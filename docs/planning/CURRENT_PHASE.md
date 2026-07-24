@@ -1,185 +1,233 @@
 # Current Execution Phase
 
-- Phase: 6
-- Name: Unified Dashboard
+- Phase: 7
+- Name: Resume Legacy Inspection
 - Status: ACTIVE
 - Controlling skill: `karpathy-guidelines`
 
 ## Required skills
 
 - `karpathy-guidelines`
+- `brainstorming`
 - `frontend-design`
 - `frontend-skill`
-- `build-web-apps:react-best-practices`
-- `test-driven-development`
-- `systematic-debugging`
-- `graphify`
-- `playwright`
-- `lighthouse-verification`
+- `technical-writing`
+- `subagent-driven-development`
 
 ## Objective
 
-- Replace the factual deferred `/dashboard` route with a connected, authenticated dashboard.
-- Present only actual owned resume, interview, learning-document, quiz, AI-usage, and activity records returned by the verified backend.
-- Support the approved 7, 30, 90, and 365-day progress windows and bounded chronological activity pagination.
-- Provide independent loading, empty, partial-data, error, retry, cancellation, and stale-response behavior for progress and activity.
+- Inspect the two approved resume legacy projects as bounded read-only
+  references.
+- Classify their routes, screens, features, assets, interaction patterns,
+  architecture, AI behavior, security, privacy, and verification evidence.
+- Map valuable user journeys to current active Resume Studio contracts.
+- Produce an evidence-based, smallest-scope implementation plan for Execution
+  Phase 8 without modifying active application source.
+
+## Approved external read-only references
+
+- `LEGACY_RESUME_BUILDER`: the exact operator-approved Resume Builder folder.
+- `LEGACY_RESUME_ANALYSER`: the exact operator-approved AI Resume Analyser
+  folder.
+
+These symbolic names must be used in reports instead of absolute external
+paths. No other legacy folder or external project is approved.
+
+## Explicit read-only constraints
+
+- Do not modify, rename, delete, move, format, or create a file in either
+  legacy project.
+- Do not run a legacy application, server, test, build, package manager,
+  migration, generator, formatter, AI call, network call, or database command.
+- Do not install legacy dependencies or add either project to the active npm
+  workspace.
+- Do not open `.env` files, credential files, token files, cookies, database
+  dumps, user uploads, generated reports containing personal data, or private
+  output.
+- Do not copy legacy source, configuration, prompts, lockfiles, database
+  models, auth, backend routes, API clients, provider integration, or assets.
+- Record before and after metadata manifests with sensitive and generated
+  paths excluded. Stop if any legacy metadata differs.
+- Pre-existing legacy changes belong to the operator and must not be altered or
+  attributed to this phase.
 
 ## Inputs to inspect
 
-- Root repository instructions, accepted decisions, the master plan, Phase 10 baseline report, frontend architecture audit, historical dashboard documentation, and the README.
-- Root, frontend, lockfile, and shared-types manifests and contracts.
-- The complete Phase 5 entry, authentication, routing, shared API-client, shell, style, and test foundation.
-- Every current dashboard frontend file and call site.
-- Bounded backend dashboard routes, controller, service, schemas, response types, ownership middleware, rate limiting, activity pagination, caching, tests, and relevant source models.
+- Root instructions, accepted decisions, master plan, current frontend
+  architecture audit, historical Resume Studio phase documentation, and README.
+- Root, frontend, and shared-type manifests and active repository contracts.
+- Current resume routing, shell, shared API client, auth integration, Resume
+  Studio scaffold, types, and tests.
+- Bounded active backend resume, version, analysis, job, private-asset,
+  validation, ownership, and relevant test evidence.
+- Safe source, style, public asset metadata, manifests, and test inventory in
+  the two approved legacy references.
 
 ## In-scope work
 
-- Transition Execution Phase 5 to `COMPLETED` and Execution Phase 6 to `ACTIVE`.
-- Connect `/dashboard` to the real dashboard while preserving the Phase 5 protected route and authenticated shell.
-- Add narrow dashboard response types and runtime validation without a schema dependency.
-- Use the Phase 5 shared API client for progress and paginated activity requests.
-- Implement independent progress and activity state, retry, request cancellation, and stale-response protection.
-- Present verified metrics, recent trends, recent owned learning documents, AI estimate disclosures, and safe chronological activity.
-- Add focused dashboard API and component tests.
-- Run repository, local data-integrity, ownership, browser, responsive, keyboard, Lighthouse, and human visual verification.
+- Transition Execution Phase 6 to `COMPLETED` and Execution Phase 7 to `ACTIVE`.
+- Inspect only the two approved legacy references under the read-only rules.
+- Create separate Resume Builder and AI Resume Analyser inventories.
+- Classify each material feature as `PORT`, `REBUILD`, `REFERENCE ONLY`, or
+  `REJECT`.
+- Verify active backend support as `SUPPORTED`, `PARTIALLY SUPPORTED`,
+  `NOT SUPPORTED`, `REQUIRES VERIFICATION`, or `NOT APPLICABLE`.
+- Resolve cross-project duplication and conflict in one Resume Studio migration
+  plan.
+- Define approved Phase 8 journeys, architecture, routes, state, integrity,
+  asset rules, sequence, tests, privacy controls, expected scope, decisions,
+  exclusions, and approval gate.
+- Verify document quality, legacy immutability, and exact active Git scope.
 
 ## Out-of-scope work
 
-- Resume Studio, Interview Coach, or Learning Workspace workflows and data-creation controls.
-- Fabricated records, synthetic engagement scores, streaks, forecasts, recommendations, or unsupported aggregation.
-- Backend production-source changes without a separately reported and authorized blocking defect.
-- Authentication, ownership, shared-client, package, lockfile, migration, AI, storage, deployment, or global design-system changes.
-- Another router, API client, state library, schema library, form library, UI library, icon library, CSS framework, database, or authentication provider.
-- Legacy-project access and later-phase activation.
+- Any active frontend, backend, shared-package, test, manifest, lockfile,
+  migration, configuration, deployment, or application-source change.
+- Phase 8 implementation or automatic Phase 8 activation.
+- Legacy execution, dependency installation, repair, formatting, or copying.
+- Authentication, database, API, provider, storage, or schema changes.
+- Adding a router, state library, design system, UI library, schema library,
+  form library, backend, database, authentication provider, or dependency.
+- Resume data migration, production data access, raw exports, or personal-data
+  inspection.
+- Commit, stage, push, pull, merge, rebase, branch switch, history rewrite, or
+  destructive Git action.
 
-## Assumptions
+## Classification definitions
 
-- The approved branch is `phase-10-unified-frontend` and the approved starting HEAD is `2386c36`.
-- The default dashboard window is 30 days.
-- The UI requests up to 12 trend points, 6 recent documents, and a fixed bounded activity page size.
-- Backend `Date` values are serialized as strings at the browser boundary.
-- Current AI usage creation records one request per UsageEvent, allowing request count and estimated-cost event count to disclose complete versus partial estimates.
-- Dashboard route guards improve navigation but never replace backend authentication, authorization, or ownership enforcement.
-
-## Verified dashboard contracts
-
-- `GET /api/v1/dashboard`
-  - Accepts `windowDays` 7–365, `trendLimit` 3–30, `activityLimit` 1–50, and `recentDocumentLimit` 1–20.
-  - Returns progress metrics plus recent activity.
-- `GET /api/v1/dashboard/progress`
-  - Accepts the same overview query and returns progress metrics without `recentActivity`.
-- `GET /api/v1/dashboard/activity`
-  - Accepts `page` at least 1, `limit` 1–100, and optional validated `type`, `origin`, and `resourceType`.
-  - Returns `{ events, pagination: { page, limit, total, pages } }`.
-  - Orders events by `occurredAt` descending and `_id` descending.
-- Progress returns:
-  - `generatedAt` and the selected `window`;
-  - resume latest, previous, change, window aggregate, distinct count, and trend values;
-  - interview window attempts, completed-feedback scores, session counts, and trend values;
-  - current learning-document status counts and recent documents;
-  - completed quiz window aggregates and trends;
-  - AI request, status, token, latency, estimated-cost, feature, and daily aggregates.
-
-## Data-integrity rules
-
-- Preserve `null` for unavailable score and latency metrics; never turn absence into zero.
-- Display factual count values, including zero.
-- Do not infer scores for unfinished resume, interview, or quiz work.
-- Do not fabricate metrics, records, trends, activity, costs, streaks, forecasts, or recommendations.
-- Label USD cost values as estimates, distinguish partial estimates, and show `No cost estimates recorded` when appropriate.
-- Preserve backend activity ordering and pagination metadata.
-- Validate required structures, finite numeric values, nullable fields, dates, document statuses, activity items, groupings, trends, and pagination before rendering.
-- Fail closed on malformed responses without logging response bodies.
+- `PORT`: a small self-contained source, style, copy, or asset candidate that
+  passes provenance, ownership, compatibility, accessibility, security, and
+  privacy review. It remains copying-prohibited during Phase 7.
+- `REBUILD`: a valuable user-facing capability that must be implemented from
+  scratch within active architecture and contracts. This is the default for
+  useful interactive behavior.
+- `REFERENCE ONLY`: evidence may inform product, workflow, or visual decisions,
+  but no source or asset should be copied.
+- `REJECT`: incompatible, unsafe, unsupported, fabricated, duplicative, dead,
+  unproven, or explicitly prohibited material that must not migrate.
 
 ## Security and privacy controls
 
-- Access tokens remain in React memory and refresh tokens remain in the existing HttpOnly cookie.
-- The shared API client continues to own credentials, Authorization, refresh deduplication, retry bounds, request IDs, and error normalization.
-- Dashboard requests send no user ID.
-- Backend authentication derives the user ID from server state and every dashboard aggregation is user-scoped.
-- Preserve `Cache-Control: private, no-store`, `Pragma: no-cache`, and `Vary: Authorization, Cookie`.
-- Do not display or log raw activity metadata, resource IDs, storage keys, filenames, resume content, job descriptions, interview answers, document text, prompts, quiz answers, tokens, cookies, passwords, secrets, or personal data.
-- Unknown activity types receive a bounded safe fallback label.
-- Do not weaken ownership or authentication.
+- Do not print or reproduce names, email addresses, phone numbers, addresses,
+  resume content, job descriptions, prompts, analysis text, tokens, cookies,
+  credentials, private IDs, storage keys, or personal data.
+- Normalize legacy paths to `LEGACY_RESUME_BUILDER` and
+  `LEGACY_RESUME_ANALYSER` in all durable reports.
+- Identify environment or sensitive files by filename only and do not read
+  their contents.
+- Reject persistent browser access-token storage, public resume screenshots,
+  unsafe uploads, weak ownership, mass assignment, unvalidated AI output,
+  automatic suggestion mutation, and personal-data logging.
+- Preserve active authenticated ownership, safe 404 behavior, private assets,
+  request IDs, no-store caching, structured validation, and selected stored
+  suggestion semantics in the Phase 8 plan.
+- Use only sanitized structural evidence. Do not reproduce legacy sample
+  identities, testimonials, scores, or records.
+
+## Evidence rules
+
+- Every material classification must cite a normalized source location or
+  explicitly state the evidence gap.
+- `IMPLEMENTED` means source-backed, not runtime-verified.
+- Do not infer active backend support from legacy source. Inspect the current
+  active route, schema, service, ownership, job, and test evidence.
+- Unknown provenance can never receive `PORT`.
+- Matrix totals must exactly match unique stable feature IDs.
+- Distinguish observed behavior, recommendation, assumption, and unresolved
+  operator choice.
+- Do not claim a command passed unless it was run and its exact result recorded.
 
 ## Exact deliverables
 
-- Updated planning controls for the Phase 5 to Phase 6 transition.
-- Reconciled feature-local dashboard types and narrow runtime response validation.
-- Dashboard progress and paginated activity operations through the shared API client.
-- Real protected dashboard route.
-- Independent progress and activity state with retry, cancellation, and stale-response protection.
-- Approved window controls, metrics, trends, recent documents, cost disclosure, safe activity, and pagination.
-- Loading, empty, partial, success, and safe error presentation.
-- Responsive and keyboard-operable dashboard presentation consistent with the authenticated shell.
-- Focused API and component tests plus repository, browser, ownership, and Lighthouse evidence.
+- `docs/legacy-analysis/resume-builder-inventory.md`
+- `docs/legacy-analysis/resume-analyser-inventory.md`
+- `docs/legacy-analysis/resume-migration-plan.md`
+- Status-only update to
+  `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md`
+- This Phase 7-only `docs/planning/CURRENT_PHASE.md`
 
 ## Success criteria
 
-- Phase 5 is `COMPLETED`, Phase 6 is `ACTIVE`, and Phases 7 through 21 remain `PLANNED`.
-- `/dashboard` renders the connected dashboard only after authentication; Resume, Interview, and Learning routes remain deferred.
-- All four approved windows request and display only their matching response.
-- Progress and activity failures, retries, loading, cancellation, and stale-response behavior remain independent.
-- Activity pagination stays within server-provided boundaries and preserves returned order.
-- Null scores remain unavailable, factual zeros remain zero, and no fabricated value appears.
-- AI estimates are disclosed as complete, partial, or unrecorded according to backend evidence and are never called billing.
-- Malformed dashboard responses fail safely and structured request IDs remain available.
-- User B cannot see User A metrics or activity.
-- Required tests, typecheck, backend suites, build, browser checks, responsive checks, keyboard checks, and bounded Lighthouse review complete.
-- Human visual QA is approved before final implementation review or commit authorization.
+- Both authorized legacy references have complete evidence-based inventories.
+- Every matrix row has a stable ID, status, classification, active support
+  finding, Phase 8 action, risk, and confidence.
+- Classification totals equal unique matrix-row totals.
+- No legacy source, asset, configuration, prompt, package, or infrastructure
+  is approved for copying without evidence.
+- The migration plan resolves duplication and conflict against current active
+  contracts.
+- Phase 8 journeys are limited to list, create, open, canonical editing,
+  stable-ID operations, immutable save/history, preview, approved design, PDF
+  import with polling, validated analysis, selected stored suggestions, and
+  factual states.
+- Expected files, contracts, tests, acceptance evidence, and stop conditions
+  are defined for the smallest implementation sequence.
+- Legacy before and after manifests match exactly.
+- Document checks, secret review, `git diff --check`, Git status, diff stat,
+  and scoped diff review complete.
+- Only the five exact deliverables differ in the active repository.
+- Phase 6 is `COMPLETED`, Phase 7 is `ACTIVE`, and Phases 8 through 21 remain
+  `PLANNED`.
+- Nothing is staged and no Phase 7 commit exists.
 
-## Verification commands
+## Verification requirements
 
-- `npm run test --workspace @career-learning-hub/web`
-- `npm run typecheck`
-- `npm run test:unit`
-- `npm run test:integration`
-- `npm run test:security`
-- `npm run build`
-- Do not run coverage, the combined CI command, `npm update`, or any audit-fix command without separate authorization.
+- Compare safe before and after metadata manifests for both legacy references.
+- Confirm neither legacy reference is a Git repository; if one is, record its
+  status without changing it.
+- Count unique `RB-###` and `RA-###` matrix rows and independently verify each
+  classification total.
+- Check all durable documents for absolute legacy paths, personal sample data,
+  secret material, invalid status values, invalid classifications, and
+  unsupported certainty.
+- Run `git diff --check`, `git status --short --branch`, `git diff --stat`, and
+  review every planning diff and new document.
+- Confirm there is no diff in application source, tests, manifests, lockfiles,
+  migrations, configuration, decision log, or unrelated documentation.
+- Record line count and SHA-256 for each new document.
+- Do not run application tests, builds, servers, package managers, migrations,
+  or browser verification because this phase changes documentation only and
+  prohibits legacy execution.
+- Human visual QA is not applicable because Phase 7 must not change visible
+  application files.
 
-## Browser-verification requirements
+## Expected write scope
 
-- Start the backend with `npm run dev:backend` and the frontend with `npm run dev:frontend` after automated checks pass.
-- Report the actual selected URLs and verify backend readiness.
-- Verify anonymous redirect, authenticated rendering, refresh bootstrap, logout, all four windows, rapid switching, independent retries, pagination boundaries, rapid pagination, safe unknown activity, request IDs, and unchanged deferred routes.
-- Use only synthetic local `.test` accounts and the local development database.
-- Compare returned aggregates with owned records for 7, 30, 90, and 365 days.
-- Confirm User B receives no User A metrics or activity.
+Modified:
 
-## Visual-QA requirements
+- `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md`
+- `docs/planning/CURRENT_PHASE.md`
 
-- Inspect dashboard headings, window controls, metrics, null states, large values, cost labels, trends, recent documents, activity, pagination, loading, empty, error, retry, and request-ID states.
-- Inspect approximately 1440, 768, 390, and 320-pixel widths.
-- Inspect skip link, dashboard navigation, window controls, retry controls, pagination, mobile menu, logout, natural tab order, and visible focus.
-- Browser automation supports but does not replace human review.
-- Required token: `PHASE_6_VISUAL_QA_APPROVED`.
+Created:
 
-## Failure-loop stop rule
+- `docs/legacy-analysis/resume-builder-inventory.md`
+- `docs/legacy-analysis/resume-analyser-inventory.md`
+- `docs/legacy-analysis/resume-migration-plan.md`
 
-- A root failure is one underlying cause that produces the same failing result.
-- Make at most three code-changing repair attempts for the same root failure.
-- Record each attempt's hypothesis, changed files, rerun command, and exact result.
-- After the third unsuccessful attempt, stop modifying files, preserve the diff, report the exact failure and attempts, state the likely unresolved cause, and wait for human direction.
-- Never weaken tests, TypeScript strictness, validation, authentication, authorization, ownership, privacy, or security controls.
+All application source, tests, dependencies, configuration, migrations,
+assets, legacy projects, and unrelated documentation are protected.
 
-## Human approval gates
+## Human approval gate
 
-- Gate 1: after automated, data-integrity, browser, responsive, keyboard, and Lighthouse verification, stop for `PHASE_6_VISUAL_QA_APPROVED`.
-- Gate 2: after visual approval and final Git/content review, stop for `PHASE_6_IMPLEMENTATION_REVIEW_APPROVED`.
-- Do not stage or commit at either gate.
+- Stop after the documents and verification evidence are complete.
+- Do not stage or commit.
+- Phase 8 must not begin until the operator supplies:
+  `PHASE_7_LEGACY_ANALYSIS_APPROVED`
 
 ## Next phase
 
-- Execution Phase 7 — Resume Legacy Inspection.
-- Do not activate Phase 7 automatically.
-- Do not access any legacy project.
+- Execution Phase 8: Resume Studio Implementation.
+- Do not activate Phase 8 automatically.
+- Phase 8 remains `PLANNED` until the operator approves the Phase 7 analysis
+  and a later authorized planning transition occurs.
 
 ## Update rules
 
-- Keep this file limited to Execution Phase 6 until both required human gates are satisfied and a later approved transition occurs.
-- Do not fabricate metrics or records.
-- Do not modify later feature workspaces.
-- Do not weaken ownership or authentication.
-- Do not stage or commit.
-- Human visual QA is mandatory before commit.
+- Keep this file limited to Execution Phase 7.
+- Do not modify or execute legacy projects.
+- Do not copy legacy source, configuration, prompts, packages, or assets.
+- Do not modify active application source.
+- Do not widen scope to unsupported resume capabilities.
+- Do not weaken authentication, ownership, validation, privacy, or security.
+- Do not stage, commit, or activate Phase 8.
+- Human approval of all Phase 7 documents is mandatory.
