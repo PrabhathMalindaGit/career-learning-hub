@@ -1,4 +1,4 @@
-import type { ClientSession } from "mongoose";
+import { Types, type ClientSession } from "mongoose";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
 import { withMongoTransaction } from "../../shared/mongoTransaction.js";
@@ -352,15 +352,15 @@ export async function generateInterviewQuestions(input: {
             },
             update: {
               $setOnInsert: {
-                userId: input.userId,
-                sessionId: input.sessionId,
+                userId: new Types.ObjectId(input.userId),
+                sessionId: new Types.ObjectId(input.sessionId),
                 source: "ai-generated",
                 category: question.category,
                 difficulty: question.difficulty,
                 question: question.question,
                 questionFingerprint,
                 modelAnswer: question.modelAnswer,
-                generationJobId: input.jobId,
+                generationJobId: new Types.ObjectId(input.jobId),
               },
             },
             upsert: true,

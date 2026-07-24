@@ -7,8 +7,12 @@ import {
   getOwnedJob,
 } from "./job.queue.js";
 
+type JobIdParams = {
+  jobId: string;
+};
+
 export async function getJobController(
-  request: Request,
+  request: Request<JobIdParams>,
   response: Response,
 ): Promise<void> {
   const job = await getOwnedJob(
@@ -36,7 +40,7 @@ export async function getJobController(
 }
 
 export async function cancelJobController(
-  request: Request,
+  request: Request<JobIdParams>,
   response: Response,
 ): Promise<void> {
   await cancelOwnedQueuedJob(

@@ -10,6 +10,10 @@ import {
 } from "./asset.service.js";
 import { getStorageForProvider } from "./storage/storage.factory.js";
 
+type AssetIdParams = {
+  assetId: string;
+};
+
 export async function uploadAssetController(
   request: Request,
   response: Response,
@@ -53,7 +57,7 @@ export async function uploadAssetController(
 }
 
 export async function getAssetController(
-  request: Request,
+  request: Request<AssetIdParams>,
   response: Response,
 ): Promise<void> {
   const asset = await getOwnedAsset(
@@ -80,7 +84,7 @@ export async function getAssetController(
 }
 
 export async function createSignedUrlController(
-  request: Request,
+  request: Request<AssetIdParams>,
   response: Response,
 ): Promise<void> {
   const { expiresInSeconds } = request.body as {
@@ -100,7 +104,7 @@ export async function createSignedUrlController(
 }
 
 export async function authenticatedDownloadController(
-  request: Request,
+  request: Request<AssetIdParams>,
   response: Response,
 ): Promise<void> {
   const asset = await getOwnedAsset(
@@ -130,7 +134,7 @@ export async function authenticatedDownloadController(
 }
 
 export async function signedDownloadController(
-  request: Request,
+  request: Request<AssetIdParams>,
   response: Response,
 ): Promise<void> {
   const { expires, signature } = request.query as unknown as {
@@ -169,7 +173,7 @@ export async function signedDownloadController(
 }
 
 export async function deleteAssetController(
-  request: Request,
+  request: Request<AssetIdParams>,
   response: Response,
 ): Promise<void> {
   await deleteOwnedAsset(

@@ -21,7 +21,7 @@ export default async function globalSetup() {
 
   const runtimeEnvironment: NodeJS.ProcessEnv = {
     NODE_ENV: "test",
-    PORT: "0",
+    PORT: "8000",
     MONGODB_URI: replSet.getUri(
       "career_learning_hub_test",
     ),

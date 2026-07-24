@@ -396,7 +396,7 @@ export function serializeQuestionDetail(
   question: InterviewQuestionDocument,
   revealAnswers = false,
 ) {
-  const value = question.toObject() as Record<string, unknown>;
+  const value = question.toObject<Record<string, unknown>>();
   delete value.questionFingerprint;
 
   if (!revealAnswers) {

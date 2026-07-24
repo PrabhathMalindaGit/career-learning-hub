@@ -50,10 +50,12 @@ export function extractStructuredJson(text: string): unknown {
   }
 }
 
-export function validateStructuredAiOutput<T>(
+export function validateStructuredAiOutput<
+  TSchema extends z.ZodTypeAny,
+>(
   text: string,
-  schema: z.ZodType<T>,
-): T {
+  schema: TSchema,
+): z.output<TSchema> {
   const parsed = schema.safeParse(
     extractStructuredJson(text),
   );

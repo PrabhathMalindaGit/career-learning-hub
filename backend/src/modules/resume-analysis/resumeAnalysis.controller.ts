@@ -14,6 +14,14 @@ import {
   listResumeAnalyses,
 } from "./resumeAnalysis.service.js";
 
+type ResumeIdParams = {
+  resumeId: string;
+};
+
+type AnalysisIdParams = {
+  analysisId: string;
+};
+
 export async function importPdfController(
   request: Request,
   response: Response,
@@ -59,7 +67,7 @@ export async function importPdfController(
 }
 
 export async function queueAnalysisController(
-  request: Request,
+  request: Request<ResumeIdParams>,
   response: Response,
 ): Promise<void> {
   const resume = await requireOwnedResume(
@@ -111,7 +119,7 @@ export async function queueAnalysisController(
 }
 
 export async function listAnalysesController(
-  request: Request,
+  request: Request<ResumeIdParams>,
   response: Response,
 ): Promise<void> {
   const result = await listResumeAnalyses(
@@ -124,7 +132,7 @@ export async function listAnalysesController(
 }
 
 export async function getAnalysisController(
-  request: Request,
+  request: Request<AnalysisIdParams>,
   response: Response,
 ): Promise<void> {
   const analysis = await getOwnedAnalysis(
@@ -136,7 +144,7 @@ export async function getAnalysisController(
 }
 
 export async function applyRewritesController(
-  request: Request,
+  request: Request<ResumeIdParams>,
   response: Response,
 ): Promise<void> {
   const result = await applyAnalysisSuggestions({

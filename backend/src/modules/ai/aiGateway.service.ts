@@ -59,17 +59,19 @@ async function executeWithRetry<T>(
   throw lastError;
 }
 
-export async function generateStructuredOutput<T>(input: {
+export async function generateStructuredOutput<
+  TSchema extends z.ZodTypeAny,
+>(input: {
   userId: string;
   feature: string;
   systemPrompt: string;
   userPrompt: string;
-  schema: z.ZodType<T>;
+  schema: TSchema;
   provider?: string;
   model?: string;
   jobId?: string;
   metadata?: Record<string, unknown>;
-}): Promise<T> {
+}): Promise<z.output<TSchema>> {
   const providerName = input.provider ?? env.AI_DEFAULT_PROVIDER;
   const provider = providers[providerName];
 

@@ -9,6 +9,14 @@ import {
   updateResumeDesign,
 } from "./resume.service.js";
 
+type ResumeIdParams = {
+  resumeId: string;
+};
+
+type VersionIdParams = ResumeIdParams & {
+  versionId: string;
+};
+
 export async function createResumeController(
   request: Request,
   response: Response,
@@ -40,7 +48,7 @@ export async function listResumesController(
 }
 
 export async function getResumeController(
-  request: Request,
+  request: Request<ResumeIdParams>,
   response: Response,
 ): Promise<void> {
   const result = await getResumeWorkspace(
@@ -52,7 +60,7 @@ export async function getResumeController(
 }
 
 export async function createVersionController(
-  request: Request,
+  request: Request<ResumeIdParams>,
   response: Response,
 ): Promise<void> {
   const result = await createResumeVersion({
@@ -68,7 +76,7 @@ export async function createVersionController(
 }
 
 export async function listVersionsController(
-  request: Request,
+  request: Request<ResumeIdParams>,
   response: Response,
 ): Promise<void> {
   const result = await listResumeVersions(
@@ -81,7 +89,7 @@ export async function listVersionsController(
 }
 
 export async function getVersionController(
-  request: Request,
+  request: Request<VersionIdParams>,
   response: Response,
 ): Promise<void> {
   const version = await getOwnedResumeVersion(
@@ -94,7 +102,7 @@ export async function getVersionController(
 }
 
 export async function updateDesignController(
-  request: Request,
+  request: Request<ResumeIdParams>,
   response: Response,
 ): Promise<void> {
   const resume = await updateResumeDesign({
