@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "inputRoot": "./migration-input",
+  "projects": {
+    "ai-learning-assistant": {
+      "users": "ai-learning-assistant/users.json",
+      "learningDocuments": "ai-learning-assistant/documents.json",
+      "flashcardSets": "ai-learning-assistant/flashcard-sets.json",
+      "flashcards": "ai-learning-assistant/flashcards.json",
+      "quizzes": "ai-learning-assistant/quizzes.json"
+    },
+    "ai-resume-analyser": {
+      "users": "ai-resume-analyser/users.json",
+      "resumes": "ai-resume-analyser/resumes.json"
+    },
+    "interview-prep-ai": {
+      "users": "interview-prep-ai/users.json",
+      "interviewSessions": "interview-prep-ai/sessions.json",
+      "interviewQuestions": "interview-prep-ai/questions.json"
+    },
+    "resume-builder": {
+      "users": "resume-builder/users.json",
+      "resumes": "resume-builder/resumes.json"
+    }
+  }
+}

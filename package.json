@@ -1,0 +1,34 @@
+{
+  "name": "career-learning-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Unified Career & Learning Hub monorepo.",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:frontend": "npm run dev --workspace @career-learning-hub/web",
+    "dev:backend": "npm run dev --workspace @career-learning-hub/api",
+    "dev:web": "npm run dev --workspace @career-learning-hub/web",
+    "dev:api": "npm run dev --workspace @career-learning-hub/api",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "migrate": "npm run migrate --workspace @career-learning-hub/api --",
+    "migrate:validate": "npm run migrate:validate --workspace @career-learning-hub/api --",
+    "migrate:dry-run": "npm run migrate:dry-run --workspace @career-learning-hub/api --",
+    "migrate:execute": "npm run migrate:execute --workspace @career-learning-hub/api --",
+    "test": "npm run test --workspace @career-learning-hub/api",
+    "test:unit": "npm run test:unit --workspace @career-learning-hub/api",
+    "test:integration": "npm run test:integration --workspace @career-learning-hub/api",
+    "test:security": "npm run test:security --workspace @career-learning-hub/api",
+    "test:coverage": "npm run test:coverage --workspace @career-learning-hub/api",
+    "typecheck:tests": "npm run typecheck:test --workspace @career-learning-hub/api",
+    "test:ci": "npm run test:ci --workspace @career-learning-hub/api"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

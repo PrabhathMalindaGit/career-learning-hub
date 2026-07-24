@@ -1,0 +1,259 @@
+.resume-workspace {
+  margin-top: 32px;
+}
+
+.resume-workspace-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.resume-workspace-heading h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+.resume-workspace-heading p:not(.eyebrow) {
+  max-width: 720px;
+  color: #5e6c64;
+}
+
+.resume-workspace-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(280px, 0.9fr)
+    minmax(360px, 1.2fr)
+    minmax(280px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.resume-panel {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #d8e2dc;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 34px rgba(20, 45, 31, 0.06);
+}
+
+.resume-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.resume-panel-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.resume-kicker {
+  margin: 0 0 5px;
+  color: #287a4a;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.resume-status,
+.resume-score {
+  display: inline-flex;
+  min-width: 42px;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #ecf2ee;
+  color: #296544;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.resume-score {
+  font-size: 1rem;
+}
+
+.resume-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.resume-form-grid label {
+  display: grid;
+  gap: 7px;
+  color: #3c4a42;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.resume-form-grid input,
+.resume-form-grid textarea {
+  width: 100%;
+  border: 1px solid #ccd8d0;
+  border-radius: 10px;
+  padding: 11px 12px;
+  color: #18211b;
+  background: #fbfdfc;
+}
+
+.resume-field-wide {
+  grid-column: 1 / -1;
+}
+
+.resume-placeholder-section,
+.resume-empty-state {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px dashed #b9c9bf;
+  border-radius: 14px;
+  color: #617168;
+  background: #f8fbf9;
+}
+
+.resume-placeholder-section h3 {
+  margin: 0 0 6px;
+  color: #26342c;
+  font-size: 0.98rem;
+}
+
+.resume-paper {
+  min-height: 620px;
+  padding: 42px;
+  border: 1px solid #d7ddd9;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(20, 35, 27, 0.09);
+}
+
+.resume-paper-header {
+  padding-bottom: 18px;
+  border-bottom: 2px solid #27342d;
+}
+
+.resume-paper-header h3 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.resume-paper h4 {
+  margin: 24px 0 8px;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.resume-paper p,
+.resume-paper li,
+.resume-paper small {
+  color: #536159;
+  line-height: 1.55;
+}
+
+.resume-preview-entry {
+  display: grid;
+  gap: 3px;
+  margin-top: 14px;
+}
+
+.resume-muted {
+  font-style: italic;
+}
+
+.resume-disclaimer {
+  padding: 12px;
+  border-radius: 12px;
+  color: #705b24;
+  background: #fff8df;
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.resume-suggestion-list {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.resume-suggestion {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid #d9e2dc;
+  border-radius: 12px;
+}
+
+.resume-suggestion span {
+  display: grid;
+  gap: 7px;
+}
+
+.resume-suggestion strong {
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.resume-suggestion small,
+.resume-suggestion em {
+  color: #637169;
+  line-height: 1.45;
+}
+
+.resume-suggestion em {
+  color: #8a6519;
+  font-size: 0.74rem;
+}
+
+.resume-primary-button {
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  background: #21683f;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.resume-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 1100px) {
+  .resume-workspace-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .resume-ai-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .resume-workspace-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .resume-workspace-grid,
+  .resume-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-ai-panel,
+  .resume-field-wide {
+    grid-column: auto;
+  }
+
+  .resume-paper {
+    min-height: 520px;
+    padding: 26px;
+  }
+}
