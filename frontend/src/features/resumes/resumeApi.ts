@@ -1,43 +1,13 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
-
-async function request<T>(
-  path: string,
-  accessToken: string,
-  init?: RequestInit,
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      ...(init?.body instanceof FormData
-        ? {}
-        : { "Content-Type": "application/json" }),
-      Authorization: `Bearer ${accessToken}`,
-      ...init?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(
-      body?.error?.message ??
-        `Request failed with HTTP ${response.status}.`,
-    );
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
+import { apiRequest } from "../../api/apiClient";
 
 export function fetchResume(
   resumeId: string,
   accessToken: string,
 ) {
-  return request(`/resumes/${resumeId}`, accessToken);
+  return apiRequest<unknown>(`/resumes/${resumeId}`, {
+    authentication: "required",
+    accessToken,
+  });
 }
 
 export function saveResumeVersion(
@@ -45,9 +15,11 @@ export function saveResumeVersion(
   accessToken: string,
   payload: unknown,
 ) {
-  return request(`/resumes/${resumeId}/versions`, accessToken, {
+  return apiRequest<unknown>(`/resumes/${resumeId}/versions`, {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
+    authentication: "required",
+    accessToken,
   });
 }
 
@@ -60,9 +32,11 @@ export function importResumePdf(
   form.set("title", title);
   form.set("file", file);
 
-  return request("/resume-analyses/import-pdf", accessToken, {
+  return apiRequest<unknown>("/resume-analyses/import-pdf", {
     method: "POST",
     body: form,
+    authentication: "required",
+    accessToken,
   });
 }
 
@@ -71,12 +45,13 @@ export function queueResumeAnalysis(
   accessToken: string,
   payload: unknown,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/resume-analyses/resumes/${resumeId}/analyze`,
-    accessToken,
     {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: payload,
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -85,9 +60,12 @@ export function fetchResumeAnalyses(
   resumeId: string,
   accessToken: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/resume-analyses/resumes/${resumeId}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -95,9 +73,12 @@ export function fetchResumeAnalysis(
   analysisId: string,
   accessToken: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/resume-analyses/${analysisId}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -110,12 +91,13 @@ export function applyResumeSuggestions(
     changeSummary?: string;
   },
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/resume-analyses/resumes/${resumeId}/rewrites/apply`,
-    accessToken,
     {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: payload,
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -124,5 +106,8 @@ export function fetchJob(
   jobId: string,
   accessToken: string,
 ) {
-  return request(`/jobs/${jobId}`, accessToken);
+  return apiRequest<unknown>(`/jobs/${jobId}`, {
+    authentication: "required",
+    accessToken,
+  });
 }

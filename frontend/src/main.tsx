@@ -1,6 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { AppShell } from "./AppShell";
+import { RouterProvider } from "react-router-dom";
+import { AuthProvider } from "./features/auth/AuthProvider";
+import { router } from "./routing/router";
 import "./styles.css";
 
 const rootElement = document.getElementById("root");
@@ -11,6 +13,8 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AppShell />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>,
 );

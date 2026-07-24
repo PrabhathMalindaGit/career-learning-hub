@@ -2,14 +2,7 @@ import type {
   DashboardOverview,
   DashboardQuery,
 } from "./types";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
-
-interface ApiEnvelope<T> {
-  success: true;
-  data: T;
-}
+import { apiRequest } from "../../api/apiClient";
 
 function queryString(query: DashboardQuery): string {
   const params = new URLSearchParams();
@@ -24,36 +17,16 @@ function queryString(query: DashboardQuery): string {
   return encoded ? `?${encoded}` : "";
 }
 
-async function request<T>(
-  path: string,
-  accessToken: string,
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: "include",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(
-      body?.error?.message ??
-        `Dashboard request failed with HTTP ${response.status}.`,
-    );
-  }
-
-  const body = (await response.json()) as ApiEnvelope<T>;
-  return body.data;
-}
-
 export function fetchDashboardOverview(
   accessToken: string,
   query: DashboardQuery = {},
 ): Promise<DashboardOverview> {
-  return request(
+  return apiRequest<DashboardOverview>(
     `/dashboard${queryString(query)}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -61,9 +34,12 @@ export function fetchProgressSnapshot(
   accessToken: string,
   query: DashboardQuery = {},
 ): Promise<Omit<DashboardOverview, "recentActivity">> {
-  return request(
+  return apiRequest<Omit<DashboardOverview, "recentActivity">>(
     `/dashboard/progress${queryString(query)}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -85,8 +61,11 @@ export function fetchDashboardActivity(
     }
   });
 
-  return request(
+  return apiRequest<unknown>(
     `/dashboard/activity?${params.toString()}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }

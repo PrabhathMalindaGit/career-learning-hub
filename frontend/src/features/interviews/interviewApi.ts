@@ -2,47 +2,17 @@ import type {
   CreateInterviewSessionInput,
   InterviewDifficulty,
 } from "./types";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
-
-async function request<T>(
-  path: string,
-  accessToken: string,
-  init?: RequestInit,
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      ...init?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(
-      body?.error?.message ??
-        `Request failed with HTTP ${response.status}.`,
-    );
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
+import { apiRequest } from "../../api/apiClient";
 
 export function createInterviewSession(
   accessToken: string,
   payload: CreateInterviewSessionInput,
 ) {
-  return request("/interview-sessions", accessToken, {
+  return apiRequest<unknown>("/interview-sessions", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
+    authentication: "required",
+    accessToken,
   });
 }
 
@@ -51,9 +21,12 @@ export function listInterviewSessions(
   page = 1,
   limit = 20,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions?page=${page}&limit=${limit}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -61,9 +34,12 @@ export function fetchInterviewSession(
   sessionId: string,
   accessToken: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions/${sessionId}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -93,9 +69,12 @@ export function listInterviewQuestions(
     query.set("category", options.category);
   }
 
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions/${sessionId}/questions?${query}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -114,15 +93,16 @@ export function generateInterviewQuestions(
     };
   },
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions/${sessionId}/questions/generate`,
-    accessToken,
     {
       method: "POST",
-      body: JSON.stringify({
+      body: {
         ...payload,
         requestId: payload.requestId ?? crypto.randomUUID(),
-      }),
+      },
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -133,12 +113,13 @@ export function setQuestionPinned(
   accessToken: string,
   isPinned: boolean,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions/${sessionId}/questions/${questionId}/pin`,
-    accessToken,
     {
       method: "PATCH",
-      body: JSON.stringify({ isPinned }),
+      body: { isPinned },
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -149,12 +130,13 @@ export function saveQuestionNotes(
   accessToken: string,
   notes: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions/${sessionId}/questions/${questionId}/notes`,
-    accessToken,
     {
       method: "PATCH",
-      body: JSON.stringify({ notes }),
+      body: { notes },
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -164,10 +146,13 @@ export function requestQuestionExplanation(
   questionId: string,
   accessToken: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions/${sessionId}/questions/${questionId}/explanation`,
-    accessToken,
-    { method: "POST" },
+    {
+      method: "POST",
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -177,12 +162,13 @@ export function recordInterviewAttempt(
   accessToken: string,
   answerText: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions/${sessionId}/questions/${questionId}/attempts`,
-    accessToken,
     {
       method: "POST",
-      body: JSON.stringify({ answerText }),
+      body: { answerText },
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -192,10 +178,13 @@ export function requestAttemptFeedback(
   attemptId: string,
   accessToken: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions/${sessionId}/attempts/${attemptId}/feedback`,
-    accessToken,
-    { method: "POST" },
+    {
+      method: "POST",
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -205,8 +194,11 @@ export function listAttemptHistory(
   page = 1,
   limit = 20,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/interview-sessions/${sessionId}/attempts?page=${page}&limit=${limit}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }

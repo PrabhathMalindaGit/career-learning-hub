@@ -1,37 +1,4 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
-
-async function request<T>(
-  path: string,
-  accessToken: string,
-  init?: RequestInit,
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      ...(init?.body instanceof FormData
-        ? {}
-        : { "Content-Type": "application/json" }),
-      Authorization: `Bearer ${accessToken}`,
-      ...init?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(
-      body?.error?.message ??
-        `Request failed with HTTP ${response.status}.`,
-    );
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
+import { apiRequest } from "../../api/apiClient";
 
 export function uploadLearningDocument(
   title: string,
@@ -42,9 +9,11 @@ export function uploadLearningDocument(
   form.set("title", title);
   form.set("file", file);
 
-  return request("/learning-documents/upload", accessToken, {
+  return apiRequest<unknown>("/learning-documents/upload", {
     method: "POST",
     body: form,
+    authentication: "required",
+    accessToken,
   });
 }
 
@@ -53,9 +22,12 @@ export function listLearningDocuments(
   page = 1,
   limit = 20,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/learning-documents?page=${page}&limit=${limit}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -63,9 +35,12 @@ export function fetchLearningDocument(
   documentId: string,
   accessToken: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/learning-documents/${documentId}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -75,9 +50,12 @@ export function listDocumentChunks(
   page = 1,
   limit = 20,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/learning-documents/${documentId}/chunks?page=${page}&limit=${limit}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -86,12 +64,13 @@ export function createLearningConversation(
   title: string,
   accessToken: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/learning-documents/${documentId}/conversations`,
-    accessToken,
     {
       method: "POST",
-      body: JSON.stringify({ title }),
+      body: { title },
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -103,12 +82,13 @@ export function sendLearningMessage(
   accessToken: string,
   requestId = crypto.randomUUID(),
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/learning-documents/${documentId}/conversations/${conversationId}/messages`,
-    accessToken,
     {
       method: "POST",
-      body: JSON.stringify({ requestId, content }),
+      body: { requestId, content },
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -120,9 +100,12 @@ export function listLearningMessages(
   page = 1,
   limit = 50,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/learning-documents/${documentId}/conversations/${conversationId}/messages?page=${page}&limit=${limit}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -136,15 +119,16 @@ export function generateFlashcardSet(
     requestId?: string;
   },
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/learning-documents/${documentId}/flashcard-sets`,
-    accessToken,
     {
       method: "POST",
-      body: JSON.stringify({
+      body: {
         ...payload,
         requestId: payload.requestId ?? crypto.randomUUID(),
-      }),
+      },
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -155,9 +139,12 @@ export function listFlashcards(
   page = 1,
   limit = 50,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/flashcard-sets/${setId}/cards?page=${page}&limit=${limit}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -171,15 +158,16 @@ export function generateQuiz(
     requestId?: string;
   },
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/learning-documents/${documentId}/quizzes`,
-    accessToken,
     {
       method: "POST",
-      body: JSON.stringify({
+      body: {
         ...payload,
         requestId: payload.requestId ?? crypto.randomUUID(),
-      }),
+      },
+      authentication: "required",
+      accessToken,
     },
   );
 }
@@ -188,7 +176,10 @@ export function fetchQuiz(
   quizId: string,
   accessToken: string,
 ) {
-  return request(`/quizzes/${quizId}`, accessToken);
+  return apiRequest<unknown>(`/quizzes/${quizId}`, {
+    authentication: "required",
+    accessToken,
+  });
 }
 
 export function submitQuiz(
@@ -199,9 +190,11 @@ export function submitQuiz(
     selectedChoiceIndex: number;
   }>,
 ) {
-  return request(`/quizzes/${quizId}/attempts`, accessToken, {
+  return apiRequest<unknown>(`/quizzes/${quizId}/attempts`, {
     method: "POST",
-    body: JSON.stringify({ answers }),
+    body: { answers },
+    authentication: "required",
+    accessToken,
   });
 }
 
@@ -211,9 +204,12 @@ export function listQuizHistory(
   page = 1,
   limit = 20,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/quizzes/${quizId}/attempts?page=${page}&limit=${limit}`,
-    accessToken,
+    {
+      authentication: "required",
+      accessToken,
+    },
   );
 }
 
@@ -221,9 +217,12 @@ export function deleteLearningDocument(
   documentId: string,
   accessToken: string,
 ) {
-  return request(
+  return apiRequest<unknown>(
     `/learning-documents/${documentId}`,
-    accessToken,
-    { method: "DELETE" },
+    {
+      method: "DELETE",
+      authentication: "required",
+      accessToken,
+    },
   );
 }
