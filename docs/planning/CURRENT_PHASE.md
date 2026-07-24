@@ -1,138 +1,116 @@
 # Current Execution Phase
 
-- Phase: 1
-- Name: Git Baseline and Repository Cleanup
+- Phase: 2
+- Name: Codex Repository Instructions
 - Status: ACTIVE
 - Controlling skill: `karpathy-guidelines`
 
 ## Required skills
 
 - `karpathy-guidelines`
-- `define-goal`
-- `executing-plans`
-- `finishing-a-development-branch`
+- `technical-writing`
+- `migrate-to-codex`
+- `onboard-new-user`
 
 ## Objective
 
-- Prepare a safe, reviewable Git baseline without altering application behavior or creating a commit.
-- Activate Execution Phase 1 after the approved Phase 0 review.
-- Inspect Git history, branches, tracked files, ignore rules, and filename-only sensitive or generated path risks.
+- Create a concise root `AGENTS.md` with permanent, repository-specific instructions for safe Codex work.
+- Transition the planning controls from completed Execution Phase 1 to active Execution Phase 2.
 
 ## Inputs to inspect
 
-- Repository root contents.
-- Git work-tree, branch, history, remote-name, index, and status metadata.
-- Root and nested `.gitignore` files.
-- Repository filenames for sensitive or generated path risks.
-- `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md`
-- `docs/planning/CURRENT_PHASE.md`
-- `docs/planning/DECISION_LOG.md`
+- `README.md`
+- Root, frontend, backend, and shared-types package manifests.
+- `.gitignore`
+- `docs/architecture/frontend-backend-structure.md`
+- The planning controls and accepted decisions under `docs/planning/`.
+- Filenames directly under `docs/phases/`.
+- Existing root `AGENTS.md`, if present.
+- Source-directory names only where needed to verify the approved architecture.
+- Safe Git status, history, branch, and operation-state evidence.
 
 ## In-scope work
 
-- Inspect and classify the current Git state.
-- Review and minimally correct `.gitignore` only if verified gaps exist.
-- Identify sensitive, generated, ignored, untracked, or tracked path risks without reading secret contents.
-- Determine whether an equivalent baseline commit exists.
-- Define the exact proposed baseline or governance commit contents.
-- Prepare exact post-approval Git commands without running them.
-- Update only the necessary planning controls for Execution Phase 1.
+- Create root `AGENTS.md`.
+- Mark Execution Phase 1 `COMPLETED`.
+- Mark Execution Phase 2 `ACTIVE`.
+- Keep Execution Phases 3 through 21 `PLANNED`.
+- Verify the instructions, phase status, write scope, and Git diff.
 
 ## Out-of-scope work
 
-- Application feature or behavior changes.
+- Production-code or package-manifest changes.
 - Dependency installation.
-- Tests, type checks, builds, development servers, or application runtime verification.
-- Staging, committing, branch creation, branch switching, branch renaming, or branch deletion.
-- Merge, rebase, cherry-pick, history rewrite, push, or any remote operation.
+- Application tests, type checks, builds, development servers, or runtime checks.
 - Legacy-project access.
-- Secret-content inspection or disclosure.
-- Automatic activation of Execution Phase 2.
+- Staging, commits, branch changes, history changes, pushes, or remote operations.
+- Automatic activation of Execution Phase 3.
 
 ## Assumptions
 
-- Phase 0 passed human review through the approval token `PHASE_0_APPROVED`.
-- Git was initialized before Phase 0.
-- The four files under `docs/planning/` are the untracked planning outputs created by Phase 0.
-- Existing implementation claims remain locally unverified until Execution Phase 3.
-- The current date is `2026-07-24`.
+- Execution Phase 1 completed through approved governance commit `8a92347`.
+- The active branch is `phase-10-unified-frontend`.
+- Existing implementation claims remain unverified until Execution Phase 3.
+- Documentation-only changes do not require visual QA, and the completion report must say so.
 
 ## Exact deliverables
 
-- Evidence-based Git-state and history classification.
-- Reviewed `.gitignore` with only necessary corrections, if any.
-- Filename-only sensitive and generated path assessment.
-- Execution Phase 0 marked `COMPLETED` in the master plan.
-- Execution Phase 1 marked `ACTIVE` in the master plan.
-- This current-phase control containing only Execution Phase 1.
-- Proposed commit contents, commit message, and exact post-approval commands.
+- `AGENTS.md`
+- `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md` with only the approved phase-status transition.
+- This current-phase control containing only Execution Phase 2.
 
 ## Success criteria
 
-- Execution Phase 0 is `COMPLETED`.
-- Execution Phase 1 is `ACTIVE`.
-- Execution Phases 2 through 21 remain `PLANNED`.
-- This file contains only Execution Phase 1.
-- No sensitive or generated tracked risk is left unreported.
-- `.gitignore` safely excludes verified local sensitive and generated paths while preserving approved examples and source-controlled files.
-- No application file is modified.
-- No file is staged and no commit is created.
-- No branch is created, switched, renamed, or deleted.
-- No Git history or remote state is changed.
-- No legacy project is accessed.
-- No dependency, test, type-check, build, or runtime command is run.
-- No secret contents are printed.
+- Root `AGENTS.md` contains all required permanent repository rules and directs Codex to this file for active scope.
+- Every listed repository command is grounded in a package manifest.
+- Execution Phases 0 and 1 are `COMPLETED`, Execution Phase 2 is `ACTIVE`, and Execution Phases 3 through 21 are `PLANNED`.
+- Only the three exact deliverable paths change.
+- No application file, package manifest, decision-log entry, or phase template changes.
+- No dependency, application verification, server, legacy, staging, commit, branch, history, or remote operation occurs.
 
 ## Verification checklist
 
-- [x] Confirm the repository root and current branch.
-- [x] Confirm branch names, recent history, and remote names.
-- [x] Confirm no merge, rebase, cherry-pick, or other unsafe Git operation is in progress.
-- [x] Confirm tracked, untracked, and ignored filename-only risk classifications.
-- [x] Confirm `.gitignore` protections and approved example-file exceptions.
-- [x] Confirm Execution Phase 0 is `COMPLETED`.
-- [x] Confirm Execution Phase 1 is `ACTIVE`.
-- [x] Confirm Execution Phases 2 through 21 remain `PLANNED`.
-- [x] Confirm this file contains only Execution Phase 1.
-- [x] Confirm only authorized planning controls and any necessary `.gitignore` correction changed.
-- [x] Confirm no files are staged and no commit was created.
-- [x] Confirm no branch or remote operation occurred.
-- [x] Confirm no legacy access or application verification command occurred.
-- [x] Provide the sorted planning-file list, line counts, and SHA-256 hashes.
-- [x] Prepare exact post-approval commands without running them.
+- [x] Confirm root `AGENTS.md` exists and contains all 16 required sections.
+- [x] Confirm commands against the inspected package manifests.
+- [x] Confirm architecture, authentication, API-client, security, privacy, legacy, failure-loop, visual-QA, and Git rules.
+- [x] Confirm no machine-specific absolute path, secret, personal data, or unsupported verification claim appears.
+- [x] Confirm Execution Phase 0 remains `COMPLETED`.
+- [x] Confirm Execution Phase 1 is `COMPLETED`.
+- [x] Confirm Execution Phase 2 is `ACTIVE`.
+- [x] Confirm Execution Phases 3 through 21 remain `PLANNED`.
+- [x] Confirm this file contains only Execution Phase 2.
+- [x] Confirm only the three authorized paths changed and no file is staged.
+- [x] Review scoped diffs, the `AGENTS.md` line count, SHA-256, headings, and full content.
 
 ## Failure-loop stop rule
 
 - A root failure is one underlying cause that produces the same failing result.
-- Allow a maximum of three code-changing repair attempts for the same root failure.
-- After the third unsuccessful attempt:
-  - Stop modifying files.
-  - Do not skip or weaken tests or security controls.
-  - Report the exact command, error, attempts, and likely cause.
-  - Wait for human direction.
+- Allow at most three code-changing repair attempts for the same root failure.
+- After the third unsuccessful attempt, stop modifying files, preserve the diff, report the exact command, error, attempts, and likely cause, and wait for human direction.
+- Never weaken tests or security controls to obtain a pass.
 
 ## Human approval gate
 
-- Required approval token: `PHASE_1_GIT_BASELINE_REVIEW_APPROVED`
-- Do not stage or commit without explicit human authorization.
-- Do not create, switch, rename or delete branches during the preparation pass.
-- Do not rewrite Git history.
+- Required approval token: `PHASE_2_AGENTS_REVIEW_APPROVED`
+- Do not stage or commit during the preparation pass.
+- Stop before commit.
+- Do not install dependencies.
+- Do not run application tests, type checks, or builds.
 - Do not access legacy projects.
-- Do not install dependencies or run application verification.
-- Do not activate Phase 2 automatically.
+- Do not modify production code.
+- Do not activate Phase 3 automatically.
 
 ## Next phase
 
-- Execution Phase 2 — Codex Repository Instructions
-- Do not activate Execution Phase 2 automatically.
+- Execution Phase 3 — Baseline Verification
+- Do not activate Execution Phase 3 automatically.
 
 ## Update rules
 
 - Keep this file limited to the current execution phase.
-- Update it only after the current phase passes its human approval gate.
-- Do not stage or commit without explicit human authorization.
-- Do not create, switch, rename or delete branches during the preparation pass.
-- Do not rewrite Git history.
-- Do not access legacy projects.
-- Do not install dependencies or run application verification.
-- Do not activate Phase 2 automatically.
+- Update it only after this phase passes its human approval gate.
+- Do not stage or commit during the preparation pass.
+- Stop before commit.
+- Do not install dependencies or run application tests, type checks, or builds.
+- Do not access legacy projects or modify production code.
+- Do not activate Phase 3 automatically.
