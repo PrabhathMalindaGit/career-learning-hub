@@ -1,154 +1,142 @@
 # Current Execution Phase
 
-- Phase: 3
-- Name: Baseline Verification
+- Phase: 4
+- Name: Frontend Architecture Audit
 - Status: ACTIVE
 - Controlling skill: `karpathy-guidelines`
 
 ## Required skills
 
 - `karpathy-guidelines`
-- `define-goal`
-- `executing-plans`
-- `systematic-debugging`
-- `test-driven-development`
+- `frontend-skill`
+- `modern-web-guidance`
+- `build-web-apps:react-best-practices`
+- `brainstorming`
 - `technical-writing`
 
 ## Objective
 
-- Independently verify the historical Phase 9 repository baseline through dependency installation, type checking, unit tests, integration tests, security tests, and production builds.
-- Repair only reproduced and understood defects that are necessary for the required baseline commands to pass.
-- Create a factual baseline report without adding product features or changing the approved architecture.
+- Perform a read-only architectural audit of the existing React and Vite frontend.
+- Inventory application composition, routes, components, styles, state, API access, types, tooling, tests, placeholders, and bounded backend contracts.
+- Distinguish current implementation from partial scaffolding, placeholders, duplication, missing infrastructure, and items that require later verification.
+- Create the smallest evidence-based file plan for Execution Phase 5 without implementing it.
 
 ## Inputs to inspect
 
-- Root `AGENTS.md`.
-- This current-phase control and the complete master plan.
-- The accepted decision log.
-- Relevant architecture and historical Phase 9 documentation.
-- Root README, workspace manifests, lockfile when present, TypeScript configuration, test configuration, and environment-example variable names.
-- Safe Git branch, history, status, diff, and operation-state evidence.
+- Root `AGENTS.md`, this current-phase control, the master plan, and accepted decisions.
+- `docs/phases/phase-10-baseline-report.md`, relevant architecture documentation, README, and `.gitignore`.
+- Relevant historical authentication, hardening, and frontend-scaffold documentation.
+- Root, frontend, and shared-types manifests and TypeScript configuration.
+- Frontend entry, source files, styles, assets, test capability, and environment variable names.
+- Bounded backend authentication, current-user, error, request-ID, cookie, and CORS contracts.
+- Safe Git branch, history, status, diff, ancestry, and operation-state evidence.
 
 ## In-scope work
 
-- Transition Execution Phase 2 to `COMPLETED` and Execution Phase 3 to `ACTIVE`.
-- Record installed Node and npm versions and compare them with declared requirements.
-- Run the existing dependency installation and required baseline commands from the repository root.
-- Reproduce, classify, and diagnose failures before editing.
-- Make surgical repairs only for verified repository defects.
-- Create `docs/phases/phase-10-baseline-report.md`.
-- Review the exact write scope, Git diff, report content, and secret-safety evidence.
+- Transition Execution Phase 3 to `COMPLETED` and Execution Phase 4 to `ACTIVE`.
+- Replace this file with a control document containing only Execution Phase 4.
+- Perform static, read-only frontend and bounded backend-contract inspection.
+- Classify infrastructure, files, behavior, placeholders, duplication, and gaps.
+- Compare minimal Phase 5 implementation options after the current frontend is understood.
+- Create `docs/frontend/frontend-architecture-audit.md`.
+- Review the exact documentation-only write scope and final Git diff.
 
 ## Out-of-scope work
 
-- New product features, visual redesign, broad refactoring, dependency modernization, or architecture changes.
-- Next.js, Supabase, shadcn, another database, another authentication provider, or another design system.
-- Disabled or weakened tests, validation, authentication, authorization, ownership, privacy, or security controls.
-- Production credentials, production databases, production user data, or raw production exports.
-- Legacy-project access.
-- Development servers or browser testing unless a required repair changes visible React behavior.
-- Staging, commits, pushes, branch changes, history changes, or remote operations.
-- Automatic activation of Execution Phase 4.
+- Do not modify frontend production source.
+- Do not modify backend production source.
+- Do not modify shared-types production source.
+- Do not implement authentication, routing, an API client, an application shell, or frontend tests.
+- Do not add dependencies or modify package manifests or the lockfile.
+- Do not run dependency installation, implementation, test, build, server, browser, Playwright, or Lighthouse commands.
+- Do not redesign visible UI or create another design system.
+- Do not access legacy projects.
+- Do not stage, commit, push, change branches, rewrite history, or perform remote operations.
+- Do not activate Execution Phase 5 automatically.
 
 ## Assumptions
 
-- The approved starting branch is `phase-10-unified-frontend`.
-- The approved starting HEAD is `ae436a7`, which includes baseline commit `9206673`.
-- Repository tests are intended to use temporary local test infrastructure and not production services.
-- The first integration or security test run may require a MongoDB test binary download when no compatible binary is cached.
-- The frontend manifest has no test script; root test commands target the backend.
+- The approved branch is `phase-10-unified-frontend`.
+- The approved starting HEAD is `b9874db`.
+- The Phase 3 baseline report remains the source of truth for commands already run and their results.
+- Runtime and browser behavior cannot be claimed from this static audit.
+- Historical documents may establish intent, but current source and manifests establish current implementation evidence.
+- Existing architecture, authentication, security, privacy, ownership, and logging controls remain binding.
 
-## Required commands
+## Audit classifications
 
-Run from the repository root in this order:
+- `IMPLEMENTED`
+- `PARTIAL`
+- `PLACEHOLDER`
+- `MISSING`
+- `DUPLICATED`
+- `UNCLEAR_REQUIRES_VERIFICATION`
+- `OUT_OF_SCOPE`
 
-```bash
-node -v
-npm -v
-npm install
-npm run typecheck
-npm run test:unit
-npm run test:integration
-npm run test:security
-npm run build
-```
-
-- After a verified repair, rerun the narrowest affected command first.
-- After all repairs, rerun the complete five-command verification sequence.
-- Do not substitute `npm run test:ci` for the required individual commands.
-- Do not run `npm run test:coverage` unless a repair specifically depends on coverage behavior.
-
-## Permitted repair boundary
-
-- Change files only when a required baseline command reproduces an understood repository defect.
-- Permitted repairs include a TypeScript defect, invalid workspace reference, broken test configuration, confirmed implementation defect, regression test, existing build configuration, already-required missing dependency declaration, or documented safe test-environment configuration.
-- Every changed line must trace to a reproduced failure.
-- Preserve the existing React/Vite, Express/TypeScript, MongoDB, shared-types, authentication, ownership, security, privacy, and repository conventions.
-- Use `systematic-debugging` before repair and `test-driven-development` when an implementation or behavior defect requires a regression test.
+Additional section-specific classifications may refine these categories without replacing them.
 
 ## Exact deliverables
 
-- `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md` with only the Phase 2 and Phase 3 status transition.
-- This current-phase control containing only Execution Phase 3.
-- `docs/phases/phase-10-baseline-report.md`.
-- A reconciled `package-lock.json` only if created or changed by the existing dependency installation.
-- Source, test, manifest, or configuration repairs only when justified by a reproduced baseline failure.
+- `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md` with only the Phase 3 and Phase 4 status transition.
+- This current-phase control containing only Execution Phase 4.
+- `docs/frontend/frontend-architecture-audit.md`.
 
 ## Success criteria
 
-- Installed Node and npm versions are classified against repository requirements.
-- `npm install` completes or is accurately classified as blocked without application-code workarounds.
-- Each required baseline command has an exact initial result and final result.
-- All reproduced failures have one primary classification and evidence-based diagnosis.
-- Any repair stays within the permitted boundary and the three-attempt rule.
-- Final verification status is recorded as `PASS`, `PASS_WITH_REPAIRS`, `BLOCKED`, or `FAIL_REQUIRES_HUMAN_REVIEW`.
-- Only authorized files change, no file is staged, and no commit or remote operation occurs.
-- No legacy folder, production credential, production database, or production data is accessed.
+- Branch, HEAD, ancestry, clean-tree, clean-index, and inactive Git-operation checks match the approved starting state.
+- Every significant frontend file is inspected before its behavior is classified.
+- Package and tooling capabilities are classified as present and used, present but unused, absent, or unclear.
+- Routes, authentication, API access, state, contracts, components, styles, forms, async states, accessibility, tests, placeholders, and duplication are documented with repository-path evidence.
+- Bounded backend authentication and common error/request-ID contracts are verified from implementation.
+- Facts are separated from inference and runtime claims are withheld.
+- The Phase 5 architecture and exact file plan are the smallest approach compatible with current evidence.
+- Only the three authorized documentation paths change.
+- No package, source, dependency, test, build, server, browser, legacy, staging, commit, or remote action occurs.
 
 ## Verification checklist
 
-- [x] Confirm Execution Phases 0 and 1 remain `COMPLETED`.
-- [x] Confirm Execution Phase 2 is `COMPLETED`.
-- [x] Confirm Execution Phase 3 is `ACTIVE`.
-- [x] Confirm Execution Phases 4 through 21 remain `PLANNED`.
-- [x] Confirm this file contains only Execution Phase 3.
-- [x] Record exact Node and npm versions and compatibility classification.
-- [x] Record the exact result of `npm install` and explain any lockfile change.
-- [x] Record initial and final results for all five required baseline commands.
-- [x] Record failure classifications, diagnosis evidence, repairs, and attempt ledger.
-- [x] Confirm no visible React behavior changed or complete the visual-QA escalation.
-- [x] Review every changed path, scoped diffs, secrets, generated output, and unrelated edits.
-- [x] Record the baseline report line count, SHA-256 hash, headings, and complete-content review.
+- [x] Confirm Execution Phases 0 through 3 are `COMPLETED`.
+- [x] Confirm Execution Phase 4 is `ACTIVE`.
+- [x] Confirm Execution Phases 5 through 21 remain `PLANNED`.
+- [x] Confirm this file contains only Execution Phase 4.
+- [x] Confirm the audit report contains all 26 required sections.
+- [x] Confirm every important finding cites a repository-relative path.
+- [x] Confirm no frontend, backend, shared-types, manifest, or lockfile diff exists.
+- [x] Confirm no dependency installation, test, build, server, or browser command ran.
+- [x] Confirm no legacy folder was accessed.
 - [x] Confirm no file is staged and no commit, branch, history, push, or remote operation occurred.
+- [x] Record the audit report line count, SHA-256 hash, headings, table count, classification counts, and full-content review.
+- [x] Check all changed documentation for secrets, personal data, absolute machine paths, unsupported claims, invented endpoints, and unrelated phase content.
 
 ## Failure-loop stop rule
 
 - A root failure is one underlying cause producing the same failing result.
 - Allow no more than three code-changing repair attempts for the same root failure.
-- Each attempt records the hypothesis, files changed, command rerun, and result.
-- After the third unsuccessful attempt, stop modifying files, preserve the diff, report the exact command and error, summarize all three attempts, state the likely unresolved cause, and wait for human direction.
-- Never weaken tests or security controls to obtain a pass.
+- This phase does not authorize production-code repair attempts.
+- After a third unsuccessful documentation repair attempt, stop modifying files, preserve the diff, report the exact check and error, summarize the attempts, state the likely unresolved cause, and wait for human direction.
+- Never weaken tests, security, privacy, authentication, authorization, ownership, or validation controls.
 
 ## Human approval gate
 
-- Required approval token: `PHASE_3_BASELINE_REVIEW_APPROVED`
-- Do not stage or commit during this preparation and verification pass.
-- Do not access legacy projects.
-- Do not introduce new features or architecture.
-- Human visual QA is required only if a baseline repair changes visible React behavior.
-- Stop before commit.
+- Required approval token: `PHASE_4_FRONTEND_AUDIT_REVIEW_APPROVED`
+- Human review of the planning transition, audit evidence, Phase 5 plan, and complete diff is required before any commit or Phase 5 activation.
+- No visual QA is required because this phase is documentation-only.
+- Do not stage or commit during this phase.
 
 ## Next phase
 
-- Execution Phase 4 — Frontend Architecture Audit
-- Do not activate Phase 4 automatically.
+- Execution Phase 5 — Authentication, Routing and Shared API Infrastructure
+- Do not activate Phase 5 automatically.
 
 ## Update rules
 
-- Keep this file limited to Execution Phase 3 until the required human approval is received.
-- Record factual command evidence and do not claim unrun checks passed.
-- Do not stage or commit during this preparation and verification pass.
+- Keep this file limited to Execution Phase 4 until the required human approval is received.
+- Record verified facts and label inference or runtime uncertainty explicitly.
+- Do not modify frontend production source.
+- Do not modify backend production source.
+- Do not add dependencies.
+- Do not run implementation commands.
 - Do not access legacy projects.
-- Do not introduce new features or architecture.
-- Stop before commit.
-- Do not activate Phase 4 automatically.
+- Do not stage or commit.
+- Do not activate Phase 5 automatically.
+- Stop and wait for `PHASE_4_FRONTEND_AUDIT_REVIEW_APPROVED`.
