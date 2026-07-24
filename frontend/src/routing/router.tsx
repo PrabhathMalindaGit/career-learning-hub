@@ -13,6 +13,8 @@ import { RegisterPage } from "../features/auth/RegisterPage";
 import { SettingsPage } from "../features/auth/SettingsPage";
 import { useAuth } from "../features/auth/AuthProvider";
 import { MainDashboard } from "../features/dashboard/MainDashboard";
+import { ResumeListPage } from "../features/resumes/ResumeListPage";
+import { ResumeWorkspace } from "../features/resumes/ResumeWorkspace";
 import { DeferredFeaturePage } from "./DeferredFeaturePage";
 import { RouteErrorPage } from "./RouteErrorPage";
 
@@ -65,25 +67,11 @@ export const appRoutes: RouteObject[] = [
           },
           {
             path: "/resumes",
-            element: (
-              <DeferredFeaturePage
-                eyebrow="Career documents"
-                title="Resumes"
-                description="Your resume collection will appear here when Resume Studio is connected."
-                emptyMessage="No resume records are shown until this area is connected."
-              />
-            ),
+            element: <ResumeListPage />,
           },
           {
             path: "/resumes/:resumeId",
-            element: (
-              <DeferredFeaturePage
-                eyebrow="Career documents"
-                title="Resume workspace"
-                description="The selected resume workspace will appear here when record loading is active."
-                emptyMessage="No resume content or sample record is being shown."
-              />
-            ),
+            element: <ResumeWorkspace />,
           },
           {
             path: "/interviews",

@@ -44,8 +44,12 @@ resumeVersionSchema.index(
   { userId: 1, sourceAssetId: 1 },
   {
     unique: true,
-    sparse: true,
     name: "resume_source_asset_unique",
+    partialFilterExpression: {
+      sourceAssetId: {
+        $type: "objectId",
+      },
+    },
   },
 );
 

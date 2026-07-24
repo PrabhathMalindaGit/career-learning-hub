@@ -39,6 +39,60 @@ vi.mock("../features/dashboard/dashboardApi", () => ({
   ),
 }));
 
+vi.mock("../features/resumes/resumeApi", () => ({
+  applyResumeSuggestions: vi.fn(),
+  createResume: vi.fn(),
+  fetchJob: vi.fn(),
+  fetchResume: vi.fn().mockResolvedValue({
+    resume: {
+      id: "507f1f77bcf86cd799439011",
+      title: "Connected resume workspace",
+      status: "draft",
+      currentVersionId: "507f1f77bcf86cd799439012",
+      latestVersionNumber: 1,
+      design: {
+        templateId: "ats-classic",
+        colorPaletteId: "slate",
+        pageSize: "A4",
+        showProfilePhoto: false,
+      },
+      createdAt: "2026-07-24T00:00:00.000Z",
+      updatedAt: "2026-07-24T00:00:00.000Z",
+    },
+    version: {
+      id: "507f1f77bcf86cd799439012",
+      resumeId: "507f1f77bcf86cd799439011",
+      versionNumber: 1,
+      source: "manual",
+      content: {
+        basics: { fullName: "Router Candidate", links: [] },
+        experience: [],
+        education: [],
+        skills: [],
+        projects: [],
+        certifications: [],
+        languages: [],
+        interests: [],
+      },
+      createdAt: "2026-07-24T00:00:00.000Z",
+      updatedAt: "2026-07-24T00:00:00.000Z",
+    },
+  }),
+  fetchResumeAnalysis: vi.fn(),
+  fetchResumeVersion: vi.fn(),
+  importResumePdf: vi.fn(),
+  listResumes: vi.fn().mockResolvedValue({
+    resumes: [],
+    pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+  }),
+  listResumeVersions: vi.fn().mockResolvedValue({
+    versions: [],
+    pagination: { page: 1, limit: 100, total: 0, pages: 0 },
+  }),
+  queueResumeAnalysis: vi.fn(),
+  saveResumeVersion: vi.fn(),
+}));
+
 const publicUser: PublicUser = {
   id: "router-user-test",
   email: "router@example.test",
@@ -161,8 +215,8 @@ describe("application routing", () => {
 
   it.each([
     ["/dashboard", "Unified dashboard"],
-    ["/resumes", "Resumes"],
-    ["/resumes/resume-test-id", "Resume workspace"],
+    ["/resumes", "Resume Studio"],
+    ["/resumes/resume-test-id", "Connected resume workspace"],
     ["/interviews", "Interviews"],
     [
       "/interviews/session-test-id",
@@ -201,6 +255,23 @@ describe("application routing", () => {
     expect(
       screen.queryByText(
         "Your unified progress view will appear here when its data connection is active.",
+      ),
+    ).toBeNull();
+  });
+
+  it("renders connected Resume Studio routes instead of deferred messages", async () => {
+    vi.mocked(authApi.refreshSession).mockResolvedValue(
+      authenticatedSession,
+    );
+
+    renderRoute("/resumes");
+
+    expect(
+      await screen.findByRole("heading", { name: "Resume Studio" }),
+    ).not.toBeNull();
+    expect(
+      screen.queryByText(
+        "Your resume collection will appear here when Resume Studio is connected.",
       ),
     ).toBeNull();
   });

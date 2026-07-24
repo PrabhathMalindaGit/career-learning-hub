@@ -442,7 +442,7 @@
 
 #### Status
 
-- Status: ACTIVE
+- Status: COMPLETED
 
 #### Purpose
 
@@ -494,7 +494,7 @@
 
 #### Status
 
-- Status: PLANNED
+- Status: ACTIVE
 
 #### Purpose
 

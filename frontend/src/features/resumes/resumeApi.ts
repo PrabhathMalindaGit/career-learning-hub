@@ -1,113 +1,242 @@
-import { apiRequest } from "../../api/apiClient";
+import { ApiError, apiRequest } from "../../api/apiClient";
+import {
+  parseAcceptedJob,
+  parseAnalysis,
+  parseApplyResult,
+  parseJob,
+  parseResumeList,
+  parseResumeWorkspace,
+  parseVersionEnvelope,
+  parseVersionList,
+} from "./resumeContracts";
+import type {
+  ResumeContentInput,
+  ResumeJob,
+} from "./types";
 
-export function fetchResume(
-  resumeId: string,
-  accessToken: string,
-) {
-  return apiRequest<unknown>(`/resumes/${resumeId}`, {
-    authentication: "required",
-    accessToken,
-  });
+function boundedInteger(
+  value: number | undefined,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  if (value === undefined || !Number.isFinite(value)) return fallback;
+  return Math.min(maximum, Math.max(minimum, Math.trunc(value)));
 }
 
-export function saveResumeVersion(
-  resumeId: string,
-  accessToken: string,
-  payload: unknown,
-) {
-  return apiRequest<unknown>(`/resumes/${resumeId}/versions`, {
-    method: "POST",
-    body: payload,
-    authentication: "required",
-    accessToken,
+function pageQuery(input: { page?: number; limit?: number }): string {
+  const query = new URLSearchParams({
+    page: String(boundedInteger(input.page, 1, 1, Number.MAX_SAFE_INTEGER)),
+    limit: String(boundedInteger(input.limit, 20, 1, 100)),
   });
+  return query.toString();
 }
 
-export function importResumePdf(
+function assertResumeIdentity(
+  expectedResumeId: string,
+  actualResumeId: string,
+): void {
+  if (actualResumeId !== expectedResumeId) {
+    throw new ApiError(
+      502,
+      "INVALID_RESUME_RESPONSE",
+      "The server returned an invalid resume response.",
+    );
+  }
+}
+
+export async function listResumes(
+  input: { page?: number; limit?: number } = {},
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/resumes?${pageQuery(input)}`,
+    { authentication: "required", signal },
+  );
+  return parseResumeList(data);
+}
+
+export async function createResume(
   title: string,
-  file: File,
-  accessToken: string,
+  signal?: AbortSignal,
 ) {
-  const form = new FormData();
-  form.set("title", title);
-  form.set("file", file);
-
-  return apiRequest<unknown>("/resume-analyses/import-pdf", {
+  const data = await apiRequest<unknown>("/resumes", {
     method: "POST",
-    body: form,
+    body: { title },
     authentication: "required",
-    accessToken,
+    signal,
   });
+  return parseResumeWorkspace(data);
 }
 
-export function queueResumeAnalysis(
+export async function fetchResume(
   resumeId: string,
-  accessToken: string,
-  payload: unknown,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
-    `/resume-analyses/resumes/${resumeId}/analyze`,
+  const data = await apiRequest<unknown>(`/resumes/${resumeId}`, {
+    authentication: "required",
+    signal,
+  });
+  const workspace = parseResumeWorkspace(data);
+  assertResumeIdentity(resumeId, workspace.resume.id);
+  return workspace;
+}
+
+export async function saveResumeVersion(
+  resumeId: string,
+  payload: {
+    content: ResumeContentInput;
+    expectedCurrentVersionId: string;
+    changeSummary?: string;
+  },
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/resumes/${resumeId}/versions`,
     {
       method: "POST",
       body: payload,
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  const workspace = parseResumeWorkspace(data);
+  assertResumeIdentity(resumeId, workspace.resume.id);
+  return workspace;
 }
 
-export function fetchResumeAnalyses(
+export async function listResumeVersions(
   resumeId: string,
-  accessToken: string,
+  input: { page?: number; limit?: number } = {},
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
-    `/resume-analyses/resumes/${resumeId}`,
-    {
-      authentication: "required",
-      accessToken,
-    },
+  const data = await apiRequest<unknown>(
+    `/resumes/${resumeId}/versions?${pageQuery(input)}`,
+    { authentication: "required", signal },
   );
+  return parseVersionList(data);
 }
 
-export function fetchResumeAnalysis(
+export async function fetchResumeVersion(
+  resumeId: string,
+  versionId: string,
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/resumes/${resumeId}/versions/${versionId}`,
+    { authentication: "required", signal },
+  );
+  const version = parseVersionEnvelope(data);
+  assertResumeIdentity(resumeId, version.resumeId);
+  if (version.id !== versionId) {
+    throw new ApiError(
+      502,
+      "INVALID_RESUME_RESPONSE",
+      "The server returned an invalid resume response.",
+    );
+  }
+  return version;
+}
+
+export async function importResumePdf(
+  title: string,
+  file: File,
+  signal?: AbortSignal,
+) {
+  const form = new FormData();
+  form.set("title", title);
+  form.set("file", file);
+  const data = await apiRequest<unknown>(
+    "/resume-analyses/import-pdf",
+    {
+      method: "POST",
+      body: form,
+      authentication: "required",
+      signal,
+    },
+  );
+  return parseAcceptedJob(data, "resume.import-pdf");
+}
+
+export async function queueResumeAnalysis(
+  resumeId: string,
+  payload: {
+    versionId: string;
+    targetRole: string;
+    company?: string;
+    jobDescription?: string;
+  },
+  signal?: AbortSignal,
+) {
+  const body = {
+    versionId: payload.versionId,
+    targetRole: payload.targetRole,
+    ...(payload.company?.trim()
+      ? { company: payload.company.trim() }
+      : {}),
+    ...(payload.jobDescription?.trim()
+      ? { jobDescription: payload.jobDescription.trim() }
+      : {}),
+  };
+  const data = await apiRequest<unknown>(
+    `/resume-analyses/resumes/${resumeId}/analyze`,
+    {
+      method: "POST",
+      body,
+      authentication: "required",
+      signal,
+    },
+  );
+  return parseAcceptedJob(data, "resume.analyze");
+}
+
+export async function fetchResumeAnalysis(
   analysisId: string,
-  accessToken: string,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
+  const data = await apiRequest<unknown>(
     `/resume-analyses/${analysisId}`,
-    {
-      authentication: "required",
-      accessToken,
-    },
+    { authentication: "required", signal },
   );
+  return parseAnalysis(data);
 }
 
-export function applyResumeSuggestions(
+export async function applyResumeSuggestions(
   resumeId: string,
-  accessToken: string,
   payload: {
     analysisId: string;
     suggestionIds: string[];
     changeSummary?: string;
   },
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
+  const data = await apiRequest<unknown>(
     `/resume-analyses/resumes/${resumeId}/rewrites/apply`,
     {
       method: "POST",
-      body: payload,
+      body: {
+        analysisId: payload.analysisId,
+        suggestionIds: [...new Set(payload.suggestionIds)],
+        ...(payload.changeSummary === undefined
+          ? {}
+          : { changeSummary: payload.changeSummary }),
+      },
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  const result = parseApplyResult(data);
+  assertResumeIdentity(resumeId, result.resume.id);
+  return result;
 }
 
-export function fetchJob(
+export async function fetchJob(
   jobId: string,
-  accessToken: string,
-) {
-  return apiRequest<unknown>(`/jobs/${jobId}`, {
+  signal?: AbortSignal,
+): Promise<ResumeJob> {
+  const data = await apiRequest<unknown>(`/jobs/${jobId}`, {
     authentication: "required",
-    accessToken,
+    signal,
   });
+  return parseJob(data);
 }

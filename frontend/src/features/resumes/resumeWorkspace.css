@@ -1,60 +1,94 @@
+.resume-list-page,
 .resume-workspace {
-  margin-top: 32px;
+  display: grid;
+  gap: 20px;
+  min-width: 0;
 }
 
+.resume-page-heading,
 .resume-workspace-heading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 20px;
+  gap: 28px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
-.resume-workspace-heading h2 {
+.resume-page-heading h1,
+.resume-workspace-heading h1 {
   margin: 0;
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  color: #1d2b22;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
+.resume-page-heading p:not(.eyebrow),
 .resume-workspace-heading p:not(.eyebrow) {
-  max-width: 720px;
+  max-width: 760px;
+  margin: 14px 0 0;
   color: #5e6c64;
+  line-height: 1.65;
 }
 
-.resume-workspace-grid {
+.resume-list-layout {
   display: grid;
-  grid-template-columns:
-    minmax(280px, 0.9fr)
-    minmax(360px, 1.2fr)
-    minmax(280px, 0.9fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(290px, 0.75fr);
   gap: 18px;
   align-items: start;
 }
 
-.resume-panel {
+.resume-collection,
+.resume-action-form,
+.resume-panel,
+.resume-version-history,
+.resume-snapshot {
   min-width: 0;
   padding: 22px;
-  border: 1px solid #d8e2dc;
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 12px 34px rgba(20, 45, 31, 0.06);
 }
 
-.resume-panel-header {
+.resume-entry-actions {
+  display: grid;
+  gap: 18px;
+}
+
+.resume-action-form {
+  display: grid;
+  gap: 16px;
+}
+
+.resume-action-form h2,
+.resume-section-heading h2,
+.resume-panel-header h2,
+.resume-version-history h2,
+.resume-snapshot h2 {
+  margin: 0;
+  color: #1d2b22;
+  font-size: 1.2rem;
+}
+
+.resume-section-heading,
+.resume-panel-header,
+.resume-version-history > header,
+.resume-snapshot > header,
+.resume-editor-section-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
-}
-
-.resume-panel-header h2 {
-  margin: 0;
-  font-size: 1.2rem;
 }
 
 .resume-kicker {
   margin: 0 0 5px;
-  color: #287a4a;
+  color: var(--accent);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -62,31 +96,126 @@
 }
 
 .resume-status,
-.resume-score {
+.resume-score,
+.resume-dirty-state,
+.resume-saved-state {
   display: inline-flex;
-  min-width: 42px;
   min-height: 34px;
   align-items: center;
   justify-content: center;
-  padding: 7px 10px;
+  padding: 7px 11px;
   border-radius: 999px;
-  background: #ecf2ee;
   color: #296544;
+  background: #ecf2ee;
   font-size: 0.78rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .resume-score {
-  font-size: 1rem;
+  min-width: 44px;
+  font-size: 1.05rem;
 }
 
-.resume-form-grid {
+.resume-dirty-state {
+  color: #795b15;
+  background: #fff5d7;
+}
+
+.resume-record-list,
+.resume-version-history ol {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 0;
+  list-style: none;
 }
 
-.resume-form-grid label {
+.resume-record-list li,
+.resume-version-history li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 15px 16px;
+  border: 1px solid #dce5df;
+  border-radius: 13px;
+  background: #fbfdfc;
+}
+
+.resume-record-list li > div,
+.resume-version-history li > div,
+.resume-job-state {
+  display: grid;
+  gap: 4px;
+}
+
+.resume-record-list span,
+.resume-record-list small,
+.resume-version-history span {
+  color: var(--text-muted);
+}
+
+.resume-record-list a,
+.resume-record-list button,
+.resume-version-history button,
+.resume-pagination button,
+.resume-editor-section button,
+.resume-dialog button,
+.resume-button-row button,
+.resume-notice button,
+.resume-route-state button,
+.resume-snapshot > header button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #bfd0c5;
+  border-radius: 9px;
+  color: #245e3c;
+  background: #f6faf7;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.resume-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.resume-state,
+.resume-empty-state,
+.resume-editor-empty,
+.resume-route-state {
+  margin: 18px 0 0;
+  padding: 18px;
+  border: 1px dashed #b9c9bf;
+  border-radius: 14px;
+  color: #617168;
+  background: #f8fbf9;
+  line-height: 1.55;
+}
+
+.resume-route-state {
+  display: grid;
+  gap: 12px;
+}
+
+.resume-route-state h1,
+.resume-route-state p {
+  margin: 0;
+}
+
+.resume-state--error,
+.resume-field-error,
+.resume-validation-summary {
+  color: var(--error);
+}
+
+.resume-action-form label,
+.resume-form-grid label,
+.resume-bullet-row label {
   display: grid;
   gap: 7px;
   color: #3c4a42;
@@ -94,76 +223,289 @@
   font-weight: 700;
 }
 
+.resume-action-form input,
 .resume-form-grid input,
-.resume-form-grid textarea {
+.resume-form-grid textarea,
+.resume-bullet-row textarea {
   width: 100%;
-  border: 1px solid #ccd8d0;
+  min-width: 0;
+  border: 1px solid #c8d5cd;
   border-radius: 10px;
   padding: 11px 12px;
   color: #18211b;
   background: #fbfdfc;
 }
 
+.resume-action-form input[type="file"] {
+  padding: 8px;
+}
+
+.resume-action-form input:focus,
+.resume-form-grid input:focus,
+.resume-form-grid textarea:focus,
+.resume-bullet-row textarea:focus {
+  border-color: var(--accent);
+  background: #fff;
+}
+
+.resume-file-name,
+.resume-privacy-note,
+.resume-muted-copy,
+.resume-inline-guidance,
+.resume-job-status {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.resume-privacy-note,
+.resume-inline-guidance {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f2f7f4;
+}
+
+.resume-job-state {
+  padding: 13px;
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  color: #415048;
+  background: #f4f8f5;
+}
+
+.resume-primary-button,
+.resume-secondary-button,
+.resume-danger-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 800;
+}
+
+.resume-primary-button {
+  border: 1px solid var(--accent-dark);
+  color: #fff;
+  background: var(--accent-dark);
+}
+
+.resume-secondary-button {
+  border: 1px solid #b9cec1;
+  color: #245e3c;
+  background: #eef6f1;
+}
+
+.resume-danger-button {
+  border: 1px solid #a33b3b !important;
+  color: #fff !important;
+  background: #a33b3b !important;
+}
+
+.resume-primary-button:disabled,
+.resume-secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.resume-workspace-actions,
+.resume-button-row,
+.resume-entry-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.resume-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.96fr) minmax(430px, 1.04fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.resume-analysis-runner,
+.resume-ai-panel {
+  grid-column: span 1;
+}
+
+.resume-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .resume-field-wide {
   grid-column: 1 / -1;
 }
 
-.resume-placeholder-section,
-.resume-empty-state {
-  margin-top: 18px;
-  padding: 16px;
-  border: 1px dashed #b9c9bf;
-  border-radius: 14px;
-  color: #617168;
-  background: #f8fbf9;
+.resume-checkbox-field {
+  display: flex !important;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 9px !important;
 }
 
-.resume-placeholder-section h3 {
-  margin: 0 0 6px;
-  color: #26342c;
-  font-size: 0.98rem;
+.resume-checkbox-field input {
+  width: auto;
+}
+
+.resume-editor {
+  display: grid;
+  gap: 20px;
+}
+
+.resume-editor-section {
+  min-width: 0;
+  padding-top: 20px;
+  border-top: 1px solid #e0e7e2;
+}
+
+.resume-editor-section > h3,
+.resume-editor-section-heading h3,
+.resume-analysis-section h3 {
+  margin: 0;
+  color: #27372e;
+  font-size: 1rem;
+}
+
+.resume-editor-section-heading {
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.resume-editor-section-heading p {
+  max-width: 440px;
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.resume-entry-card,
+.resume-bullet-row {
+  display: grid;
+  gap: 13px;
+  margin-top: 12px;
+  padding: 15px;
+  border: 1px solid #dce5df;
+  border-radius: 13px;
+  background: #fafcfb;
+}
+
+.resume-entry-card h4 {
+  margin: 0;
+}
+
+.resume-bullet-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 13px;
+}
+
+.resume-bullet-row {
+  margin-top: 0;
+  padding: 12px;
+}
+
+.resume-preview-panel {
+  position: sticky;
+  top: 92px;
 }
 
 .resume-paper {
+  width: 100%;
+  min-width: 0;
   min-height: 620px;
-  padding: 42px;
-  border: 1px solid #d7ddd9;
+  aspect-ratio: 210 / 297;
+  padding: clamp(24px, 5vw, 48px);
+  overflow: hidden;
+  border: 1px solid #ced7d1;
+  color: #1f2823;
   background: #fff;
-  box-shadow: 0 16px 40px rgba(20, 35, 27, 0.09);
+  box-shadow: 0 16px 40px rgba(20, 35, 27, 0.1);
+  overflow-wrap: anywhere;
 }
 
 .resume-paper-header {
-  padding-bottom: 18px;
+  padding-bottom: 16px;
   border-bottom: 2px solid #27342d;
 }
 
 .resume-paper-header h3 {
   margin: 0;
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.resume-paper-header p {
+  margin: 5px 0;
+  color: #334239;
+  font-weight: 700;
 }
 
 .resume-paper h4 {
-  margin: 24px 0 8px;
-  font-size: 0.78rem;
+  margin: 22px 0 8px;
+  font-size: 0.76rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .resume-paper p,
 .resume-paper li,
-.resume-paper small {
-  color: #536159;
-  line-height: 1.55;
+.resume-paper small,
+.resume-paper span,
+.resume-paper dd {
+  color: #526057;
+  font-size: clamp(0.72rem, 1.2vw, 0.88rem);
+  line-height: 1.52;
+}
+
+.resume-paper ul {
+  margin: 7px 0 0;
+  padding-left: 20px;
+}
+
+.resume-paper-links,
+.resume-paper-compact-list {
+  padding-left: 0 !important;
+  list-style: none;
 }
 
 .resume-preview-entry {
   display: grid;
   gap: 3px;
-  margin-top: 14px;
+  margin-top: 13px;
 }
 
-.resume-muted {
-  font-style: italic;
+.resume-preview-entry-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.resume-paper-definition-list {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+.resume-paper-definition-list div {
+  display: grid;
+  grid-template-columns: minmax(80px, 0.3fr) 1fr;
+  gap: 8px;
+}
+
+.resume-paper-definition-list dt {
+  font-weight: 800;
+}
+
+.resume-paper-definition-list dd {
+  margin: 0;
 }
 
 .resume-disclaimer {
@@ -175,10 +517,83 @@
   line-height: 1.5;
 }
 
+.resume-score-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 16px 0;
+}
+
+.resume-score-grid div {
+  padding: 11px;
+  border: 1px solid #dce5df;
+  border-radius: 10px;
+  background: #fafcfb;
+}
+
+.resume-score-grid dt {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.resume-score-grid dd {
+  margin: 4px 0 0;
+  color: #22342a;
+  font-weight: 800;
+}
+
+.resume-analysis-section {
+  margin-top: 20px;
+}
+
+.resume-analysis-section ul {
+  display: grid;
+  gap: 9px;
+  padding-left: 20px;
+}
+
+.resume-analysis-section li {
+  line-height: 1.5;
+}
+
+.resume-analysis-section li > strong,
+.resume-analysis-section li > span {
+  display: block;
+}
+
+.resume-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.resume-chip-list span,
+.resume-severity {
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #315d44;
+  background: #eaf4ed;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.resume-severity-high {
+  color: #8d2f2f;
+  background: #fff0ef;
+}
+
+.resume-severity-medium {
+  color: #795b15;
+  background: #fff5d7;
+}
+
 .resume-suggestion-list {
   display: grid;
   gap: 10px;
-  margin: 16px 0;
+  margin: 12px 0 16px;
 }
 
 .resume-suggestion {
@@ -190,9 +605,10 @@
   border-radius: 12px;
 }
 
-.resume-suggestion span {
+.resume-suggestion > span {
   display: grid;
   gap: 7px;
+  min-width: 0;
 }
 
 .resume-suggestion strong {
@@ -207,53 +623,179 @@
 }
 
 .resume-suggestion em {
-  color: #8a6519;
+  color: #80601b;
   font-size: 0.74rem;
 }
 
-.resume-primary-button {
-  padding: 11px 16px;
-  border: 0;
-  border-radius: 10px;
-  color: #fff;
-  background: #21683f;
-  font-weight: 800;
-  cursor: pointer;
+.resume-notice,
+.resume-validation-summary {
+  display: grid;
+  gap: 5px;
+  padding: 14px 16px;
+  border: 1px solid #cbdad1;
+  border-radius: 12px;
+  color: #315d44;
+  background: #f0f7f2;
 }
 
-.resume-primary-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
+.resume-notice-error {
+  border-color: #efc8c4;
+  color: var(--error);
+  background: var(--error-surface);
 }
 
-@media (max-width: 1100px) {
+.resume-notice-warning {
+  border-color: #ead7a5;
+  color: #725617;
+  background: #fff8e2;
+}
+
+.resume-notice-info {
+  color: #315e70;
+  background: #eff8fb;
+}
+
+.resume-validation-summary h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.resume-validation-summary ul {
+  margin: 5px 0 0;
+}
+
+.resume-version-history,
+.resume-snapshot {
+  display: grid;
+  gap: 16px;
+}
+
+.resume-snapshot > .resume-preview-panel {
+  position: static;
+  max-width: 800px;
+}
+
+.resume-dialog-backdrop {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(18, 28, 22, 0.58);
+}
+
+.resume-dialog {
+  width: min(100%, 480px);
+  padding: 24px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(12, 24, 16, 0.28);
+}
+
+.resume-dialog h2 {
+  margin: 0;
+}
+
+.resume-dialog p {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.resume-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 1080px) {
+  .resume-list-layout,
   .resume-workspace-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
-  .resume-ai-panel {
-    grid-column: 1 / -1;
+  .resume-preview-panel {
+    position: static;
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 720px) {
+  .resume-page-heading,
   .resume-workspace-heading {
     align-items: stretch;
     flex-direction: column;
+    padding: 22px;
   }
 
-  .resume-workspace-grid,
+  .resume-workspace-actions {
+    justify-content: flex-start;
+  }
+
   .resume-form-grid {
     grid-template-columns: 1fr;
   }
 
-  .resume-ai-panel,
   .resume-field-wide {
     grid-column: auto;
   }
 
+  .resume-record-list li,
+  .resume-version-history li,
+  .resume-snapshot > header,
+  .resume-editor-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .resume-entry-controls {
+    justify-content: flex-start;
+  }
+
   .resume-paper {
-    min-height: 520px;
-    padding: 26px;
+    min-height: 500px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 420px) {
+  .resume-page-heading,
+  .resume-workspace-heading,
+  .resume-collection,
+  .resume-action-form,
+  .resume-panel,
+  .resume-version-history,
+  .resume-snapshot {
+    padding: 17px;
+    border-radius: 15px;
+  }
+
+  .resume-workspace-actions,
+  .resume-button-row,
+  .resume-dialog-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .resume-workspace-actions > *,
+  .resume-button-row > *,
+  .resume-dialog-actions > * {
+    width: 100%;
+  }
+
+  .resume-paper {
+    min-height: 430px;
+    padding: 19px;
+  }
+
+  .resume-preview-entry-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resume-dialog-backdrop {
+    scroll-behavior: auto;
   }
 }
