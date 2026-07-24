@@ -1,26 +1,32 @@
-import type { DashboardOverview } from "./types";
+import type { DashboardProgress } from "./types";
 
 interface ProgressWidgetsProps {
-  data: DashboardOverview;
+  data: DashboardProgress;
 }
 
 function scoreLabel(value: number | null): string {
-  return value === null ? "No data" : `${Math.round(value)}%`;
+  return value === null ? "Unavailable" : `${Math.round(value)}%`;
 }
 
-function MetricCard({
+function countLabel(
+  count: number,
+  singular: string,
+  plural = `${singular}s`,
+): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function Metric({
   label,
   value,
   detail,
-  tone,
 }: {
   label: string;
   value: string;
   detail: string;
-  tone: "green" | "purple" | "blue" | "amber";
 }) {
   return (
-    <article className={`dashboard-metric dashboard-tone-${tone}`}>
+    <article className="dashboard-metric">
       <p>{label}</p>
       <strong>{value}</strong>
       <small>{detail}</small>
@@ -36,44 +42,48 @@ export function ProgressWidgets({
       className="dashboard-metric-grid"
       aria-label="Recorded progress metrics"
     >
-      <MetricCard
+      <Metric
         label="Resume readiness"
         value={
           data.resumeReadiness.latest
-            ? `${data.resumeReadiness.latest.score}%`
-            : "No analysis"
+            ? `${Math.round(
+                data.resumeReadiness.latest.score,
+              )}%`
+            : "Unavailable"
         }
-        detail={
-          data.resumeReadiness.latest
-            ? `${data.resumeReadiness.latest.targetRole} · ${data.resumeReadiness.analysesInWindow} analyses in window`
-            : "Run a resume analysis to establish a score."
-        }
-        tone="green"
+        detail={`${countLabel(
+          data.resumeReadiness.analysesInWindow,
+          "analysis",
+          "analyses",
+        )} across ${countLabel(
+          data.resumeReadiness.analyzedResumesInWindow,
+          "resume",
+        )}`}
       />
-
-      <MetricCard
+      <Metric
         label="Interview feedback"
         value={scoreLabel(
           data.interviews.averageFeedbackScore,
         )}
-        detail={`${data.interviews.feedbackCompletedInWindow} scored attempts · ${data.interviews.attemptsInWindow} total attempts`}
-        tone="purple"
+        detail={`${data.interviews.feedbackCompletedInWindow} scored of ${countLabel(
+          data.interviews.attemptsInWindow,
+          "attempt",
+        )}`}
       />
-
-      <MetricCard
+      <Metric
         label="Quiz performance"
         value={scoreLabel(
           data.learning.quizPerformance.averageScore,
         )}
-        detail={`${data.learning.quizPerformance.totalCorrectAnswers}/${data.learning.quizPerformance.totalQuestionsAnswered} recorded answers correct`}
-        tone="blue"
+        detail={`${data.learning.quizPerformance.totalCorrectAnswers} of ${countLabel(
+          data.learning.quizPerformance.totalQuestionsAnswered,
+          "answer",
+        )} correct`}
       />
-
-      <MetricCard
+      <Metric
         label="AI usage"
-        value={String(data.aiUsage.requestCount)}
-        detail={`${data.aiUsage.successCount} successful · ${data.aiUsage.failureCount} failed requests`}
-        tone="amber"
+        value={countLabel(data.aiUsage.requestCount, "request")}
+        detail={`${data.aiUsage.successCount} successful · ${data.aiUsage.failureCount} failed`}
       />
     </section>
   );

@@ -1,14 +1,33 @@
+export const dashboardWindowDays = [7, 30, 90, 365] as const;
+
+export type DashboardWindowDays =
+  (typeof dashboardWindowDays)[number];
+
+export const learningDocumentStatuses = [
+  "uploaded",
+  "processing",
+  "ready",
+  "failed",
+  "deleting",
+] as const;
+
+export type LearningDocumentStatus =
+  (typeof learningDocumentStatuses)[number];
+
+export type DashboardActivityOrigin =
+  | "api"
+  | "worker"
+  | "system";
+
 export interface DashboardActivityItem {
   id: string;
   type: string;
   resourceType?: string;
-  resourceId?: string;
-  origin: "api" | "worker" | "system";
-  metadata?: Record<string, unknown>;
+  origin: DashboardActivityOrigin;
   occurredAt: string;
 }
 
-export interface DashboardOverview {
+export interface DashboardProgress {
   generatedAt: string;
   window: {
     days: number;
@@ -71,7 +90,7 @@ export interface DashboardOverview {
     recentDocuments: Array<{
       documentId: string;
       title: string;
-      status: string;
+      status: LearningDocumentStatus;
       pageCount: number;
       chunkCount: number;
       processedAt?: string;
@@ -124,12 +143,28 @@ export interface DashboardOverview {
       estimatedCostUsd: number;
     }>;
   };
-  recentActivity: DashboardActivityItem[];
 }
 
-export interface DashboardQuery {
-  windowDays?: number;
+export interface DashboardProgressQuery {
+  windowDays: DashboardWindowDays;
   trendLimit?: number;
-  activityLimit?: number;
   recentDocumentLimit?: number;
+}
+
+export interface DashboardActivityQuery {
+  page?: number;
+  limit?: number;
+  type?: string;
+  origin?: DashboardActivityOrigin;
+  resourceType?: string;
+}
+
+export interface DashboardActivityPage {
+  events: DashboardActivityItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }

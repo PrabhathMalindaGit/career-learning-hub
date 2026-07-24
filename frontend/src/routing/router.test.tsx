@@ -30,6 +30,15 @@ vi.mock("../features/auth/authApi", () => ({
   register: vi.fn(),
 }));
 
+vi.mock("../features/dashboard/dashboardApi", () => ({
+  fetchDashboardActivity: vi.fn(
+    () => new Promise(() => undefined),
+  ),
+  fetchProgressSnapshot: vi.fn(
+    () => new Promise(() => undefined),
+  ),
+}));
+
 const publicUser: PublicUser = {
   id: "router-user-test",
   email: "router@example.test",
@@ -151,7 +160,7 @@ describe("application routing", () => {
   );
 
   it.each([
-    ["/dashboard", "Dashboard"],
+    ["/dashboard", "Unified dashboard"],
     ["/resumes", "Resumes"],
     ["/resumes/resume-test-id", "Resume workspace"],
     ["/interviews", "Interviews"],
@@ -175,6 +184,25 @@ describe("application routing", () => {
     expect(
       await screen.findByRole("heading", { name: heading }),
     ).not.toBeNull();
+  });
+
+  it("renders the connected dashboard instead of its deferred message", async () => {
+    vi.mocked(authApi.refreshSession).mockResolvedValue(
+      authenticatedSession,
+    );
+
+    renderRoute("/dashboard");
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Unified dashboard",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.queryByText(
+        "Your unified progress view will appear here when its data connection is active.",
+      ),
+    ).toBeNull();
   });
 
   it("renders a safe not-found page for an unknown path", async () => {

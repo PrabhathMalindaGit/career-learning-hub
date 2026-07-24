@@ -12,6 +12,7 @@ import { LoginPage } from "../features/auth/LoginPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
 import { SettingsPage } from "../features/auth/SettingsPage";
 import { useAuth } from "../features/auth/AuthProvider";
+import { MainDashboard } from "../features/dashboard/MainDashboard";
 import { DeferredFeaturePage } from "./DeferredFeaturePage";
 import { RouteErrorPage } from "./RouteErrorPage";
 
@@ -60,14 +61,7 @@ export const appRoutes: RouteObject[] = [
         children: [
           {
             path: "/dashboard",
-            element: (
-              <DeferredFeaturePage
-                eyebrow="Workspace overview"
-                title="Dashboard"
-                description="Your unified progress view will appear here when its data connection is active."
-                emptyMessage="No dashboard metrics or activity records are shown until this area is connected."
-              />
-            ),
+            element: <MainDashboard />,
           },
           {
             path: "/resumes",

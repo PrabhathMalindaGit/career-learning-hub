@@ -19,6 +19,13 @@ export function validate(schemas: RequestSchemas): RequestHandler {
       const result = schema.safeParse(request[key]);
       if (!result.success) {
         errors[key] = result.error.flatten();
+      } else if (key === "query") {
+        Object.defineProperty(request, "query", {
+          value: result.data,
+          configurable: true,
+          enumerable: true,
+          writable: true,
+        });
       } else {
         (request as unknown as Record<string, unknown>)[key] = result.data;
       }
