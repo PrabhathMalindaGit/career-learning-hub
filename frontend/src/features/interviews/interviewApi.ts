@@ -1,204 +1,360 @@
+import { apiRequest } from "../../api/apiClient";
+import {
+  parseAcceptedInterviewJob,
+  parseAttemptDetail,
+  parseAttemptList,
+  parseCreatedSession,
+  parseCreatedQuestion,
+  parseExplanationResponse,
+  parseFeedbackResponse,
+  parseInterviewJob,
+  parseQuestionDetail,
+  parseQuestionList,
+  parseRecordedAttempt,
+  parseSessionDetail,
+  parseSessionList,
+} from "./interviewContracts";
 import type {
   CreateInterviewSessionInput,
+  InterviewAttemptStatus,
   InterviewDifficulty,
+  InterviewJob,
+  InterviewSessionStatus,
+  ManualInterviewQuestionInput,
 } from "./types";
-import { apiRequest } from "../../api/apiClient";
 
-export function createInterviewSession(
-  accessToken: string,
-  payload: CreateInterviewSessionInput,
-) {
-  return apiRequest<unknown>("/interview-sessions", {
-    method: "POST",
-    body: payload,
-    authentication: "required",
-    accessToken,
+function boundedInteger(
+  value: number | undefined,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  if (value === undefined || !Number.isFinite(value)) return fallback;
+  return Math.min(maximum, Math.max(minimum, Math.trunc(value)));
+}
+
+function canonicalList(values: readonly string[]): string[] {
+  return values
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .slice(0, 50);
+}
+
+function paginationQuery(input: {
+  page?: number;
+  limit?: number;
+}): URLSearchParams {
+  return new URLSearchParams({
+    page: String(
+      boundedInteger(input.page, 1, 1, Number.MAX_SAFE_INTEGER),
+    ),
+    limit: String(boundedInteger(input.limit, 20, 1, 100)),
   });
 }
 
-export function listInterviewSessions(
-  accessToken: string,
-  page = 1,
-  limit = 20,
-) {
-  return apiRequest<unknown>(
-    `/interview-sessions?page=${page}&limit=${limit}`,
-    {
-      authentication: "required",
-      accessToken,
-    },
-  );
+function routeId(value: string): string {
+  return encodeURIComponent(value);
 }
 
-export function fetchInterviewSession(
-  sessionId: string,
-  accessToken: string,
+export async function listInterviewSessions(
+  input: {
+    page?: number;
+    limit?: number;
+    status?: InterviewSessionStatus;
+  } = {},
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
-    `/interview-sessions/${sessionId}`,
-    {
-      authentication: "required",
-      accessToken,
-    },
+  const query = paginationQuery(input);
+  if (input.status) query.set("status", input.status);
+  const data = await apiRequest<unknown>(
+    `/interview-sessions?${query}`,
+    { authentication: "required", signal },
   );
+  return parseSessionList(data);
 }
 
-export function listInterviewQuestions(
+export async function createInterviewSession(
+  input: CreateInterviewSessionInput,
+  signal?: AbortSignal,
+) {
+  const jobDescription = input.jobDescription?.trim();
+  const data = await apiRequest<unknown>("/interview-sessions", {
+    method: "POST",
+    authentication: "required",
+    signal,
+    body: {
+      title: input.title.trim(),
+      targetRole: input.targetRole.trim(),
+      experienceLevel: input.experienceLevel.trim(),
+      focusTopics: canonicalList(input.focusTopics),
+      skillGaps: canonicalList(input.skillGaps),
+      ...(jobDescription ? { jobDescription } : {}),
+      mode: input.mode,
+      manualQuestions: [],
+    },
+  });
+  return parseCreatedSession(data);
+}
+
+export async function fetchInterviewSession(
   sessionId: string,
-  accessToken: string,
-  options: {
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}`,
+    { authentication: "required", signal },
+  );
+  return parseSessionDetail(data, sessionId);
+}
+
+export async function updateInterviewSessionStatus(
+  sessionId: string,
+  status: InterviewSessionStatus,
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/status`,
+    {
+      method: "PATCH",
+      body: { status },
+      authentication: "required",
+      signal,
+    },
+  );
+  return parseSessionDetail(data, sessionId);
+}
+
+export async function listInterviewQuestions(
+  sessionId: string,
+  input: {
     page?: number;
     limit?: number;
     pinned?: boolean;
     difficulty?: InterviewDifficulty;
     category?: string;
   } = {},
+  signal?: AbortSignal,
 ) {
-  const query = new URLSearchParams({
-    page: String(options.page ?? 1),
-    limit: String(options.limit ?? 20),
-  });
-
-  if (options.pinned !== undefined) {
-    query.set("pinned", String(options.pinned));
+  const query = paginationQuery(input);
+  if (input.pinned !== undefined) {
+    query.set("pinned", String(input.pinned));
   }
-  if (options.difficulty) {
-    query.set("difficulty", options.difficulty);
+  if (input.difficulty) query.set("difficulty", input.difficulty);
+  if (input.category?.trim()) {
+    query.set("category", input.category.trim());
   }
-  if (options.category) {
-    query.set("category", options.category);
-  }
-
-  return apiRequest<unknown>(
-    `/interview-sessions/${sessionId}/questions?${query}`,
-    {
-      authentication: "required",
-      accessToken,
-    },
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/questions?${query}`,
+    { authentication: "required", signal },
   );
+  return parseQuestionList(data, sessionId);
 }
 
-export function generateInterviewQuestions(
+export async function addManualQuestion(
   sessionId: string,
-  accessToken: string,
-  payload: {
-    requestId?: string;
-    resumeVersionId?: string;
-    count: number;
-    categories: string[];
-    difficultyMix?: {
-      easy: number;
-      medium: number;
-      hard: number;
-    };
-  },
+  input: ManualInterviewQuestionInput,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
-    `/interview-sessions/${sessionId}/questions/generate`,
+  const modelAnswer = input.modelAnswer?.trim();
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/questions`,
     {
       method: "POST",
-      body: {
-        ...payload,
-        requestId: payload.requestId ?? crypto.randomUUID(),
-      },
       authentication: "required",
-      accessToken,
+      signal,
+      body: {
+        category: input.category.trim(),
+        difficulty: input.difficulty,
+        question: input.question.trim(),
+        ...(modelAnswer ? { modelAnswer } : {}),
+      },
     },
+  );
+  return parseCreatedQuestion(data, sessionId);
+}
+
+export async function generateInterviewQuestions(
+  sessionId: string,
+  input: {
+    requestId: string;
+    count: number;
+    categories: string[];
+  },
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/questions/generate`,
+    {
+      method: "POST",
+      authentication: "required",
+      signal,
+      body: {
+        requestId: input.requestId,
+        count: boundedInteger(input.count, 10, 1, 20),
+        categories: canonicalList(input.categories),
+      },
+    },
+  );
+  return parseAcceptedInterviewJob(
+    data,
+    "interview.questions.generate",
   );
 }
 
-export function setQuestionPinned(
+export async function fetchInterviewQuestion(
   sessionId: string,
   questionId: string,
-  accessToken: string,
-  isPinned: boolean,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
-    `/interview-sessions/${sessionId}/questions/${questionId}/pin`,
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
+      questionId,
+    )}`,
+    { authentication: "required", signal },
+  );
+  return parseQuestionDetail(data, sessionId, questionId);
+}
+
+export async function setQuestionPinned(
+  sessionId: string,
+  questionId: string,
+  isPinned: boolean,
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
+      questionId,
+    )}/pin`,
     {
       method: "PATCH",
       body: { isPinned },
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  return parseQuestionDetail(data, sessionId, questionId);
 }
 
-export function saveQuestionNotes(
+export async function saveQuestionNotes(
   sessionId: string,
   questionId: string,
-  accessToken: string,
   notes: string,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
-    `/interview-sessions/${sessionId}/questions/${questionId}/notes`,
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
+      questionId,
+    )}/notes`,
     {
       method: "PATCH",
-      body: { notes },
+      body: { notes: notes.trim() },
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  return parseQuestionDetail(data, sessionId, questionId);
 }
 
-export function requestQuestionExplanation(
+export async function requestQuestionExplanation(
   sessionId: string,
   questionId: string,
-  accessToken: string,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
-    `/interview-sessions/${sessionId}/questions/${questionId}/explanation`,
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
+      questionId,
+    )}/explanation`,
     {
       method: "POST",
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  return parseExplanationResponse(data, sessionId, questionId);
 }
 
-export function recordInterviewAttempt(
+export async function recordInterviewAttempt(
   sessionId: string,
   questionId: string,
-  accessToken: string,
   answerText: string,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
-    `/interview-sessions/${sessionId}/questions/${questionId}/attempts`,
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
+      questionId,
+    )}/attempts`,
     {
       method: "POST",
-      body: { answerText },
+      body: { answerText: answerText.trim() },
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  return parseRecordedAttempt(data, sessionId);
 }
 
-export function requestAttemptFeedback(
+export async function listAttemptHistory(
+  sessionId: string,
+  input: {
+    page?: number;
+    limit?: number;
+    questionId?: string;
+    status?: InterviewAttemptStatus;
+  } = {},
+  signal?: AbortSignal,
+) {
+  const query = paginationQuery(input);
+  if (input.questionId) query.set("questionId", input.questionId);
+  if (input.status) query.set("status", input.status);
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/attempts?${query}`,
+    { authentication: "required", signal },
+  );
+  return parseAttemptList(data, sessionId);
+}
+
+export async function fetchInterviewAttempt(
   sessionId: string,
   attemptId: string,
-  accessToken: string,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
-    `/interview-sessions/${sessionId}/attempts/${attemptId}/feedback`,
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/attempts/${routeId(
+      attemptId,
+    )}`,
+    { authentication: "required", signal },
+  );
+  return parseAttemptDetail(data, sessionId, attemptId);
+}
+
+export async function requestAttemptFeedback(
+  sessionId: string,
+  attemptId: string,
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/interview-sessions/${routeId(sessionId)}/attempts/${routeId(
+      attemptId,
+    )}/feedback`,
     {
       method: "POST",
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  return parseFeedbackResponse(data, sessionId, attemptId);
 }
 
-export function listAttemptHistory(
-  sessionId: string,
-  accessToken: string,
-  page = 1,
-  limit = 20,
-) {
-  return apiRequest<unknown>(
-    `/interview-sessions/${sessionId}/attempts?page=${page}&limit=${limit}`,
-    {
-      authentication: "required",
-      accessToken,
-    },
-  );
+export async function fetchInterviewJob(
+  jobId: string,
+  signal?: AbortSignal,
+): Promise<InterviewJob> {
+  const data = await apiRequest<unknown>(`/jobs/${routeId(jobId)}`, {
+    authentication: "required",
+    signal,
+  });
+  return parseInterviewJob(data);
 }
+
+export * from "./interviewContracts";
+export * from "./interviewPolling";

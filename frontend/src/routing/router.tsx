@@ -13,6 +13,8 @@ import { RegisterPage } from "../features/auth/RegisterPage";
 import { SettingsPage } from "../features/auth/SettingsPage";
 import { useAuth } from "../features/auth/AuthProvider";
 import { MainDashboard } from "../features/dashboard/MainDashboard";
+import { InterviewSessionListPage } from "../features/interviews/InterviewSessionListPage";
+import { InterviewSessionWorkspace } from "../features/interviews/InterviewSessionWorkspace";
 import { ResumeListPage } from "../features/resumes/ResumeListPage";
 import { ResumeWorkspace } from "../features/resumes/ResumeWorkspace";
 import { DeferredFeaturePage } from "./DeferredFeaturePage";
@@ -75,25 +77,11 @@ export const appRoutes: RouteObject[] = [
           },
           {
             path: "/interviews",
-            element: (
-              <DeferredFeaturePage
-                eyebrow="Interview preparation"
-                title="Interviews"
-                description="Your interview sessions will appear here when Interview Coach is connected."
-                emptyMessage="No interview records are shown until this area is connected."
-              />
-            ),
+            element: <InterviewSessionListPage />,
           },
           {
             path: "/interviews/:sessionId",
-            element: (
-              <DeferredFeaturePage
-                eyebrow="Interview preparation"
-                title="Interview session"
-                description="The selected interview session will appear here when record loading is active."
-                emptyMessage="No questions, attempts, or sample feedback are being shown."
-              />
-            ),
+            element: <InterviewSessionWorkspace />,
           },
           {
             path: "/learning",

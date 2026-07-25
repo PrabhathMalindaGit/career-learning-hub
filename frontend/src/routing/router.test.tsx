@@ -93,6 +93,46 @@ vi.mock("../features/resumes/resumeApi", () => ({
   saveResumeVersion: vi.fn(),
 }));
 
+vi.mock("../features/interviews/interviewApi", () => ({
+  addManualQuestion: vi.fn(),
+  createInterviewSession: vi.fn(),
+  fetchInterviewAttempt: vi.fn(),
+  fetchInterviewJob: vi.fn(),
+  fetchInterviewQuestion: vi.fn(),
+  fetchInterviewSession: vi.fn().mockResolvedValue({
+    id: "session-test-id",
+    title: "Connected interview session",
+    targetRole: "Backend Engineer",
+    experienceLevel: "Mid-level",
+    focusTopics: [],
+    skillGaps: [],
+    mode: "written-practice",
+    status: "active",
+    questionCount: 0,
+    createdAt: "2026-07-25T00:00:00.000Z",
+    updatedAt: "2026-07-25T00:00:00.000Z",
+  }),
+  generateInterviewQuestions: vi.fn(),
+  listAttemptHistory: vi.fn().mockResolvedValue({
+    attempts: [],
+    pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+  }),
+  listInterviewQuestions: vi.fn().mockResolvedValue({
+    questions: [],
+    pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+  }),
+  listInterviewSessions: vi.fn().mockResolvedValue({
+    sessions: [],
+    pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+  }),
+  recordInterviewAttempt: vi.fn(),
+  requestAttemptFeedback: vi.fn(),
+  requestQuestionExplanation: vi.fn(),
+  saveQuestionNotes: vi.fn(),
+  setQuestionPinned: vi.fn(),
+  updateInterviewSessionStatus: vi.fn(),
+}));
+
 const publicUser: PublicUser = {
   id: "router-user-test",
   email: "router@example.test",
@@ -217,10 +257,10 @@ describe("application routing", () => {
     ["/dashboard", "Unified dashboard"],
     ["/resumes", "Resume Studio"],
     ["/resumes/resume-test-id", "Connected resume workspace"],
-    ["/interviews", "Interviews"],
+    ["/interviews", "Interview Coach"],
     [
       "/interviews/session-test-id",
-      "Interview session",
+      "Connected interview session",
     ],
     ["/learning", "Learning"],
     [
@@ -313,9 +353,14 @@ describe("application routing", () => {
 
     expect(
       await screen.findByText(
-        "No interview records are shown until this area is connected.",
+        "No interview sessions match this view. Create a private session to begin.",
       ),
     ).not.toBeNull();
+    expect(
+      screen.queryByText(
+        "No interview records are shown until this area is connected.",
+      ),
+    ).toBeNull();
     expect(screen.queryByText("Example question")).toBeNull();
     expect(screen.queryByText("Resume Workspace")).toBeNull();
   });
