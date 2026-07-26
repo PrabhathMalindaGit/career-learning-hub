@@ -7,13 +7,13 @@
 - Active implementation phase: Phase 12, Learning Workspace Implementation
 - Next planned phase: Phase 13, Shared Design and UX Hardening (`PLANNED`)
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS C: GROUNDED DOCUMENT CHAT`
+  `PHASE 12 ACTIVE — PASS A, PASS B AND PASS C COMPLETED, PASS D PLANNED, NOT ACTIVATED`
 - Controlling skills: `karpathy-guidelines`, `test-driven-development`,
   `security-best-practices`
 
 ## Objective
 
-- Pass C — Grounded Document Chat is active with scope limited to:
+- Pass C — Grounded Document Chat is completed and delivered:
   - conversation creation and listing;
   - route-bound conversation workspace;
   - paginated canonical message history;
@@ -38,8 +38,8 @@
 - Pass B — Document Library and Workspace is `COMPLETED`.
 - Pass B visual QA was approved with
   `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
-- Pass C — Grounded Document Chat is `ACTIVE`.
-- Later Phase 12 passes remain `PLANNED` and are not activated.
+- Pass C — Grounded Document Chat is `COMPLETED`.
+- Pass D remains `PLANNED` and is not activated.
 - Phase 12 is not completed.
 
 ## Pass A completion record
@@ -65,6 +65,28 @@
 - Gemini remained unconfigured. Provider-unavailable processing behavior was
   verified truthfully; real-provider processing success was not claimed.
 
+## Pass C completion record
+
+- Implementation checkpoint `92aad4c` and generated-file correction `000df7c`
+  were verified.
+- Delivered owned conversation creation and listing, nested conversation
+  routing, canonical paginated message history, idempotent question
+  submission, duplicate-send prevention, bounded job polling, pause and resume
+  using the same job, and canonical assistant-message refetch.
+- Delivered validated source-page controls, plain-text rendering,
+  stale-response and account-change protection, safe missing or foreign
+  conversation handling, and responsive accessible chat workflows.
+- The nested document/conversation identity repair was verified. Focused
+  Grounded Chat tests and the complete frontend suite passed after the repair,
+  as did frontend and root typechecks and the root production build.
+- Desktop, tablet, and mobile runtime QA, User A/User B boundaries, logout and
+  account-switch clearing, and human visual QA passed. No unresolved Critical
+  or Important findings remained.
+- Human visual QA was approved with
+  `PHASE_12C_GROUNDED_CHAT_VISUAL_QA_APPROVED`.
+- Gemini remained unconfigured. Truthful provider-unavailable behavior was
+  verified; real-provider success was not claimed.
+
 ## Authorized implementation scope
 
 - `frontend/src/features/learning/**`.
@@ -89,14 +111,16 @@
 ## Verification
 
 - Focused RED and GREEN coverage passed without weakening security or tests.
-- The complete frontend suite passed with 322 tests.
+- The complete frontend suite passed with 365 tests after the Pass C ownership
+  repair.
 - Frontend and root typechecks, the production build, runtime upload and
   workspace verification, and desktop, tablet, and mobile browser QA passed.
-- The Pass B diff review found no unresolved Critical or Important findings.
+- The Pass C review found no unresolved Critical or Important findings.
 
 ## Human approval gate
 
 - Pass B human visual QA was approved with
   `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
-- Pass C requires human visual QA and the exact approval token
-  `PHASE_12C_GROUNDED_CHAT_VISUAL_QA_APPROVED` before commit.
+- Pass C human visual QA was approved with
+  `PHASE_12C_GROUNDED_CHAT_VISUAL_QA_APPROVED`.
+- Pass D requires a separate operator-approved execution prompt.

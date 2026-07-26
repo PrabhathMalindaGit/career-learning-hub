@@ -219,12 +219,38 @@ export function LearningConversationWorkspace() {
         setPagination(result.pagination);
       })
       .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
+        if (
+          controller.signal.aborted ||
+          current !== historySequence.current ||
+          identityRef.current !== identity
+        ) {
+          return;
+        }
+        const safe = safeError(
+          error,
+          "Conversation history could not be loaded.",
+        );
+        if (error instanceof ApiError && error.status === 404) {
+          setMessages([]);
+          setPagination(undefined);
+          setDraft("");
+          setSendError(undefined);
+          setSending(false);
+          setUncertain(false);
+          setPendingJob(undefined);
+          setResponseState({ status: "idle" });
+          setSelectedSourcePage(undefined);
+          sendInFlight.current = false;
+          intent.current = undefined;
+          sendController.current?.abort();
+          pollController.current?.abort();
+          completionController.current?.abort();
+          setLoadState({ status: "not-found", error: safe });
+          return;
+        }
         setMessages([]);
         setPagination(undefined);
-        setHistoryError(
-          safeError(error, "Conversation history could not be loaded."),
-        );
+        setHistoryError(safe);
       })
       .finally(() => {
         if (

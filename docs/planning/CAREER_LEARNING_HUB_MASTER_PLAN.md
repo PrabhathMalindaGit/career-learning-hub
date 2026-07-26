@@ -746,7 +746,7 @@
 - Activated by operator-approved prompt
   `CLH-PHASE-12A-PRIVATE-PDF-CONTRACT-01`.
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS C: GROUNDED DOCUMENT CHAT`.
+  `PHASE 12 ACTIVE — PASS A, PASS B AND PASS C COMPLETED, PASS D PLANNED, NOT ACTIVATED`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -757,13 +757,10 @@
 - Pass B — Document Library and Workspace is `COMPLETED`.
 - Pass B visual QA was approved with
   `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
-- Pass C — Grounded Document Chat is `ACTIVE`, activated by the
+- Pass C — Grounded Document Chat is `COMPLETED`, activated by the
   operator-approved prompt `CLH-PHASE-12C-GROUNDED-DOCUMENT-CHAT-01`.
-- Pass C is limited to conversation creation and listing, the route-bound
-  conversation workspace, canonical message history, grounded question
-  submission, chat-response job polling, canonical message refresh, factual
-  source-page rendering, and accessible responsive chat UI.
-- Later Phase 12 passes remain `PLANNED` and are not activated.
+- Pass D remains `PLANNED`, is not activated, and requires a separate
+  operator-approved execution prompt.
 - Phase 12 remains `ACTIVE` and is not completed.
 
 #### Pass B completion record
@@ -780,6 +777,28 @@
 - No unresolved Critical or Important findings remained.
 - Gemini remained unconfigured. Provider-unavailable processing behavior was
   verified truthfully; real-provider processing success was not claimed.
+
+#### Pass C completion record
+
+- Implementation checkpoint `92aad4c` and generated-file correction `000df7c`
+  were verified.
+- Delivered owned conversation creation and listing, nested conversation
+  routing, canonical paginated message history, idempotent question
+  submission, duplicate-send prevention, bounded job polling, pause and resume
+  using the same job, and canonical assistant-message refetch.
+- Delivered validated source-page controls, plain-text rendering,
+  stale-response and account-change protection, safe missing or foreign
+  conversation handling, and responsive accessible chat workflows.
+- The nested document/conversation identity repair was verified. Focused
+  Grounded Chat tests and the complete frontend suite passed after the repair,
+  as did frontend and root typechecks and the root production build.
+- Desktop, tablet, and mobile runtime QA, User A/User B boundaries, logout and
+  account-switch clearing, and human visual QA passed. No unresolved Critical
+  or Important findings remained.
+- Human visual QA was approved with
+  `PHASE_12C_GROUNDED_CHAT_VISUAL_QA_APPROVED`.
+- Gemini remained unconfigured. Truthful provider-unavailable behavior was
+  verified; real-provider success was not claimed.
 
 #### Purpose
 

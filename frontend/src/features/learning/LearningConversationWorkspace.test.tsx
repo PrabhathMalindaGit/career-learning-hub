@@ -518,6 +518,26 @@ describe("Learning conversation workspace", () => {
     expect(screen.queryByText("Stale private message")).toBeNull();
   });
 
+  it("adopts a safe not-found state when the conversation does not belong to the route document", async () => {
+    vi.mocked(learningApi.listLearningMessages).mockRejectedValue(
+      new ApiError(
+        404,
+        "LEARNING_CONVERSATION_NOT_FOUND",
+        "Learning conversation not found.",
+        "request-cross-document-0001",
+      ),
+    );
+    renderConversation();
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Conversation not found",
+      }),
+    ).not.toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Question" })).toBeNull();
+    expect(screen.getByText(/request-cross-document-0001/)).not.toBeNull();
+  });
+
   it("shows safe not-found and non-ready states and never writes chat state to browser storage", async () => {
     const local = vi.spyOn(Storage.prototype, "setItem");
     vi.mocked(learningApi.fetchLearningDocument).mockRejectedValue(
