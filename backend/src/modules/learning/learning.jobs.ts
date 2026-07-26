@@ -13,6 +13,9 @@ import {
 import {
   processLearningDocument,
 } from "./documentProcessing.service.js";
+import {
+  assertLearningDocumentWorkAvailable,
+} from "./learningDocumentWorkFence.js";
 
 let registered = false;
 
@@ -28,6 +31,16 @@ export function registerLearningJobHandlers(): void {
       assetId: z.string().regex(/^[a-f\d]{24}$/i),
     }),
     async (payload, context) => {
+      await assertLearningDocumentWorkAvailable({
+        userId: payload.userId,
+        documentId: payload.documentId,
+        allowedStatuses: [
+          "uploaded",
+          "processing",
+          "failed",
+          "ready",
+        ],
+      });
       await context.reportProgress(5);
       const result = await processLearningDocument({
         ...payload,
@@ -64,6 +77,11 @@ export function registerLearningJobHandlers(): void {
       userMessageId: z.string().regex(/^[a-f\d]{24}$/i),
     }),
     async (payload, context) => {
+      await assertLearningDocumentWorkAvailable({
+        userId: payload.userId,
+        documentId: payload.documentId,
+        allowedStatuses: ["ready"],
+      });
       await context.reportProgress(10);
       const result = await generateDocumentChatResponse({
         ...payload,
@@ -84,6 +102,11 @@ export function registerLearningJobHandlers(): void {
       focus: z.string().max(500).optional(),
     }),
     async (payload, context) => {
+      await assertLearningDocumentWorkAvailable({
+        userId: payload.userId,
+        documentId: payload.documentId,
+        allowedStatuses: ["ready"],
+      });
       await context.reportProgress(10);
       const result = await generateFlashcards({
         ...payload,
@@ -104,6 +127,11 @@ export function registerLearningJobHandlers(): void {
       focus: z.string().max(500).optional(),
     }),
     async (payload, context) => {
+      await assertLearningDocumentWorkAvailable({
+        userId: payload.userId,
+        documentId: payload.documentId,
+        allowedStatuses: ["ready"],
+      });
       await context.reportProgress(10);
       const result = await generateQuiz({
         ...payload,

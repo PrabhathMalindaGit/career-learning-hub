@@ -66,6 +66,34 @@ export interface LearningJob {
   updatedAt: string;
 }
 
+export interface AcceptedLearningDocumentDeletionJob {
+  id: string;
+  type: "learning.document.delete";
+  status: "queued" | "processing" | "queued-or-processing";
+}
+
+export interface LearningDocumentDeletionResult {
+  documentId: string;
+  alreadyDeleted: boolean;
+}
+
+export interface LearningDocumentDeletionJob {
+  id: string;
+  type: "learning.document.delete";
+  status: "queued" | "processing" | "completed" | "failed" | "cancelled";
+  progress: number;
+  attempts: number;
+  maxAttempts: number;
+  result?: LearningDocumentDeletionResult;
+  error?: {
+    code: string;
+    message: string;
+  };
+  requestId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LearningDocumentSource {
   url: string;
   expiresAt: string;

@@ -1,4 +1,5 @@
 import { env } from "../../config/env.js";
+import { cancelQueuedLearningDocumentJobs } from "../../jobs/job.queue.js";
 import { AppError } from "../../shared/appError.js";
 import { withMongoTransaction } from "../../shared/mongoTransaction.js";
 import { recordActivitySafely } from "../activity/activity.service.js";
@@ -254,6 +255,11 @@ export async function cascadeDeleteLearningDocument(input: {
     },
   );
 
+  await cancelQueuedLearningDocumentJobs({
+    userId: input.userId,
+    documentId: input.documentId,
+  });
+
   const asset = await AssetModel.findOne({
     _id: document.assetId,
     userId: input.userId,
@@ -272,49 +278,38 @@ export async function cascadeDeleteLearningDocument(input: {
 
   const deletionCounts = await withMongoTransaction(
     async (mongoSession) => {
-      const [
-        messages,
-        conversations,
-        cards,
-        cardSets,
-        quizAttempts,
-        quizQuestions,
-        quizzes,
-        chunks,
-      ] = await Promise.all([
-        MessageModel.deleteMany({
-          userId: input.userId,
-          documentId: input.documentId,
-        }).session(mongoSession),
-        ConversationModel.deleteMany({
-          userId: input.userId,
-          documentId: input.documentId,
-        }).session(mongoSession),
-        FlashcardModel.deleteMany({
-          userId: input.userId,
-          documentId: input.documentId,
-        }).session(mongoSession),
-        FlashcardSetModel.deleteMany({
-          userId: input.userId,
-          documentId: input.documentId,
-        }).session(mongoSession),
-        QuizAttemptModel.deleteMany({
-          userId: input.userId,
-          documentId: input.documentId,
-        }).session(mongoSession),
-        QuizQuestionModel.deleteMany({
-          userId: input.userId,
-          documentId: input.documentId,
-        }).session(mongoSession),
-        QuizModel.deleteMany({
-          userId: input.userId,
-          documentId: input.documentId,
-        }).session(mongoSession),
-        DocumentChunkModel.deleteMany({
-          userId: input.userId,
-          documentId: input.documentId,
-        }).session(mongoSession),
-      ]);
+      const messages = await MessageModel.deleteMany({
+        userId: input.userId,
+        documentId: input.documentId,
+      }).session(mongoSession);
+      const conversations = await ConversationModel.deleteMany({
+        userId: input.userId,
+        documentId: input.documentId,
+      }).session(mongoSession);
+      const cards = await FlashcardModel.deleteMany({
+        userId: input.userId,
+        documentId: input.documentId,
+      }).session(mongoSession);
+      const cardSets = await FlashcardSetModel.deleteMany({
+        userId: input.userId,
+        documentId: input.documentId,
+      }).session(mongoSession);
+      const quizAttempts = await QuizAttemptModel.deleteMany({
+        userId: input.userId,
+        documentId: input.documentId,
+      }).session(mongoSession);
+      const quizQuestions = await QuizQuestionModel.deleteMany({
+        userId: input.userId,
+        documentId: input.documentId,
+      }).session(mongoSession);
+      const quizzes = await QuizModel.deleteMany({
+        userId: input.userId,
+        documentId: input.documentId,
+      }).session(mongoSession);
+      const chunks = await DocumentChunkModel.deleteMany({
+        userId: input.userId,
+        documentId: input.documentId,
+      }).session(mongoSession);
 
       const deletedDocument =
         await LearningDocumentModel.deleteOne({

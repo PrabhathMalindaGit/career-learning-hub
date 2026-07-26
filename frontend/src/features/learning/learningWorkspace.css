@@ -377,6 +377,139 @@
   margin-top: 4px;
 }
 
+.learning-document-actions {
+  display: grid;
+  flex: 0 0 auto;
+  justify-items: end;
+  gap: 10px;
+  max-width: min(100%, 520px);
+}
+
+.learning-deletion {
+  min-width: 0;
+}
+
+.learning-danger-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 15px;
+  border: 1px solid #b93838;
+  border-radius: 10px;
+  color: #ffffff;
+  background: #a72f2f;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.learning-danger-button:hover:not(:disabled) {
+  background: #842424;
+}
+
+.learning-danger-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.learning-deletion-status {
+  max-width: 520px;
+  padding: 18px;
+  border: 1px solid #dfc0b5;
+  border-radius: 14px;
+  color: #4b3028;
+  background: #fff7f3;
+  overflow-wrap: anywhere;
+}
+
+.learning-deletion-status--error {
+  border-color: #efc7c3;
+  color: #762020;
+  background: var(--error-surface);
+}
+
+.learning-deletion-status h2,
+.learning-deletion-status p {
+  margin: 0;
+}
+
+.learning-deletion-status h2 {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.learning-deletion-status p {
+  margin-top: 8px;
+  line-height: 1.55;
+}
+
+.learning-deletion-status button {
+  margin-top: 14px;
+}
+
+.learning-deletion-dialog {
+  width: min(calc(100% - 32px), 620px);
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid #d7c7c0;
+  border-radius: 18px;
+  color: #26362c;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgb(30 37 32 / 24%);
+  overflow: auto;
+}
+
+.learning-deletion-dialog::backdrop {
+  background: rgb(22 29 24 / 64%);
+}
+
+.learning-deletion-form {
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+}
+
+.learning-deletion-form h2,
+.learning-deletion-form p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.learning-deletion-form h2 {
+  color: #6e2525;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  line-height: 1.2;
+}
+
+.learning-deletion-form p {
+  line-height: 1.6;
+}
+
+.learning-deletion-form label {
+  display: grid;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.learning-deletion-form input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #b8c7bd;
+  border-radius: 10px;
+  color: #18211b;
+  background: #ffffff;
+  font: inherit;
+}
+
+.learning-deletion-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .learning-tabs {
   display: flex;
   gap: 6px;
@@ -593,7 +726,11 @@
 .learning-source-pages a:focus-visible,
 .learning-source-pages button:focus-visible,
 .learning-study-navigation button:focus-visible,
-.learning-study-reveal button:focus-visible {
+.learning-study-reveal button:focus-visible,
+.learning-danger-button:focus-visible,
+.learning-deletion-status button:focus-visible,
+.learning-deletion-form input:focus-visible,
+.learning-deletion-actions button:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--accent) 42%, transparent);
   outline-offset: 3px;
 }
@@ -1253,6 +1390,20 @@
     flex-direction: column;
   }
 
+  .learning-document-actions {
+    width: 100%;
+    justify-items: stretch;
+  }
+
+  .learning-document-actions .learning-status {
+    width: fit-content;
+  }
+
+  .learning-danger-button,
+  .learning-deletion-status {
+    width: 100%;
+  }
+
   .learning-header-actions,
   .learning-document-link {
     width: 100%;
@@ -1340,6 +1491,7 @@
 
   .learning-header-actions,
   .learning-form-actions,
+  .learning-deletion-actions,
   .learning-pagination,
   .learning-conversation-list a,
   .learning-study-navigation {
@@ -1349,6 +1501,7 @@
 
   .learning-header-actions > *,
   .learning-form-actions > *,
+  .learning-deletion-actions > *,
   .learning-pagination > button,
   .learning-study-navigation > button {
     width: 100%;
@@ -1356,6 +1509,15 @@
 
   .learning-header-actions > * {
     flex: 0 0 auto;
+  }
+
+  .learning-deletion-dialog {
+    width: calc(100% - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .learning-deletion-form {
+    padding: 20px;
   }
 
   .learning-tabs {

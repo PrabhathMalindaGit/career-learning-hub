@@ -1,6 +1,7 @@
 import { ApiError } from "../../api/apiClient";
 import type {
   LearningChatJob,
+  LearningDocumentDeletionJob,
   LearningFlashcardJob,
   LearningJob,
   LearningQuizJob,
@@ -32,6 +33,7 @@ function defaultWait(
 
 type PollableLearningJob =
   | LearningJob
+  | LearningDocumentDeletionJob
   | LearningChatJob
   | LearningFlashcardJob
   | LearningQuizJob;

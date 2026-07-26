@@ -13,6 +13,10 @@ import {
   type MessageDocument,
 } from "./message.model.js";
 import { documentChatResultSchema } from "./learning.schemas.js";
+import {
+  fenceLearningDocumentWork,
+  learningDocumentWorkInvalidatedError,
+} from "./learningDocumentWorkFence.js";
 import { retrieveRelevantChunks } from "./documentSearch.service.js";
 
 export async function createConversation(input: {
@@ -20,13 +24,32 @@ export async function createConversation(input: {
   documentId: string;
   title: string;
 }): Promise<ConversationDocument> {
-  const conversation = await ConversationModel.create({
-    userId: input.userId,
-    documentId: input.documentId,
-    title: input.title,
-  });
+  return withMongoTransaction(async (mongoSession) => {
+    await fenceLearningDocumentWork({
+      userId: input.userId,
+      documentId: input.documentId,
+      allowedStatuses: [
+        "uploaded",
+        "processing",
+        "ready",
+        "failed",
+      ],
+      session: mongoSession,
+    });
 
-  return conversation;
+    const [conversation] = await ConversationModel.create(
+      [
+        {
+          userId: input.userId,
+          documentId: input.documentId,
+          title: input.title,
+        },
+      ],
+      { session: mongoSession },
+    );
+
+    return conversation;
+  });
 }
 
 export async function listDocumentConversations(input: {
@@ -104,17 +127,24 @@ export async function createUserChatMessage(input: {
   requestId: string;
   content: string;
 }): Promise<MessageDocument> {
-  const existing = await MessageModel.findOne({
-    userId: input.userId,
-    conversationId: input.conversationId,
-    clientRequestId: input.requestId,
-    role: "user",
-  });
-
-  if (existing) return existing;
-
   try {
     return await withMongoTransaction(async (mongoSession) => {
+      await fenceLearningDocumentWork({
+        userId: input.userId,
+        documentId: input.documentId,
+        allowedStatuses: ["ready"],
+        session: mongoSession,
+      });
+
+      const existing = await MessageModel.findOne({
+        userId: input.userId,
+        conversationId: input.conversationId,
+        clientRequestId: input.requestId,
+        role: "user",
+      }).session(mongoSession);
+
+      if (existing) return existing;
+
       const [message] = await MessageModel.create(
         [
           {
@@ -129,7 +159,7 @@ export async function createUserChatMessage(input: {
         { session: mongoSession },
       );
 
-      await ConversationModel.updateOne(
+      const conversationUpdate = await ConversationModel.updateOne(
         {
           _id: input.conversationId,
           documentId: input.documentId,
@@ -141,6 +171,10 @@ export async function createUserChatMessage(input: {
         },
         { session: mongoSession },
       );
+
+      if (conversationUpdate.matchedCount !== 1) {
+        throw learningDocumentWorkInvalidatedError();
+      }
 
       return message;
     });
@@ -170,18 +204,42 @@ export async function attachChatResponseJob(input: {
   messageId: string;
   jobId: string;
 }): Promise<void> {
-  await MessageModel.updateOne(
-    {
+  await withMongoTransaction(async (mongoSession) => {
+    const message = await MessageModel.findOne({
       _id: input.messageId,
       userId: input.userId,
       role: "user",
-    },
-    {
-      $set: {
-        responseJobId: input.jobId,
+    }).session(mongoSession);
+
+    if (!message) {
+      throw learningDocumentWorkInvalidatedError();
+    }
+
+    await fenceLearningDocumentWork({
+      userId: input.userId,
+      documentId: message.documentId.toString(),
+      allowedStatuses: ["ready"],
+      session: mongoSession,
+    });
+
+    const attached = await MessageModel.updateOne(
+      {
+        _id: input.messageId,
+        userId: input.userId,
+        role: "user",
       },
-    },
-  );
+      {
+        $set: {
+          responseJobId: input.jobId,
+        },
+      },
+      { session: mongoSession },
+    );
+
+    if (attached.matchedCount !== 1) {
+      throw learningDocumentWorkInvalidatedError();
+    }
+  });
 }
 
 export async function generateDocumentChatResponse(input: {
@@ -325,6 +383,13 @@ export async function generateDocumentChatResponse(input: {
 
   const assistantMessage = await withMongoTransaction(
     async (mongoSession) => {
+      await fenceLearningDocumentWork({
+        userId: input.userId,
+        documentId: input.documentId,
+        allowedStatuses: ["ready"],
+        session: mongoSession,
+      });
+
       const retryExisting = await MessageModel.findOne({
         userId: input.userId,
         conversationId: input.conversationId,
@@ -351,7 +416,7 @@ export async function generateDocumentChatResponse(input: {
         { session: mongoSession },
       );
 
-      await ConversationModel.updateOne(
+      const conversationUpdate = await ConversationModel.updateOne(
         {
           _id: input.conversationId,
           documentId: input.documentId,
@@ -363,6 +428,10 @@ export async function generateDocumentChatResponse(input: {
         },
         { session: mongoSession },
       );
+
+      if (conversationUpdate.matchedCount !== 1) {
+        throw learningDocumentWorkInvalidatedError();
+      }
 
       return created;
     },

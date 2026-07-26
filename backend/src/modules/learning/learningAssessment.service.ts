@@ -21,27 +21,11 @@ import {
   type QuizAttemptDocument,
 } from "./quizAttempt.model.js";
 import { QuizQuestionModel } from "./quizQuestion.model.js";
-
-async function requireReadyDocument(
-  userId: string,
-  documentId: string,
-) {
-  const document = await LearningDocumentModel.findOne({
-    _id: documentId,
-    userId,
-    status: "ready",
-  });
-
-  if (!document) {
-    throw new AppError(
-      409,
-      "LEARNING_DOCUMENT_NOT_READY",
-      "The learning document is not ready for assessment generation.",
-    );
-  }
-
-  return document;
-}
+import {
+  fenceLearningDocumentWork,
+  isLearningDocumentWorkInvalidated,
+  learningDocumentWorkInvalidatedError,
+} from "./learningDocumentWorkFence.js";
 
 async function assessmentChunks(input: {
   userId: string;
@@ -101,23 +85,37 @@ export async function createFlashcardSet(input: {
   requestId: string;
   title: string;
 }): Promise<FlashcardSetDocument> {
-  await requireReadyDocument(input.userId, input.documentId);
-
-  const existing = await FlashcardSetModel.findOne({
-    userId: input.userId,
-    documentId: input.documentId,
-    requestId: input.requestId,
-  });
-
-  if (existing) return existing;
-
   try {
-    return await FlashcardSetModel.create({
-      userId: input.userId,
-      documentId: input.documentId,
-      requestId: input.requestId,
-      title: input.title,
-      status: "generating",
+    return await withMongoTransaction(async (mongoSession) => {
+      await fenceLearningDocumentWork({
+        userId: input.userId,
+        documentId: input.documentId,
+        allowedStatuses: ["ready"],
+        session: mongoSession,
+      });
+
+      const existing = await FlashcardSetModel.findOne({
+        userId: input.userId,
+        documentId: input.documentId,
+        requestId: input.requestId,
+      }).session(mongoSession);
+
+      if (existing) return existing;
+
+      const [set] = await FlashcardSetModel.create(
+        [
+          {
+            userId: input.userId,
+            documentId: input.documentId,
+            requestId: input.requestId,
+            title: input.title,
+            status: "generating",
+          },
+        ],
+        { session: mongoSession },
+      );
+
+      return set;
     });
   } catch (error) {
     if (
@@ -143,17 +141,41 @@ export async function attachFlashcardJob(input: {
   setId: string;
   jobId: string;
 }): Promise<void> {
-  await FlashcardSetModel.updateOne(
-    {
+  await withMongoTransaction(async (mongoSession) => {
+    const set = await FlashcardSetModel.findOne({
       _id: input.setId,
       userId: input.userId,
       status: "generating",
-    },
-    {
-      $set: { generationJobId: input.jobId },
-      $unset: { generationError: 1 },
-    },
-  );
+    }).session(mongoSession);
+
+    if (!set) {
+      throw learningDocumentWorkInvalidatedError();
+    }
+
+    await fenceLearningDocumentWork({
+      userId: input.userId,
+      documentId: set.documentId.toString(),
+      allowedStatuses: ["ready"],
+      session: mongoSession,
+    });
+
+    const attached = await FlashcardSetModel.updateOne(
+      {
+        _id: input.setId,
+        userId: input.userId,
+        status: "generating",
+      },
+      {
+        $set: { generationJobId: input.jobId },
+        $unset: { generationError: 1 },
+      },
+      { session: mongoSession },
+    );
+
+    if (attached.matchedCount !== 1) {
+      throw learningDocumentWorkInvalidatedError();
+    }
+  });
 }
 
 export async function generateFlashcards(input: {
@@ -298,6 +320,13 @@ export async function generateFlashcards(input: {
     });
 
     await withMongoTransaction(async (mongoSession) => {
+      await fenceLearningDocumentWork({
+        userId: input.userId,
+        documentId: input.documentId,
+        allowedStatuses: ["ready"],
+        session: mongoSession,
+      });
+
       await FlashcardModel.deleteMany({
         userId: input.userId,
         setId: input.setId,
@@ -350,28 +379,48 @@ export async function generateFlashcards(input: {
       cardCount: records.length,
     };
   } catch (error) {
-    await FlashcardSetModel.updateOne(
-      {
-        _id: input.setId,
-        userId: input.userId,
-        generationJobId: input.jobId,
-      },
-      {
-        $set: {
-          status: "failed",
-          generationError: {
-            code:
-              error instanceof AppError
-                ? error.code
-                : "FLASHCARD_GENERATION_FAILED",
-            message:
-              error instanceof Error
-                ? error.message.slice(0, 2_000)
-                : "Flashcard generation failed.",
-          },
-        },
-      },
-    );
+    if (!isLearningDocumentWorkInvalidated(error)) {
+      try {
+        await withMongoTransaction(async (mongoSession) => {
+          await fenceLearningDocumentWork({
+            userId: input.userId,
+            documentId: input.documentId,
+            allowedStatuses: ["ready"],
+            session: mongoSession,
+          });
+
+          await FlashcardSetModel.updateOne(
+            {
+              _id: input.setId,
+              userId: input.userId,
+              generationJobId: input.jobId,
+            },
+            {
+              $set: {
+                status: "failed",
+                generationError: {
+                  code:
+                    error instanceof AppError
+                      ? error.code
+                      : "FLASHCARD_GENERATION_FAILED",
+                  message:
+                    error instanceof Error
+                      ? error.message.slice(0, 2_000)
+                      : "Flashcard generation failed.",
+                },
+              },
+            },
+            { session: mongoSession },
+          );
+        });
+      } catch (failureWriteError) {
+        if (isLearningDocumentWorkInvalidated(failureWriteError)) {
+          throw failureWriteError;
+        }
+
+        throw error;
+      }
+    }
 
     throw error;
   }
@@ -450,23 +499,37 @@ export async function createQuiz(input: {
   requestId: string;
   title: string;
 }): Promise<QuizDocument> {
-  await requireReadyDocument(input.userId, input.documentId);
-
-  const existing = await QuizModel.findOne({
-    userId: input.userId,
-    documentId: input.documentId,
-    requestId: input.requestId,
-  });
-
-  if (existing) return existing;
-
   try {
-    return await QuizModel.create({
-      userId: input.userId,
-      documentId: input.documentId,
-      requestId: input.requestId,
-      title: input.title,
-      status: "generating",
+    return await withMongoTransaction(async (mongoSession) => {
+      await fenceLearningDocumentWork({
+        userId: input.userId,
+        documentId: input.documentId,
+        allowedStatuses: ["ready"],
+        session: mongoSession,
+      });
+
+      const existing = await QuizModel.findOne({
+        userId: input.userId,
+        documentId: input.documentId,
+        requestId: input.requestId,
+      }).session(mongoSession);
+
+      if (existing) return existing;
+
+      const [quiz] = await QuizModel.create(
+        [
+          {
+            userId: input.userId,
+            documentId: input.documentId,
+            requestId: input.requestId,
+            title: input.title,
+            status: "generating",
+          },
+        ],
+        { session: mongoSession },
+      );
+
+      return quiz;
     });
   } catch (error) {
     if (
@@ -492,17 +555,41 @@ export async function attachQuizJob(input: {
   quizId: string;
   jobId: string;
 }): Promise<void> {
-  await QuizModel.updateOne(
-    {
+  await withMongoTransaction(async (mongoSession) => {
+    const quiz = await QuizModel.findOne({
       _id: input.quizId,
       userId: input.userId,
       status: "generating",
-    },
-    {
-      $set: { generationJobId: input.jobId },
-      $unset: { generationError: 1 },
-    },
-  );
+    }).session(mongoSession);
+
+    if (!quiz) {
+      throw learningDocumentWorkInvalidatedError();
+    }
+
+    await fenceLearningDocumentWork({
+      userId: input.userId,
+      documentId: quiz.documentId.toString(),
+      allowedStatuses: ["ready"],
+      session: mongoSession,
+    });
+
+    const attached = await QuizModel.updateOne(
+      {
+        _id: input.quizId,
+        userId: input.userId,
+        status: "generating",
+      },
+      {
+        $set: { generationJobId: input.jobId },
+        $unset: { generationError: 1 },
+      },
+      { session: mongoSession },
+    );
+
+    if (attached.matchedCount !== 1) {
+      throw learningDocumentWorkInvalidatedError();
+    }
+  });
 }
 
 export async function generateQuiz(input: {
@@ -651,6 +738,13 @@ export async function generateQuiz(input: {
     });
 
     await withMongoTransaction(async (mongoSession) => {
+      await fenceLearningDocumentWork({
+        userId: input.userId,
+        documentId: input.documentId,
+        allowedStatuses: ["ready"],
+        session: mongoSession,
+      });
+
       await QuizQuestionModel.deleteMany({
         userId: input.userId,
         quizId: input.quizId,
@@ -703,28 +797,48 @@ export async function generateQuiz(input: {
       questionCount: records.length,
     };
   } catch (error) {
-    await QuizModel.updateOne(
-      {
-        _id: input.quizId,
-        userId: input.userId,
-        generationJobId: input.jobId,
-      },
-      {
-        $set: {
-          status: "failed",
-          generationError: {
-            code:
-              error instanceof AppError
-                ? error.code
-                : "QUIZ_GENERATION_FAILED",
-            message:
-              error instanceof Error
-                ? error.message.slice(0, 2_000)
-                : "Quiz generation failed.",
-          },
-        },
-      },
-    );
+    if (!isLearningDocumentWorkInvalidated(error)) {
+      try {
+        await withMongoTransaction(async (mongoSession) => {
+          await fenceLearningDocumentWork({
+            userId: input.userId,
+            documentId: input.documentId,
+            allowedStatuses: ["ready"],
+            session: mongoSession,
+          });
+
+          await QuizModel.updateOne(
+            {
+              _id: input.quizId,
+              userId: input.userId,
+              generationJobId: input.jobId,
+            },
+            {
+              $set: {
+                status: "failed",
+                generationError: {
+                  code:
+                    error instanceof AppError
+                      ? error.code
+                      : "QUIZ_GENERATION_FAILED",
+                  message:
+                    error instanceof Error
+                      ? error.message.slice(0, 2_000)
+                      : "Quiz generation failed.",
+                },
+              },
+            },
+            { session: mongoSession },
+          );
+        });
+      } catch (failureWriteError) {
+        if (isLearningDocumentWorkInvalidated(failureWriteError)) {
+          throw failureWriteError;
+        }
+
+        throw error;
+      }
+    }
 
     throw error;
   }
@@ -904,22 +1018,49 @@ export async function submitQuizAttempt(input: {
     questionCount: quiz.questionCount,
   });
 
-  const attempt = await QuizAttemptModel.create({
-    userId: input.userId,
-    documentId: quiz.documentId,
-    quizId: quiz._id,
-    answers: reviewedAnswers.map(
-      ({ question, selectedChoiceIndex, correct }) => ({
-        questionId: question._id,
-        questionIndex: question.questionIndex,
-        selectedChoiceIndex,
-        correct,
-      }),
-    ),
-    correctCount,
-    questionCount: quiz.questionCount,
-    scorePercent,
-    completedAt: new Date(),
+  const attempt = await withMongoTransaction(async (mongoSession) => {
+    await fenceLearningDocumentWork({
+      userId: input.userId,
+      documentId: quiz.documentId.toString(),
+      allowedStatuses: ["ready"],
+      session: mongoSession,
+    });
+
+    const currentQuiz = await QuizModel.findOne({
+      _id: quiz._id,
+      userId: input.userId,
+      documentId: quiz.documentId,
+      status: "ready",
+    }).session(mongoSession);
+
+    if (!currentQuiz) {
+      throw learningDocumentWorkInvalidatedError();
+    }
+
+    const [created] = await QuizAttemptModel.create(
+      [
+        {
+          userId: input.userId,
+          documentId: quiz.documentId,
+          quizId: quiz._id,
+          answers: reviewedAnswers.map(
+            ({ question, selectedChoiceIndex, correct }) => ({
+              questionId: question._id,
+              questionIndex: question.questionIndex,
+              selectedChoiceIndex,
+              correct,
+            }),
+          ),
+          correctCount,
+          questionCount: quiz.questionCount,
+          scorePercent,
+          completedAt: new Date(),
+        },
+      ],
+      { session: mongoSession },
+    );
+
+    return created;
   });
 
   await recordActivitySafely({

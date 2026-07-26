@@ -1,7 +1,86 @@
 import { Types } from "mongoose";
 import { env } from "../config/env.js";
 import { AppError } from "../shared/appError.js";
+import { withMongoTransaction } from "../shared/mongoTransaction.js";
+import {
+  fenceLearningDocumentWork,
+  isLearningDocumentWorkInvalidated,
+} from "../modules/learning/learningDocumentWorkFence.js";
+import type { LearningDocumentStatus } from "../modules/learning/learningDocument.model.js";
 import { JobRecordModel, type JobRecord } from "./job.model.js";
+
+const learningJobRetryStatuses: Readonly<
+  Record<string, readonly LearningDocumentStatus[]>
+> = {
+  "learning.document.process": [
+    "uploaded",
+    "processing",
+    "failed",
+    "ready",
+  ],
+  "learning.chat.respond": ["ready"],
+  "learning.flashcards.generate": ["ready"],
+  "learning.quiz.generate": ["ready"],
+};
+
+function learningJobRetryFence(job: JobRecord):
+  | {
+      userId: string;
+      documentId: string;
+      allowedStatuses: readonly LearningDocumentStatus[];
+    }
+  | undefined {
+  const allowedStatuses = learningJobRetryStatuses[job.type];
+  const payload =
+    typeof job.payload === "object" &&
+    job.payload !== null &&
+    !Array.isArray(job.payload)
+      ? (job.payload as Record<string, unknown>)
+      : undefined;
+  const documentId = payload?.documentId;
+
+  if (
+    !allowedStatuses ||
+    !job.userId ||
+    typeof documentId !== "string" ||
+    !/^[a-f\d]{24}$/i.test(documentId)
+  ) {
+    return undefined;
+  }
+
+  return {
+    userId: job.userId.toString(),
+    documentId,
+    allowedStatuses,
+  };
+}
+
+async function cancelInvalidatedProcessingJob(
+  jobId: string,
+): Promise<void> {
+  const cancelledAt = new Date();
+  await JobRecordModel.updateOne(
+    {
+      _id: jobId,
+      status: "processing",
+    },
+    {
+      $set: {
+        status: "cancelled",
+        expiresAt: new Date(
+          cancelledAt.getTime() +
+            env.JOB_RETENTION_DAYS * 24 * 60 * 60 * 1_000,
+        ),
+      },
+      $unset: {
+        lockedAt: 1,
+        lockExpiresAt: 1,
+        lockedBy: 1,
+        error: 1,
+      },
+    },
+  );
+}
 
 export async function enqueueJob(input: {
   type: string;
@@ -184,6 +263,14 @@ export async function failOrRetryJob(
   job: JobRecord,
   error: unknown,
 ): Promise<void> {
+  if (
+    error instanceof AppError &&
+    error.code === "LEARNING_DOCUMENT_WORK_INVALIDATED"
+  ) {
+    await cancelInvalidatedProcessingJob(job._id.toString());
+    return;
+  }
+
   const message =
     error instanceof Error ? error.message : "Unknown job failure.";
   const code =
@@ -194,12 +281,63 @@ export async function failOrRetryJob(
       : undefined;
 
   if (job.attempts < job.maxAttempts) {
+    const retryAt = new Date(Date.now() + retryDelay(job.attempts));
+    const retryFence = learningJobRetryFence(job);
+
+    if (retryFence) {
+      try {
+        await withMongoTransaction(async (mongoSession) => {
+          await fenceLearningDocumentWork({
+            ...retryFence,
+            session: mongoSession,
+          });
+
+          await JobRecordModel.updateOne(
+            {
+              _id: job._id,
+              status: "processing",
+            },
+            {
+              $set: {
+                status: "queued",
+                runAt: retryAt,
+                error: {
+                  code,
+                  message: message.slice(0, 2_000),
+                  stack,
+                },
+              },
+              $unset: {
+                lockedAt: 1,
+                lockExpiresAt: 1,
+                lockedBy: 1,
+              },
+            },
+            { session: mongoSession },
+          );
+
+          return true;
+        });
+      } catch (retryError) {
+        if (isLearningDocumentWorkInvalidated(retryError)) {
+          await cancelInvalidatedProcessingJob(
+            job._id.toString(),
+          );
+          return;
+        }
+
+        throw retryError;
+      }
+
+      return;
+    }
+
     await JobRecordModel.updateOne(
       { _id: job._id },
       {
         $set: {
           status: "queued",
-          runAt: new Date(Date.now() + retryDelay(job.attempts)),
+          runAt: retryAt,
           error: {
             code,
             message: message.slice(0, 2_000),
@@ -240,6 +378,45 @@ export async function failOrRetryJob(
       },
     },
   );
+}
+
+export async function cancelQueuedLearningDocumentJobs(input: {
+  userId: string;
+  documentId: string;
+}): Promise<number> {
+  const cancelledAt = new Date();
+  const result = await JobRecordModel.updateMany(
+    {
+      userId: input.userId,
+      status: "queued",
+      type: {
+        $in: [
+          "learning.document.process",
+          "learning.chat.respond",
+          "learning.flashcards.generate",
+          "learning.quiz.generate",
+        ],
+      },
+      "payload.documentId": input.documentId,
+    },
+    {
+      $set: {
+        status: "cancelled",
+        expiresAt: new Date(
+          cancelledAt.getTime() +
+            env.JOB_RETENTION_DAYS * 24 * 60 * 60 * 1_000,
+        ),
+      },
+      $unset: {
+        lockedAt: 1,
+        lockExpiresAt: 1,
+        lockedBy: 1,
+        error: 1,
+      },
+    },
+  );
+
+  return result.modifiedCount;
 }
 
 export async function getOwnedJob(

@@ -11,6 +11,11 @@ import {
 import { DocumentChunkModel } from "./documentChunk.model.js";
 import { LearningDocumentModel } from "./learningDocument.model.js";
 import { documentSummaryResultSchema } from "./learning.schemas.js";
+import {
+  fenceLearningDocumentWork,
+  isLearningDocumentWorkInvalidated,
+  learningDocumentWorkInvalidatedError,
+} from "./learningDocumentWorkFence.js";
 
 interface PageText {
   pageNumber: number;
@@ -168,10 +173,13 @@ export async function processLearningDocument(input: {
     };
   }
 
-  await LearningDocumentModel.updateOne(
+  const processingStarted = await LearningDocumentModel.updateOne(
     {
       _id: document._id,
       userId: input.userId,
+      assetId: input.assetId,
+      processingJobId: input.jobId,
+      status: { $in: ["uploaded", "processing", "failed"] },
     },
     {
       $set: {
@@ -183,6 +191,10 @@ export async function processLearningDocument(input: {
       },
     },
   );
+
+  if (processingStarted.matchedCount !== 1) {
+    throw learningDocumentWorkInvalidatedError();
+  }
 
   try {
     const buffer = await readOwnedAssetBuffer(
@@ -217,6 +229,15 @@ export async function processLearningDocument(input: {
     });
 
     await withMongoTransaction(async (mongoSession) => {
+      await fenceLearningDocumentWork({
+        userId: input.userId,
+        documentId: input.documentId,
+        allowedStatuses: ["processing"],
+        session: mongoSession,
+        assetId: input.assetId,
+        processingJobId: input.jobId,
+      });
+
       await DocumentChunkModel.deleteMany({
         userId: input.userId,
         documentId: input.documentId,
@@ -239,6 +260,7 @@ export async function processLearningDocument(input: {
           _id: input.documentId,
           userId: input.userId,
           processingJobId: input.jobId,
+          status: "processing",
         },
         {
           $set: {
@@ -292,6 +314,10 @@ export async function processLearningDocument(input: {
       chunkCount: chunks.length,
     };
   } catch (error) {
+    if (isLearningDocumentWorkInvalidated(error)) {
+      throw error;
+    }
+
     const code =
       error instanceof AppError
         ? error.code
@@ -301,11 +327,12 @@ export async function processLearningDocument(input: {
         ? error.message
         : "Learning document processing failed.";
 
-    await LearningDocumentModel.updateOne(
+    const failureRecorded = await LearningDocumentModel.updateOne(
       {
         _id: input.documentId,
         userId: input.userId,
         processingJobId: input.jobId,
+        status: { $ne: "deleting" },
       },
       {
         $set: {
@@ -317,6 +344,10 @@ export async function processLearningDocument(input: {
         },
       },
     );
+
+    if (failureRecorded.matchedCount !== 1) {
+      throw learningDocumentWorkInvalidatedError();
+    }
 
     throw error;
   }

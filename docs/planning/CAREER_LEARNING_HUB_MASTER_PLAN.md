@@ -746,7 +746,7 @@
 - Activated by operator-approved prompt
   `CLH-PHASE-12A-PRIVATE-PDF-CONTRACT-01`.
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASSES A THROUGH E COMPLETED; DELETION AND FINAL VERIFICATION PLANNED, NOT ACTIVATED`.
+  `PHASE 12 ACTIVE — PASS F: DOCUMENT CASCADE DELETION AND FINAL VERIFICATION`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -765,8 +765,12 @@
 - Pass E — Quiz Generation, Submission and Review is `COMPLETED`.
 - Pass E human visual QA was approved with
   `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
-- The deletion and Phase 12 final-verification pass remains `PLANNED` and is
-  not activated.
+- Pass F — Document Cascade Deletion and Phase 12 Final Verification is
+  `ACTIVE`.
+- Pass F scope is confirmed owned document cascade deletion, dependent-record
+  verification, private-source asset verification, User A/User B deletion
+  ownership, deletion-state cleanup, and final integrated Phase 12
+  verification.
 - Phase 12 remains `ACTIVE` and is not completed.
 
 #### Pass E completion record

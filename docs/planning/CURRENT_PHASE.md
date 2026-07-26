@@ -7,15 +7,17 @@
 - Active implementation phase: Phase 12, Learning Workspace Implementation
 - Next planned phase: Phase 13, Shared Design and UX Hardening (`PLANNED`)
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASSES A THROUGH E COMPLETED; DELETION AND FINAL VERIFICATION PLANNED, NOT ACTIVATED`
+  `PHASE 12 ACTIVE — PASS F: DOCUMENT CASCADE DELETION AND FINAL VERIFICATION`
 - Controlling skills: `karpathy-guidelines`, `test-driven-development`,
   `security-best-practices`
 
 ## Objective
 
 - Preserve completed Passes A through E.
-- Keep document cascade deletion and Phase 12 final verification `PLANNED`
-  until a separate operator-approved activation prompt is provided.
+- Implement Pass F confirmed owned document cascade deletion,
+  dependent-record verification, private-source asset verification, User
+  A/User B deletion ownership, deletion-state cleanup, and final integrated
+  Phase 12 verification.
 - Preserve the private-source contract, authentication and ownership
   boundaries, safe owned-404 behavior, request-ID handling, and private-data
   controls.
@@ -39,8 +41,8 @@
 - Pass E — Quiz Generation, Submission and Review is `COMPLETED`.
 - Pass E human visual QA was approved with
   `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
-- The deletion and Phase 12 final-verification pass remains `PLANNED` and is
-  not activated.
+- Pass F — Document Cascade Deletion and Phase 12 Final Verification is
+  `ACTIVE`.
 - Phase 12 is not completed.
 
 ## Pass E completion record
@@ -150,10 +152,10 @@
 
 ## Explicit exclusions
 
-- Document cascade deletion, standalone quiz deletion, attempt deletion,
-  mutable attempts, persistent answer drafts, offline quizzes, quiz exports,
-  quiz sharing, question editing, answer editing after submission, timers,
-  streaks, leaderboards, badges, mastery scores, and later Phase 12 passes.
+- Standalone quiz deletion, attempt deletion, mutable attempts, persistent
+  answer drafts, offline quizzes, quiz exports, quiz sharing, question
+  editing, answer editing after submission, timers, streaks, leaderboards,
+  badges, mastery scores, and later Phase 12 passes.
 - Flashcard changes and Grounded Chat changes.
 - Backend behavior outside the job-response privacy correction, shared types,
   unrelated frontend features, shared-design hardening, provider

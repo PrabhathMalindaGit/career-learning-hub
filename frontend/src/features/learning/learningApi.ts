@@ -1,9 +1,12 @@
 import {
   ApiError,
-  apiRequest,
   requestWithMetadata,
   requestWithStatusMetadata,
 } from "../../api/apiClient";
+import {
+  parseLearningDocumentDeletionAcceptance,
+  parseLearningDocumentDeletionJob,
+} from "./learningDeletionContracts";
 import {
   parseDocumentChunks,
   parseFlashcardList,
@@ -612,16 +615,50 @@ export async function fetchQuizAttemptReview(
   };
 }
 
-export function deleteLearningDocument(
+export async function requestLearningDocumentDeletion(
   documentId: string,
-  accessToken: string,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
+  const response = await requestWithStatusMetadata<unknown>(
     `/learning-documents/${documentId}`,
     {
       method: "DELETE",
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  if (response.status !== 202) {
+    throw new ApiError(
+      502,
+      "INVALID_LEARNING_RESPONSE",
+      "The server returned an invalid learning response.",
+      response.requestId,
+    );
+  }
+  return {
+    ...parseLearningDocumentDeletionAcceptance(response.data),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
+}
+
+export async function fetchLearningDocumentDeletionJob(
+  jobId: string,
+  documentId: string,
+  signal?: AbortSignal,
+) {
+  const response = await requestWithMetadata<unknown>(`/jobs/${jobId}`, {
+    authentication: "required",
+    signal,
+  });
+  return {
+    ...parseLearningDocumentDeletionJob(response.data, {
+      expectedJobId: jobId,
+      expectedDocumentId: documentId,
+    }),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
 }

@@ -16,6 +16,7 @@ import {
 import { DocumentConversations } from "./DocumentConversations";
 import { DocumentFlashcards } from "./DocumentFlashcards";
 import { DocumentQuizzes } from "./DocumentQuizzes";
+import { LearningDocumentDeletion } from "./LearningDocumentDeletion";
 import type {
   DocumentChunk,
   LearningDocument,
@@ -445,6 +446,7 @@ export function LearningDocumentWorkspace() {
     useState<WorkspaceLoadState>({ status: "loading" });
   const [view, setView] = useState<WorkspaceView>("overview");
   const [refreshVersion, setRefreshVersion] = useState(0);
+  const [deletionAccepted, setDeletionAccepted] = useState(false);
   const sequence = useRef(0);
   const refreshStartedAt = useRef<number | undefined>(undefined);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -454,6 +456,7 @@ export function LearningDocumentWorkspace() {
     const current = ++sequence.current;
     setLoadState({ status: "loading" });
     setView("overview");
+    setDeletionAccepted(false);
 
     void fetchLearningDocument(documentId, controller.signal)
       .then((result) => {
@@ -519,6 +522,11 @@ export function LearningDocumentWorkspace() {
 
   const chooseView = useCallback((next: WorkspaceView) => {
     setView(next);
+  }, []);
+
+  const handleDeletionAccepted = useCallback(() => {
+    setView("overview");
+    setDeletionAccepted(true);
   }, []);
 
   const handleTabKey = (
@@ -588,13 +596,21 @@ export function LearningDocumentWorkspace() {
             {document.originalFilename}
           </p>
         </div>
-        <span
-          className={`learning-status learning-status--${document.status}`}
-        >
-          {document.status === "failed"
-            ? "Processing failed"
-            : document.status}
-        </span>
+        <div className="learning-document-actions">
+          <span
+            className={`learning-status learning-status--${document.status}`}
+          >
+            {document.status === "failed"
+              ? "Processing failed"
+              : document.status}
+          </span>
+          <LearningDocumentDeletion
+            key={`${accountId}:${document.id}`}
+            accountId={accountId}
+            document={document}
+            onDeletionAccepted={handleDeletionAccepted}
+          />
+        </div>
       </header>
 
       {document.status === "uploaded" ||
@@ -647,17 +663,7 @@ export function LearningDocumentWorkspace() {
         </div>
       ) : null}
 
-      {document.status === "deleting" ? (
-        <div className="learning-state learning-state--compact">
-          <h2>Document is being deleted</h2>
-          <p>This workspace is unavailable while deletion completes.</p>
-          <p>Grounded chat is unavailable while deletion completes.</p>
-          <p>Flashcards are unavailable while deletion completes.</p>
-          <p>Quizzes are unavailable while deletion completes.</p>
-        </div>
-      ) : null}
-
-      {document.status === "ready" ? (
+      {document.status === "ready" && !deletionAccepted ? (
         <>
           <div
             className="learning-tabs"

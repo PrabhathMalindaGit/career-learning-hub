@@ -11,6 +11,9 @@ export const learningDocumentStatuses = [
 export type LearningDocumentStatus =
   (typeof learningDocumentStatuses)[number];
 
+export const maximumLearningDocumentWorkFence =
+  Number.MAX_SAFE_INTEGER;
+
 export interface LearningDocument {
   userId: Types.ObjectId;
   assetId: Types.ObjectId;
@@ -24,6 +27,7 @@ export interface LearningDocument {
   summaryKeyPoints: string[];
   processingJobId?: Types.ObjectId;
   deletionJobId?: Types.ObjectId;
+  workFence: number;
   processingError?: {
     code: string;
     message: string;
@@ -104,6 +108,13 @@ const learningDocumentSchema = new Schema<LearningDocument>(
     deletionJobId: {
       type: Schema.Types.ObjectId,
       ref: "JobRecord",
+    },
+    workFence: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: maximumLearningDocumentWorkFence,
+      default: 0,
     },
     processingError: {
       code: { type: String, maxlength: 120 },

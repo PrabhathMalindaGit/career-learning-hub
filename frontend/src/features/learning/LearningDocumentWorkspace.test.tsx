@@ -13,6 +13,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiClient";
 import * as learningApi from "./learningApi";
+import * as learningPolling from "./learningPolling";
 import { LearningDocumentWorkspace } from "./LearningDocumentWorkspace";
 import type { LearningDocument } from "./types";
 
@@ -34,6 +35,7 @@ vi.mock("./learningApi", () => ({
   fetchFlashcardSet: vi.fn(),
   fetchLearningFlashcardJob: vi.fn(),
   fetchLearningDocument: vi.fn(),
+  fetchLearningDocumentDeletionJob: vi.fn(),
   fetchLearningDocumentSource: vi.fn(),
   fetchLearningJob: vi.fn(),
   fetchLearningQuizJob: vi.fn(),
@@ -44,8 +46,19 @@ vi.mock("./learningApi", () => ({
   listLearningConversations: vi.fn(),
   listLearningDocuments: vi.fn(),
   listQuizzes: vi.fn(),
+  requestLearningDocumentDeletion: vi.fn(),
   uploadLearningDocument: vi.fn(),
 }));
+
+vi.mock("./learningPolling", async () => {
+  const actual = await vi.importActual<typeof learningPolling>(
+    "./learningPolling",
+  );
+  return {
+    ...actual,
+    pollLearningJob: vi.fn(),
+  };
+});
 
 const firstDocumentId = "507f1f77bcf86cd799439011";
 const secondDocumentId = "507f1f77bcf86cd799439099";
@@ -152,6 +165,18 @@ beforeEach(() => {
     sets: [],
     pagination: { page: 1, limit: 10, total: 0, pages: 0 },
   });
+  vi.mocked(
+    learningApi.requestLearningDocumentDeletion,
+  ).mockResolvedValue({
+    job: {
+      id: "507f1f77bcf86cd799439098",
+      type: "learning.document.delete",
+      status: "queued",
+    },
+  });
+  vi.mocked(learningPolling.pollLearningJob).mockReturnValue(
+    new Promise(() => undefined),
+  );
 });
 
 afterEach(() => {
@@ -651,5 +676,81 @@ describe("Page-aware extracted content", () => {
     );
 
     expect(local).not.toHaveBeenCalled();
+  });
+});
+
+describe("Document-level deletion placement and teardown", () => {
+  it("places the sole destructive action in the document header", async () => {
+    renderWorkspace();
+
+    const trigger = await screen.findByRole("button", {
+      name: "Delete document",
+    });
+    expect(
+      trigger.closest(".learning-workspace-header"),
+    ).not.toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: /delete (conversation|message|flashcard|quiz|attempt)/i,
+      }),
+    ).toBeNull();
+  });
+
+  it("unmounts document-scoped views and revokes the PDF URL after acceptance", async () => {
+    renderWorkspace();
+    await userEvent.click(
+      await screen.findByRole("tab", { name: "Original PDF" }),
+    );
+    await screen.findByTitle(
+      "Original PDF: Synthetic distributed systems notes",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Delete document" }),
+    );
+    await userEvent.type(
+      screen.getByRole("textbox", {
+        name: "Type the document title to confirm",
+      }),
+      learningDocument().title,
+    );
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Permanently delete document",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("status"),
+    ).not.toBeNull();
+    expect(
+      screen.queryByRole("tablist", {
+        name: "Document workspace views",
+      }),
+    ).toBeNull();
+    expect(screen.queryByTitle(/Original PDF:/)).toBeNull();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(
+      "blob:synthetic-private-pdf",
+    );
+  });
+
+  it("shows factual observation instead of a new action for a deleting document", async () => {
+    vi.mocked(learningApi.fetchLearningDocument).mockResolvedValue({
+      document: learningDocument({ status: "deleting" }),
+    });
+    renderWorkspace();
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Document is being deleted",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Delete document" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Check deletion status",
+      }),
+    ).not.toBeNull();
   });
 });
