@@ -746,7 +746,7 @@
 - Activated by operator-approved prompt
   `CLH-PHASE-12A-PRIVATE-PDF-CONTRACT-01`.
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS A, PASS B AND PASS C COMPLETED, PASS D PLANNED, NOT ACTIVATED`.
+  `PHASE 12 ACTIVE — PASS D COMPLETED; PASS E PLANNED`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -759,9 +759,42 @@
   `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
 - Pass C — Grounded Document Chat is `COMPLETED`, activated by the
   operator-approved prompt `CLH-PHASE-12C-GROUNDED-DOCUMENT-CHAT-01`.
-- Pass D remains `PLANNED`, is not activated, and requires a separate
-  operator-approved execution prompt.
+- Pass D — Flashcard Generation and Study is `COMPLETED`.
+- Pass D human visual QA was approved with
+  `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.
+- Pass E and later Phase 12 work remain `PLANNED` and are not activated.
 - Phase 12 remains `ACTIVE` and is not completed.
+
+#### Pass D delivered scope
+
+- Owned flashcard-set generation, listing, detail, and canonical flashcard
+  retrieval.
+- Exact generation-job polling with truthful queued, processing, paused,
+  failed, cancelled, and completed states.
+- Route-bound, responsive, and accessible flashcard study with transient
+  mounted-session state only.
+- Canonical source-page controls, nested document/set identity protection,
+  stale-response prevention, and account-change and logout cleanup.
+
+#### Pass D completion record
+
+- Delivered owned flashcard-set generation and listing, strict canonical
+  response validation, exact generation-job polling, canonical completion
+  refetch, and route-bound study.
+- Delivered explicit answer reveal and hide/reset, previous and next
+  navigation with boundaries, transient mounted-session state, canonical
+  source-page controls, stale-response protection, and account-change cleanup.
+- Focused RED/GREEN coverage passed. The complete frontend suite passed with
+  409 tests, and directly affected tests passed after the final review repairs.
+  Frontend and root typechecks, the production build, dependency integrity,
+  runtime verification, and responsive browser QA passed.
+- User A/User B ownership, logout and account switching, long-content
+  wrapping, visible focus, and 320px overflow behavior were verified. No
+  unresolved Critical or Important findings remained.
+- Human visual QA was approved with
+  `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.
+- Gemini remained unconfigured. Truthful provider-unavailable behavior was
+  verified; real-provider success was not claimed.
 
 #### Pass B completion record
 

@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   parseDocumentChunks,
+  parseFlashcardList,
+  parseFlashcardSetAcceptance,
+  parseFlashcardSetDetail,
+  parseFlashcardSetList,
   parseLearningChatJob,
   parseLearningConversationCreate,
   parseLearningConversationList,
   parseLearningDocumentDetail,
   parseLearningDocumentList,
+  parseLearningFlashcardJob,
   parseLearningJob,
   parseLearningMessageAcceptance,
   parseLearningMessageList,
@@ -20,6 +25,8 @@ const conversationId = "507f1f77bcf86cd799439013";
 const messageId = "507f1f77bcf86cd799439014";
 const assistantMessageId = "507f1f77bcf86cd799439015";
 const userId = "507f1f77bcf86cd799439016";
+const setId = "507f1f77bcf86cd799439017";
+const cardId = "507f1f77bcf86cd799439018";
 const createdAt = "2026-07-26T01:00:00.000Z";
 
 function safeDocument(overrides: Record<string, unknown> = {}) {
@@ -620,5 +627,265 @@ describe("Grounded chat response contracts", () => {
       code: "AI_PROVIDER_UNAVAILABLE",
       message: "Grounded response generation is unavailable.",
     });
+  });
+});
+
+function flashcardSet(overrides: Record<string, unknown> = {}) {
+  return {
+    _id: setId,
+    documentId,
+    title: "Synthetic architecture review",
+    status: "ready",
+    cardCount: 2,
+    createdAt,
+    updatedAt: createdAt,
+    ...overrides,
+  };
+}
+
+function flashcard(overrides: Record<string, unknown> = {}) {
+  return {
+    _id: cardId,
+    cardIndex: 0,
+    front: "What is **bounded context**?",
+    back: "<strong>It is stored as plain text.</strong>",
+    sourcePages: [1, 3],
+    createdAt,
+    ...overrides,
+  };
+}
+
+describe("Flashcard response contracts", () => {
+  it("validates exact generation acceptance and job type", () => {
+    expect(
+      parseFlashcardSetAcceptance(
+        {
+          setId,
+          job: {
+            id: jobId,
+            type: "learning.flashcards.generate",
+            status: "queued",
+          },
+        },
+        documentId,
+      ),
+    ).toEqual({
+      setId,
+      documentId,
+      job: {
+        id: jobId,
+        type: "learning.flashcards.generate",
+        status: "queued",
+      },
+    });
+
+    expect(() =>
+      parseFlashcardSetAcceptance(
+        {
+          setId,
+          job: {
+            id: jobId,
+            type: "learning.chat.respond",
+            status: "queued",
+          },
+        },
+        documentId,
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("validates a bounded set page and strips no private fields", () => {
+    const result = parseFlashcardSetList(
+      {
+        sets: [flashcardSet()],
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          pages: 1,
+        },
+      },
+      documentId,
+    );
+
+    expect(result.sets[0]).toEqual({
+      id: setId,
+      documentId,
+      title: "Synthetic architecture review",
+      status: "ready",
+      cardCount: 2,
+      createdAt,
+      updatedAt: createdAt,
+    });
+  });
+
+  it.each([
+    { status: "completed" },
+    { provider: "must-not-enter-state" },
+    { userId },
+  ])("rejects malformed or private set data: %s", (extra) => {
+    expect(() =>
+      parseFlashcardSetList(
+        {
+          sets: [flashcardSet(extra)],
+          pagination: pagination({ limit: 10 }),
+        },
+        documentId,
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("validates set detail and rejects wrong nested document identity", () => {
+    const { _id: _listSetId, ...listFields } = flashcardSet();
+    const detail = { ...listFields, id: setId };
+
+    expect(
+      parseFlashcardSetDetail({ set: detail }, { documentId, setId }).set.id,
+    ).toBe(setId);
+    expect(() =>
+      parseFlashcardSetDetail(
+        {
+          set: {
+            ...detail,
+            documentId: "507f1f77bcf86cd799439099",
+          },
+        },
+        { documentId, setId },
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("validates canonical ordered cards and factual source pages", () => {
+    const result = parseFlashcardList(
+      {
+        cards: [
+          flashcard(),
+          flashcard({
+            _id: "507f1f77bcf86cd799439019",
+            cardIndex: 1,
+            front: "Second question",
+            back: "Second answer",
+            sourcePages: [],
+          }),
+        ],
+        pagination: {
+          page: 1,
+          limit: 100,
+          total: 2,
+          pages: 1,
+        },
+      },
+      { pageCount: 3 },
+    );
+
+    expect(result.cards[0]?.front).toBe("What is **bounded context**?");
+    expect(result.cards[0]?.sourcePages).toEqual([1, 3]);
+    expect(result.cards[0]).not.toHaveProperty("sourceChunkIds");
+  });
+
+  it.each([
+    [[0], "Page 0"],
+    [[4], "out of range"],
+    [[1, 1], "duplicate"],
+    [[3, 1], "unordered"],
+  ])("rejects invalid flashcard source pages: %s (%s)", (sourcePages) => {
+    expect(() =>
+      parseFlashcardList(
+        {
+          cards: [flashcard({ sourcePages })],
+          pagination: pagination({ limit: 100 }),
+        },
+        { pageCount: 3 },
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("rejects duplicate IDs, unordered indexes and private card fields", () => {
+    expect(() =>
+      parseFlashcardList(
+        {
+          cards: [
+            flashcard({ cardIndex: 1 }),
+            flashcard({ cardIndex: 0 }),
+          ],
+          pagination: {
+            page: 1,
+            limit: 100,
+            total: 2,
+            pages: 1,
+          },
+        },
+        { pageCount: 3 },
+      ),
+    ).toThrow(/invalid learning response/i);
+
+    expect(() =>
+      parseFlashcardList(
+        {
+          cards: [flashcard({ sourceChunkIds: [cardId] })],
+          pagination: pagination({ limit: 100 }),
+        },
+        { pageCount: 3 },
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("validates exact completed generation job and result set identity", () => {
+    const result = parseLearningFlashcardJob(
+      {
+        job: {
+          id: jobId,
+          type: "learning.flashcards.generate",
+          status: "completed",
+          progress: 100,
+          attempts: 1,
+          maxAttempts: 3,
+          result: { setId, cardCount: 2 },
+          createdAt,
+          updatedAt: createdAt,
+        },
+      },
+      { jobId, setId },
+    );
+
+    expect(result.result).toEqual({ setId, cardCount: 2 });
+  });
+
+  it.each([
+    {
+      id: "507f1f77bcf86cd799439099",
+      type: "learning.flashcards.generate",
+      result: { setId, cardCount: 2 },
+    },
+    {
+      id: jobId,
+      type: "learning.chat.respond",
+      result: { setId, cardCount: 2 },
+    },
+    {
+      id: jobId,
+      type: "learning.flashcards.generate",
+      result: {
+        setId: "507f1f77bcf86cd799439099",
+        cardCount: 2,
+      },
+    },
+  ])("rejects wrong flashcard job identity: %s", (identity) => {
+    expect(() =>
+      parseLearningFlashcardJob(
+        {
+          job: {
+            ...identity,
+            status: "completed",
+            progress: 100,
+            attempts: 1,
+            maxAttempts: 3,
+            createdAt,
+            updatedAt: createdAt,
+          },
+        },
+        { jobId, setId },
+      ),
+    ).toThrow(/invalid learning response/i);
   });
 });

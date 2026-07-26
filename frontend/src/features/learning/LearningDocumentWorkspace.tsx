@@ -14,6 +14,7 @@ import {
   listDocumentChunks,
 } from "./learningApi";
 import { DocumentConversations } from "./DocumentConversations";
+import { DocumentFlashcards } from "./DocumentFlashcards";
 import type {
   DocumentChunk,
   LearningDocument,
@@ -415,7 +416,12 @@ type WorkspaceLoadState =
       error: SafeError;
     };
 
-type WorkspaceView = "overview" | "original" | "extracted" | "chat";
+type WorkspaceView =
+  | "overview"
+  | "original"
+  | "extracted"
+  | "chat"
+  | "flashcards";
 
 const workspaceViews: Array<{
   id: WorkspaceView;
@@ -425,6 +431,7 @@ const workspaceViews: Array<{
   { id: "original", label: "Original PDF" },
   { id: "extracted", label: "Extracted Content" },
   { id: "chat", label: "Grounded Chat" },
+  { id: "flashcards", label: "Flashcards" },
 ];
 
 export function LearningDocumentWorkspace() {
@@ -597,6 +604,7 @@ export function LearningDocumentWorkspace() {
           </h2>
           <p>Processing is continuing in the background.</p>
           <p>Processing must finish before grounded chat is available.</p>
+          <p>Processing must finish before flashcards can be generated.</p>
           <button
             type="button"
             className="learning-secondary-button"
@@ -620,6 +628,7 @@ export function LearningDocumentWorkspace() {
               "The PDF could not be processed. Scanned files may fail because OCR is not supported."}
           </p>
           <p>Failed documents cannot be used for grounded chat.</p>
+          <p>Failed documents cannot generate grounded flashcards.</p>
           <RequestId value={loadState.requestId} />
           <button
             type="button"
@@ -638,6 +647,7 @@ export function LearningDocumentWorkspace() {
           <h2>Document is being deleted</h2>
           <p>This workspace is unavailable while deletion completes.</p>
           <p>Grounded chat is unavailable while deletion completes.</p>
+          <p>Flashcards are unavailable while deletion completes.</p>
         </div>
       ) : null}
 
@@ -739,6 +749,13 @@ export function LearningDocumentWorkspace() {
             ) : null}
             {view === "chat" ? (
               <DocumentConversations
+                key={`${accountId}:${document.id}`}
+                accountId={accountId}
+                document={document}
+              />
+            ) : null}
+            {view === "flashcards" ? (
+              <DocumentFlashcards
                 key={`${accountId}:${document.id}`}
                 accountId={accountId}
                 document={document}

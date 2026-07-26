@@ -1,11 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as apiClient from "../../api/apiClient";
 import {
+  createFlashcardSet,
   createLearningConversation,
+  fetchFlashcardSet,
   fetchLearningChatJob,
   fetchLearningDocument,
   fetchLearningDocumentSource,
   fetchLearningJob,
+  fetchLearningFlashcardJob,
+  listFlashcardSets,
+  listLearningFlashcards,
   listDocumentChunks,
   listLearningConversations,
   listLearningDocuments,
@@ -30,6 +35,8 @@ const jobId = "507f1f77bcf86cd799439012";
 const conversationId = "507f1f77bcf86cd799439013";
 const messageId = "507f1f77bcf86cd799439014";
 const userId = "507f1f77bcf86cd799439015";
+const setId = "507f1f77bcf86cd799439016";
+const cardId = "507f1f77bcf86cd799439017";
 const createdAt = "2026-07-26T01:00:00.000Z";
 
 function document(status = "ready") {
@@ -342,6 +349,150 @@ describe("Learning API", () => {
     );
     expect(accepted.requestId).toBe("request-send-chat-0001");
     expect(apiClient.requestWithMetadata).toHaveBeenLastCalledWith(
+      `/jobs/${jobId}`,
+      expect.objectContaining({ authentication: "required" }),
+    );
+  });
+
+  it("creates a flashcard set with exact canonical acceptance and no userId", async () => {
+    const requestId = "3159bf41-e3ac-409c-bad4-a77981000d52";
+    vi.mocked(apiClient.requestWithStatusMetadata).mockResolvedValue({
+      status: 202,
+      data: {
+        setId,
+        job: {
+          id: jobId,
+          type: "learning.flashcards.generate",
+          status: "queued",
+        },
+      },
+      requestId: "request-flashcards-0001",
+    });
+
+    const result = await createFlashcardSet(documentId, {
+      title: "Architecture review",
+      count: 12,
+      focus: "Bounded contexts",
+      requestId,
+    });
+
+    expect(apiClient.requestWithStatusMetadata).toHaveBeenCalledWith(
+      `/learning-documents/${documentId}/flashcard-sets`,
+      expect.objectContaining({
+        method: "POST",
+        authentication: "required",
+        body: {
+          title: "Architecture review",
+          count: 12,
+          focus: "Bounded contexts",
+          requestId,
+        },
+      }),
+    );
+    expect(
+      vi.mocked(apiClient.requestWithStatusMetadata).mock.calls[0]?.[1]?.body,
+    ).not.toHaveProperty("userId");
+    expect(result.requestId).toBe("request-flashcards-0001");
+    expect(result.setId).toBe(setId);
+  });
+
+  it("requires HTTP 202 for flashcard generation acceptance", async () => {
+    vi.mocked(apiClient.requestWithStatusMetadata).mockResolvedValue({
+      status: 200,
+      data: {},
+    });
+
+    await expect(
+      createFlashcardSet(documentId, {
+        title: "Architecture review",
+        count: 12,
+        requestId: "3159bf41-e3ac-409c-bad4-a77981000d52",
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_LEARNING_RESPONSE" });
+  });
+
+  it("lists and fetches canonical route-bound sets and cards", async () => {
+    const canonicalSet = {
+      _id: setId,
+      documentId,
+      title: "Architecture review",
+      status: "ready",
+      cardCount: 1,
+      createdAt,
+      updatedAt: createdAt,
+    };
+    const { _id: _listSetId, ...canonicalSetDetail } = canonicalSet;
+    vi.mocked(apiClient.requestWithMetadata)
+      .mockResolvedValueOnce({
+        data: {
+          sets: [canonicalSet],
+          pagination: { page: 1, limit: 10, total: 1, pages: 1 },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: { set: { ...canonicalSetDetail, id: setId } },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          cards: [
+            {
+              _id: cardId,
+              cardIndex: 0,
+              front: "Canonical question",
+              back: "Canonical answer",
+              sourcePages: [1],
+              createdAt,
+            },
+          ],
+          pagination: { page: 1, limit: 100, total: 1, pages: 1 },
+        },
+      });
+
+    await listFlashcardSets(documentId, { page: 1, limit: 10 });
+    await fetchFlashcardSet(documentId, setId);
+    await listLearningFlashcards(setId, 2, {
+      page: 1,
+      limit: 100,
+    });
+
+    expect(apiClient.requestWithMetadata).toHaveBeenNthCalledWith(
+      1,
+      `/flashcard-sets?documentId=${documentId}&page=1&limit=10`,
+      expect.objectContaining({ authentication: "required" }),
+    );
+    expect(apiClient.requestWithMetadata).toHaveBeenNthCalledWith(
+      2,
+      `/flashcard-sets/${setId}`,
+      expect.objectContaining({ authentication: "required" }),
+    );
+    expect(apiClient.requestWithMetadata).toHaveBeenNthCalledWith(
+      3,
+      `/flashcard-sets/${setId}/cards?page=1&limit=100`,
+      expect.objectContaining({ authentication: "required" }),
+    );
+  });
+
+  it("polls the exact flashcard job and expected result set", async () => {
+    vi.mocked(apiClient.requestWithMetadata).mockResolvedValue({
+      data: {
+        job: {
+          id: jobId,
+          type: "learning.flashcards.generate",
+          status: "completed",
+          progress: 100,
+          attempts: 1,
+          maxAttempts: 3,
+          result: { setId, cardCount: 1 },
+          createdAt,
+          updatedAt: createdAt,
+        },
+      },
+    });
+
+    const result = await fetchLearningFlashcardJob(jobId, setId);
+
+    expect(result.result?.setId).toBe(setId);
+    expect(apiClient.requestWithMetadata).toHaveBeenCalledWith(
       `/jobs/${jobId}`,
       expect.objectContaining({ authentication: "required" }),
     );

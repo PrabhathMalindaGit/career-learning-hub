@@ -1,13 +1,18 @@
 import { ApiError } from "../../api/apiClient";
 import type {
+  AcceptedLearningFlashcardJob,
   AcceptedLearningChatJob,
   AcceptedLearningJob,
   DocumentChunk,
+  Flashcard,
+  FlashcardSet,
+  FlashcardSetStatus,
   LearningChatJob,
   LearningConversation,
   LearningDocument,
   LearningDocumentSource,
   LearningDocumentStatus,
+  LearningFlashcardJob,
   LearningJob,
   LearningMessage,
   LearningPagination,
@@ -32,6 +37,11 @@ const jobStatuses = new Set<LearningJob["status"]>([
 const messageRoles = new Set<LearningMessage["role"]>([
   "user",
   "assistant",
+]);
+const flashcardSetStatuses = new Set<FlashcardSetStatus>([
+  "generating",
+  "ready",
+  "failed",
 ]);
 
 function invalid(): never {
@@ -510,6 +520,239 @@ export function parseLearningChatJob(
     id: jobId,
     type: "learning.chat.respond",
     status: item.status as LearningChatJob["status"],
+    progress: integer(item.progress, 0, 100),
+    attempts: integer(item.attempts, 0, 10),
+    maxAttempts: integer(item.maxAttempts, 1, 10),
+    ...(result === undefined ? {} : { result }),
+    ...(error === undefined ? {} : { error }),
+    createdAt: isoDate(item.createdAt),
+    updatedAt: isoDate(item.updatedAt),
+  };
+}
+
+function parseFlashcardSetError(
+  value: unknown,
+): FlashcardSet["generationError"] {
+  const item = record(value);
+  if (Object.keys(item).length === 0) return undefined;
+  exactKeys(item, ["code", "message"]);
+  return {
+    code: text(item.code, 120, 1),
+    message: text(item.message, 2_000, 1),
+  };
+}
+
+function parseFlashcardSet(
+  value: unknown,
+  identityKey: "id" | "_id",
+  expectedDocumentId: string,
+): FlashcardSet {
+  const item = record(value);
+  exactKeys(
+    item,
+    [
+      identityKey,
+      "documentId",
+      "title",
+      "status",
+      "cardCount",
+      "createdAt",
+      "updatedAt",
+    ],
+    ["generationError"],
+  );
+  if (
+    typeof item.status !== "string" ||
+    !flashcardSetStatuses.has(item.status as FlashcardSetStatus)
+  ) {
+    invalid();
+  }
+  const documentId = id(item.documentId);
+  if (documentId !== expectedDocumentId) invalid();
+  const generationError =
+    item.generationError === undefined
+      ? undefined
+      : parseFlashcardSetError(item.generationError);
+  return {
+    id: id(item[identityKey]),
+    documentId,
+    title: text(item.title, 200, 1),
+    status: item.status as FlashcardSetStatus,
+    cardCount: integer(item.cardCount, 0, 100),
+    ...(generationError === undefined ? {} : { generationError }),
+    createdAt: isoDate(item.createdAt),
+    updatedAt: isoDate(item.updatedAt),
+  };
+}
+
+export function parseFlashcardSetAcceptance(
+  value: unknown,
+  expectedDocumentId: string,
+): {
+  setId: string;
+  documentId: string;
+  job: AcceptedLearningFlashcardJob;
+} {
+  const item = record(value);
+  exactKeys(item, ["setId", "job"]);
+  const job = record(item.job);
+  exactKeys(job, ["id", "type", "status"]);
+  if (
+    job.type !== "learning.flashcards.generate" ||
+    (job.status !== "queued" && job.status !== "processing")
+  ) {
+    invalid();
+  }
+  return {
+    setId: id(item.setId),
+    documentId: id(expectedDocumentId),
+    job: {
+      id: id(job.id),
+      type: "learning.flashcards.generate",
+      status: job.status,
+    },
+  };
+}
+
+export function parseFlashcardSetList(
+  value: unknown,
+  expectedDocumentId: string,
+): {
+  sets: FlashcardSet[];
+  pagination: LearningPagination;
+} {
+  const item = record(value);
+  exactKeys(item, ["sets", "pagination"]);
+  if (!Array.isArray(item.sets) || item.sets.length > 100) invalid();
+  const sets = item.sets.map((set) =>
+    parseFlashcardSet(set, "_id", expectedDocumentId),
+  );
+  if (new Set(sets.map((set) => set.id)).size !== sets.length) invalid();
+  return {
+    sets,
+    pagination: parsePagination(item.pagination),
+  };
+}
+
+export function parseFlashcardSetDetail(
+  value: unknown,
+  expected: { documentId: string; setId: string },
+): { set: FlashcardSet } {
+  const item = record(value);
+  exactKeys(item, ["set"]);
+  const set = parseFlashcardSet(item.set, "id", expected.documentId);
+  if (set.id !== expected.setId) invalid();
+  return { set };
+}
+
+function parseFlashcard(
+  value: unknown,
+  pageCount: number,
+): Flashcard {
+  const item = record(value);
+  exactKeys(item, [
+    "_id",
+    "cardIndex",
+    "front",
+    "back",
+    "sourcePages",
+    "createdAt",
+  ]);
+  if (!Array.isArray(item.sourcePages) || item.sourcePages.length > 50) {
+    invalid();
+  }
+  return {
+    id: id(item._id),
+    cardIndex: integer(item.cardIndex, 0, 99),
+    front: text(item.front, 3_000, 1),
+    back: text(item.back, 8_000, 1),
+    sourcePages: parseSourcePages(item.sourcePages, pageCount),
+    createdAt: isoDate(item.createdAt),
+  };
+}
+
+export function parseFlashcardList(
+  value: unknown,
+  expected: { pageCount: number },
+): { cards: Flashcard[]; pagination: LearningPagination } {
+  const item = record(value);
+  exactKeys(item, ["cards", "pagination"]);
+  if (!Array.isArray(item.cards) || item.cards.length > 100) invalid();
+  const cards = item.cards.map((card) =>
+    parseFlashcard(card, expected.pageCount),
+  );
+  const ids = new Set<string>();
+  for (let index = 0; index < cards.length; index += 1) {
+    const current = cards[index]!;
+    if (ids.has(current.id)) invalid();
+    ids.add(current.id);
+    const previous = cards[index - 1];
+    if (previous && previous.cardIndex >= current.cardIndex) invalid();
+  }
+  return {
+    cards,
+    pagination: parsePagination(item.pagination),
+  };
+}
+
+function parseFlashcardJobResult(
+  value: unknown,
+): NonNullable<LearningFlashcardJob["result"]> {
+  const item = record(value);
+  exactKeys(item, ["setId", "cardCount"]);
+  return {
+    setId: id(item.setId),
+    cardCount: integer(item.cardCount, 1, 100),
+  };
+}
+
+export function parseLearningFlashcardJob(
+  value: unknown,
+  expected: { jobId: string; setId: string },
+): LearningFlashcardJob {
+  const envelope = record(value);
+  exactKeys(envelope, ["job"]);
+  const item = record(envelope.job);
+  exactKeys(
+    item,
+    [
+      "id",
+      "type",
+      "status",
+      "progress",
+      "attempts",
+      "maxAttempts",
+      "createdAt",
+      "updatedAt",
+    ],
+    ["result", "error"],
+  );
+  if (
+    item.type !== "learning.flashcards.generate" ||
+    typeof item.status !== "string" ||
+    !jobStatuses.has(item.status as LearningFlashcardJob["status"])
+  ) {
+    invalid();
+  }
+  const jobId = id(item.id);
+  if (jobId !== expected.jobId) invalid();
+  const result =
+    item.result === undefined
+      ? undefined
+      : parseFlashcardJobResult(item.result);
+  if (
+    (item.status === "completed" && result === undefined) ||
+    (item.status !== "completed" && result !== undefined) ||
+    (result !== undefined && result.setId !== expected.setId)
+  ) {
+    invalid();
+  }
+  const error =
+    item.error === undefined ? undefined : parseJobError(item.error);
+  return {
+    id: jobId,
+    type: "learning.flashcards.generate",
+    status: item.status as LearningFlashcardJob["status"],
     progress: integer(item.progress, 0, 100),
     attempts: integer(item.attempts, 0, 10),
     maxAttempts: integer(item.maxAttempts, 1, 10),

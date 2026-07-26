@@ -18,6 +18,7 @@ import { InterviewSessionWorkspace } from "../features/interviews/InterviewSessi
 import { LearningDashboard } from "../features/learning/LearningDashboard";
 import { LearningConversationWorkspace } from "../features/learning/LearningConversationWorkspace";
 import { LearningDocumentWorkspace } from "../features/learning/LearningDocumentWorkspace";
+import { LearningFlashcardWorkspace } from "../features/learning/LearningFlashcardWorkspace";
 import { ResumeListPage } from "../features/resumes/ResumeListPage";
 import { ResumeWorkspace } from "../features/resumes/ResumeWorkspace";
 import { RouteErrorPage } from "./RouteErrorPage";
@@ -96,6 +97,10 @@ export const appRoutes: RouteObject[] = [
           {
             path: "/learning/documents/:documentId/conversations/:conversationId",
             element: <LearningConversationWorkspace />,
+          },
+          {
+            path: "/learning/documents/:documentId/flashcards/:setId",
+            element: <LearningFlashcardWorkspace />,
           },
           {
             path: "/settings",

@@ -118,12 +118,54 @@ export interface LearningChatJob {
   updatedAt: string;
 }
 
+export type FlashcardSetStatus = "generating" | "ready" | "failed";
+
+export interface FlashcardSet {
+  id: string;
+  documentId: string;
+  title: string;
+  status: FlashcardSetStatus;
+  cardCount: number;
+  generationError?: {
+    code: string;
+    message: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AcceptedLearningFlashcardJob {
+  id: string;
+  type: "learning.flashcards.generate";
+  status: "queued" | "processing";
+}
+
+export interface LearningFlashcardJob {
+  id: string;
+  type: "learning.flashcards.generate";
+  status: "queued" | "processing" | "completed" | "failed" | "cancelled";
+  progress: number;
+  attempts: number;
+  maxAttempts: number;
+  result?: {
+    setId: string;
+    cardCount: number;
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Flashcard {
-  _id: string;
+  id: string;
   cardIndex: number;
   front: string;
   back: string;
   sourcePages: number[];
+  createdAt: string;
 }
 
 export interface QuizQuestion {

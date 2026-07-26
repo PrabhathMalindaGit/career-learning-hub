@@ -7,24 +7,18 @@
 - Active implementation phase: Phase 12, Learning Workspace Implementation
 - Next planned phase: Phase 13, Shared Design and UX Hardening (`PLANNED`)
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS A, PASS B AND PASS C COMPLETED, PASS D PLANNED, NOT ACTIVATED`
+  `PHASE 12 ACTIVE — PASS D COMPLETED; PASS E PLANNED`
 - Controlling skills: `karpathy-guidelines`, `test-driven-development`,
   `security-best-practices`
 
 ## Objective
 
-- Pass C — Grounded Document Chat is completed and delivered:
-  - conversation creation and listing;
-  - route-bound conversation workspace;
-  - paginated canonical message history;
-  - grounded question submission;
-  - owned chat-response job polling;
-  - canonical message refresh;
-  - factual source-page rendering;
-  - accessible and responsive chat UI.
-- Preserve the completed Pass A private-source contract, existing
-  authentication and ownership boundaries, safe owned-404 behavior,
-  request-ID handling, and private-data controls.
+- Preserve completed Passes A through D.
+- Keep Pass E and later Phase 12 work `PLANNED` until a separate
+  operator-approved activation prompt is provided.
+- Preserve the private-source contract, authentication and ownership
+  boundaries, safe owned-404 behavior, request-ID handling, and private-data
+  controls.
 - Keep page-aware extracted chunks authoritative for page references.
 
 ## Phase status controls
@@ -39,7 +33,10 @@
 - Pass B visual QA was approved with
   `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
 - Pass C — Grounded Document Chat is `COMPLETED`.
-- Pass D remains `PLANNED` and is not activated.
+- Pass D — Flashcard Generation and Study is `COMPLETED`.
+- Pass D human visual QA was approved with
+  `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.
+- Pass E and later Phase 12 work remain `PLANNED` and are not activated.
 - Phase 12 is not completed.
 
 ## Pass A completion record
@@ -87,6 +84,26 @@
 - Gemini remained unconfigured. Truthful provider-unavailable behavior was
   verified; real-provider success was not claimed.
 
+## Pass D completion record
+
+- Delivered owned flashcard-set generation and listing, strict canonical
+  response validation, exact generation-job polling, canonical completion
+  refetch, and route-bound study.
+- Delivered explicit answer reveal and hide/reset, previous and next
+  navigation with boundaries, transient mounted-session state, canonical
+  source-page controls, stale-response protection, and account-change cleanup.
+- Focused RED/GREEN coverage passed. The complete frontend suite passed with
+  409 tests, and directly affected tests passed after the final review repairs.
+  Frontend and root typechecks, the production build, dependency integrity,
+  runtime verification, and responsive browser QA passed.
+- User A/User B ownership, logout and account switching, long-content
+  wrapping, visible focus, and 320px overflow behavior were verified. No
+  unresolved Critical or Important findings remained.
+- Human visual QA was approved with
+  `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.
+- Gemini remained unconfigured. Truthful provider-unavailable behavior was
+  verified; real-provider success was not claimed.
+
 ## Authorized implementation scope
 
 - `frontend/src/features/learning/**`.
@@ -98,8 +115,9 @@
 
 ## Explicit exclusions
 
-- Flashcards, quizzes, attempts, answer review, deletion UI, persisted study
-  state, and later Phase 12 passes.
+- Quizzes, attempts, answer review, flashcard editing or deletion, flashcard-set
+  deletion, persisted study state, spaced repetition, deletion UI, and later
+  Phase 12 passes.
 - Backend, shared types, unrelated frontend features, shared-design hardening,
   provider configuration, package changes, migrations, seeds, and deployment
   configuration.
@@ -123,4 +141,5 @@
   `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
 - Pass C human visual QA was approved with
   `PHASE_12C_GROUNDED_CHAT_VISUAL_QA_APPROVED`.
-- Pass D requires a separate operator-approved execution prompt.
+- Pass D human visual QA was approved with
+  `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.

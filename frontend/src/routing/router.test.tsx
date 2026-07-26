@@ -134,7 +134,19 @@ vi.mock("../features/interviews/interviewApi", () => ({
 }));
 
 vi.mock("../features/learning/learningApi", () => ({
+  createFlashcardSet: vi.fn(),
   createLearningConversation: vi.fn(),
+  fetchFlashcardSet: vi.fn().mockResolvedValue({
+    set: {
+      id: "507f1f77bcf86cd799439012",
+      documentId: "507f1f77bcf86cd799439011",
+      title: "Connected flashcard set",
+      status: "ready",
+      cardCount: 1,
+      createdAt: "2026-07-26T00:00:00.000Z",
+      updatedAt: "2026-07-26T00:00:00.000Z",
+    },
+  }),
   fetchLearningChatJob: vi.fn(),
   fetchLearningDocument: vi.fn().mockResolvedValue({
     document: {
@@ -153,8 +165,26 @@ vi.mock("../features/learning/learningApi", () => ({
     },
   }),
   fetchLearningDocumentSource: vi.fn(),
+  fetchLearningFlashcardJob: vi.fn(),
   fetchLearningJob: vi.fn(),
   listDocumentChunks: vi.fn(),
+  listFlashcardSets: vi.fn().mockResolvedValue({
+    sets: [],
+    pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+  }),
+  listLearningFlashcards: vi.fn().mockResolvedValue({
+    cards: [
+      {
+        id: "507f1f77bcf86cd799439013",
+        cardIndex: 0,
+        front: "Connected canonical question",
+        back: "Connected canonical answer",
+        sourcePages: [1],
+        createdAt: "2026-07-26T00:00:00.000Z",
+      },
+    ],
+    pagination: { page: 1, limit: 100, total: 1, pages: 1 },
+  }),
   listLearningConversations: vi.fn().mockResolvedValue({
     conversations: [],
     pagination: { page: 1, limit: 10, total: 0, pages: 0 },
@@ -261,6 +291,7 @@ describe("application routing", () => {
     "/learning",
     "/learning/documents/507f1f77bcf86cd799439011",
     "/learning/documents/507f1f77bcf86cd799439011/conversations/507f1f77bcf86cd799439012",
+    "/learning/documents/507f1f77bcf86cd799439011/flashcards/507f1f77bcf86cd799439012",
     "/settings",
   ])("redirects anonymous users from protected path %s", async (path) => {
     vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
@@ -309,6 +340,10 @@ describe("application routing", () => {
     [
       "/learning/documents/507f1f77bcf86cd799439011/conversations/507f1f77bcf86cd799439012",
       "Ask the document",
+    ],
+    [
+      "/learning/documents/507f1f77bcf86cd799439011/flashcards/507f1f77bcf86cd799439012",
+      "Connected flashcard set",
     ],
     ["/settings", "Session settings"],
   ])("matches protected target path %s", async (path, heading) => {

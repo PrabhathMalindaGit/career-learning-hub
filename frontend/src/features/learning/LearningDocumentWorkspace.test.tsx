@@ -28,11 +28,16 @@ vi.mock("../auth/AuthProvider", () => ({
 }));
 
 vi.mock("./learningApi", () => ({
+  createFlashcardSet: vi.fn(),
   createLearningConversation: vi.fn(),
+  fetchFlashcardSet: vi.fn(),
+  fetchLearningFlashcardJob: vi.fn(),
   fetchLearningDocument: vi.fn(),
   fetchLearningDocumentSource: vi.fn(),
   fetchLearningJob: vi.fn(),
   listDocumentChunks: vi.fn(),
+  listFlashcardSets: vi.fn(),
+  listLearningFlashcards: vi.fn(),
   listLearningConversations: vi.fn(),
   listLearningDocuments: vi.fn(),
   uploadLearningDocument: vi.fn(),
@@ -133,6 +138,10 @@ beforeEach(() => {
   });
   vi.mocked(learningApi.listLearningConversations).mockResolvedValue({
     conversations: [],
+    pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+  });
+  vi.mocked(learningApi.listFlashcardSets).mockResolvedValue({
+    sets: [],
     pagination: { page: 1, limit: 10, total: 0, pages: 0 },
   });
 });
@@ -300,6 +309,23 @@ describe("Learning document workspace", () => {
     );
   });
 
+  it("offers owned flashcard generation and sets only for a ready document", async () => {
+    renderWorkspace();
+    await userEvent.click(
+      await screen.findByRole("tab", { name: "Flashcards" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Flashcard sets" }),
+    ).not.toBeNull();
+    expect(screen.getByText("No flashcard sets yet.")).not.toBeNull();
+    expect(learningApi.listFlashcardSets).toHaveBeenCalledWith(
+      firstDocumentId,
+      { page: 1, limit: 10 },
+      expect.any(AbortSignal),
+    );
+  });
+
   it.each([
     [
       "processing",
@@ -323,7 +349,11 @@ describe("Learning document workspace", () => {
     expect(
       screen.queryByRole("tab", { name: "Grounded Chat" }),
     ).toBeNull();
+    expect(
+      screen.queryByRole("tab", { name: "Flashcards" }),
+    ).toBeNull();
     expect(learningApi.listLearningConversations).not.toHaveBeenCalled();
+    expect(learningApi.listFlashcardSets).not.toHaveBeenCalled();
   });
 });
 

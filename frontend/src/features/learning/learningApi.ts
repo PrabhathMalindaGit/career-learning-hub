@@ -6,11 +6,16 @@ import {
 } from "../../api/apiClient";
 import {
   parseDocumentChunks,
+  parseFlashcardList,
+  parseFlashcardSetAcceptance,
+  parseFlashcardSetDetail,
+  parseFlashcardSetList,
   parseLearningChatJob,
   parseLearningConversationCreate,
   parseLearningConversationList,
   parseLearningDocumentDetail,
   parseLearningDocumentList,
+  parseLearningFlashcardJob,
   parseLearningJob,
   parseLearningMessageAcceptance,
   parseLearningMessageList,
@@ -296,43 +301,116 @@ export async function fetchLearningChatJob(
   return parseLearningChatJob(response.data, { jobId, pageCount });
 }
 
-export function generateFlashcardSet(
+export async function createFlashcardSet(
   documentId: string,
-  accessToken: string,
   payload: {
     title: string;
     count: number;
     focus?: string;
-    requestId?: string;
+    requestId: string;
   },
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
+  const response = await requestWithStatusMetadata<unknown>(
     `/learning-documents/${documentId}/flashcard-sets`,
     {
       method: "POST",
-      body: {
-        ...payload,
-        requestId: payload.requestId ?? crypto.randomUUID(),
-      },
+      body: payload,
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  if (response.status !== 202) {
+    throw new ApiError(
+      502,
+      "INVALID_LEARNING_RESPONSE",
+      "The server returned an invalid learning response.",
+      response.requestId,
+    );
+  }
+  return {
+    ...parseFlashcardSetAcceptance(response.data, documentId),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
 }
 
-export function listFlashcards(
-  setId: string,
-  accessToken: string,
-  page = 1,
-  limit = 50,
+export async function listFlashcardSets(
+  documentId: string,
+  input: { page?: number; limit?: number } = {},
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
+  const page = boundedInteger(input.page, 1, 1, Number.MAX_SAFE_INTEGER);
+  const limit = boundedInteger(input.limit, 10, 1, 100);
+  const response = await requestWithMetadata<unknown>(
+    `/flashcard-sets?documentId=${documentId}&page=${page}&limit=${limit}`,
+    {
+      authentication: "required",
+      signal,
+    },
+  );
+  return {
+    ...parseFlashcardSetList(response.data, documentId),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
+}
+
+export async function fetchFlashcardSet(
+  documentId: string,
+  setId: string,
+  signal?: AbortSignal,
+) {
+  const response = await requestWithMetadata<unknown>(
+    `/flashcard-sets/${setId}`,
+    {
+      authentication: "required",
+      signal,
+    },
+  );
+  return {
+    ...parseFlashcardSetDetail(response.data, { documentId, setId }),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
+}
+
+export async function listLearningFlashcards(
+  setId: string,
+  pageCount: number,
+  input: { page?: number; limit?: number } = {},
+  signal?: AbortSignal,
+) {
+  const page = boundedInteger(input.page, 1, 1, Number.MAX_SAFE_INTEGER);
+  const limit = boundedInteger(input.limit, 100, 1, 100);
+  const response = await requestWithMetadata<unknown>(
     `/flashcard-sets/${setId}/cards?page=${page}&limit=${limit}`,
     {
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  return {
+    ...parseFlashcardList(response.data, { pageCount }),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
+}
+
+export async function fetchLearningFlashcardJob(
+  jobId: string,
+  setId: string,
+  signal?: AbortSignal,
+) {
+  const response = await requestWithMetadata<unknown>(`/jobs/${jobId}`, {
+    authentication: "required",
+    signal,
+  });
+  return parseLearningFlashcardJob(response.data, { jobId, setId });
 }
 
 export function generateQuiz(

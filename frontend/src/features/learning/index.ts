@@ -4,5 +4,6 @@ export { FlashcardStudy } from "./FlashcardStudy";
 export { LearningDashboard } from "./LearningDashboard";
 export { LearningConversationWorkspace } from "./LearningConversationWorkspace";
 export { LearningDocumentWorkspace } from "./LearningDocumentWorkspace";
+export { LearningFlashcardWorkspace } from "./LearningFlashcardWorkspace";
 export { QuizTaker } from "./QuizTaker";
 export * from "./types";

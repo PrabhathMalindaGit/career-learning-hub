@@ -1,5 +1,9 @@
 import { ApiError } from "../../api/apiClient";
-import type { LearningChatJob, LearningJob } from "./types";
+import type {
+  LearningChatJob,
+  LearningFlashcardJob,
+  LearningJob,
+} from "./types";
 
 export const LEARNING_POLLING_MAX_DURATION_MS = 5 * 60 * 1_000;
 const TRANSIENT_FAILURE_LIMIT = 3;
@@ -25,7 +29,10 @@ function defaultWait(
   });
 }
 
-type PollableLearningJob = LearningJob | LearningChatJob;
+type PollableLearningJob =
+  | LearningJob
+  | LearningChatJob
+  | LearningFlashcardJob;
 
 export type LearningPollResult<
   Job extends PollableLearningJob = LearningJob,
