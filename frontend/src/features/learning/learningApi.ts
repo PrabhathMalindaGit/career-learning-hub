@@ -1,62 +1,165 @@
-import { apiRequest } from "../../api/apiClient";
+import {
+  ApiError,
+  apiRequest,
+  requestWithMetadata,
+  requestWithStatusMetadata,
+} from "../../api/apiClient";
+import {
+  parseDocumentChunks,
+  parseLearningDocumentDetail,
+  parseLearningDocumentList,
+  parseLearningJob,
+  parseLearningSource,
+  parseLearningUpload,
+} from "./learningContracts";
+import type { LearningDocumentStatus } from "./types";
 
-export function uploadLearningDocument(
+export async function uploadLearningDocument(
   title: string,
   file: File,
-  accessToken: string,
+  signal?: AbortSignal,
 ) {
   const form = new FormData();
   form.set("title", title);
   form.set("file", file);
 
-  return apiRequest<unknown>("/learning-documents/upload", {
+  const response = await requestWithStatusMetadata<unknown>(
+    "/learning-documents/upload",
+    {
     method: "POST",
     body: form,
     authentication: "required",
-    accessToken,
-  });
-}
-
-export function listLearningDocuments(
-  accessToken: string,
-  page = 1,
-  limit = 20,
-) {
-  return apiRequest<unknown>(
-    `/learning-documents?page=${page}&limit=${limit}`,
-    {
-      authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  if (response.status !== 202) {
+    throw new ApiError(
+      502,
+      "INVALID_LEARNING_RESPONSE",
+      "The server returned an invalid learning response.",
+      response.requestId,
+    );
+  }
+  return {
+    ...parseLearningUpload(response.data),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
 }
 
-export function fetchLearningDocument(
-  documentId: string,
-  accessToken: string,
+function boundedInteger(
+  value: number | undefined,
+  fallback: number,
+  minimum: number,
+  maximum: number,
 ) {
-  return apiRequest<unknown>(
+  if (value === undefined || !Number.isFinite(value)) return fallback;
+  return Math.min(maximum, Math.max(minimum, Math.trunc(value)));
+}
+
+export async function listLearningDocuments(
+  input: {
+    page?: number;
+    limit?: number;
+    status?: LearningDocumentStatus;
+  } = {},
+  signal?: AbortSignal,
+) {
+  const query = new URLSearchParams({
+    page: String(boundedInteger(input.page, 1, 1, Number.MAX_SAFE_INTEGER)),
+    limit: String(boundedInteger(input.limit, 20, 1, 100)),
+  });
+  if (input.status) query.set("status", input.status);
+  const response = await requestWithMetadata<unknown>(
+    `/learning-documents?${query.toString()}`,
+    {
+      authentication: "required",
+      signal,
+    },
+  );
+  return {
+    ...parseLearningDocumentList(response.data),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
+}
+
+export async function fetchLearningDocument(
+  documentId: string,
+  signal?: AbortSignal,
+) {
+  const response = await requestWithMetadata<unknown>(
     `/learning-documents/${documentId}`,
     {
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  return {
+    ...parseLearningDocumentDetail(response.data, documentId),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
 }
 
-export function listDocumentChunks(
+export async function listDocumentChunks(
   documentId: string,
-  accessToken: string,
-  page = 1,
-  limit = 20,
+  pageCount: number,
+  input: { page?: number; limit?: number } = {},
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
+  const page = boundedInteger(input.page, 1, 1, Number.MAX_SAFE_INTEGER);
+  const limit = boundedInteger(input.limit, 20, 1, 100);
+  const response = await requestWithMetadata<unknown>(
     `/learning-documents/${documentId}/chunks?page=${page}&limit=${limit}`,
     {
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  return {
+    ...parseDocumentChunks(response.data, { pageCount }),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
+}
+
+export async function fetchLearningJob(
+  jobId: string,
+  documentId: string,
+  signal?: AbortSignal,
+) {
+  const response = await requestWithMetadata<unknown>(`/jobs/${jobId}`, {
+    authentication: "required",
+    signal,
+  });
+  return parseLearningJob(response.data, {
+    expectedJobId: jobId,
+    expectedDocumentId: documentId,
+  });
+}
+
+export async function fetchLearningDocumentSource(
+  documentId: string,
+  signal?: AbortSignal,
+) {
+  const response = await requestWithMetadata<unknown>(
+    `/learning-documents/${documentId}/source`,
+    {
+      authentication: "required",
+      signal,
+    },
+  );
+  return {
+    ...parseLearningSource(response.data),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
 }
 
 export function createLearningConversation(

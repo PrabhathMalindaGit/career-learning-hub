@@ -34,6 +34,11 @@ export type ApiResponseWithMetadata<T> = {
   requestId?: string;
 };
 
+export type ApiResponseWithStatusMetadata<T> =
+  ApiResponseWithMetadata<T> & {
+    status: number;
+  };
+
 export type ApiClientAuthAdapter = {
   getAccessToken(): string | null;
   refreshSession(): Promise<void>;
@@ -100,11 +105,12 @@ function requestPath(path: string): string {
 function responseWithMetadata<T>(
   response: Response,
   data: T,
-): ApiResponseWithMetadata<T> {
+): ApiResponseWithStatusMetadata<T> {
   const requestId = response.headers.get("X-Request-Id");
 
   return {
     data,
+    status: response.status,
     ...(requestId && CANONICAL_REQUEST_ID_PATTERN.test(requestId)
       ? { requestId }
       : {}),
@@ -222,7 +228,7 @@ async function executeRequest<T>(
   path: string,
   options: ApiRequestOptions,
   retried: boolean,
-): Promise<ApiResponseWithMetadata<T>> {
+): Promise<ApiResponseWithStatusMetadata<T>> {
   const response = await fetch(
     joinApiPath(path),
     createRequestInit(options),
@@ -276,5 +282,17 @@ export function requestWithMetadata<T>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<ApiResponseWithMetadata<T>> {
+  return executeRequest<T>(path, options, false).then(
+    ({ data, requestId }) => ({
+      data,
+      ...(requestId === undefined ? {} : { requestId }),
+    }),
+  );
+}
+
+export function requestWithStatusMetadata<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<ApiResponseWithStatusMetadata<T>> {
   return executeRequest<T>(path, options, false);
 }

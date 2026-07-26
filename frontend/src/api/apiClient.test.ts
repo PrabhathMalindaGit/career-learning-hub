@@ -218,6 +218,27 @@ describe("apiClient", () => {
     expect(result).not.toHaveProperty("X-Internal-Transport");
   });
 
+  it("returns status only through the explicit status-aware metadata helper", async () => {
+    const { requestWithStatusMetadata } = await loadClient();
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        { success: true, data: { accepted: true } },
+        202,
+        { "X-Request-Id": "request-upload-status-0001" },
+      ),
+    );
+
+    await expect(
+      requestWithStatusMetadata<{ accepted: boolean }>("/uploads", {
+        method: "POST",
+      }),
+    ).resolves.toEqual({
+      data: { accepted: true },
+      requestId: "request-upload-status-0001",
+      status: 202,
+    });
+  });
+
   it.each([
     ["missing", undefined],
     ["malformed", "invalid request id"],

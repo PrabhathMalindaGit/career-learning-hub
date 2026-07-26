@@ -746,7 +746,7 @@
 - Activated by operator-approved prompt
   `CLH-PHASE-12A-PRIVATE-PDF-CONTRACT-01`.
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS A COMPLETED, PASS B PLANNED, NOT ACTIVATED`.
+  `PHASE 12 ACTIVE — PASS A AND PASS B COMPLETED, NEXT PASS PLANNED, NOT ACTIVATED`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -754,9 +754,27 @@
   owner-scoped, short-lived private access and exposes only `url`, `expiresAt`,
   and `contentType`.
 - Page-aware extracted chunks remain authoritative for grounding and citations.
-- Pass B is `PLANNED` and not activated.
-- Later Learning Workspace passes require separate bounded instructions.
+- Pass B — Document Library and Workspace is `COMPLETED`.
+- Pass B visual QA was approved with
+  `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
+- The next Learning Workspace pass remains `PLANNED`, is not activated, and
+  requires a separate bounded operator-approved execution prompt.
 - Phase 12 remains `ACTIVE` and is not completed.
+
+#### Pass B completion record
+
+- Delivered the owned document library with canonical status filtering and
+  pagination, accessible private-PDF upload, bounded processing-job polling,
+  and truthful uploaded, processing, ready, failed, and deleting states.
+- Delivered the document overview, stored summary and key points, secure
+  short-lived private-PDF viewer, page-aware extracted-content reader,
+  stale-response protection, and responsive accessible document workflows.
+- The complete frontend suite passed with 322 tests. Frontend and root
+  typechecks, the production build, runtime upload and workspace verification,
+  and desktop, tablet, and mobile browser QA passed.
+- No unresolved Critical or Important findings remained.
+- Gemini remained unconfigured. Provider-unavailable processing behavior was
+  verified truthfully; real-provider processing success was not claimed.
 
 #### Purpose
 

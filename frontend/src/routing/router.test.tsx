@@ -133,6 +133,33 @@ vi.mock("../features/interviews/interviewApi", () => ({
   updateInterviewSessionStatus: vi.fn(),
 }));
 
+vi.mock("../features/learning/learningApi", () => ({
+  fetchLearningDocument: vi.fn().mockResolvedValue({
+    document: {
+      id: "507f1f77bcf86cd799439011",
+      title: "Connected learning document",
+      originalFilename: "connected-learning-document.pdf",
+      mimeType: "application/pdf",
+      status: "ready",
+      pageCount: 1,
+      chunkCount: 1,
+      summary: "Stored connected summary.",
+      summaryKeyPoints: [],
+      processedAt: "2026-07-26T00:00:00.000Z",
+      createdAt: "2026-07-26T00:00:00.000Z",
+      updatedAt: "2026-07-26T00:00:00.000Z",
+    },
+  }),
+  fetchLearningDocumentSource: vi.fn(),
+  fetchLearningJob: vi.fn(),
+  listDocumentChunks: vi.fn(),
+  listLearningDocuments: vi.fn().mockResolvedValue({
+    documents: [],
+    pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+  }),
+  uploadLearningDocument: vi.fn(),
+}));
+
 const publicUser: PublicUser = {
   id: "router-user-test",
   email: "router@example.test",
@@ -221,7 +248,7 @@ describe("application routing", () => {
     "/interviews",
     "/interviews/session-test-id",
     "/learning",
-    "/learning/document-test-id",
+    "/learning/documents/507f1f77bcf86cd799439011",
     "/settings",
   ])("redirects anonymous users from protected path %s", async (path) => {
     vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
@@ -264,8 +291,8 @@ describe("application routing", () => {
     ],
     ["/learning", "Learning"],
     [
-      "/learning/document-test-id",
-      "Learning document",
+      "/learning/documents/507f1f77bcf86cd799439011",
+      "Connected learning document",
     ],
     ["/settings", "Session settings"],
   ])("matches protected target path %s", async (path, heading) => {

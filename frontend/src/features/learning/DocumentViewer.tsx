@@ -51,7 +51,7 @@ export function DocumentViewer({
             {chunks.map((chunk) => (
               <article
                 className="learning-chunk"
-                key={chunk._id}
+                key={chunk.id}
               >
                 <button
                   type="button"

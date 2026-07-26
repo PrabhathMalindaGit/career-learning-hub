@@ -7,18 +7,24 @@
 - Active implementation phase: Phase 12, Learning Workspace Implementation
 - Next planned phase: Phase 13, Shared Design and UX Hardening (`PLANNED`)
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS A COMPLETED, PASS B PLANNED, NOT ACTIVATED`
+  `PHASE 12 ACTIVE — PASS A AND PASS B COMPLETED, NEXT PASS PLANNED, NOT ACTIVATED`
 - Controlling skills: `karpathy-guidelines`, `test-driven-development`,
   `security-best-practices`
 
 ## Objective
 
-- Implement only approved OD-001 Option B: an authenticated owner may obtain a
-  bounded, short-lived private viewing or download target for the original PDF
-  associated with an owned Learning Document.
-- Preserve existing authentication, ownership, safe owned-404, private
-  `no-store`, request-ID, Asset, storage, and Learning Document DTO behavior.
-- Keep page-aware extracted chunks authoritative for citations and grounding.
+- Pass B — Document Library and Workspace is completed with:
+  - owned document library;
+  - PDF upload;
+  - document-processing status;
+  - document workspace;
+  - secure original-PDF viewer;
+  - page-aware extracted chunks;
+  - stored summary and key points.
+- Preserve the completed Pass A private-source contract, existing
+  authentication and ownership boundaries, safe owned-404 behavior,
+  request-ID handling, and private-data controls.
+- Keep page-aware extracted chunks authoritative for page references.
 
 ## Phase status controls
 
@@ -28,8 +34,11 @@
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
-- Pass B is `PLANNED` and not activated.
-- Later Learning Workspace passes require separate bounded instructions.
+- Pass B — Document Library and Workspace is `COMPLETED`.
+- Pass B visual QA was approved with
+  `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
+- The next Learning Workspace pass remains `PLANNED`, is not activated, and
+  requires a separate bounded operator-approved execution prompt.
 - Phase 12 is not completed.
 
 ## Pass A completion record
@@ -40,19 +49,37 @@
 - Access is authenticated, owner-scoped, short-lived, and private.
 - Page-aware extracted chunks remain authoritative for grounding and citations.
 
+## Pass B completion record
+
+- Delivered the owned document library with canonical status filtering and
+  pagination, accessible private-PDF upload, bounded processing-job polling,
+  and truthful uploaded, processing, ready, failed, and deleting states.
+- Delivered the document overview, stored summary and key points, secure
+  short-lived private-PDF viewer, page-aware extracted-content reader,
+  stale-response protection, and responsive accessible document workflows.
+- The complete frontend suite passed with 322 tests. Frontend and root
+  typechecks, the production build, runtime upload and workspace verification,
+  and desktop, tablet, and mobile browser QA passed.
+- No unresolved Critical or Important findings remained.
+- Gemini remained unconfigured. Provider-unavailable processing behavior was
+  verified truthfully; real-provider processing success was not claimed.
+
 ## Authorized implementation scope
 
-- The smallest relevant private Asset and Learning backend paths.
-- Relevant backend tests.
-- Shared or non-visible frontend contract foundations only when required to
-  represent the response safely.
+- `frontend/src/features/learning/**`.
+- The minimum Learning routes under `frontend/src/routing/**`.
+- `frontend/src/api/apiClient.ts` and its focused test only if a reproduced
+  limitation requires a shared-client change.
+- Existing frontend test support required by the Learning feature.
 - The Phase 12 status records in the master plan and this file.
 
 ## Explicit exclusions
 
-- Document library, upload, extracted-content, chat, flashcard, quiz,
-  cascade-deletion, browser PDF viewer, routing, CSS, or other visible frontend
-  work.
+- Grounded chat, conversations, flashcards, quizzes, attempts, answer review,
+  deletion UI, persisted study state, and later Phase 12 passes.
+- Backend, shared types, unrelated frontend features, shared-design hardening,
+  provider configuration, package changes, migrations, seeds, and deployment
+  configuration.
 - New storage mechanisms, public URLs, unrelated API or data-model changes,
   dependency changes, migrations, and legacy access.
 - Exposure of storage keys, provider names, checksums, internal paths, Asset
@@ -60,20 +87,15 @@
 
 ## Verification
 
-- Add focused failing tests before implementation and record RED evidence.
-- Reach focused GREEN without weakening existing security or tests.
-- Run the required affected backend, complete backend, typecheck, build,
-  dependency-tree, and diff checks once after focused tests pass.
-- Perform bounded MongoDB-backed runtime ownership verification when the local
-  services are safely available.
-- Review only the changed diff for ownership, IDOR, association, expiry,
-  traversal, filename, metadata, logging, `no-store`, request-ID, and error
-  equivalence risks.
-- Leave all changes unstaged, uncommitted, and unpushed.
+- Focused RED and GREEN coverage passed without weakening security or tests.
+- The complete frontend suite passed with 322 tests.
+- Frontend and root typechecks, the production build, runtime upload and
+  workspace verification, and desktop, tablet, and mobile browser QA passed.
+- The Pass B diff review found no unresolved Critical or Important findings.
 
 ## Human approval gate
 
-- No visual QA is required because Pass A includes no visible frontend change.
-- Pass A review was approved with
-  `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
-- Pass B requires separate bounded activation instructions.
+- Pass B human visual QA was approved with
+  `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
+- The next pass remains planned and requires separate bounded operator
+  approval before activation.

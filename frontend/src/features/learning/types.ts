@@ -9,23 +9,67 @@ export interface LearningDocument {
   id: string;
   title: string;
   originalFilename: string;
+  mimeType: "application/pdf";
   status: LearningDocumentStatus;
   pageCount: number;
   chunkCount: number;
   summary?: string;
   summaryKeyPoints: string[];
+  processingError?: {
+    code: string;
+    message: string;
+  };
   processedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface DocumentChunk {
-  _id: string;
+  id: string;
   chunkIndex: number;
   pageStart: number;
   pageEnd: number;
   text: string;
   wordCount: number;
+}
+
+export interface LearningPagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+export interface AcceptedLearningJob {
+  id: string;
+  type: "learning.document.process";
+  status: "queued" | "processing";
+}
+
+export interface LearningJob {
+  id: string;
+  type: "learning.document.process";
+  status: "queued" | "processing" | "completed" | "failed" | "cancelled";
+  progress: number;
+  attempts: number;
+  maxAttempts: number;
+  result?: {
+    documentId: string;
+    pageCount: number;
+    chunkCount: number;
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LearningDocumentSource {
+  url: string;
+  expiresAt: string;
+  contentType: "application/pdf";
 }
 
 export interface LearningMessage {
