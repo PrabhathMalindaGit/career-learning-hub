@@ -14,6 +14,7 @@ const REFRESH_EXCLUDED_PATHS = new Set([
   "/auth/refresh",
   "/auth/logout",
 ]);
+const CANONICAL_REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{16,128}$/;
 
 type ApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type AuthenticationMode = "optional" | "required" | "none";
@@ -26,6 +27,11 @@ export type ApiRequestOptions = {
   authentication?: AuthenticationMode;
   retryUnauthorized?: boolean;
   accessToken?: string;
+};
+
+export type ApiResponseWithMetadata<T> = {
+  data: T;
+  requestId?: string;
 };
 
 export type ApiClientAuthAdapter = {
@@ -89,6 +95,20 @@ function joinApiPath(path: string): string {
 function requestPath(path: string): string {
   const queryIndex = path.indexOf("?");
   return queryIndex === -1 ? path : path.slice(0, queryIndex);
+}
+
+function responseWithMetadata<T>(
+  response: Response,
+  data: T,
+): ApiResponseWithMetadata<T> {
+  const requestId = response.headers.get("X-Request-Id");
+
+  return {
+    data,
+    ...(requestId && CANONICAL_REQUEST_ID_PATTERN.test(requestId)
+      ? { requestId }
+      : {}),
+  };
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -202,7 +222,7 @@ async function executeRequest<T>(
   path: string,
   options: ApiRequestOptions,
   retried: boolean,
-): Promise<T> {
+): Promise<ApiResponseWithMetadata<T>> {
   const response = await fetch(
     joinApiPath(path),
     createRequestInit(options),
@@ -222,7 +242,7 @@ async function executeRequest<T>(
   }
 
   if (response.status === 204) {
-    return undefined as T;
+    return responseWithMetadata(response, undefined as T);
   }
 
   const body = await readJson(response);
@@ -240,12 +260,21 @@ async function executeRequest<T>(
     );
   }
 
-  return body.data;
+  return responseWithMetadata(response, body.data);
 }
 
 export function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<T> {
+  return executeRequest<T>(path, options, false).then(
+    ({ data }) => data,
+  );
+}
+
+export function requestWithMetadata<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<ApiResponseWithMetadata<T>> {
   return executeRequest<T>(path, options, false);
 }

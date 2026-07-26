@@ -173,6 +173,198 @@ describe("apiClient", () => {
     });
   });
 
+  it("keeps existing callers limited to the unwrapped data", async () => {
+    const { apiRequest } = await loadClient();
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        { success: true, data: { id: "record-1" } },
+        200,
+        {
+          "X-Request-Id": "canonical-request-id-0001",
+          "X-Internal-Transport": "must-not-leak",
+        },
+      ),
+    );
+
+    const result = await apiRequest<{ id: string }>("/records/record-1");
+
+    expect(result).toEqual({ id: "record-1" });
+  });
+
+  it("returns only data and a canonical request ID when metadata is requested", async () => {
+    const { requestWithMetadata } = await loadClient();
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        { success: true, data: { id: "record-1" } },
+        200,
+        {
+          "X-Request-Id": "canonical-request-id-0001",
+          "X-Internal-Transport": "must-not-leak",
+        },
+      ),
+    );
+
+    const result = await requestWithMetadata<{ id: string }>(
+      "/records/record-1",
+    );
+
+    expect(result).toEqual({
+      data: { id: "record-1" },
+      requestId: "canonical-request-id-0001",
+    });
+    expect(Object.keys(result).sort()).toEqual(["data", "requestId"]);
+    expect(result).not.toHaveProperty("response");
+    expect(result).not.toHaveProperty("headers");
+    expect(result).not.toHaveProperty("X-Internal-Transport");
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["malformed", "invalid request id"],
+  ])("omits a %s request ID from requested metadata", async (
+    _description,
+    requestId,
+  ) => {
+    const { requestWithMetadata } = await loadClient();
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        { success: true, data: { ok: true } },
+        200,
+        requestId ? { "X-Request-Id": requestId } : undefined,
+      ),
+    );
+
+    await expect(
+      requestWithMetadata<{ ok: boolean }>("/records"),
+    ).resolves.toEqual({
+      data: { ok: true },
+    });
+  });
+
+  it("preserves current structured errors and their request IDs for metadata callers", async () => {
+    const { ApiError, requestWithMetadata } = await loadClient();
+    const details = { fieldErrors: { title: ["Title is required"] } };
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        {
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Request validation failed.",
+            requestId: "request-body-id-0002",
+            details,
+          },
+        },
+        400,
+        { "X-Request-Id": "request-header-id-0002" },
+      ),
+    );
+
+    const error = await requestWithMetadata("/records").catch(
+      (reason: unknown) => reason,
+    );
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({
+      status: 400,
+      code: "VALIDATION_ERROR",
+      message: "Request validation failed.",
+      requestId: "request-body-id-0002",
+      details,
+    });
+  });
+
+  it("preserves refresh and one-retry behavior for metadata callers", async () => {
+    const {
+      configureApiClientAuth,
+      requestWithMetadata,
+    } = await loadClient();
+    let accessToken = "expired-token";
+    const refreshSession = vi.fn(async () => {
+      accessToken = "refreshed-token";
+    });
+    configureApiClientAuth({
+      getAccessToken: () => accessToken,
+      refreshSession,
+      clearAuthentication: vi.fn(),
+    });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            success: false,
+            error: {
+              code: "AUTHENTICATION_REQUIRED",
+              message: "Authentication is required.",
+              requestId: "request-auth-id-0005",
+            },
+          },
+          401,
+        ),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { success: true, data: { ok: true } },
+          200,
+          { "X-Request-Id": "request-retry-id-0001" },
+        ),
+      );
+
+    await expect(
+      requestWithMetadata<{ ok: boolean }>("/protected"),
+    ).resolves.toEqual({
+      data: { ok: true },
+      requestId: "request-retry-id-0001",
+    });
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const retryHeaders = new Headers(
+      vi.mocked(fetch).mock.calls[1]?.[1]?.headers,
+    );
+    expect(retryHeaders.get("Authorization")).toBe(
+      "Bearer refreshed-token",
+    );
+  });
+
+  it("forwards an AbortSignal for metadata callers", async () => {
+    const { requestWithMetadata } = await loadClient();
+    const controller = new AbortController();
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ success: true, data: { ok: true } }),
+    );
+
+    await requestWithMetadata("/records", {
+      signal: controller.signal,
+    });
+
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]?.signal).toBe(
+      controller.signal,
+    );
+  });
+
+  it("returns 204 data and canonical metadata without exposing transport state", async () => {
+    const { requestWithMetadata } = await loadClient();
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(null, {
+        status: 204,
+        headers: {
+          "X-Request-Id": "request-empty-id-0001",
+          "X-Internal-Transport": "must-not-leak",
+        },
+      }),
+    );
+
+    const result = await requestWithMetadata<void>("/session", {
+      method: "DELETE",
+    });
+
+    expect(result).toEqual({
+      data: undefined,
+      requestId: "request-empty-id-0001",
+    });
+    expect(Object.keys(result).sort()).toEqual(["data", "requestId"]);
+  });
+
   it("returns undefined for a 204 response", async () => {
     const { apiRequest } = await loadClient();
     vi.mocked(fetch).mockResolvedValue(emptyResponse());

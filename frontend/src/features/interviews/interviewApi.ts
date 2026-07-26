@@ -1,4 +1,8 @@
-import { apiRequest } from "../../api/apiClient";
+import {
+  ApiError,
+  requestWithMetadata,
+  type ApiRequestOptions,
+} from "../../api/apiClient";
 import {
   parseAcceptedInterviewJob,
   parseAttemptDetail,
@@ -19,6 +23,7 @@ import type {
   InterviewAttemptStatus,
   InterviewDifficulty,
   InterviewJob,
+  InterviewJobType,
   InterviewSessionStatus,
   ManualInterviewQuestionInput,
 } from "./types";
@@ -56,6 +61,31 @@ function routeId(value: string): string {
   return encodeURIComponent(value);
 }
 
+async function requestParsed<T>(
+  path: string,
+  options: ApiRequestOptions,
+  parse: (value: unknown) => T,
+): Promise<T> {
+  const response = await requestWithMetadata<unknown>(path, options);
+  try {
+    return parse(response.data);
+  } catch (error) {
+    if (
+      !(error instanceof ApiError) ||
+      error.status !== 502 ||
+      error.code !== "INVALID_INTERVIEW_RESPONSE"
+    ) {
+      throw error;
+    }
+    throw new ApiError(
+      502,
+      "INVALID_INTERVIEW_RESPONSE",
+      "The server returned an invalid interview response.",
+      response.requestId,
+    );
+  }
+}
+
 export async function listInterviewSessions(
   input: {
     page?: number;
@@ -66,11 +96,11 @@ export async function listInterviewSessions(
 ) {
   const query = paginationQuery(input);
   if (input.status) query.set("status", input.status);
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions?${query}`,
     { authentication: "required", signal },
+    parseSessionList,
   );
-  return parseSessionList(data);
 }
 
 export async function createInterviewSession(
@@ -78,33 +108,36 @@ export async function createInterviewSession(
   signal?: AbortSignal,
 ) {
   const jobDescription = input.jobDescription?.trim();
-  const data = await apiRequest<unknown>("/interview-sessions", {
-    method: "POST",
-    authentication: "required",
-    signal,
-    body: {
-      title: input.title.trim(),
-      targetRole: input.targetRole.trim(),
-      experienceLevel: input.experienceLevel.trim(),
-      focusTopics: canonicalList(input.focusTopics),
-      skillGaps: canonicalList(input.skillGaps),
-      ...(jobDescription ? { jobDescription } : {}),
-      mode: input.mode,
-      manualQuestions: [],
+  return requestParsed(
+    "/interview-sessions",
+    {
+      method: "POST",
+      authentication: "required",
+      signal,
+      body: {
+        title: input.title.trim(),
+        targetRole: input.targetRole.trim(),
+        experienceLevel: input.experienceLevel.trim(),
+        focusTopics: canonicalList(input.focusTopics),
+        skillGaps: canonicalList(input.skillGaps),
+        ...(jobDescription ? { jobDescription } : {}),
+        mode: input.mode,
+        manualQuestions: [],
+      },
     },
-  });
-  return parseCreatedSession(data);
+    parseCreatedSession,
+  );
 }
 
 export async function fetchInterviewSession(
   sessionId: string,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}`,
     { authentication: "required", signal },
+    (data) => parseSessionDetail(data, sessionId),
   );
-  return parseSessionDetail(data, sessionId);
 }
 
 export async function updateInterviewSessionStatus(
@@ -112,7 +145,7 @@ export async function updateInterviewSessionStatus(
   status: InterviewSessionStatus,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/status`,
     {
       method: "PATCH",
@@ -120,8 +153,8 @@ export async function updateInterviewSessionStatus(
       authentication: "required",
       signal,
     },
+    (data) => parseSessionDetail(data, sessionId),
   );
-  return parseSessionDetail(data, sessionId);
 }
 
 export async function listInterviewQuestions(
@@ -143,11 +176,11 @@ export async function listInterviewQuestions(
   if (input.category?.trim()) {
     query.set("category", input.category.trim());
   }
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions?${query}`,
     { authentication: "required", signal },
+    (data) => parseQuestionList(data, sessionId),
   );
-  return parseQuestionList(data, sessionId);
 }
 
 export async function addManualQuestion(
@@ -156,7 +189,7 @@ export async function addManualQuestion(
   signal?: AbortSignal,
 ) {
   const modelAnswer = input.modelAnswer?.trim();
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions`,
     {
       method: "POST",
@@ -169,8 +202,8 @@ export async function addManualQuestion(
         ...(modelAnswer ? { modelAnswer } : {}),
       },
     },
+    (data) => parseCreatedQuestion(data, sessionId),
   );
-  return parseCreatedQuestion(data, sessionId);
 }
 
 export async function generateInterviewQuestions(
@@ -182,7 +215,7 @@ export async function generateInterviewQuestions(
   },
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions/generate`,
     {
       method: "POST",
@@ -194,10 +227,11 @@ export async function generateInterviewQuestions(
         categories: canonicalList(input.categories),
       },
     },
-  );
-  return parseAcceptedInterviewJob(
-    data,
-    "interview.questions.generate",
+    (data) =>
+      parseAcceptedInterviewJob(
+        data,
+        "interview.questions.generate",
+      ),
   );
 }
 
@@ -206,13 +240,13 @@ export async function fetchInterviewQuestion(
   questionId: string,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
       questionId,
     )}`,
     { authentication: "required", signal },
+    (data) => parseQuestionDetail(data, sessionId, questionId),
   );
-  return parseQuestionDetail(data, sessionId, questionId);
 }
 
 export async function setQuestionPinned(
@@ -221,7 +255,7 @@ export async function setQuestionPinned(
   isPinned: boolean,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
       questionId,
     )}/pin`,
@@ -231,8 +265,8 @@ export async function setQuestionPinned(
       authentication: "required",
       signal,
     },
+    (data) => parseQuestionDetail(data, sessionId, questionId),
   );
-  return parseQuestionDetail(data, sessionId, questionId);
 }
 
 export async function saveQuestionNotes(
@@ -241,7 +275,7 @@ export async function saveQuestionNotes(
   notes: string,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
       questionId,
     )}/notes`,
@@ -251,8 +285,8 @@ export async function saveQuestionNotes(
       authentication: "required",
       signal,
     },
+    (data) => parseQuestionDetail(data, sessionId, questionId),
   );
-  return parseQuestionDetail(data, sessionId, questionId);
 }
 
 export async function requestQuestionExplanation(
@@ -260,7 +294,7 @@ export async function requestQuestionExplanation(
   questionId: string,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
       questionId,
     )}/explanation`,
@@ -269,8 +303,8 @@ export async function requestQuestionExplanation(
       authentication: "required",
       signal,
     },
+    (data) => parseExplanationResponse(data, sessionId, questionId),
   );
-  return parseExplanationResponse(data, sessionId, questionId);
 }
 
 export async function recordInterviewAttempt(
@@ -279,7 +313,7 @@ export async function recordInterviewAttempt(
   answerText: string,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
       questionId,
     )}/attempts`,
@@ -289,8 +323,8 @@ export async function recordInterviewAttempt(
       authentication: "required",
       signal,
     },
+    (data) => parseRecordedAttempt(data, sessionId, questionId),
   );
-  return parseRecordedAttempt(data, sessionId);
 }
 
 export async function listAttemptHistory(
@@ -306,33 +340,41 @@ export async function listAttemptHistory(
   const query = paginationQuery(input);
   if (input.questionId) query.set("questionId", input.questionId);
   if (input.status) query.set("status", input.status);
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/attempts?${query}`,
     { authentication: "required", signal },
+    (data) => parseAttemptList(data, sessionId, input.questionId),
   );
-  return parseAttemptList(data, sessionId);
 }
 
 export async function fetchInterviewAttempt(
   sessionId: string,
   attemptId: string,
   signal?: AbortSignal,
+  expectedQuestionId?: string,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/attempts/${routeId(
       attemptId,
     )}`,
     { authentication: "required", signal },
+    (data) =>
+      parseAttemptDetail(
+        data,
+        sessionId,
+        attemptId,
+        expectedQuestionId,
+      ),
   );
-  return parseAttemptDetail(data, sessionId, attemptId);
 }
 
 export async function requestAttemptFeedback(
   sessionId: string,
   attemptId: string,
   signal?: AbortSignal,
+  expectedQuestionId?: string,
 ) {
-  const data = await apiRequest<unknown>(
+  return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/attempts/${routeId(
       attemptId,
     )}/feedback`,
@@ -341,19 +383,55 @@ export async function requestAttemptFeedback(
       authentication: "required",
       signal,
     },
+    (data) =>
+      parseFeedbackResponse(
+        data,
+        sessionId,
+        attemptId,
+        expectedQuestionId,
+      ),
   );
-  return parseFeedbackResponse(data, sessionId, attemptId);
 }
 
 export async function fetchInterviewJob(
   jobId: string,
   signal?: AbortSignal,
+  expectation?: {
+    expectedType: InterviewJobType;
+    expectedResultId?: string;
+  },
 ): Promise<InterviewJob> {
-  const data = await apiRequest<unknown>(`/jobs/${routeId(jobId)}`, {
-    authentication: "required",
-    signal,
-  });
-  return parseInterviewJob(data);
+  return requestParsed(
+    `/jobs/${routeId(jobId)}`,
+    {
+      authentication: "required",
+      signal,
+    },
+    (data) => {
+      const job = parseInterviewJob(data);
+      const resultId =
+        job.result?.kind === "explanation"
+          ? job.result.questionId
+          : job.result?.kind === "feedback"
+            ? job.result.attemptId
+            : undefined;
+      if (
+        expectation &&
+        (job.id !== jobId ||
+          job.type !== expectation.expectedType ||
+          (job.status === "completed" &&
+            expectation.expectedResultId !== undefined &&
+            resultId !== expectation.expectedResultId))
+      ) {
+        throw new ApiError(
+          502,
+          "INVALID_INTERVIEW_RESPONSE",
+          "The server returned an invalid interview response.",
+        );
+      }
+      return job;
+    },
+  );
 }
 
 export * from "./interviewContracts";

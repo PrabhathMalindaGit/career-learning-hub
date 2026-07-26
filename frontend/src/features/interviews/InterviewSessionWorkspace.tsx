@@ -26,6 +26,7 @@ import {
 import { pollInterviewJob } from "./interviewPolling";
 import type {
   InterviewAttempt,
+  InterviewAttemptStatus,
   InterviewDifficulty,
   InterviewJob,
   InterviewJobType,
@@ -38,23 +39,68 @@ import "./interviewCoach.css";
 
 const PAGE_SIZE = 20;
 const ANSWER_MAX_LENGTH = 12_000;
+const CANONICAL_REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{16,128}$/;
+const FEEDBACK_READY_MESSAGE = "Practice feedback is ready.";
 
 type SafeError = { message: string; requestId?: string };
+type ProviderOperation = {
+  token: number;
+  scope: "generation" | "explanation" | "feedback";
+  controller: AbortController;
+  sessionId: string;
+  routeEpoch: number;
+  generationRequestId?: string;
+};
+type PinOperation = {
+  token: number;
+  questionId: string;
+  controller: AbortController;
+};
 type ActiveJob = {
   scope: "generation" | "explanation" | "feedback";
   resourceId?: string;
+  questionId?: string;
   job: Pick<InterviewJob, "id" | "type" | "status"> | InterviewJob;
   paused?: boolean;
 };
 
 function safeError(error: unknown): SafeError {
   if (error instanceof ApiError) {
+    const requestId = error.requestId?.trim();
     return {
       message: error.message,
-      ...(error.requestId ? { requestId: error.requestId } : {}),
+      ...(requestId && CANONICAL_REQUEST_ID_PATTERN.test(requestId)
+        ? { requestId }
+        : {}),
     };
   }
   return { message: "The request could not be completed. Try again." };
+}
+
+function generationSubmissionMayHaveSucceeded(error: unknown): boolean {
+  return (
+    error instanceof TypeError ||
+    (error instanceof ApiError &&
+      (error.code === "INVALID_API_RESPONSE" ||
+        error.code === "INVALID_INTERVIEW_RESPONSE"))
+  );
+}
+
+function SafeErrorMessage({
+  error,
+  className = "interview-field-error",
+}: {
+  error: SafeError;
+  className?: string;
+}) {
+  return (
+    <div className={className} role="alert">
+      <span>{error.message}</span>
+      {error.requestId ? (
+        <small>Request ID: {error.requestId}</small>
+      ) : null}
+    </div>
+  );
 }
 
 function parseList(value: string): string[] {
@@ -153,12 +199,16 @@ export function InterviewSessionWorkspace() {
   const [answerBusy, setAnswerBusy] = useState(false);
   const [questionActionError, setQuestionActionError] =
     useState<SafeError | null>(null);
+  const [pinPendingQuestionId, setPinPendingQuestionId] = useState("");
 
   const [attempts, setAttempts] = useState<InterviewAttempt[]>([]);
   const [attemptPagination, setAttemptPagination] =
     useState<Pagination | null>(null);
   const [attemptPage, setAttemptPage] = useState(1);
   const [attemptReloadKey, setAttemptReloadKey] = useState(0);
+  const [attemptStatusFilter, setAttemptStatusFilter] = useState<
+    InterviewAttemptStatus | ""
+  >("");
   const [attemptLoading, setAttemptLoading] = useState(false);
   const [attemptError, setAttemptError] = useState<SafeError | null>(
     null,
@@ -187,22 +237,45 @@ export function InterviewSessionWorkspace() {
   const [statusBusy, setStatusBusy] = useState(false);
 
   const routeSequence = useRef(0);
+  const routeEpoch = useRef(0);
   const routeIdentity = useRef("");
   const questionSequence = useRef(0);
   const questionDetailSequence = useRef(0);
   const attemptSequence = useRef(0);
   const attemptDetailSequence = useRef(0);
+  const questionSelectionSequence = useRef(0);
+  const attemptSelectionSequence = useRef(0);
+  const selectedQuestionIdentity = useRef("");
+  const selectedAttemptIdentity = useRef("");
+  const pinOperationSequence = useRef(0);
+  const pinOperation = useRef<PinOperation | null>(null);
   const generationIntentId = useRef<string | null>(null);
   const actionControllers = useRef(new Set<AbortController>());
+  const questionControllers = useRef(new Set<AbortController>());
+  const attemptControllers = useRef(new Set<AbortController>());
+  const attemptListController = useRef<AbortController | null>(null);
+  const providerOperationSequence = useRef(0);
+  const providerOperation = useRef<ProviderOperation | null>(null);
+  const providerErrorScope = useRef<ActiveJob["scope"] | null>(null);
 
-  const makeController = useCallback(() => {
-    const controller = new AbortController();
-    actionControllers.current.add(controller);
-    return controller;
-  }, []);
+  const makeController = useCallback(
+    (scope: "route" | "question" | "attempt" = "route") => {
+      const controller = new AbortController();
+      actionControllers.current.add(controller);
+      if (scope === "question") {
+        questionControllers.current.add(controller);
+      } else if (scope === "attempt") {
+        attemptControllers.current.add(controller);
+      }
+      return controller;
+    },
+    [],
+  );
 
   const releaseController = useCallback((controller: AbortController) => {
     actionControllers.current.delete(controller);
+    questionControllers.current.delete(controller);
+    attemptControllers.current.delete(controller);
   }, []);
 
   function actionIsCurrent(controller: AbortController): boolean {
@@ -212,14 +285,151 @@ export function InterviewSessionWorkspace() {
     );
   }
 
+  function beginProviderOperation(
+    scope: ProviderOperation["scope"],
+    controller: AbortController,
+    generationRequestId?: string,
+  ): ProviderOperation {
+    const operation: ProviderOperation = {
+      token: ++providerOperationSequence.current,
+      scope,
+      controller,
+      sessionId,
+      routeEpoch: routeEpoch.current,
+      ...(generationRequestId ? { generationRequestId } : {}),
+    };
+    providerOperation.current = operation;
+    return operation;
+  }
+
+  function providerOperationIsCurrent(
+    operation: ProviderOperation,
+  ): boolean {
+    return (
+      providerOperation.current === operation &&
+      !operation.controller.signal.aborted &&
+      routeIdentity.current === operation.sessionId &&
+      routeEpoch.current === operation.routeEpoch
+    );
+  }
+
+  const invalidateAttemptScope = useCallback(() => {
+    attemptSelectionSequence.current += 1;
+    for (const controller of attemptControllers.current) {
+      controller.abort();
+      actionControllers.current.delete(controller);
+    }
+    attemptControllers.current.clear();
+    selectedAttemptIdentity.current = "";
+    setSelectedAttemptId("");
+    setSelectedAttempt(null);
+    setAttemptError(null);
+    if (
+      providerOperation.current?.scope === "feedback" ||
+      providerErrorScope.current === "feedback"
+    ) {
+      if (providerOperation.current?.scope === "feedback") {
+        providerOperation.current.controller.abort();
+        providerOperation.current = null;
+      }
+      providerErrorScope.current = null;
+      setProviderBusy(false);
+      setProviderError(null);
+      setActiveJob((current) =>
+        current?.scope === "feedback" ? null : current,
+      );
+      setStatusMessage("");
+    }
+    setActiveJob((current) =>
+      current?.scope === "feedback" ? null : current,
+    );
+    setStatusMessage((current) =>
+      current === FEEDBACK_READY_MESSAGE ? "" : current,
+    );
+  }, []);
+
+  const invalidateQuestionScope = useCallback(() => {
+    questionSelectionSequence.current += 1;
+    for (const controller of questionControllers.current) {
+      controller.abort();
+      actionControllers.current.delete(controller);
+    }
+    questionControllers.current.clear();
+    pinOperation.current = null;
+    setPinPendingQuestionId("");
+    setQuestionActionError(null);
+    setAnswerError(null);
+    setAnswerBusy(false);
+    setNotesState("clean");
+    if (
+      providerOperation.current?.scope === "explanation" ||
+      providerErrorScope.current === "explanation"
+    ) {
+      if (providerOperation.current?.scope === "explanation") {
+        providerOperation.current.controller.abort();
+        providerOperation.current = null;
+      }
+      providerErrorScope.current = null;
+      setProviderBusy(false);
+      setProviderError(null);
+      setActiveJob((current) =>
+        current?.scope === "explanation" ? null : current,
+      );
+      setStatusMessage("");
+    }
+    setActiveJob((current) =>
+      current?.scope === "explanation" ? null : current,
+    );
+    attemptListController.current?.abort();
+    attemptListController.current = null;
+    attemptSequence.current += 1;
+    setStatusMessage("");
+    invalidateAttemptScope();
+  }, [invalidateAttemptScope]);
+
+  const selectQuestion = useCallback(
+    (questionId: string) => {
+      if (selectedQuestionIdentity.current === questionId) return;
+      invalidateQuestionScope();
+      selectedQuestionIdentity.current = questionId;
+      setSelectedQuestionId(questionId);
+      setSelectedQuestion(null);
+      setNotesDraft("");
+      setAnswerDraft("");
+    },
+    [invalidateQuestionScope],
+  );
+
+  const selectAttempt = useCallback(
+    (attemptId: string) => {
+      if (selectedAttemptIdentity.current === attemptId) return;
+      invalidateAttemptScope();
+      selectedAttemptIdentity.current = attemptId;
+      setSelectedAttemptId(attemptId);
+    },
+    [invalidateAttemptScope],
+  );
+
   useEffect(() => {
     const identityChanged = routeIdentity.current !== sessionId;
     routeIdentity.current = sessionId;
     if (identityChanged) {
+      routeEpoch.current += 1;
       for (const controller of actionControllers.current) {
         controller.abort();
       }
       actionControllers.current.clear();
+      questionControllers.current.clear();
+      attemptControllers.current.clear();
+      attemptListController.current?.abort();
+      attemptListController.current = null;
+      questionSelectionSequence.current += 1;
+      attemptSelectionSequence.current += 1;
+      selectedQuestionIdentity.current = "";
+      selectedAttemptIdentity.current = "";
+      pinOperation.current = null;
+      providerOperation.current = null;
+      providerErrorScope.current = null;
     }
     const sequence = ++routeSequence.current;
     const controller = new AbortController();
@@ -229,6 +439,7 @@ export function InterviewSessionWorkspace() {
       setQuestionPagination(null);
       setSelectedQuestionId("");
       setSelectedQuestion(null);
+      setQuestionDetailLoading(false);
       setAttempts([]);
       setAttemptPagination(null);
       setSelectedAttemptId("");
@@ -238,6 +449,8 @@ export function InterviewSessionWorkspace() {
       setAnswerError(null);
       setAnswerBusy(false);
       setNotesState("clean");
+      setQuestionActionError(null);
+      setPinPendingQuestionId("");
       setManualOpen(false);
       setManualCategory("");
       setManualDifficulty("medium");
@@ -254,6 +467,7 @@ export function InterviewSessionWorkspace() {
       setStatusBusy(false);
       setQuestionPage(1);
       setAttemptPage(1);
+      setAttemptStatusFilter("");
       setPinnedFilter(false);
       setDifficultyFilter("");
       setCategoryFilter("");
@@ -283,6 +497,10 @@ export function InterviewSessionWorkspace() {
         controller.abort();
       }
       actionControllers.current.clear();
+      questionControllers.current.clear();
+      attemptControllers.current.clear();
+      attemptListController.current?.abort();
+      attemptListController.current = null;
     },
     [],
   );
@@ -318,12 +536,11 @@ export function InterviewSessionWorkspace() {
         }
         setQuestions(result.questions);
         setQuestionPagination(result.pagination);
-        setSelectedQuestionId((current) => {
-          if (result.questions.some((item) => item.id === current)) {
-            return current;
-          }
-          return result.questions[0]?.id ?? "";
-        });
+        const current = selectedQuestionIdentity.current;
+        const next = result.questions.some((item) => item.id === current)
+          ? current
+          : (result.questions[0]?.id ?? "");
+        if (next !== current) selectQuestion(next);
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted && sequence === questionSequence.current) {
@@ -344,17 +561,21 @@ export function InterviewSessionWorkspace() {
     questionReloadKey,
     session,
     sessionId,
+    selectQuestion,
   ]);
 
   useEffect(() => {
     if (!selectedQuestionId) {
       questionDetailSequence.current += 1;
       setSelectedQuestion(null);
+      setQuestionDetailLoading(false);
       setNotesDraft("");
       setAnswerDraft("");
       return;
     }
     const sequence = ++questionDetailSequence.current;
+    const selection = questionSelectionSequence.current;
+    const expectedQuestionId = selectedQuestionId;
     const controller = new AbortController();
     setQuestionDetailLoading(true);
     setQuestionActionError(null);
@@ -370,6 +591,8 @@ export function InterviewSessionWorkspace() {
         if (
           controller.signal.aborted ||
           sequence !== questionDetailSequence.current ||
+          selection !== questionSelectionSequence.current ||
+          selectedQuestionIdentity.current !== expectedQuestionId ||
           routeIdentity.current !== sessionId
         ) {
           return;
@@ -382,6 +605,8 @@ export function InterviewSessionWorkspace() {
         if (
           !controller.signal.aborted &&
           sequence === questionDetailSequence.current &&
+          selection === questionSelectionSequence.current &&
+          selectedQuestionIdentity.current === expectedQuestionId &&
           routeIdentity.current === sessionId
         ) {
           setQuestionActionError(safeError(error));
@@ -390,6 +615,8 @@ export function InterviewSessionWorkspace() {
       .finally(() => {
         if (
           sequence === questionDetailSequence.current &&
+          selection === questionSelectionSequence.current &&
+          selectedQuestionIdentity.current === expectedQuestionId &&
           routeIdentity.current === sessionId
         ) {
           setQuestionDetailLoading(false);
@@ -401,7 +628,10 @@ export function InterviewSessionWorkspace() {
   useEffect(() => {
     if (!session) return;
     const sequence = ++attemptSequence.current;
+    const questionSelection = questionSelectionSequence.current;
+    const expectedQuestionId = selectedQuestionId;
     const controller = new AbortController();
+    attemptListController.current = controller;
     setAttemptLoading(true);
     setAttemptError(null);
     void listAttemptHistory(
@@ -410,6 +640,9 @@ export function InterviewSessionWorkspace() {
         page: attemptPage,
         limit: PAGE_SIZE,
         ...(selectedQuestionId ? { questionId: selectedQuestionId } : {}),
+        ...(attemptStatusFilter
+          ? { status: attemptStatusFilter }
+          : {}),
       },
       controller.signal,
     )
@@ -417,25 +650,56 @@ export function InterviewSessionWorkspace() {
         if (
           controller.signal.aborted ||
           sequence !== attemptSequence.current ||
+          questionSelection !== questionSelectionSequence.current ||
+          selectedQuestionIdentity.current !== expectedQuestionId ||
           routeIdentity.current !== sessionId
         ) {
           return;
         }
         setAttempts(result.attempts);
         setAttemptPagination(result.pagination);
+        const currentAttemptId = selectedAttemptIdentity.current;
+        if (
+          currentAttemptId &&
+          !result.attempts.some(
+            (attempt) => attempt.id === currentAttemptId,
+          )
+        ) {
+          invalidateAttemptScope();
+        }
       })
       .catch((error: unknown) => {
-        if (!controller.signal.aborted && sequence === attemptSequence.current) {
+        if (
+          !controller.signal.aborted &&
+          sequence === attemptSequence.current &&
+          questionSelection === questionSelectionSequence.current &&
+          selectedQuestionIdentity.current === expectedQuestionId &&
+          routeIdentity.current === sessionId
+        ) {
           setAttemptError(safeError(error));
         }
       })
       .finally(() => {
-        if (sequence === attemptSequence.current) setAttemptLoading(false);
+        if (
+          sequence === attemptSequence.current &&
+          questionSelection === questionSelectionSequence.current &&
+          selectedQuestionIdentity.current === expectedQuestionId &&
+          routeIdentity.current === sessionId
+        ) {
+          setAttemptLoading(false);
+        }
       });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      if (attemptListController.current === controller) {
+        attemptListController.current = null;
+      }
+    };
   }, [
     attemptPage,
     attemptReloadKey,
+    attemptStatusFilter,
+    invalidateAttemptScope,
     selectedQuestionId,
     session,
     sessionId,
@@ -448,16 +712,23 @@ export function InterviewSessionWorkspace() {
       return;
     }
     const sequence = ++attemptDetailSequence.current;
+    const selection = attemptSelectionSequence.current;
+    const expectedAttemptId = selectedAttemptId;
+    const expectedQuestionId = selectedQuestionId;
     const controller = new AbortController();
     void fetchInterviewAttempt(
       sessionId,
       selectedAttemptId,
       controller.signal,
+      expectedQuestionId,
     )
       .then((attempt) => {
         if (
           !controller.signal.aborted &&
           sequence === attemptDetailSequence.current &&
+          selection === attemptSelectionSequence.current &&
+          selectedAttemptIdentity.current === expectedAttemptId &&
+          selectedQuestionIdentity.current === expectedQuestionId &&
           routeIdentity.current === sessionId
         ) {
           setSelectedAttempt(attempt);
@@ -467,46 +738,74 @@ export function InterviewSessionWorkspace() {
         if (
           !controller.signal.aborted &&
           sequence === attemptDetailSequence.current &&
+          selection === attemptSelectionSequence.current &&
+          selectedAttemptIdentity.current === expectedAttemptId &&
+          selectedQuestionIdentity.current === expectedQuestionId &&
           routeIdentity.current === sessionId
         ) {
           setAttemptError(safeError(error));
         }
       });
     return () => controller.abort();
-  }, [selectedAttemptId, sessionId]);
+  }, [selectedAttemptId, selectedQuestionId, sessionId]);
 
   const pollAcceptedJob = useCallback(
     async (
       scope: ActiveJob["scope"],
       accepted: Pick<InterviewJob, "id" | "type" | "status">,
       controller: AbortController,
+      operation: ProviderOperation,
       expectedResultId?: string,
+      expectedQuestionId?: string,
     ) => {
-      setActiveJob({ scope, resourceId: expectedResultId, job: accepted });
+      const questionSelection = questionSelectionSequence.current;
+      const attemptSelection = attemptSelectionSequence.current;
+      const scopeIsCurrent = () =>
+        providerOperation.current === operation &&
+        !controller.signal.aborted &&
+        routeIdentity.current === operation.sessionId &&
+        routeEpoch.current === operation.routeEpoch &&
+        (scope !== "explanation" ||
+          (expectedResultId === selectedQuestionIdentity.current &&
+            questionSelection === questionSelectionSequence.current)) &&
+        (scope !== "feedback" ||
+          (expectedResultId === selectedAttemptIdentity.current &&
+            expectedQuestionId === selectedQuestionIdentity.current &&
+            attemptSelection === attemptSelectionSequence.current));
+      if (!scopeIsCurrent()) return;
+      setActiveJob({
+        scope,
+        resourceId: expectedResultId,
+        questionId: expectedQuestionId,
+        job: accepted,
+      });
       const result = await pollInterviewJob({
         jobId: accepted.id,
         expectedType: accepted.type as InterviewJobType,
         ...(expectedResultId ? { expectedResultId } : {}),
-        fetchJob: fetchInterviewJob,
+        fetchJob: (jobId, signal) =>
+          fetchInterviewJob(jobId, signal, {
+            expectedType: accepted.type as InterviewJobType,
+            ...(expectedResultId ? { expectedResultId } : {}),
+          }),
         signal: controller.signal,
         onUpdate: (job) => {
-          if (
-            !controller.signal.aborted &&
-            routeIdentity.current === sessionId
-          ) {
+          if (scopeIsCurrent()) {
             setActiveJob({
               scope,
               resourceId: expectedResultId,
+              questionId: expectedQuestionId,
               job,
             });
           }
         },
       });
-      if (controller.signal.aborted) return;
+      if (!scopeIsCurrent()) return;
       if (result.reason === "terminal") {
         setActiveJob({
           scope,
           resourceId: expectedResultId,
+          questionId: expectedQuestionId,
           job: result.job,
         });
         if (result.job.status === "completed") {
@@ -515,10 +814,9 @@ export function InterviewSessionWorkspace() {
               ? "Question generation completed."
               : scope === "explanation"
                 ? "Explanation is ready."
-                : "Practice feedback is ready.",
+                : FEEDBACK_READY_MESSAGE,
           );
           if (scope === "generation") {
-            generationIntentId.current = null;
             setQuestionReloadKey((key) => key + 1);
             setSessionReloadKey((key) => key + 1);
           } else if (scope === "explanation" && expectedResultId) {
@@ -527,32 +825,31 @@ export function InterviewSessionWorkspace() {
               expectedResultId,
               controller.signal,
             );
-            if (
-              !controller.signal.aborted &&
-              routeIdentity.current === sessionId
-            ) {
+            if (scopeIsCurrent()) {
               setSelectedQuestion(detail);
             }
-          } else if (scope === "feedback" && expectedResultId) {
+          } else if (
+            scope === "feedback" &&
+            expectedResultId &&
+            expectedQuestionId
+          ) {
             const detail = await fetchInterviewAttempt(
               sessionId,
               expectedResultId,
               controller.signal,
+              expectedQuestionId,
             );
-            if (
-              !controller.signal.aborted &&
-              routeIdentity.current === sessionId
-            ) {
+            if (scopeIsCurrent()) {
               setSelectedAttempt(detail);
               setAttemptReloadKey((key) => key + 1);
             }
           }
         } else {
-          if (scope === "generation") generationIntentId.current = null;
           setProviderError({
             message:
               "The AI request did not complete. Try again only when you want to start a new request.",
           });
+          providerErrorScope.current = scope;
         }
       } else if (
         result.reason === "timeout" ||
@@ -569,6 +866,7 @@ export function InterviewSessionWorkspace() {
                   "Automatic status checks paused after five minutes. The backend job may still be running.",
               },
         );
+        providerErrorScope.current = scope;
       }
     },
     [sessionId],
@@ -583,7 +881,18 @@ export function InterviewSessionWorkspace() {
     ) {
       return;
     }
-    const controller = makeController();
+    const controller = makeController(
+      activeJob.scope === "generation"
+        ? "route"
+        : activeJob.scope === "explanation"
+          ? "question"
+          : "attempt",
+    );
+    const operation = beginProviderOperation(
+      activeJob.scope,
+      controller,
+    );
+    providerErrorScope.current = null;
     setProviderBusy(true);
     setProviderError(null);
     try {
@@ -591,13 +900,21 @@ export function InterviewSessionWorkspace() {
         activeJob.scope,
         activeJob.job,
         controller,
+        operation,
         activeJob.resourceId,
+        activeJob.questionId,
       );
     } catch (error) {
-      if (actionIsCurrent(controller)) setProviderError(safeError(error));
+      if (providerOperationIsCurrent(operation)) {
+        providerErrorScope.current = activeJob.scope;
+        setProviderError(safeError(error));
+      }
     } finally {
       releaseController(controller);
-      setProviderBusy(false);
+      if (providerOperation.current === operation) {
+        providerOperation.current = null;
+        setProviderBusy(false);
+      }
     }
   }
 
@@ -620,7 +937,7 @@ export function InterviewSessionWorkspace() {
       if (actionIsCurrent(controller)) setWorkspaceError(safeError(error));
     } finally {
       releaseController(controller);
-      setStatusBusy(false);
+      if (actionIsCurrent(controller)) setStatusBusy(false);
     }
   }
 
@@ -660,13 +977,13 @@ export function InterviewSessionWorkspace() {
       setManualOpen(false);
       setQuestionReloadKey((key) => key + 1);
       setSessionReloadKey((key) => key + 1);
-      setSelectedQuestionId(created.id);
+      selectQuestion(created.id);
       setStatusMessage("Manual question added.");
     } catch (error) {
       if (actionIsCurrent(controller)) setManualError(safeError(error));
     } finally {
       releaseController(controller);
-      setManualBusy(false);
+      if (actionIsCurrent(controller)) setManualBusy(false);
     }
   }
 
@@ -677,6 +994,12 @@ export function InterviewSessionWorkspace() {
     const requestId =
       generationIntentId.current ?? crypto.randomUUID();
     generationIntentId.current = requestId;
+    const operation = beginProviderOperation(
+      "generation",
+      controller,
+      requestId,
+    );
+    providerErrorScope.current = null;
     setProviderBusy(true);
     setProviderError(null);
     try {
@@ -689,62 +1012,121 @@ export function InterviewSessionWorkspace() {
         },
         controller.signal,
       );
-      if (!actionIsCurrent(controller)) return;
-      generationIntentId.current = null;
-      await pollAcceptedJob("generation", accepted, controller);
-    } catch (error) {
-      if (!(error instanceof TypeError)) {
+      if (!providerOperationIsCurrent(operation)) return;
+      if (generationIntentId.current === requestId) {
         generationIntentId.current = null;
       }
-      if (actionIsCurrent(controller)) setProviderError(safeError(error));
+      await pollAcceptedJob(
+        "generation",
+        accepted,
+        controller,
+        operation,
+      );
+    } catch (error) {
+      if (providerOperationIsCurrent(operation)) {
+        if (
+          !generationSubmissionMayHaveSucceeded(error) &&
+          generationIntentId.current === requestId
+        ) {
+          generationIntentId.current = null;
+        }
+        providerErrorScope.current = "generation";
+        setProviderError(safeError(error));
+      }
     } finally {
       releaseController(controller);
-      setProviderBusy(false);
+      if (providerOperation.current === operation) {
+        providerOperation.current = null;
+        setProviderBusy(false);
+      }
     }
   }
 
   async function togglePinned() {
-    if (!selectedQuestion) return;
-    const controller = makeController();
+    if (
+      !selectedQuestion ||
+      (pinOperation.current?.questionId === selectedQuestion.id &&
+        !pinOperation.current.controller.signal.aborted)
+    ) {
+      return;
+    }
+    const expectedQuestionId = selectedQuestion.id;
+    const selection = questionSelectionSequence.current;
+    const controller = makeController("question");
+    const operation: PinOperation = {
+      token: ++pinOperationSequence.current,
+      questionId: expectedQuestionId,
+      controller,
+    };
+    pinOperation.current = operation;
+    setPinPendingQuestionId(expectedQuestionId);
     setQuestionActionError(null);
     try {
       const updated = await setQuestionPinned(
         sessionId,
-        selectedQuestion.id,
+        expectedQuestionId,
         !selectedQuestion.isPinned,
         controller.signal,
       );
-      if (!actionIsCurrent(controller)) return;
+      if (
+        !actionIsCurrent(controller) ||
+        pinOperation.current !== operation ||
+        selection !== questionSelectionSequence.current ||
+        selectedQuestionIdentity.current !== expectedQuestionId
+      ) {
+        return;
+      }
       setSelectedQuestion(updated);
       setQuestionReloadKey((key) => key + 1);
     } catch (error) {
-      if (actionIsCurrent(controller)) {
+      if (
+        actionIsCurrent(controller) &&
+        pinOperation.current === operation &&
+        selection === questionSelectionSequence.current &&
+        selectedQuestionIdentity.current === expectedQuestionId
+      ) {
         setQuestionActionError(safeError(error));
       }
     } finally {
       releaseController(controller);
+      if (pinOperation.current === operation) {
+        pinOperation.current = null;
+        setPinPendingQuestionId("");
+      }
     }
   }
 
   async function persistNotes(value: string) {
     if (!selectedQuestion || notesState === "saving") return;
-    const controller = makeController();
+    const expectedQuestionId = selectedQuestion.id;
+    const selection = questionSelectionSequence.current;
+    const controller = makeController("question");
     setNotesState("saving");
     setQuestionActionError(null);
     try {
       const updated = await saveQuestionNotes(
         sessionId,
-        selectedQuestion.id,
+        expectedQuestionId,
         value,
         controller.signal,
       );
-      if (!actionIsCurrent(controller)) return;
+      if (
+        !actionIsCurrent(controller) ||
+        selection !== questionSelectionSequence.current ||
+        selectedQuestionIdentity.current !== expectedQuestionId
+      ) {
+        return;
+      }
       setSelectedQuestion(updated);
       setNotesDraft(updated.userNotes ?? "");
       setNotesState("saved");
       setQuestionReloadKey((key) => key + 1);
     } catch (error) {
-      if (actionIsCurrent(controller)) {
+      if (
+        actionIsCurrent(controller) &&
+        selection === questionSelectionSequence.current &&
+        selectedQuestionIdentity.current === expectedQuestionId
+      ) {
         setNotesState("error");
         setQuestionActionError(safeError(error));
       }
@@ -755,16 +1137,30 @@ export function InterviewSessionWorkspace() {
 
   async function requestExplanation() {
     if (!selectedQuestion || providerBusy) return;
-    const controller = makeController();
+    const expectedQuestionId = selectedQuestion.id;
+    const selection = questionSelectionSequence.current;
+    const controller = makeController("question");
+    const operation = beginProviderOperation(
+      "explanation",
+      controller,
+    );
+    providerErrorScope.current = null;
     setProviderBusy(true);
     setProviderError(null);
     try {
       const result = await requestQuestionExplanation(
         sessionId,
-        selectedQuestion.id,
+        expectedQuestionId,
         controller.signal,
       );
-      if (!actionIsCurrent(controller)) return;
+      if (
+        !actionIsCurrent(controller) ||
+        !providerOperationIsCurrent(operation) ||
+        selection !== questionSelectionSequence.current ||
+        selectedQuestionIdentity.current !== expectedQuestionId
+      ) {
+        return;
+      }
       if (result.kind === "available") {
         setSelectedQuestion(result.question);
         setStatusMessage("Explanation is available.");
@@ -773,14 +1169,26 @@ export function InterviewSessionWorkspace() {
           "explanation",
           result.job,
           controller,
-          selectedQuestion.id,
+          operation,
+          expectedQuestionId,
+          expectedQuestionId,
         );
       }
     } catch (error) {
-      if (actionIsCurrent(controller)) setProviderError(safeError(error));
+      if (
+        providerOperationIsCurrent(operation) &&
+        selection === questionSelectionSequence.current &&
+        selectedQuestionIdentity.current === expectedQuestionId
+      ) {
+        providerErrorScope.current = "explanation";
+        setProviderError(safeError(error));
+      }
     } finally {
       releaseController(controller);
-      setProviderBusy(false);
+      if (providerOperation.current === operation) {
+        providerOperation.current = null;
+        setProviderBusy(false);
+      }
     }
   }
 
@@ -793,44 +1201,77 @@ export function InterviewSessionWorkspace() {
       });
       return;
     }
-    const controller = makeController();
+    const expectedQuestionId = selectedQuestion.id;
+    const selection = questionSelectionSequence.current;
+    const controller = makeController("question");
     setAnswerBusy(true);
     setAnswerError(null);
     try {
       const created = await recordInterviewAttempt(
         sessionId,
-        selectedQuestion.id,
+        expectedQuestionId,
         answer,
         controller.signal,
       );
-      if (!actionIsCurrent(controller)) return;
+      if (
+        !actionIsCurrent(controller) ||
+        selection !== questionSelectionSequence.current ||
+        selectedQuestionIdentity.current !== expectedQuestionId
+      ) {
+        return;
+      }
       setAnswerDraft("");
-      setSelectedAttemptId(created.id);
+      selectAttempt(created.id);
       setSelectedAttempt(created);
       setAttemptReloadKey((key) => key + 1);
       setStatusMessage(
         "Immutable attempt recorded. Another try will create a new record.",
       );
     } catch (error) {
-      if (actionIsCurrent(controller)) setAnswerError(safeError(error));
+      if (
+        actionIsCurrent(controller) &&
+        selection === questionSelectionSequence.current &&
+        selectedQuestionIdentity.current === expectedQuestionId
+      ) {
+        setAnswerError(safeError(error));
+      }
     } finally {
       releaseController(controller);
-      setAnswerBusy(false);
+      if (
+        selection === questionSelectionSequence.current &&
+        selectedQuestionIdentity.current === expectedQuestionId
+      ) {
+        setAnswerBusy(false);
+      }
     }
   }
 
   async function requestFeedback(attempt: InterviewAttempt) {
     if (providerBusy || attempt.feedback) return;
-    const controller = makeController();
+    const expectedAttemptId = attempt.id;
+    const expectedQuestionId = attempt.questionId;
+    const selection = attemptSelectionSequence.current;
+    const controller = makeController("attempt");
+    const operation = beginProviderOperation("feedback", controller);
+    providerErrorScope.current = null;
     setProviderBusy(true);
     setProviderError(null);
     try {
       const result = await requestAttemptFeedback(
         sessionId,
-        attempt.id,
+        expectedAttemptId,
         controller.signal,
+        expectedQuestionId,
       );
-      if (!actionIsCurrent(controller)) return;
+      if (
+        !actionIsCurrent(controller) ||
+        !providerOperationIsCurrent(operation) ||
+        selection !== attemptSelectionSequence.current ||
+        selectedAttemptIdentity.current !== expectedAttemptId ||
+        selectedQuestionIdentity.current !== expectedQuestionId
+      ) {
+        return;
+      }
       if (result.kind === "available") {
         setSelectedAttempt(result.attempt);
         setAttemptReloadKey((key) => key + 1);
@@ -839,14 +1280,27 @@ export function InterviewSessionWorkspace() {
           "feedback",
           result.job,
           controller,
+          operation,
           result.attemptId,
+          expectedQuestionId,
         );
       }
     } catch (error) {
-      if (actionIsCurrent(controller)) setProviderError(safeError(error));
+      if (
+        providerOperationIsCurrent(operation) &&
+        selection === attemptSelectionSequence.current &&
+        selectedAttemptIdentity.current === expectedAttemptId &&
+        selectedQuestionIdentity.current === expectedQuestionId
+      ) {
+        providerErrorScope.current = "feedback";
+        setProviderError(safeError(error));
+      }
     } finally {
       releaseController(controller);
-      setProviderBusy(false);
+      if (providerOperation.current === operation) {
+        providerOperation.current = null;
+        setProviderBusy(false);
+      }
     }
   }
 
@@ -862,10 +1316,7 @@ export function InterviewSessionWorkspace() {
     return (
       <section className="interview-state interview-state--error">
         <h1>Interview session unavailable</h1>
-        <p role="alert">{workspaceError.message}</p>
-        {workspaceError.requestId ? (
-          <small>Request ID: {workspaceError.requestId}</small>
-        ) : null}
+        <SafeErrorMessage error={workspaceError} />
         <button
           type="button"
           onClick={() => setSessionReloadKey((key) => key + 1)}
@@ -986,9 +1437,7 @@ export function InterviewSessionWorkspace() {
       ) : null}
 
       {workspaceError ? (
-        <p className="interview-field-error" role="alert">
-          {workspaceError.message}
-        </p>
+        <SafeErrorMessage error={workspaceError} />
       ) : null}
       <p className="interview-sr-status" aria-live="polite">
         {statusMessage}
@@ -1117,9 +1566,7 @@ export function InterviewSessionWorkspace() {
                 />
               </label>
               {manualError ? (
-                <p className="interview-field-error" role="alert">
-                  {manualError.message}
-                </p>
+                <SafeErrorMessage error={manualError} />
               ) : null}
               <button
                 className="interview-secondary-button"
@@ -1170,9 +1617,7 @@ export function InterviewSessionWorkspace() {
         </section>
       ) : null}
       {providerError ? (
-        <p className="interview-field-error" role="alert">
-          {providerError.message}
-        </p>
+        <SafeErrorMessage error={providerError} />
       ) : null}
 
       <div className="interview-workspace-grid">
@@ -1236,7 +1681,10 @@ export function InterviewSessionWorkspace() {
             </p>
           ) : questionError ? (
             <div className="interview-state interview-state--error">
-              <p role="alert">{questionError.message}</p>
+              <SafeErrorMessage
+                error={questionError}
+                className="interview-field-error"
+              />
               <button
                 type="button"
                 onClick={() => setQuestionReloadKey((key) => key + 1)}
@@ -1263,7 +1711,7 @@ export function InterviewSessionWorkspace() {
                     aria-label={`${
                       question.isPinned ? "Pinned: " : ""
                     }${question.question}`}
-                    onClick={() => setSelectedQuestionId(question.id)}
+                    onClick={() => selectQuestion(question.id)}
                   >
                     <span>
                       {question.category} · {question.difficulty}
@@ -1335,6 +1783,9 @@ export function InterviewSessionWorkspace() {
                   <button
                     type="button"
                     className="interview-secondary-button"
+                    disabled={
+                      pinPendingQuestionId === selectedQuestion.id
+                    }
                     onClick={() => void togglePinned()}
                   >
                     {selectedQuestion.isPinned ? "Unpin" : "Pin question"}
@@ -1450,12 +1901,7 @@ export function InterviewSessionWorkspace() {
                     {ANSWER_MAX_LENGTH.toLocaleString()}
                   </small>
                   {answerError ? (
-                    <p className="interview-field-error" role="alert">
-                      {answerError.message}
-                      {answerError.requestId
-                        ? ` Request ID: ${answerError.requestId}`
-                        : ""}
-                    </p>
+                    <SafeErrorMessage error={answerError} />
                   ) : null}
                   <button
                     type="button"
@@ -1470,13 +1916,11 @@ export function InterviewSessionWorkspace() {
                 </section>
               ) : null}
 
-              {questionActionError ? (
-                <p className="interview-field-error" role="alert">
-                  {questionActionError.message}
-                </p>
-              ) : null}
             </>
           )}
+          {questionActionError ? (
+            <SafeErrorMessage error={questionActionError} />
+          ) : null}
         </section>
 
         <section
@@ -1494,13 +1938,41 @@ export function InterviewSessionWorkspace() {
               </span>
             ) : null}
           </div>
+          <label className="interview-attempt-status-filter">
+            Attempt status
+            <select
+              value={attemptStatusFilter}
+              onChange={(event) => {
+                attemptListController.current?.abort();
+                attemptSequence.current += 1;
+                setAttemptStatusFilter(
+                  event.target.value as InterviewAttemptStatus | "",
+                );
+                setAttemptPage(1);
+              }}
+            >
+              <option value="">All statuses</option>
+              <option value="recorded">Recorded</option>
+              <option value="feedback-queued">Feedback queued</option>
+              <option value="feedback-processing">
+                Feedback processing
+              </option>
+              <option value="feedback-completed">
+                Feedback completed
+              </option>
+              <option value="feedback-failed">Feedback failed</option>
+            </select>
+          </label>
           {attemptLoading ? (
             <p className="interview-state" role="status">
               Loading attempts…
             </p>
           ) : attemptError ? (
             <div className="interview-state interview-state--error">
-              <p role="alert">{attemptError.message}</p>
+              <SafeErrorMessage
+                error={attemptError}
+                className="interview-field-error"
+              />
               <button
                 type="button"
                 onClick={() => setAttemptReloadKey((key) => key + 1)}
@@ -1522,7 +1994,7 @@ export function InterviewSessionWorkspace() {
                     aria-label={`Open attempt ${index + 1} from ${new Date(
                       attempt.createdAt,
                     ).toLocaleString()}`}
-                    onClick={() => setSelectedAttemptId(attempt.id)}
+                    onClick={() => selectAttempt(attempt.id)}
                   >
                     <strong>Attempt {index + 1}</strong>
                     <span>{attempt.status.replaceAll("-", " ")}</span>

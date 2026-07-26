@@ -14,6 +14,10 @@ import { ApiError } from "../../api/apiClient";
 import * as interviewApi from "./interviewApi";
 import * as interviewPolling from "./interviewPolling";
 import { InterviewSessionWorkspace } from "./InterviewSessionWorkspace";
+import type {
+  InterviewAttempt,
+  InterviewQuestionDetail,
+} from "./types";
 
 vi.mock("./interviewApi", () => ({
   addManualQuestion: vi.fn(),
@@ -48,6 +52,16 @@ const questionId = "507f1f77bcf86cd799439022";
 const attemptId = "507f1f77bcf86cd799439023";
 const jobId = "507f1f77bcf86cd799439024";
 const timestamp = "2026-07-25T08:00:00.000Z";
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
 
 function session(status: "active" | "completed" | "archived" = "active") {
   return {
@@ -91,6 +105,19 @@ function questionDetail() {
   };
 }
 
+function alternateQuestion() {
+  return {
+    ...questionDetail(),
+    id: "507f1f77bcf86cd799439027",
+    category: "Reliability",
+    question: "How would you recover a poisoned queue?",
+    userNotes: "Canonical alternate notes.",
+    modelAnswer: "Quarantine poison messages.",
+    explanation: "Use bounded retries and a dead-letter queue.",
+    explanationKeyPoints: ["Quarantine", "Replay"],
+  };
+}
+
 function attempt(withFeedback = false) {
   return {
     id: attemptId,
@@ -115,6 +142,27 @@ function attempt(withFeedback = false) {
     createdAt: timestamp,
     updatedAt: timestamp,
   };
+}
+
+function alternateAttempt(withFeedback = false): InterviewAttempt {
+  return {
+    ...attempt(withFeedback),
+    id: "507f1f77bcf86cd799439028",
+    answerText: "I would quarantine and inspect poison messages.",
+  };
+}
+
+function apiFailure(
+  message: string,
+  requestId = "workspace-request-id-0001",
+) {
+  return new ApiError(
+    503,
+    "INTERVIEW_UNAVAILABLE",
+    message,
+    requestId,
+    { internal: "must-not-render" },
+  );
 }
 
 function renderWorkspace(
@@ -234,6 +282,57 @@ describe("InterviewSessionWorkspace", () => {
     });
     expect(
       screen.getByText("No questions match these filters."),
+    ).not.toBeNull();
+  });
+
+  it("clears question-detail loading when the next route has no questions", async () => {
+    const nextSessionId = "507f1f77bcf86cd799439030";
+    vi.mocked(interviewApi.fetchInterviewSession).mockImplementation(
+      async (id) =>
+        id === sessionId
+          ? session()
+          : {
+              ...session(),
+              id: nextSessionId,
+              title: "Empty interview session",
+              questionCount: 0,
+            },
+    );
+    vi.mocked(interviewApi.listInterviewQuestions).mockImplementation(
+      async (id) =>
+        id === sessionId
+          ? {
+              questions: [questionSummary()],
+              pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+            }
+          : {
+              questions: [],
+              pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+            },
+    );
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockReturnValue(
+      new Promise(() => undefined),
+    );
+    const router = renderWorkspace();
+    await screen.findByRole("button", {
+      name: /How would you design a reliable job processor/,
+    });
+
+    await router.navigate(`/interviews/${nextSessionId}`);
+    expect(
+      await screen.findByRole("heading", {
+        name: "Empty interview session",
+      }),
+    ).not.toBeNull();
+    expect(
+      await screen.findByText("No questions match these filters."),
+    ).not.toBeNull();
+
+    expect(screen.queryByText("Loading question…")).toBeNull();
+    expect(
+      screen.getByText(
+        "Choose a question to review its private practice record.",
+      ),
     ).not.toBeNull();
   });
 
@@ -524,10 +623,17 @@ describe("InterviewSessionWorkspace", () => {
       sessionId,
       attemptId,
       expect.any(AbortSignal),
+      questionId,
     );
     expect(
       await screen.findByText("Model-generated practice guidance"),
     ).not.toBeNull();
+    expect(interviewApi.fetchInterviewAttempt).toHaveBeenLastCalledWith(
+      sessionId,
+      attemptId,
+      expect.any(AbortSignal),
+      questionId,
+    );
   });
 
   it("polls queued feedback and reloads the bound canonical attempt", async () => {
@@ -582,6 +688,92 @@ describe("InterviewSessionWorkspace", () => {
     );
     expect(
       await screen.findByText("Model-generated practice guidance"),
+    ).not.toBeNull();
+    expect(interviewApi.fetchInterviewAttempt).toHaveBeenLastCalledWith(
+      sessionId,
+      attemptId,
+      expect.any(AbortSignal),
+      questionId,
+    );
+    const fetchJob = vi.mocked(interviewPolling.pollInterviewJob).mock
+      .calls[0]?.[0].fetchJob;
+    await fetchJob?.(jobId);
+    expect(interviewApi.fetchInterviewJob).toHaveBeenCalledWith(
+      jobId,
+      undefined,
+      {
+        expectedType: "interview.attempt.feedback",
+        expectedResultId: attemptId,
+      },
+    );
+  });
+
+  it("clears completed feedback messaging when another attempt is selected", async () => {
+    let feedbackReady = false;
+    vi.mocked(interviewApi.listAttemptHistory).mockResolvedValue({
+      attempts: [attempt(), alternateAttempt()],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewAttempt).mockImplementation(
+      async (_session, id) =>
+        id === attemptId ? attempt(feedbackReady) : alternateAttempt(),
+    );
+    vi.mocked(interviewApi.requestAttemptFeedback).mockImplementation(
+      async () => {
+        feedbackReady = true;
+        return {
+          kind: "queued",
+          attemptId,
+          job: {
+            id: jobId,
+            type: "interview.attempt.feedback",
+            status: "queued",
+          },
+        };
+      },
+    );
+    vi.mocked(interviewPolling.pollInterviewJob).mockResolvedValue({
+      reason: "terminal",
+      job: {
+        id: jobId,
+        type: "interview.attempt.feedback",
+        status: "completed",
+        progress: 100,
+        attempts: 1,
+        maxAttempts: 3,
+        result: {
+          kind: "feedback",
+          attemptId,
+          score: 76,
+        },
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    });
+    renderWorkspace();
+    const user = userEvent.setup();
+    const attemptButtons = await screen.findAllByRole("button", {
+      name: /Open attempt/,
+    });
+    await user.click(attemptButtons[0]!);
+    await user.click(
+      await screen.findByRole("button", { name: "Request feedback" }),
+    );
+    expect(
+      await screen.findByText("Practice feedback is ready."),
+    ).not.toBeNull();
+
+    await user.click(attemptButtons[1]!);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText("Practice feedback is ready."),
+      ).toBeNull();
+    });
+    expect(
+      await screen.findByText(
+        "I would quarantine and inspect poison messages.",
+      ),
     ).not.toBeNull();
   });
 
@@ -679,6 +871,66 @@ describe("InterviewSessionWorkspace", () => {
     await userEvent.click(generate);
     await screen.findByText(
       "The request could not be completed. Try again.",
+    );
+    await userEvent.click(generate);
+
+    await waitFor(() => {
+      expect(
+        interviewApi.generateInterviewQuestions,
+      ).toHaveBeenCalledTimes(2);
+    });
+    const firstInput = vi.mocked(
+      interviewApi.generateInterviewQuestions,
+    ).mock.calls[0]?.[1];
+    const secondInput = vi.mocked(
+      interviewApi.generateInterviewQuestions,
+    ).mock.calls[1]?.[1];
+    expect(firstInput?.requestId).toBe(secondInput?.requestId);
+    expect(crypto.randomUUID).toHaveBeenCalledTimes(1);
+  });
+
+  it("reuses a generation UUID after a malformed successful response", async () => {
+    vi.stubGlobal("crypto", {
+      randomUUID: vi.fn().mockReturnValue(
+        "a4d20e66-4af2-4dd2-834b-fad9fe354a6f",
+      ),
+    });
+    vi.mocked(interviewApi.generateInterviewQuestions)
+      .mockRejectedValueOnce(
+        new ApiError(
+          502,
+          "INVALID_INTERVIEW_RESPONSE",
+          "The server returned an invalid interview response.",
+          "generation-request-id-0001",
+        ),
+      )
+      .mockResolvedValueOnce({
+        id: jobId,
+        type: "interview.questions.generate",
+        status: "queued",
+      });
+    vi.mocked(interviewPolling.pollInterviewJob).mockResolvedValue({
+      reason: "terminal",
+      job: {
+        id: jobId,
+        type: "interview.questions.generate",
+        status: "failed",
+        progress: 20,
+        attempts: 1,
+        maxAttempts: 3,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    });
+    renderWorkspace();
+    await screen.findByRole("textbox", { name: "Written answer" });
+    const generate = screen.getByRole("button", {
+      name: "Generate questions",
+    });
+
+    await userEvent.click(generate);
+    await screen.findByText(
+      "The server returned an invalid interview response.",
     );
     await userEvent.click(generate);
 
@@ -824,5 +1076,1086 @@ describe("InterviewSessionWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: /mark active/i }),
     ).toBeNull();
+  });
+
+  it("keeps pin state bound to the selected question and blocks duplicate pin writes", async () => {
+    const pinRequest = deferred<InterviewQuestionDetail>();
+    vi.mocked(interviewApi.listInterviewQuestions).mockResolvedValue({
+      questions: [questionSummary(), alternateQuestion()],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockImplementation(
+      async (_session, id) =>
+        id === questionId ? questionDetail() : alternateQuestion(),
+    );
+    vi.mocked(interviewApi.setQuestionPinned).mockReturnValue(
+      pinRequest.promise,
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const pin = await screen.findByRole("button", {
+      name: "Pin question",
+    });
+
+    await user.click(pin);
+    expect((pin as HTMLButtonElement).disabled).toBe(true);
+    await user.click(pin);
+    expect(interviewApi.setQuestionPinned).toHaveBeenCalledTimes(1);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /How would you recover a poisoned queue/,
+      }),
+    );
+    expect(
+      await screen.findByText("Canonical alternate notes."),
+    ).not.toBeNull();
+
+    pinRequest.resolve({ ...questionDetail(), isPinned: true });
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Reliability" }),
+      ).not.toBeNull();
+    });
+    expect(screen.queryByRole("button", { name: "Unpin" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Pin question" }),
+    ).not.toBeNull();
+  });
+
+  it("does not let a late notes save overwrite the next question notes or answer draft", async () => {
+    const notesRequest = deferred<InterviewQuestionDetail>();
+    vi.mocked(interviewApi.listInterviewQuestions).mockResolvedValue({
+      questions: [questionSummary(), alternateQuestion()],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockImplementation(
+      async (_session, id) =>
+        id === questionId ? questionDetail() : alternateQuestion(),
+    );
+    vi.mocked(interviewApi.saveQuestionNotes).mockReturnValue(
+      notesRequest.promise,
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const notes = await screen.findByRole("textbox", {
+      name: "Private notes",
+    });
+    await user.clear(notes);
+    await user.type(notes, "Pending notes for A.");
+    await user.click(screen.getByRole("button", { name: "Save notes" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: /How would you recover a poisoned queue/,
+      }),
+    );
+    const nextNotes = await screen.findByRole("textbox", {
+      name: "Private notes",
+    });
+    const nextAnswer = screen.getByRole("textbox", {
+      name: "Written answer",
+    });
+    await user.clear(nextNotes);
+    await user.type(nextNotes, "Draft notes for B.");
+    await user.type(nextAnswer, "Draft answer for B.");
+
+    notesRequest.resolve({
+      ...questionDetail(),
+      userNotes: "Canonical saved notes for A.",
+    });
+
+    await waitFor(() => {
+      expect((nextNotes as HTMLTextAreaElement).value).toBe(
+        "Draft notes for B.",
+      );
+    });
+    expect((nextAnswer as HTMLTextAreaElement).value).toBe(
+      "Draft answer for B.",
+    );
+    expect(screen.queryByText("Notes saved.")).toBeNull();
+  });
+
+  it("ignores late explanation polling and detail reload after selecting another question", async () => {
+    const pollRequest =
+      deferred<Awaited<ReturnType<typeof interviewPolling.pollInterviewJob>>>();
+    vi.mocked(interviewApi.listInterviewQuestions).mockResolvedValue({
+      questions: [questionSummary(), alternateQuestion()],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockImplementation(
+      async (_session, id) =>
+        id === questionId
+          ? {
+              ...questionDetail(),
+              explanation: undefined,
+              explanationKeyPoints: [],
+            }
+          : alternateQuestion(),
+    );
+    vi.mocked(interviewApi.requestQuestionExplanation).mockResolvedValue({
+      kind: "queued",
+      job: {
+        id: jobId,
+        type: "interview.question.explain",
+        status: "queued",
+      },
+    });
+    vi.mocked(interviewPolling.pollInterviewJob).mockReturnValue(
+      pollRequest.promise,
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Request explanation",
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: /How would you recover a poisoned queue/,
+      }),
+    );
+    await screen.findByText(
+      "Use bounded retries and a dead-letter queue.",
+    );
+
+    pollRequest.resolve({
+      reason: "terminal",
+      job: {
+        id: jobId,
+        type: "interview.question.explain",
+        status: "completed",
+        progress: 100,
+        attempts: 1,
+        maxAttempts: 3,
+        result: {
+          kind: "explanation",
+          questionId,
+          explanationReady: true,
+        },
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Use bounded retries and a dead-letter queue."),
+      ).not.toBeNull();
+    });
+    expect(
+      screen.queryByText("Discuss delivery guarantees and recovery."),
+    ).toBeNull();
+    expect(screen.queryByText("Explanation is ready.")).toBeNull();
+  });
+
+  it("does not clear or select from a late attempt recorded for the prior question", async () => {
+    const recordRequest = deferred<InterviewAttempt>();
+    vi.mocked(interviewApi.listInterviewQuestions).mockResolvedValue({
+      questions: [questionSummary(), alternateQuestion()],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockImplementation(
+      async (_session, id) =>
+        id === questionId ? questionDetail() : alternateQuestion(),
+    );
+    vi.mocked(interviewApi.recordInterviewAttempt).mockReturnValue(
+      recordRequest.promise,
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const firstAnswer = await screen.findByRole("textbox", {
+      name: "Written answer",
+    });
+    await user.type(firstAnswer, "Attempt for A.");
+    await user.click(
+      screen.getByRole("button", { name: "Record immutable attempt" }),
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: /How would you recover a poisoned queue/,
+      }),
+    );
+    const nextAnswer = await screen.findByRole("textbox", {
+      name: "Written answer",
+    });
+    await user.type(nextAnswer, "Draft answer for B.");
+
+    recordRequest.resolve(attempt());
+
+    await waitFor(() => {
+      expect((nextAnswer as HTMLTextAreaElement).value).toBe(
+        "Draft answer for B.",
+      );
+    });
+    expect(screen.queryByText(/Immutable attempt recorded/)).toBeNull();
+    expect(
+      screen.queryByText(
+        "I would use a durable queue and idempotency keys.",
+      ),
+    ).toBeNull();
+  });
+
+  it("keeps feedback bound to the selected attempt and passes expected question identities", async () => {
+    const feedbackRequest =
+      deferred<Awaited<ReturnType<typeof interviewApi.requestAttemptFeedback>>>();
+    vi.mocked(interviewApi.listAttemptHistory).mockResolvedValue({
+      attempts: [attempt(), alternateAttempt()],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewAttempt).mockImplementation(
+      async (_session, id) =>
+        id === attemptId ? attempt() : alternateAttempt(),
+    );
+    vi.mocked(interviewApi.requestAttemptFeedback).mockReturnValue(
+      feedbackRequest.promise,
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const attemptButtons = await screen.findAllByRole("button", {
+      name: /Open attempt/,
+    });
+    await user.click(attemptButtons[0]!);
+    await screen.findByText(
+      "I would use a durable queue and idempotency keys.",
+    );
+    expect(interviewApi.fetchInterviewAttempt).toHaveBeenLastCalledWith(
+      sessionId,
+      attemptId,
+      expect.any(AbortSignal),
+      questionId,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Request feedback" }),
+    );
+    expect(interviewApi.requestAttemptFeedback).toHaveBeenCalledWith(
+      sessionId,
+      attemptId,
+      expect.any(AbortSignal),
+      questionId,
+    );
+
+    await user.click(attemptButtons[1]!);
+    await screen.findByText(
+      "I would quarantine and inspect poison messages.",
+    );
+    feedbackRequest.resolve({
+      kind: "available",
+      attempt: attempt(true),
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "I would quarantine and inspect poison messages.",
+        ),
+      ).not.toBeNull();
+    });
+    expect(
+      screen.queryByText("Model-generated practice guidance"),
+    ).toBeNull();
+  });
+
+  it("aborts and ignores stale session, question, and attempt mutations on a route change", async () => {
+    const nextSessionId = "507f1f77bcf86cd799439029";
+    const statusRequest = deferred<ReturnType<typeof session>>();
+    const pinRequest = deferred<InterviewQuestionDetail>();
+    const feedbackRequest =
+      deferred<Awaited<ReturnType<typeof interviewApi.requestAttemptFeedback>>>();
+    vi.mocked(interviewApi.fetchInterviewSession).mockImplementation(
+      async (id) =>
+        id === sessionId
+          ? session()
+          : {
+              ...session(),
+              id: nextSessionId,
+              title: "Route B interview",
+              questionCount: 0,
+            },
+    );
+    vi.mocked(interviewApi.listInterviewQuestions).mockImplementation(
+      async (id) =>
+        id === sessionId
+          ? {
+              questions: [questionSummary()],
+              pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+            }
+          : {
+              questions: [],
+              pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+            },
+    );
+    vi.mocked(interviewApi.listAttemptHistory).mockResolvedValue({
+      attempts: [attempt()],
+      pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewAttempt).mockResolvedValue(
+      attempt(),
+    );
+    vi.mocked(interviewApi.updateInterviewSessionStatus).mockReturnValue(
+      statusRequest.promise,
+    );
+    vi.mocked(interviewApi.setQuestionPinned).mockReturnValue(
+      pinRequest.promise,
+    );
+    vi.mocked(interviewApi.requestAttemptFeedback).mockReturnValue(
+      feedbackRequest.promise,
+    );
+    const router = renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByRole("button", { name: "Pin question" });
+    await user.click(
+      screen.getByRole("button", { name: "Mark completed" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Pin question" }));
+    await user.click(
+      await screen.findByRole("button", { name: /Open attempt/ }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Request feedback" }),
+    );
+
+    const statusSignal = vi.mocked(
+      interviewApi.updateInterviewSessionStatus,
+    ).mock.calls[0]?.[2];
+    const pinSignal = vi.mocked(interviewApi.setQuestionPinned).mock
+      .calls[0]?.[3];
+    const feedbackSignal = vi.mocked(
+      interviewApi.requestAttemptFeedback,
+    ).mock.calls[0]?.[2];
+    await router.navigate(`/interviews/${nextSessionId}`);
+    expect(
+      await screen.findByRole("heading", { name: "Route B interview" }),
+    ).not.toBeNull();
+    expect(statusSignal?.aborted).toBe(true);
+    expect(pinSignal?.aborted).toBe(true);
+    expect(feedbackSignal?.aborted).toBe(true);
+
+    statusRequest.resolve(session("completed"));
+    pinRequest.resolve({ ...questionDetail(), isPinned: true });
+    feedbackRequest.resolve({
+      kind: "available",
+      attempt: attempt(true),
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Route B interview" }),
+      ).not.toBeNull();
+    });
+    expect(screen.queryByText(/Session marked completed/)).toBeNull();
+    expect(
+      screen.queryByText("Model-generated practice guidance"),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Unpin" })).toBeNull();
+  });
+
+  it("filters attempts by status, resets page, invalidates obsolete reads, and clears an absent selection", async () => {
+    const obsoletePage = deferred<{
+      attempts: InterviewAttempt[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+      };
+    }>();
+    vi.mocked(interviewApi.listAttemptHistory).mockImplementation(
+      async (_id, input) => {
+        const request = input ?? {};
+        if (request.status === "feedback-queued") {
+          return {
+            attempts: [],
+            pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+          };
+        }
+        if (request.page === 2) return obsoletePage.promise;
+        return {
+          attempts: [attempt()],
+          pagination: { page: 1, limit: 20, total: 1, pages: 2 },
+        };
+      },
+    );
+    vi.mocked(interviewApi.fetchInterviewAttempt).mockResolvedValue(
+      attempt(),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    expect(
+      await screen.findByRole("combobox", { name: "Attempt status" }),
+    ).not.toBeNull();
+    await waitFor(() => {
+      expect(interviewApi.listAttemptHistory).toHaveBeenCalledWith(
+        sessionId,
+        {
+          page: 1,
+          limit: 20,
+          questionId,
+        },
+        expect.any(AbortSignal),
+      );
+    });
+    await user.click(
+      await screen.findByRole("button", { name: /Open attempt/ }),
+    );
+    const history = screen
+      .getByRole("heading", { name: "Attempt history" })
+      .closest("section");
+    expect(history).not.toBeNull();
+    await user.click(
+      within(history as HTMLElement).getByRole("button", {
+        name: "Next",
+      }),
+    );
+    await waitFor(() => {
+      expect(
+        vi.mocked(interviewApi.listAttemptHistory).mock.calls.some(
+          (call) => call[1]?.page === 2,
+        ),
+      ).toBe(true);
+    });
+    const obsoleteSignal = vi
+      .mocked(interviewApi.listAttemptHistory)
+      .mock.calls.find((call) => call[1]?.page === 2)?.[2];
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Attempt status" }),
+      "feedback-queued",
+    );
+    expect(obsoleteSignal?.aborted).toBe(true);
+    await waitFor(() => {
+      expect(interviewApi.listAttemptHistory).toHaveBeenLastCalledWith(
+        sessionId,
+        {
+          page: 1,
+          limit: 20,
+          questionId,
+          status: "feedback-queued",
+        },
+        expect.any(AbortSignal),
+      );
+    });
+    expect(
+      within(history as HTMLElement).getByText("Page 1"),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "System design" }),
+    ).not.toBeNull();
+    expect(
+      screen.queryByText(
+        "I would use a durable queue and idempotency keys.",
+      ),
+    ).toBeNull();
+
+    obsoletePage.resolve({
+      attempts: [alternateAttempt()],
+      pagination: { page: 2, limit: 20, total: 1, pages: 2 },
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByText("No written attempts have been recorded for this question."),
+      ).not.toBeNull();
+    });
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Attempt status" }),
+      "",
+    );
+    await waitFor(() => {
+      const lastInput = vi.mocked(interviewApi.listAttemptHistory).mock
+        .calls.at(-1)?.[1];
+      expect(lastInput).not.toHaveProperty("status");
+    });
+    expect(
+      screen.getByRole("option", { name: "All statuses" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("option", { name: "Recorded" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("option", { name: "Feedback queued" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("option", { name: "Feedback processing" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("option", { name: "Feedback completed" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("option", { name: "Feedback failed" }),
+    ).not.toBeNull();
+  });
+
+  it("renders safe request IDs for initial errors without leaking details or empty labels", async () => {
+    vi.mocked(interviewApi.fetchInterviewSession).mockRejectedValueOnce(
+      apiFailure(
+        "The interview workspace is unavailable.",
+        "initial-request-id-0001",
+      ),
+    );
+    renderWorkspace();
+
+    expect(
+      await screen.findByText("Request ID: initial-request-id-0001"),
+    ).not.toBeNull();
+    expect(screen.queryByText(/must-not-render/)).toBeNull();
+
+    vi.mocked(interviewApi.fetchInterviewSession).mockRejectedValueOnce(
+      new Error("raw internal transport failure"),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Retry session" }),
+    );
+    expect(
+      await screen.findByText(
+        "The request could not be completed. Try again.",
+      ),
+    ).not.toBeNull();
+    expect(screen.queryByText(/raw internal transport failure/)).toBeNull();
+    expect(screen.queryByText(/^Request ID:\s*$/)).toBeNull();
+  });
+
+  it("renders request IDs for status, manual, pin, notes, and answer failures", async () => {
+    vi.mocked(interviewApi.updateInterviewSessionStatus).mockRejectedValue(
+      apiFailure("Status failed.", "status-request-id-0001"),
+    );
+    vi.mocked(interviewApi.addManualQuestion).mockRejectedValue(
+      apiFailure("Manual failed.", "manual-request-id-0001"),
+    );
+    vi.mocked(interviewApi.setQuestionPinned).mockRejectedValue(
+      apiFailure("Pin failed.", "pin-request-id-0001"),
+    );
+    vi.mocked(interviewApi.saveQuestionNotes).mockRejectedValue(
+      apiFailure("Notes failed.", "notes-request-id-0001"),
+    );
+    vi.mocked(interviewApi.recordInterviewAttempt).mockRejectedValue(
+      apiFailure("Answer failed.", "answer-request-id-0001"),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const notes = await screen.findByRole("textbox", {
+      name: "Private notes",
+    });
+    const answer = screen.getByRole("textbox", {
+      name: "Written answer",
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "Mark completed" }),
+    );
+    expect(
+      await screen.findByText("Request ID: status-request-id-0001"),
+    ).not.toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: "Add manually" }),
+    );
+    const manual = within(
+      document.getElementById("manual-question-form") as HTMLFormElement,
+    );
+    await user.type(
+      manual.getByRole("textbox", { name: "Category" }),
+      "Reliability",
+    );
+    await user.type(
+      manual.getByRole("textbox", { name: "Question" }),
+      "Why can retries fail?",
+    );
+    await user.click(
+      manual.getByRole("button", { name: "Add question" }),
+    );
+    expect(
+      await screen.findByText("Request ID: manual-request-id-0001"),
+    ).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Pin question" }));
+    expect(
+      await screen.findByText("Request ID: pin-request-id-0001"),
+    ).not.toBeNull();
+
+    await user.clear(notes);
+    await user.type(notes, "Updated notes.");
+    await user.click(screen.getByRole("button", { name: "Save notes" }));
+    expect(
+      await screen.findByText("Request ID: notes-request-id-0001"),
+    ).not.toBeNull();
+
+    await user.type(answer, "A private practice answer.");
+    await user.click(
+      screen.getByRole("button", { name: "Record immutable attempt" }),
+    );
+    expect(
+      await screen.findByText("Request ID: answer-request-id-0001"),
+    ).not.toBeNull();
+    expect(screen.queryByText(/must-not-render/)).toBeNull();
+  });
+
+  it("renders request IDs for question-list and attempt-list failures", async () => {
+    vi.mocked(interviewApi.listInterviewQuestions).mockRejectedValue(
+      apiFailure("Question list failed.", "question-list-request-id-0001"),
+    );
+    vi.mocked(interviewApi.listAttemptHistory).mockRejectedValue(
+      apiFailure("Attempt list failed.", "attempt-list-request-id-0001"),
+    );
+    renderWorkspace();
+
+    expect(
+      await screen.findByText(
+        "Request ID: question-list-request-id-0001",
+      ),
+    ).not.toBeNull();
+    expect(
+      await screen.findByText(
+        "Request ID: attempt-list-request-id-0001",
+      ),
+    ).not.toBeNull();
+  });
+
+  it("renders request IDs for question-detail and attempt-detail failures", async () => {
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockRejectedValue(
+      apiFailure(
+        "Question detail failed.",
+        "question-detail-request-id-0001",
+      ),
+    );
+    vi.mocked(interviewApi.listAttemptHistory).mockResolvedValue({
+      attempts: [attempt()],
+      pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewAttempt).mockRejectedValue(
+      apiFailure(
+        "Attempt detail failed.",
+        "attempt-detail-request-id-0001",
+      ),
+    );
+    renderWorkspace();
+
+    expect(
+      await screen.findByText(
+        "Request ID: question-detail-request-id-0001",
+      ),
+    ).not.toBeNull();
+    await userEvent.click(
+      await screen.findByRole("button", { name: /Open attempt/ }),
+    );
+    expect(
+      await screen.findByText(
+        "Request ID: attempt-detail-request-id-0001",
+      ),
+    ).not.toBeNull();
+  });
+
+  it("renders request IDs for generation, explanation, feedback, and poll transport failures", async () => {
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockResolvedValue({
+      ...questionDetail(),
+      explanation: undefined,
+      explanationKeyPoints: [],
+    });
+    vi.mocked(interviewApi.listAttemptHistory).mockResolvedValue({
+      attempts: [attempt()],
+      pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewAttempt).mockResolvedValue(
+      attempt(),
+    );
+    vi.mocked(interviewApi.generateInterviewQuestions).mockRejectedValueOnce(
+      apiFailure("Generation failed.", "generation-request-id-0001"),
+    );
+    vi.mocked(interviewApi.requestQuestionExplanation).mockRejectedValueOnce(
+      apiFailure("Explanation failed.", "explanation-request-id-0001"),
+    );
+    vi.mocked(interviewApi.requestAttemptFeedback)
+      .mockRejectedValueOnce(
+        apiFailure("Feedback failed.", "feedback-request-id-0001"),
+      )
+      .mockResolvedValueOnce({
+        kind: "queued",
+        attemptId,
+        job: {
+          id: jobId,
+          type: "interview.attempt.feedback",
+          status: "queued",
+        },
+      });
+    vi.mocked(interviewPolling.pollInterviewJob).mockResolvedValue({
+      reason: "transport-failure",
+      job: undefined,
+      error: apiFailure(
+        "Polling failed.",
+        "poll-transport-request-id-0001",
+      ),
+    });
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByRole("button", { name: "Request explanation" });
+
+    await user.click(
+      screen.getByRole("button", { name: "Generate questions" }),
+    );
+    expect(
+      await screen.findByText("Request ID: generation-request-id-0001"),
+    ).not.toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: "Request explanation" }),
+    );
+    expect(
+      await screen.findByText(
+        "Request ID: explanation-request-id-0001",
+      ),
+    ).not.toBeNull();
+
+    await user.click(
+      await screen.findByRole("button", { name: /Open attempt/ }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Request feedback" }),
+    );
+    expect(
+      await screen.findByText("Request ID: feedback-request-id-0001"),
+    ).not.toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: "Request feedback" }),
+    );
+    expect(
+      await screen.findByText(
+        "Request ID: poll-transport-request-id-0001",
+      ),
+    ).not.toBeNull();
+    expect(screen.queryByText(/must-not-render/)).toBeNull();
+  });
+
+  it("keeps a newer same-scope explanation operation pending when an aborted operation settles", async () => {
+    const firstExplanation =
+      deferred<Awaited<ReturnType<typeof interviewApi.requestQuestionExplanation>>>();
+    const secondExplanation =
+      deferred<Awaited<ReturnType<typeof interviewApi.requestQuestionExplanation>>>();
+    vi.mocked(interviewApi.listInterviewQuestions).mockResolvedValue({
+      questions: [questionSummary(), alternateQuestion()],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockImplementation(
+      async (_session, id) => ({
+        ...(id === questionId ? questionDetail() : alternateQuestion()),
+        explanation: undefined,
+        explanationKeyPoints: [],
+      }),
+    );
+    vi.mocked(interviewApi.requestQuestionExplanation)
+      .mockReturnValueOnce(firstExplanation.promise)
+      .mockReturnValueOnce(secondExplanation.promise);
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Request explanation",
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: /How would you recover a poisoned queue/,
+      }),
+    );
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Request explanation",
+      }),
+    );
+
+    firstExplanation.resolve({
+      kind: "available",
+      question: {
+        ...questionDetail(),
+        explanation: "Stale explanation for A.",
+      },
+    });
+    await waitFor(() => {
+      expect(
+        interviewApi.requestQuestionExplanation,
+      ).toHaveBeenCalledTimes(2);
+    });
+    const currentButton = screen.getByRole("button", {
+      name: "Request explanation",
+    }) as HTMLButtonElement;
+    expect(currentButton.disabled).toBe(true);
+    expect(screen.queryByText("Stale explanation for A.")).toBeNull();
+
+    secondExplanation.resolve({
+      kind: "available",
+      question: {
+        ...alternateQuestion(),
+        explanation: "Current explanation for B.",
+      },
+    });
+    expect(
+      await screen.findByText("Current explanation for B."),
+    ).not.toBeNull();
+  });
+
+  it("keeps a new route generation operation and ambiguous UUID isolated from a stale generation", async () => {
+    const nextSessionId = "507f1f77bcf86cd799439030";
+    const firstGeneration =
+      deferred<Awaited<ReturnType<typeof interviewApi.generateInterviewQuestions>>>();
+    const secondGeneration =
+      deferred<Awaited<ReturnType<typeof interviewApi.generateInterviewQuestions>>>();
+    vi.stubGlobal("crypto", {
+      randomUUID: vi
+        .fn()
+        .mockReturnValueOnce(
+          "a4d20e66-4af2-4dd2-834b-fad9fe354a6f",
+        )
+        .mockReturnValueOnce(
+          "efdf2cb4-e2ef-4939-93fb-0143ea577d48",
+        )
+        .mockReturnValueOnce(
+          "f52e495f-973c-4539-a657-c98255441a31",
+        ),
+    });
+    vi.mocked(interviewApi.fetchInterviewSession).mockImplementation(
+      async (id) =>
+        id === sessionId
+          ? session()
+          : {
+              ...session(),
+              id: nextSessionId,
+              title: "Generation route B",
+              questionCount: 0,
+            },
+    );
+    vi.mocked(interviewApi.listInterviewQuestions).mockImplementation(
+      async (id) =>
+        id === sessionId
+          ? {
+              questions: [questionSummary()],
+              pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+            }
+          : {
+              questions: [],
+              pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+            },
+    );
+    vi.mocked(interviewApi.generateInterviewQuestions)
+      .mockReturnValueOnce(firstGeneration.promise)
+      .mockReturnValueOnce(secondGeneration.promise)
+      .mockResolvedValueOnce({
+        id: jobId,
+        type: "interview.questions.generate",
+        status: "queued",
+      });
+    vi.mocked(interviewPolling.pollInterviewJob).mockResolvedValue({
+      reason: "terminal",
+      job: {
+        id: jobId,
+        type: "interview.questions.generate",
+        status: "failed",
+        progress: 20,
+        attempts: 1,
+        maxAttempts: 3,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    });
+    const router = renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Generate questions",
+      }),
+    );
+    await router.navigate(`/interviews/${nextSessionId}`);
+    await screen.findByRole("heading", { name: "Generation route B" });
+    await user.click(
+      screen.getByRole("button", { name: "Generate questions" }),
+    );
+
+    firstGeneration.reject(
+      apiFailure("Stale generation failed.", "stale-generation-id-0001"),
+    );
+    await waitFor(() => {
+      expect(
+        interviewApi.generateInterviewQuestions,
+      ).toHaveBeenCalledTimes(2);
+    });
+    const stayedPending = (
+      screen.getByRole("button", {
+        name: "Generate questions",
+      }) as HTMLButtonElement
+    ).disabled;
+
+    secondGeneration.reject(new TypeError("ambiguous B transport"));
+    await screen.findByText(
+      "The request could not be completed. Try again.",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Generate questions" }),
+    );
+    await waitFor(() => {
+      expect(
+        interviewApi.generateInterviewQuestions,
+      ).toHaveBeenCalledTimes(3);
+    });
+    const calls = vi.mocked(interviewApi.generateInterviewQuestions).mock
+      .calls;
+    expect(stayedPending).toBe(true);
+    expect(calls[1]?.[1].requestId).toBe(
+      "efdf2cb4-e2ef-4939-93fb-0143ea577d48",
+    );
+    expect(calls[2]?.[1].requestId).toBe(calls[1]?.[1].requestId);
+    expect(crypto.randomUUID).toHaveBeenCalledTimes(2);
+  });
+
+  it("never commits an obsolete question attempt list after selecting another question", async () => {
+    const firstQuestionAttempts = deferred<{
+      attempts: InterviewAttempt[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+      };
+    }>();
+    vi.mocked(interviewApi.listInterviewQuestions).mockResolvedValue({
+      questions: [questionSummary(), alternateQuestion()],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockImplementation(
+      async (_session, id) =>
+        id === questionId ? questionDetail() : alternateQuestion(),
+    );
+    vi.mocked(interviewApi.listAttemptHistory).mockImplementation(
+      async (_session, input) => {
+        if (input?.questionId === questionId) {
+          return firstQuestionAttempts.promise;
+        }
+        if (input?.questionId === alternateQuestion().id) {
+          return {
+            attempts: [alternateAttempt()],
+            pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+          };
+        }
+        return {
+          attempts: [],
+          pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+        };
+      },
+    );
+    vi.mocked(interviewApi.fetchInterviewAttempt).mockImplementation(
+      async (_session, id) =>
+        id === attemptId ? attempt() : alternateAttempt(),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    await waitFor(() => {
+      expect(interviewApi.listAttemptHistory).toHaveBeenCalledWith(
+        sessionId,
+        expect.objectContaining({ questionId }),
+        expect.any(AbortSignal),
+      );
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /How would you recover a poisoned queue/,
+      }),
+    );
+    await screen.findByText("Canonical alternate notes.");
+    firstQuestionAttempts.resolve({
+      attempts: [attempt()],
+      pagination: { page: 1, limit: 20, total: 77, pages: 4 },
+    });
+
+    await user.click(
+      await screen.findByRole("button", { name: /Open attempt/ }),
+    );
+    expect(
+      await screen.findByText(
+        "I would quarantine and inspect poison messages.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.queryByText(
+        "I would use a durable queue and idempotency keys.",
+      ),
+    ).toBeNull();
+    expect(screen.queryByText("77")).toBeNull();
+  });
+
+  it("keeps a newer pin for the same question pending when an older pin settles", async () => {
+    const oldPin = deferred<InterviewQuestionDetail>();
+    const newPin = deferred<InterviewQuestionDetail>();
+    vi.mocked(interviewApi.listInterviewQuestions).mockResolvedValue({
+      questions: [questionSummary(), alternateQuestion()],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockImplementation(
+      async (_session, id) =>
+        id === questionId ? questionDetail() : alternateQuestion(),
+    );
+    vi.mocked(interviewApi.setQuestionPinned)
+      .mockReturnValueOnce(oldPin.promise)
+      .mockReturnValueOnce(newPin.promise);
+    renderWorkspace();
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Pin question" }),
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: /How would you recover a poisoned queue/,
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: /How would you design a reliable job processor/,
+      }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Pin question" }),
+    );
+
+    oldPin.resolve({ ...questionDetail(), isPinned: true });
+    await waitFor(() => {
+      expect(interviewApi.setQuestionPinned).toHaveBeenCalledTimes(2);
+    });
+    const currentPin = screen.getByRole("button", {
+      name: "Pin question",
+    }) as HTMLButtonElement;
+    expect(currentPin.disabled).toBe(true);
+    await user.click(currentPin);
+    expect(interviewApi.setQuestionPinned).toHaveBeenCalledTimes(2);
+
+    newPin.resolve({ ...questionDetail(), isPinned: true });
+    expect(
+      await screen.findByRole("button", { name: "Unpin" }),
+    ).not.toBeNull();
+  });
+
+  it("renders only trimmed canonical request IDs", async () => {
+    vi.mocked(interviewApi.fetchInterviewSession)
+      .mockRejectedValueOnce(
+        apiFailure("Malformed ID.", "invalid request id"),
+      )
+      .mockRejectedValueOnce(apiFailure("Whitespace ID.", "   "))
+      .mockRejectedValueOnce(
+        apiFailure("Valid ID.", "valid-request-id-0001"),
+      );
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    await screen.findByText("Malformed ID.");
+    expect(screen.queryByText(/Request ID:/)).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Retry session" }),
+    );
+    await screen.findByText("Whitespace ID.");
+    expect(screen.queryByText(/Request ID:/)).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Retry session" }),
+    );
+    expect(
+      await screen.findByText("Request ID: valid-request-id-0001"),
+    ).not.toBeNull();
   });
 });

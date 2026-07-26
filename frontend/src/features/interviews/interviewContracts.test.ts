@@ -18,13 +18,22 @@ type ContractApi = {
     expectedQuestionId: string,
   ): unknown;
   parseCreatedQuestion(value: unknown, expectedSessionId: string): unknown;
-  parseAttemptList(value: unknown, expectedSessionId: string): unknown;
+  parseAttemptList(
+    value: unknown,
+    expectedSessionId: string,
+    expectedQuestionId?: string,
+  ): unknown;
   parseAttemptDetail(
     value: unknown,
     expectedSessionId: string,
     expectedAttemptId: string,
+    expectedQuestionId?: string,
   ): unknown;
-  parseRecordedAttempt(value: unknown, expectedSessionId: string): unknown;
+  parseRecordedAttempt(
+    value: unknown,
+    expectedSessionId: string,
+    expectedQuestionId: string,
+  ): unknown;
   parseAcceptedInterviewJob(value: unknown, expectedType: string): unknown;
   parseInterviewJob(value: unknown): unknown;
   parseExplanationResponse(
@@ -36,6 +45,7 @@ type ContractApi = {
     value: unknown,
     expectedSessionId: string,
     expectedAttemptId: string,
+    expectedQuestionId?: string,
   ): unknown;
 };
 
@@ -250,6 +260,7 @@ describe("interview response contracts", () => {
     const recorded = contracts.parseRecordedAttempt(
       { attempt: attemptFixture() },
       sessionId,
+      questionId,
     ) as Record<string, unknown>;
     expect(recorded).toMatchObject({ id: attemptId, sessionId });
 
@@ -402,6 +413,7 @@ describe("interview response contracts", () => {
         },
         sessionId,
         attemptId,
+        questionId,
       ),
     ).toMatchObject({ kind: "available" });
 
@@ -417,7 +429,133 @@ describe("interview response contracts", () => {
         },
         sessionId,
         attemptId,
+        questionId,
       ),
     ).toMatchObject({ kind: "queued" });
+  });
+
+  it("rejects a recorded attempt bound to the wrong session", () => {
+    expect(() =>
+      contracts.parseRecordedAttempt(
+        {
+          attempt: {
+            ...attemptFixture(),
+            sessionId: "507f1f77bcf86cd799439099",
+          },
+        },
+        sessionId,
+        questionId,
+      ),
+    ).toThrowError(/invalid interview response/i);
+  });
+
+  it("rejects a recorded attempt bound to the wrong question", () => {
+    expect(() =>
+      contracts.parseRecordedAttempt(
+        {
+          attempt: {
+            ...attemptFixture(),
+            questionId: "507f1f77bcf86cd799439099",
+          },
+        },
+        sessionId,
+        questionId,
+      ),
+    ).toThrowError(/invalid interview response/i);
+  });
+
+  it("rejects attempts outside a filtered question history", () => {
+    expect(() =>
+      contracts.parseAttemptList(
+        {
+          attempts: [
+            {
+              ...attemptFixture(),
+              questionId: "507f1f77bcf86cd799439099",
+            },
+          ],
+          pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+        },
+        sessionId,
+        questionId,
+      ),
+    ).toThrowError(/invalid interview response/i);
+  });
+
+  it("rejects an attempt list entry bound to the wrong session", () => {
+    expect(() =>
+      contracts.parseAttemptList(
+        {
+          attempts: [
+            {
+              ...attemptFixture(),
+              sessionId: "507f1f77bcf86cd799439099",
+            },
+          ],
+          pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+        },
+        sessionId,
+      ),
+    ).toThrowError(/invalid interview response/i);
+  });
+
+  it("rejects attempt details bound to the wrong attempt or question", () => {
+    expect(() =>
+      contracts.parseAttemptDetail(
+        { attempt: attemptFixture() },
+        sessionId,
+        "507f1f77bcf86cd799439099",
+        questionId,
+      ),
+    ).toThrowError(/invalid interview response/i);
+
+    expect(() =>
+      contracts.parseAttemptDetail(
+        {
+          attempt: {
+            ...attemptFixture(),
+            questionId: "507f1f77bcf86cd799439099",
+          },
+        },
+        sessionId,
+        attemptId,
+        questionId,
+      ),
+    ).toThrowError(/invalid interview response/i);
+  });
+
+  it("rejects already-available feedback for the wrong question", () => {
+    expect(() =>
+      contracts.parseFeedbackResponse(
+        {
+          attempt: {
+            ...attemptFixture(),
+            questionId: "507f1f77bcf86cd799439099",
+          },
+          alreadyAvailable: true,
+        },
+        sessionId,
+        attemptId,
+        questionId,
+      ),
+    ).toThrowError(/invalid interview response/i);
+  });
+
+  it("rejects a queued feedback response bound to the wrong attempt", () => {
+    expect(() =>
+      contracts.parseFeedbackResponse(
+        {
+          attemptId: "507f1f77bcf86cd799439099",
+          job: {
+            id: jobId,
+            type: "interview.attempt.feedback",
+            status: "queued",
+          },
+        },
+        sessionId,
+        attemptId,
+        questionId,
+      ),
+    ).toThrowError(/invalid interview response/i);
   });
 });

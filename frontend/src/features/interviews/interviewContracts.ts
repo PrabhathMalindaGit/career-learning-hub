@@ -368,11 +368,15 @@ export function parseCreatedQuestion(
 export function parseAttemptList(
   value: unknown,
   expectedSessionId: string,
+  expectedQuestionId?: string,
 ): InterviewAttemptPage {
   const item = record(value);
   const attempts = array(item.attempts, 100, parseAttempt);
   for (const attempt of attempts) {
     assertIdentity(expectedSessionId, attempt.sessionId);
+    if (expectedQuestionId !== undefined) {
+      assertIdentity(expectedQuestionId, attempt.questionId);
+    }
   }
   return {
     attempts,
@@ -384,22 +388,28 @@ export function parseAttemptDetail(
   value: unknown,
   expectedSessionId: string,
   expectedAttemptId: string,
+  expectedQuestionId?: string,
 ): InterviewAttempt {
   const attempt = parseAttempt(record(value).attempt);
   assertIdentity(expectedSessionId, attempt.sessionId);
   assertIdentity(expectedAttemptId, attempt.id);
+  if (expectedQuestionId !== undefined) {
+    assertIdentity(expectedQuestionId, attempt.questionId);
+  }
   return attempt;
 }
 
 export function parseRecordedAttempt(
   value: unknown,
   expectedSessionId: string,
+  expectedQuestionId: string,
 ): InterviewAttempt {
   const item = record(record(value).attempt);
   return parseAttemptDetail(
     { attempt: item },
     expectedSessionId,
     id(item.id ?? item._id),
+    expectedQuestionId,
   );
 }
 
@@ -511,6 +521,7 @@ export function parseFeedbackResponse(
   value: unknown,
   expectedSessionId: string,
   expectedAttemptId: string,
+  expectedQuestionId?: string,
 ): FeedbackRequestResult {
   const item = record(value);
   if (item.alreadyAvailable === true) {
@@ -520,6 +531,7 @@ export function parseFeedbackResponse(
         { attempt: item.attempt },
         expectedSessionId,
         expectedAttemptId,
+        expectedQuestionId,
       ),
     };
   }

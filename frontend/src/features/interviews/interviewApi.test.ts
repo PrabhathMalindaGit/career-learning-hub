@@ -75,23 +75,39 @@ type InterviewApi = {
     id: string,
     attempt: string,
     signal?: AbortSignal,
+    question?: string,
   ): Promise<unknown>;
   requestAttemptFeedback(
     id: string,
     attempt: string,
     signal?: AbortSignal,
+    question?: string,
   ): Promise<unknown>;
-  fetchInterviewJob(id: string, signal?: AbortSignal): Promise<unknown>;
+  fetchInterviewJob(
+    id: string,
+    signal?: AbortSignal,
+    expectation?: {
+      expectedType: string;
+      expectedResultId?: string;
+    },
+  ): Promise<unknown>;
 };
 
 let api: InterviewApi;
 
-function jsonResponse(data: unknown, status = 200): Response {
+function jsonResponse(
+  data: unknown,
+  status = 200,
+  responseRequestId: string | null =
+    "interview-request-id-0001",
+): Response {
   return new Response(JSON.stringify({ success: true, data }), {
     status,
     headers: {
       "Content-Type": "application/json",
-      "X-Request-Id": "interview-request-id-0001",
+      ...(responseRequestId
+        ? { "X-Request-Id": responseRequestId }
+        : {}),
     },
   });
 }
@@ -347,7 +363,12 @@ describe("interviewApi", () => {
       );
 
     await api.requestQuestionExplanation(sessionId, questionId);
-    await api.requestAttemptFeedback(sessionId, attemptId);
+    await api.requestAttemptFeedback(
+      sessionId,
+      attemptId,
+      undefined,
+      questionId,
+    );
 
     expect(requestAt(0)[1].method).toBe("POST");
     expect(requestAt(0)[1].body).toBeUndefined();
@@ -377,7 +398,12 @@ describe("interviewApi", () => {
       questionId,
       status: "recorded",
     });
-    await api.fetchInterviewAttempt(sessionId, attemptId);
+    await api.fetchInterviewAttempt(
+      sessionId,
+      attemptId,
+      undefined,
+      questionId,
+    );
 
     expect(JSON.parse(String(requestAt(0)[1].body))).toEqual({
       answerText: "Start from delivery requirements.",
@@ -420,5 +446,200 @@ describe("interviewApi", () => {
     expect(requestAt(0)[0]).toBe(
       `https://api.example.test/api/v1/jobs/${jobId}`,
     );
+  });
+
+  it("preserves the response request ID when a polled job violates its expected identity", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        {
+          job: {
+            id: jobId,
+            type: "interview.question.explain",
+            status: "completed",
+            progress: 100,
+            attempts: 1,
+            maxAttempts: 3,
+            result: {
+              kind: "explanation",
+              questionId,
+              explanationReady: true,
+            },
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          },
+        },
+        200,
+        "job-identity-request-id-0001",
+      ),
+    );
+
+    const error = await api
+      .fetchInterviewJob(jobId, undefined, {
+        expectedType: "interview.attempt.feedback",
+        expectedResultId: attemptId,
+      })
+      .catch((reason: unknown) => reason);
+
+    expect(error).toMatchObject({
+      status: 502,
+      code: "INVALID_INTERVIEW_RESPONSE",
+      requestId: "job-identity-request-id-0001",
+    });
+  });
+
+  it("preserves a safe response request ID on malformed interview data", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        {
+          sessions: [{ ...session(), _id: "bad", private: "discard" }],
+          pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+          internal: "discard",
+        },
+        200,
+        "interview-request-id-0002",
+      ),
+    );
+
+    const error = await api.listInterviewSessions().catch(
+      (reason: unknown) => reason,
+    );
+
+    expect(error).toMatchObject({
+      status: 502,
+      code: "INVALID_INTERVIEW_RESPONSE",
+      message: "The server returned an invalid interview response.",
+      requestId: "interview-request-id-0002",
+    });
+    expect(String(error)).not.toContain("private");
+    expect(String(error)).not.toContain("internal");
+  });
+
+  it("keeps malformed interview errors safe when the response has no request ID", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        {
+          sessions: [{ ...session(), _id: "bad", private: "discard" }],
+          pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+        },
+        200,
+        null,
+      ),
+    );
+
+    const error = await api.listInterviewSessions().catch(
+      (reason: unknown) => reason,
+    );
+
+    expect(error).toMatchObject({
+      status: 502,
+      code: "INVALID_INTERVIEW_RESPONSE",
+      message: "The server returned an invalid interview response.",
+      requestId: undefined,
+    });
+    expect(String(error)).not.toContain("private");
+  });
+
+  it("continues to strip unknown fields from valid interview responses", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({
+        sessions: [
+          {
+            ...session(),
+            userId: "private-owner",
+            provider: "private-provider",
+          },
+        ],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 1,
+          pages: 1,
+          internal: "discard",
+        },
+        internal: "discard",
+      }),
+    );
+
+    await expect(api.listInterviewSessions()).resolves.toEqual({
+      sessions: [
+        {
+          id: sessionId,
+          title: "Synthetic interview",
+          targetRole: "Platform Engineer",
+          experienceLevel: "Mid-level",
+          focusTopics: [],
+          skillGaps: [],
+          mode: "study",
+          status: "active",
+          questionCount: 0,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        },
+      ],
+      pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+    });
+  });
+
+  it("passes question identity through attempt response parsing", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        jsonResponse({
+          attempt: {
+            ...attempt(),
+            questionId: "507f1f77bcf86cd799439099",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          attempts: [
+            {
+              ...attempt(),
+              questionId: "507f1f77bcf86cd799439099",
+            },
+          ],
+          pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          attempt: {
+            ...attempt(),
+            questionId: "507f1f77bcf86cd799439099",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          attempt: {
+            ...attempt(),
+            questionId: "507f1f77bcf86cd799439099",
+          },
+          alreadyAvailable: true,
+        }),
+      );
+
+    await expect(
+      api.recordInterviewAttempt(sessionId, questionId, "answer"),
+    ).rejects.toMatchObject({ code: "INVALID_INTERVIEW_RESPONSE" });
+    await expect(
+      api.listAttemptHistory(sessionId, { questionId }),
+    ).rejects.toMatchObject({ code: "INVALID_INTERVIEW_RESPONSE" });
+    await expect(
+      api.fetchInterviewAttempt(
+        sessionId,
+        attemptId,
+        undefined,
+        questionId,
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_INTERVIEW_RESPONSE" });
+    await expect(
+      api.requestAttemptFeedback(
+        sessionId,
+        attemptId,
+        undefined,
+        questionId,
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_INTERVIEW_RESPONSE" });
   });
 });

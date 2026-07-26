@@ -187,6 +187,16 @@
   margin: 0;
 }
 
+.interview-field-error {
+  display: grid;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+
+.interview-field-error small {
+  font-weight: 650;
+}
+
 .interview-session-list,
 .interview-question-list,
 .interview-attempt-list {
@@ -266,6 +276,7 @@
 .interview-generation-form label,
 .interview-manual-form label,
 .interview-question-filters label,
+.interview-attempt-status-filter,
 .interview-answer-field {
   display: grid;
   min-width: 0;
@@ -298,6 +309,7 @@
 .interview-manual-form textarea,
 .interview-question-filters input:not([type="checkbox"]),
 .interview-question-filters select,
+.interview-attempt-status-filter select,
 .interview-answer-field textarea {
   width: 100%;
   min-width: 0;
@@ -306,6 +318,10 @@
   padding: 11px 12px;
   color: #18211b;
   background: #fbfdfc;
+}
+
+.interview-attempt-status-filter {
+  max-width: 240px;
 }
 
 .interview-form input[aria-invalid="true"],
@@ -695,6 +711,27 @@
 
   .interview-pagination {
     flex-wrap: wrap;
+  }
+
+  .interview-attempt-status-filter {
+    max-width: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .interview-page-heading,
+  .interview-workspace-heading,
+  .interview-panel,
+  .interview-question-card,
+  .interview-record-block,
+  .interview-attempt-composer,
+  .interview-attempt-detail {
+    padding: 14px;
+  }
+
+  .interview-action-row > button,
+  .interview-pagination > button {
+    flex: 1 1 100%;
   }
 }
 
