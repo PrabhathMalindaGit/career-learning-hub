@@ -746,7 +746,7 @@
 - Activated by operator-approved prompt
   `CLH-PHASE-12A-PRIVATE-PDF-CONTRACT-01`.
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS D COMPLETED; PASS E PLANNED`.
+  `PHASE 12 ACTIVE — PASSES A THROUGH E COMPLETED; DELETION AND FINAL VERIFICATION PLANNED, NOT ACTIVATED`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -762,8 +762,44 @@
 - Pass D — Flashcard Generation and Study is `COMPLETED`.
 - Pass D human visual QA was approved with
   `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.
-- Pass E and later Phase 12 work remain `PLANNED` and are not activated.
+- Pass E — Quiz Generation, Submission and Review is `COMPLETED`.
+- Pass E human visual QA was approved with
+  `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
+- The deletion and Phase 12 final-verification pass remains `PLANNED` and is
+  not activated.
 - Phase 12 remains `ACTIVE` and is not completed.
+
+#### Pass E completion record
+
+- Delivered owned quiz generation and listing, exact generation-job polling,
+  and safe quiz-taking DTOs without pre-submission answer keys.
+- Delivered one-choice-per-question interaction, transient in-memory drafts,
+  server-authoritative submission and scoring, duplicate-submit prevention,
+  and safe uncertain-outcome reconciliation.
+- Delivered immutable explicit multiple attempts, paginated owned attempt
+  history, authorized completed-attempt review, selected-versus-correct answer
+  display, and post-submission explanations.
+- Delivered canonical source-page controls, plain-text rendering, nested
+  document/quiz/attempt ownership, stale-response protection, account and
+  logout clearing, and responsive accessible quiz workflows.
+- `GET /api/v1/jobs/:jobId` now allowlists public failed-job errors to `code`
+  and `message`; stack traces and arbitrary stored error metadata are not
+  serialized publicly, while internal stored error behavior remains intact.
+- Focused answer-key and quiz tests passed. The complete frontend suite passed
+  with 486 tests. Frontend and root typechecks and the root production build
+  passed.
+- Backend unit, integration, and security suites passed with 19, 21, and 7
+  tests respectively. The job-response regression passed with 3 tests.
+- Runtime generation and truthful Gemini-unavailable failure, safe taking,
+  submission, attempt history, review, and User A/User B ownership boundaries
+  passed. Gemini remained unconfigured; real-provider generation success was
+  not claimed.
+- Desktop, tablet, and mobile responsive QA passed. Human verification
+  approved native keyboard behavior, visible focus, native 200% zoom, mobile
+  and desktop layout, non-color-only correctness, and absence of
+  pre-submission answer-key exposure.
+- No unresolved Critical or Important findings remained. Human visual QA was
+  approved with `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
 
 #### Pass D delivered scope
 

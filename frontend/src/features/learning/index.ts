@@ -5,5 +5,7 @@ export { LearningDashboard } from "./LearningDashboard";
 export { LearningConversationWorkspace } from "./LearningConversationWorkspace";
 export { LearningDocumentWorkspace } from "./LearningDocumentWorkspace";
 export { LearningFlashcardWorkspace } from "./LearningFlashcardWorkspace";
+export { LearningQuizAttemptWorkspace } from "./LearningQuizAttemptWorkspace";
+export { LearningQuizWorkspace } from "./LearningQuizWorkspace";
 export { QuizTaker } from "./QuizTaker";
 export * from "./types";

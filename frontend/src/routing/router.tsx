@@ -19,6 +19,8 @@ import { LearningDashboard } from "../features/learning/LearningDashboard";
 import { LearningConversationWorkspace } from "../features/learning/LearningConversationWorkspace";
 import { LearningDocumentWorkspace } from "../features/learning/LearningDocumentWorkspace";
 import { LearningFlashcardWorkspace } from "../features/learning/LearningFlashcardWorkspace";
+import { LearningQuizAttemptWorkspace } from "../features/learning/LearningQuizAttemptWorkspace";
+import { LearningQuizWorkspace } from "../features/learning/LearningQuizWorkspace";
 import { ResumeListPage } from "../features/resumes/ResumeListPage";
 import { ResumeWorkspace } from "../features/resumes/ResumeWorkspace";
 import { RouteErrorPage } from "./RouteErrorPage";
@@ -101,6 +103,14 @@ export const appRoutes: RouteObject[] = [
           {
             path: "/learning/documents/:documentId/flashcards/:setId",
             element: <LearningFlashcardWorkspace />,
+          },
+          {
+            path: "/learning/documents/:documentId/quizzes/:quizId",
+            element: <LearningQuizWorkspace />,
+          },
+          {
+            path: "/learning/documents/:documentId/quizzes/:quizId/attempts/:attemptId",
+            element: <LearningQuizAttemptWorkspace />,
           },
           {
             path: "/settings",

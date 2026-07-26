@@ -29,17 +29,21 @@ vi.mock("../auth/AuthProvider", () => ({
 
 vi.mock("./learningApi", () => ({
   createFlashcardSet: vi.fn(),
+  createQuizGeneration: vi.fn(),
   createLearningConversation: vi.fn(),
   fetchFlashcardSet: vi.fn(),
   fetchLearningFlashcardJob: vi.fn(),
   fetchLearningDocument: vi.fn(),
   fetchLearningDocumentSource: vi.fn(),
   fetchLearningJob: vi.fn(),
+  fetchLearningQuizJob: vi.fn(),
+  fetchQuizForTaking: vi.fn(),
   listDocumentChunks: vi.fn(),
   listFlashcardSets: vi.fn(),
   listLearningFlashcards: vi.fn(),
   listLearningConversations: vi.fn(),
   listLearningDocuments: vi.fn(),
+  listQuizzes: vi.fn(),
   uploadLearningDocument: vi.fn(),
 }));
 
@@ -106,6 +110,10 @@ beforeEach(() => {
   vi.mocked(learningApi.fetchLearningDocument).mockResolvedValue({
     document: learningDocument(),
     requestId: "request-workspace-0001",
+  });
+  vi.mocked(learningApi.listQuizzes).mockResolvedValue({
+    quizzes: [],
+    pagination: { page: 1, limit: 10, total: 0, pages: 0 },
   });
   vi.mocked(learningApi.listDocumentChunks).mockResolvedValue({
     chunks: [
@@ -326,6 +334,23 @@ describe("Learning document workspace", () => {
     );
   });
 
+  it("offers owned quiz generation and records only for a ready document", async () => {
+    renderWorkspace();
+    await userEvent.click(
+      await screen.findByRole("tab", { name: "Quizzes" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Quizzes" }),
+    ).not.toBeNull();
+    expect(screen.getByText("No quizzes yet.")).not.toBeNull();
+    expect(learningApi.listQuizzes).toHaveBeenCalledWith(
+      firstDocumentId,
+      { page: 1, limit: 10 },
+      expect.any(AbortSignal),
+    );
+  });
+
   it.each([
     [
       "processing",
@@ -351,6 +376,9 @@ describe("Learning document workspace", () => {
     ).toBeNull();
     expect(
       screen.queryByRole("tab", { name: "Flashcards" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("tab", { name: "Quizzes" }),
     ).toBeNull();
     expect(learningApi.listLearningConversations).not.toHaveBeenCalled();
     expect(learningApi.listFlashcardSets).not.toHaveBeenCalled();

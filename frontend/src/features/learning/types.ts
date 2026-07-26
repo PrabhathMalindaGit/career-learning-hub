@@ -168,18 +168,93 @@ export interface Flashcard {
   createdAt: string;
 }
 
-export interface QuizQuestion {
+export type QuizStatus = "generating" | "ready" | "failed";
+
+export interface QuizSummary {
+  id: string;
+  documentId: string;
+  title: string;
+  status: QuizStatus;
+  questionCount: number;
+  generationError?: {
+    code: string;
+    message: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AcceptedLearningQuizJob {
+  id: string;
+  type: "learning.quiz.generate";
+  status: "queued" | "processing";
+}
+
+export interface LearningQuizJob {
+  id: string;
+  type: "learning.quiz.generate";
+  status: "queued" | "processing" | "completed" | "failed" | "cancelled";
+  progress: number;
+  attempts: number;
+  maxAttempts: number;
+  result?: {
+    quizId: string;
+    questionCount: number;
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuizQuestionForTaking {
   questionIndex: number;
   prompt: string;
   choices: string[];
   sourcePages: number[];
 }
 
-export interface QuizAttemptReview {
+export interface QuizForTaking {
+  id: string;
+  documentId: string;
+  title: string;
+  status: "ready";
+  questionCount: number;
+  createdAt: string;
+  updatedAt: string;
+  questions: QuizQuestionForTaking[];
+}
+
+export interface QuizAnswerSelection {
   questionIndex: number;
+  selectedChoiceIndex: number;
+}
+
+export interface QuizAttemptSummary {
+  id: string;
+  documentId: string;
+  quizId: string;
+  correctCount: number;
+  questionCount: number;
+  scorePercent: number;
+  completedAt: string;
+  createdAt: string;
+}
+
+export interface QuizQuestionReview {
+  questionIndex: number;
+  prompt: string;
+  choices: string[];
   selectedChoiceIndex: number;
   correctChoiceIndex: number;
   correct: boolean;
   explanation: string;
   sourcePages: number[];
+}
+
+export interface QuizAttemptReview {
+  attempt: QuizAttemptSummary;
+  review: QuizQuestionReview[];
 }

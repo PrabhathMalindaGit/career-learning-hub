@@ -31,7 +31,14 @@ export async function getJobController(
         attempts: job.attempts,
         maxAttempts: job.maxAttempts,
         result: job.result,
-        error: job.error,
+        ...(job.error === undefined
+          ? {}
+          : {
+              error: {
+                code: job.error.code,
+                message: job.error.message,
+              },
+            }),
         createdAt: job.createdAt,
         updatedAt: job.updatedAt,
       },

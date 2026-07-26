@@ -15,6 +15,7 @@ import {
 } from "./learningApi";
 import { DocumentConversations } from "./DocumentConversations";
 import { DocumentFlashcards } from "./DocumentFlashcards";
+import { DocumentQuizzes } from "./DocumentQuizzes";
 import type {
   DocumentChunk,
   LearningDocument,
@@ -421,7 +422,8 @@ type WorkspaceView =
   | "original"
   | "extracted"
   | "chat"
-  | "flashcards";
+  | "flashcards"
+  | "quizzes";
 
 const workspaceViews: Array<{
   id: WorkspaceView;
@@ -432,6 +434,7 @@ const workspaceViews: Array<{
   { id: "extracted", label: "Extracted Content" },
   { id: "chat", label: "Grounded Chat" },
   { id: "flashcards", label: "Flashcards" },
+  { id: "quizzes", label: "Quizzes" },
 ];
 
 export function LearningDocumentWorkspace() {
@@ -605,6 +608,7 @@ export function LearningDocumentWorkspace() {
           <p>Processing is continuing in the background.</p>
           <p>Processing must finish before grounded chat is available.</p>
           <p>Processing must finish before flashcards can be generated.</p>
+          <p>Processing must finish before quizzes can be generated.</p>
           <button
             type="button"
             className="learning-secondary-button"
@@ -629,6 +633,7 @@ export function LearningDocumentWorkspace() {
           </p>
           <p>Failed documents cannot be used for grounded chat.</p>
           <p>Failed documents cannot generate grounded flashcards.</p>
+          <p>Failed documents cannot generate grounded quizzes.</p>
           <RequestId value={loadState.requestId} />
           <button
             type="button"
@@ -648,6 +653,7 @@ export function LearningDocumentWorkspace() {
           <p>This workspace is unavailable while deletion completes.</p>
           <p>Grounded chat is unavailable while deletion completes.</p>
           <p>Flashcards are unavailable while deletion completes.</p>
+          <p>Quizzes are unavailable while deletion completes.</p>
         </div>
       ) : null}
 
@@ -756,6 +762,13 @@ export function LearningDocumentWorkspace() {
             ) : null}
             {view === "flashcards" ? (
               <DocumentFlashcards
+                key={`${accountId}:${document.id}`}
+                accountId={accountId}
+                document={document}
+              />
+            ) : null}
+            {view === "quizzes" ? (
+              <DocumentQuizzes
                 key={`${accountId}:${document.id}`}
                 accountId={accountId}
                 document={document}

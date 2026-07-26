@@ -3,6 +3,7 @@ import type {
   LearningChatJob,
   LearningFlashcardJob,
   LearningJob,
+  LearningQuizJob,
 } from "./types";
 
 export const LEARNING_POLLING_MAX_DURATION_MS = 5 * 60 * 1_000;
@@ -32,7 +33,8 @@ function defaultWait(
 type PollableLearningJob =
   | LearningJob
   | LearningChatJob
-  | LearningFlashcardJob;
+  | LearningFlashcardJob
+  | LearningQuizJob;
 
 export type LearningPollResult<
   Job extends PollableLearningJob = LearningJob,

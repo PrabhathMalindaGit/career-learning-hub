@@ -135,6 +135,7 @@ vi.mock("../features/interviews/interviewApi", () => ({
 
 vi.mock("../features/learning/learningApi", () => ({
   createFlashcardSet: vi.fn(),
+  createQuizGeneration: vi.fn(),
   createLearningConversation: vi.fn(),
   fetchFlashcardSet: vi.fn().mockResolvedValue({
     set: {
@@ -167,6 +168,48 @@ vi.mock("../features/learning/learningApi", () => ({
   fetchLearningDocumentSource: vi.fn(),
   fetchLearningFlashcardJob: vi.fn(),
   fetchLearningJob: vi.fn(),
+  fetchLearningQuizJob: vi.fn(),
+  fetchQuizForTaking: vi.fn().mockResolvedValue({
+    id: "507f1f77bcf86cd799439014",
+    documentId: "507f1f77bcf86cd799439011",
+    title: "Connected quiz",
+    status: "ready",
+    questionCount: 1,
+    createdAt: "2026-07-26T00:00:00.000Z",
+    updatedAt: "2026-07-26T00:00:00.000Z",
+    questions: [
+      {
+        questionIndex: 0,
+        prompt: "Connected safe question",
+        choices: ["First choice", "Second choice"],
+        sourcePages: [1],
+      },
+    ],
+  }),
+  fetchQuizAttemptReview: vi.fn().mockResolvedValue({
+    attempt: {
+      id: "507f1f77bcf86cd799439015",
+      documentId: "507f1f77bcf86cd799439011",
+      quizId: "507f1f77bcf86cd799439014",
+      correctCount: 1,
+      questionCount: 1,
+      scorePercent: 100,
+      completedAt: "2026-07-26T00:01:00.000Z",
+      createdAt: "2026-07-26T00:01:00.000Z",
+    },
+    review: [
+      {
+        questionIndex: 0,
+        prompt: "Connected safe question",
+        choices: ["First choice", "Second choice"],
+        selectedChoiceIndex: 0,
+        correctChoiceIndex: 0,
+        correct: true,
+        explanation: "Connected authorized explanation",
+        sourcePages: [1],
+      },
+    ],
+  }),
   listDocumentChunks: vi.fn(),
   listFlashcardSets: vi.fn().mockResolvedValue({
     sets: [],
@@ -197,6 +240,15 @@ vi.mock("../features/learning/learningApi", () => ({
     messages: [],
     pagination: { page: 1, limit: 20, total: 0, pages: 0 },
   }),
+  listQuizAttempts: vi.fn().mockResolvedValue({
+    attempts: [],
+    pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+  }),
+  listQuizzes: vi.fn().mockResolvedValue({
+    quizzes: [],
+    pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+  }),
+  submitQuizAttempt: vi.fn(),
   sendLearningMessage: vi.fn(),
   uploadLearningDocument: vi.fn(),
 }));
@@ -292,6 +344,8 @@ describe("application routing", () => {
     "/learning/documents/507f1f77bcf86cd799439011",
     "/learning/documents/507f1f77bcf86cd799439011/conversations/507f1f77bcf86cd799439012",
     "/learning/documents/507f1f77bcf86cd799439011/flashcards/507f1f77bcf86cd799439012",
+    "/learning/documents/507f1f77bcf86cd799439011/quizzes/507f1f77bcf86cd799439014",
+    "/learning/documents/507f1f77bcf86cd799439011/quizzes/507f1f77bcf86cd799439014/attempts/507f1f77bcf86cd799439015",
     "/settings",
   ])("redirects anonymous users from protected path %s", async (path) => {
     vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
@@ -344,6 +398,14 @@ describe("application routing", () => {
     [
       "/learning/documents/507f1f77bcf86cd799439011/flashcards/507f1f77bcf86cd799439012",
       "Connected flashcard set",
+    ],
+    [
+      "/learning/documents/507f1f77bcf86cd799439011/quizzes/507f1f77bcf86cd799439014",
+      "Connected quiz",
+    ],
+    [
+      "/learning/documents/507f1f77bcf86cd799439011/quizzes/507f1f77bcf86cd799439014/attempts/507f1f77bcf86cd799439015",
+      "Connected quiz",
     ],
     ["/settings", "Session settings"],
   ])("matches protected target path %s", async (path, heading) => {

@@ -5,6 +5,7 @@ import {
   pollLearningJob,
   pollingDelayForAttempt,
 } from "./learningPolling";
+import type { LearningQuizJob } from "./types";
 
 const documentId = "507f1f77bcf86cd799439011";
 const jobId = "507f1f77bcf86cd799439012";
@@ -138,5 +139,29 @@ describe("Learning processing polling", () => {
       reason: "cancelled",
       job: undefined,
     });
+  });
+
+  it("uses the same bounded lifecycle for an exact quiz-generation job", async () => {
+    const quizId = "507f1f77bcf86cd799439013";
+    const quizJob: LearningQuizJob = {
+      id: jobId,
+      type: "learning.quiz.generate",
+      status: "completed",
+      progress: 100,
+      attempts: 1,
+      maxAttempts: 3,
+      result: { quizId, questionCount: 1 },
+      createdAt,
+      updatedAt: createdAt,
+    };
+
+    const result = await pollLearningJob<LearningQuizJob>({
+      jobId,
+      documentId,
+      fetchJob: vi.fn().mockResolvedValue(quizJob),
+      wait: vi.fn().mockResolvedValue(undefined),
+    });
+
+    expect(result).toEqual({ reason: "terminal", job: quizJob });
   });
 });

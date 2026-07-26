@@ -7,15 +7,15 @@
 - Active implementation phase: Phase 12, Learning Workspace Implementation
 - Next planned phase: Phase 13, Shared Design and UX Hardening (`PLANNED`)
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS D COMPLETED; PASS E PLANNED`
+  `PHASE 12 ACTIVE — PASSES A THROUGH E COMPLETED; DELETION AND FINAL VERIFICATION PLANNED, NOT ACTIVATED`
 - Controlling skills: `karpathy-guidelines`, `test-driven-development`,
   `security-best-practices`
 
 ## Objective
 
-- Preserve completed Passes A through D.
-- Keep Pass E and later Phase 12 work `PLANNED` until a separate
-  operator-approved activation prompt is provided.
+- Preserve completed Passes A through E.
+- Keep document cascade deletion and Phase 12 final verification `PLANNED`
+  until a separate operator-approved activation prompt is provided.
 - Preserve the private-source contract, authentication and ownership
   boundaries, safe owned-404 behavior, request-ID handling, and private-data
   controls.
@@ -36,8 +36,43 @@
 - Pass D — Flashcard Generation and Study is `COMPLETED`.
 - Pass D human visual QA was approved with
   `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.
-- Pass E and later Phase 12 work remain `PLANNED` and are not activated.
+- Pass E — Quiz Generation, Submission and Review is `COMPLETED`.
+- Pass E human visual QA was approved with
+  `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
+- The deletion and Phase 12 final-verification pass remains `PLANNED` and is
+  not activated.
 - Phase 12 is not completed.
+
+## Pass E completion record
+
+- Delivered owned quiz generation and listing, exact generation-job polling,
+  and safe quiz-taking DTOs without pre-submission answer keys.
+- Delivered one-choice-per-question interaction, transient in-memory drafts,
+  server-authoritative submission and scoring, duplicate-submit prevention,
+  and safe uncertain-outcome reconciliation.
+- Delivered immutable explicit multiple attempts, paginated owned attempt
+  history, authorized completed-attempt review, selected-versus-correct answer
+  display, and post-submission explanations.
+- Delivered canonical source-page controls, plain-text rendering, nested
+  document/quiz/attempt ownership, stale-response protection, account and
+  logout clearing, and responsive accessible quiz workflows.
+- `GET /api/v1/jobs/:jobId` now allowlists public failed-job errors to `code`
+  and `message`; stack traces and arbitrary stored error metadata are not
+  serialized publicly, while internal stored error behavior remains intact.
+- Focused answer-key and quiz tests passed. The complete frontend suite passed
+  with 486 tests. Frontend and root typechecks and the root production build
+  passed.
+- Backend unit, integration, and security suites passed with 19, 21, and 7
+  tests respectively. The job-response regression passed with 3 tests.
+- Runtime generation and truthful Gemini-unavailable failure, safe taking,
+  submission, attempt history, review, and User A/User B ownership boundaries
+  passed. Gemini remained unconfigured; real-provider generation success was
+  not claimed.
+- Desktop, tablet, and mobile responsive QA passed. Human verification
+  approved native keyboard behavior, visible focus, native 200% zoom, mobile
+  and desktop layout, non-color-only correctness, and absence of
+  pre-submission answer-key exposure.
+- No unresolved Critical or Important findings remained.
 
 ## Pass A completion record
 
@@ -115,11 +150,14 @@
 
 ## Explicit exclusions
 
-- Quizzes, attempts, answer review, flashcard editing or deletion, flashcard-set
-  deletion, persisted study state, spaced repetition, deletion UI, and later
-  Phase 12 passes.
-- Backend, shared types, unrelated frontend features, shared-design hardening,
-  provider configuration, package changes, migrations, seeds, and deployment
+- Document cascade deletion, standalone quiz deletion, attempt deletion,
+  mutable attempts, persistent answer drafts, offline quizzes, quiz exports,
+  quiz sharing, question editing, answer editing after submission, timers,
+  streaks, leaderboards, badges, mastery scores, and later Phase 12 passes.
+- Flashcard changes and Grounded Chat changes.
+- Backend behavior outside the job-response privacy correction, shared types,
+  unrelated frontend features, shared-design hardening, provider
+  configuration, package changes, migrations, seeds, and deployment
   configuration.
 - New storage mechanisms, public URLs, unrelated API or data-model changes,
   dependency changes, migrations, and legacy access.
@@ -128,12 +166,10 @@
 
 ## Verification
 
-- Focused RED and GREEN coverage passed without weakening security or tests.
-- The complete frontend suite passed with 365 tests after the Pass C ownership
-  repair.
-- Frontend and root typechecks, the production build, runtime upload and
-  workspace verification, and desktop, tablet, and mobile browser QA passed.
-- The Pass C review found no unresolved Critical or Important findings.
+- Pass E focused and complete automated verification, runtime QA, ownership
+  checks, responsive QA, and human visual QA passed as recorded above.
+- Gemini remained unconfigured, and real-provider generation success was not
+  claimed.
 
 ## Human approval gate
 
@@ -143,3 +179,5 @@
   `PHASE_12C_GROUNDED_CHAT_VISUAL_QA_APPROVED`.
 - Pass D human visual QA was approved with
   `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.
+- Pass E human visual QA was approved with
+  `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.

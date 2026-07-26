@@ -582,9 +582,15 @@
 .learning-chat-form textarea:focus-visible,
 .learning-flashcard-form input:focus-visible,
 .learning-flashcard-form textarea:focus-visible,
+.learning-quiz-form input:focus-visible,
+.learning-quiz-form textarea:focus-visible,
+.learning-quiz-choices input:focus-visible + span,
 .learning-tabs button:focus-visible,
 .learning-conversation-list a:focus-visible,
 .learning-flashcard-set-list a:focus-visible,
+.learning-quiz-set-list a:focus-visible,
+.learning-attempt-list a:focus-visible,
+.learning-source-pages a:focus-visible,
 .learning-source-pages button:focus-visible,
 .learning-study-navigation button:focus-visible,
 .learning-study-reveal button:focus-visible {
@@ -700,6 +706,19 @@
   font-weight: 800;
 }
 
+.learning-source-pages a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #b8d1c0;
+  border-radius: 999px;
+  color: var(--accent-dark);
+  background: #f4faf6;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .learning-source-note,
 .learning-response-status {
   margin-top: 18px;
@@ -780,6 +799,58 @@
   width: fit-content;
 }
 
+.learning-quiz-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.28fr);
+  gap: 14px;
+  margin-top: 26px;
+  padding: 22px;
+  border: 1px solid #c9d9cd;
+  border-radius: 14px;
+  background: #f6faf7;
+}
+
+.learning-quiz-form label {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.learning-quiz-form label > span {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.learning-quiz-form input,
+.learning-quiz-form textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #b8c7bd;
+  border-radius: 10px;
+  color: #18211b;
+  background: #ffffff;
+  font: inherit;
+}
+
+.learning-quiz-form input {
+  min-height: 46px;
+}
+
+.learning-quiz-form textarea {
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.learning-quiz-focus,
+.learning-quiz-form-error {
+  grid-column: 1 / -1;
+}
+
+.learning-quiz-form > .learning-primary-button {
+  width: fit-content;
+}
+
 .learning-flashcard-set-list {
   display: grid;
   gap: 12px;
@@ -828,6 +899,271 @@
 .learning-flashcard-set-list .learning-document-link {
   grid-column: 2;
   grid-row: 1 / span 2;
+}
+
+.learning-quiz-set-list,
+.learning-attempt-list,
+.learning-review-list {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learning-quiz-set-list article,
+.learning-attempt-list article {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 18px;
+  align-items: center;
+  padding: 17px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.learning-quiz-set-list article > div,
+.learning-attempt-list article > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px 12px;
+}
+
+.learning-quiz-set-list strong,
+.learning-attempt-list strong {
+  min-width: 0;
+  color: #26362c;
+  overflow-wrap: anywhere;
+}
+
+.learning-quiz-set-list article > p,
+.learning-attempt-list time,
+.learning-attempt-list span {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.learning-quiz-set-list .learning-row-error {
+  grid-column: 1 / -1;
+  color: #762020;
+}
+
+.learning-quiz-set-list .learning-document-link,
+.learning-attempt-list .learning-document-link {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.learning-quiz-workspace,
+.learning-quiz-review {
+  min-width: 0;
+}
+
+.learning-quiz {
+  min-width: 0;
+  margin-top: 30px;
+}
+
+.learning-quiz-list {
+  display: grid;
+  gap: 18px;
+  margin: 22px 0;
+}
+
+.learning-quiz-question {
+  min-width: 0;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid #c9d9cd;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.learning-quiz-question legend {
+  max-width: 100%;
+  padding: 0 6px;
+  color: #26362c;
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.learning-quiz-choices {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.learning-quiz-choices label {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 11px;
+  align-items: start;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid #d6e0d8;
+  border-radius: 11px;
+  background: #f9fbf9;
+  cursor: pointer;
+}
+
+.learning-quiz-choices label:has(input:checked) {
+  border-color: #78a687;
+  background: #edf7f0;
+}
+
+.learning-quiz-choices input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--accent-dark);
+}
+
+.learning-quiz-choices span,
+.learning-review-question h3,
+.learning-review-question p,
+.learning-review-explanation {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.learning-quiz-question .learning-source-pages {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.learning-attempt-history {
+  min-width: 0;
+  margin-top: 38px;
+  padding-top: 30px;
+  border-top: 1px solid var(--border);
+}
+
+.learning-score-card {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 24px;
+  align-items: center;
+  margin: 28px 0 36px;
+  padding: 24px 26px;
+  border: 1px solid #a9c7b2;
+  border-left: 7px solid var(--accent);
+  border-radius: 14px;
+  background: #f4faf6;
+}
+
+.learning-score-card p,
+.learning-score-card h2 {
+  margin: 0;
+}
+
+.learning-score-card > strong {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--accent-dark);
+  font-size: clamp(2rem, 6vw, 3.6rem);
+  line-height: 1;
+}
+
+.learning-review-question {
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-left: 6px solid #6b7a70;
+  border-radius: 13px;
+  background: #ffffff;
+}
+
+.learning-review-question--correct {
+  border-left-color: #2f7d4a;
+}
+
+.learning-review-question--incorrect {
+  border-left-color: #a84a42;
+}
+
+.learning-review-question > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.learning-review-question--correct > header strong {
+  color: #27683e;
+}
+
+.learning-review-question--incorrect > header strong {
+  color: #8a332d;
+}
+
+.learning-review-index {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.learning-review-question h3 {
+  margin: 16px 0;
+  color: #26362c;
+  line-height: 1.55;
+}
+
+.learning-review-question > p {
+  margin: 8px 0 0;
+  line-height: 1.6;
+}
+
+.learning-review-explanation {
+  margin-top: 18px;
+  padding: 15px 16px;
+  border-radius: 10px;
+  background: #f5f7f5;
+  line-height: 1.65;
+}
+
+.learning-review-explanation p {
+  margin: 6px 0 0;
+}
+
+.learning-quizzes button,
+.learning-quizzes a,
+.learning-quiz-workspace button,
+.learning-quiz-workspace a,
+.learning-quiz-review button,
+.learning-quiz-review a,
+.learning-quiz-choices label {
+  touch-action: manipulation;
+}
+
+.learning-quizzes h2,
+.learning-quiz-workspace h1,
+.learning-quiz-workspace h2,
+.learning-quiz-review h1,
+.learning-quiz-review h2,
+.learning-review-question h3 {
+  text-wrap: balance;
+}
+
+.learning-score-card > strong,
+.learning-attempt-list strong,
+.learning-chip {
+  font-variant-numeric: tabular-nums;
 }
 
 .learning-flashcard-study {
@@ -960,7 +1296,8 @@
 
   .learning-panel-header,
   .learning-conversation-form,
-  .learning-flashcard-form {
+  .learning-flashcard-form,
+  .learning-quiz-form {
     align-items: stretch;
     grid-template-columns: 1fr;
   }
@@ -972,6 +1309,20 @@
   .learning-flashcard-focus,
   .learning-flashcard-form-error {
     grid-column: auto;
+  }
+
+  .learning-quiz-focus,
+  .learning-quiz-form-error {
+    grid-column: auto;
+  }
+
+  .learning-score-card {
+    grid-template-columns: 1fr;
+  }
+
+  .learning-score-card > strong {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .learning-message {
@@ -1036,7 +1387,8 @@
   .learning-panel-header > button,
   .learning-conversation-form > button,
   .learning-chat-form .learning-form-actions > button,
-  .learning-flashcard-form > .learning-primary-button {
+  .learning-flashcard-form > .learning-primary-button,
+  .learning-quiz-form > .learning-primary-button {
     width: 100%;
   }
 
@@ -1053,6 +1405,10 @@
     padding: 18px;
   }
 
+  .learning-quiz-form {
+    padding: 18px;
+  }
+
   .learning-flashcard-set-list article {
     grid-template-columns: 1fr;
   }
@@ -1061,6 +1417,27 @@
     width: 100%;
     grid-column: auto;
     grid-row: auto;
+  }
+
+  .learning-quiz-set-list article,
+  .learning-attempt-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .learning-quiz-set-list .learning-document-link,
+  .learning-attempt-list .learning-document-link {
+    width: 100%;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .learning-quiz-question,
+  .learning-review-question {
+    padding: 16px 14px;
+  }
+
+  .learning-quiz-choices label {
+    padding: 12px 10px;
   }
 
   .learning-study-card {
