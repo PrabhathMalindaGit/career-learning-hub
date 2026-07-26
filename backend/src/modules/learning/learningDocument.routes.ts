@@ -12,6 +12,7 @@ import {
   createQuizController,
   deleteLearningDocumentController,
   getLearningDocumentController,
+  getLearningDocumentSourceController,
   listConversationMessagesController,
   listConversationsController,
   listDocumentChunksController,
@@ -59,6 +60,13 @@ learningDocumentRouter.get(
   validate({ params: documentParamsSchema }),
   requireOwnedLearningDocument,
   asyncHandler(getLearningDocumentController),
+);
+
+learningDocumentRouter.get(
+  "/:documentId/source",
+  validate({ params: documentParamsSchema }),
+  requireOwnedLearningDocument,
+  asyncHandler(getLearningDocumentSourceController),
 );
 
 learningDocumentRouter.get(

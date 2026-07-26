@@ -24,6 +24,7 @@ import {
   listDocumentConversations,
 } from "./learningChat.service.js";
 import {
+  createLearningDocumentSourceTarget,
   createLearningDocumentUpload,
   listDocumentChunks,
   listLearningDocuments,
@@ -119,6 +120,23 @@ export async function getLearningDocumentController(
       document: serializeLearningDocument(
         request.learningDocument!,
       ),
+    },
+  });
+}
+
+export async function getLearningDocumentSourceController(
+  request: Request,
+  response: Response,
+): Promise<void> {
+  const source = await createLearningDocumentSourceTarget({
+    userId: request.auth!.userId,
+    document: request.learningDocument!,
+  });
+
+  response.status(200).json({
+    success: true,
+    data: {
+      source,
     },
   });
 }

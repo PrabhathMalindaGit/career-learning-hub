@@ -3,7 +3,10 @@ import { AppError } from "../../shared/appError.js";
 import { withMongoTransaction } from "../../shared/mongoTransaction.js";
 import { recordActivitySafely } from "../activity/activity.service.js";
 import { AssetModel } from "../assets/asset.model.js";
-import { createAsset } from "../assets/asset.service.js";
+import {
+  createAsset,
+  createSignedAssetUrl,
+} from "../assets/asset.service.js";
 import { getStorageForProvider } from "../assets/storage/storage.factory.js";
 import { ConversationModel } from "./conversation.model.js";
 import { DocumentChunkModel } from "./documentChunk.model.js";
@@ -135,6 +138,45 @@ export function serializeLearningDocument(
     processedAt: document.processedAt,
     createdAt: document.createdAt,
     updatedAt: document.updatedAt,
+  };
+}
+
+export async function createLearningDocumentSourceTarget(input: {
+  userId: string;
+  document: LearningDocumentDocument;
+}) {
+  const asset = await AssetModel.findOne({
+    _id: input.document.assetId,
+    userId: input.userId,
+    purpose: "learning-document",
+    mimeType: "application/pdf",
+    status: { $ne: "deleted" },
+  });
+  const associatedDocumentId =
+    asset?.metadata?.learningDocumentId;
+
+  if (
+    !asset ||
+    (associatedDocumentId !== undefined &&
+      associatedDocumentId !==
+        input.document._id.toString())
+  ) {
+    throw new AppError(
+      404,
+      "LEARNING_DOCUMENT_SOURCE_NOT_FOUND",
+      "Learning document source not found.",
+    );
+  }
+
+  const target = await createSignedAssetUrl(
+    input.userId,
+    asset._id.toString(),
+  );
+
+  return {
+    url: target.url,
+    expiresAt: target.expiresAt,
+    contentType: "application/pdf" as const,
   };
 }
 

@@ -164,7 +164,7 @@ export async function signedDownloadController(
 
   response.setHeader("Content-Type", asset.mimeType);
   response.setHeader("Content-Length", String(asset.sizeBytes));
-  response.setHeader("Cache-Control", "private, max-age=60");
+  response.setHeader("Cache-Control", "private, no-store");
   target.stream.on(
     "error",
     (error: Error) => response.destroy(error),

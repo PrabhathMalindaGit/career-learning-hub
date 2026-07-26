@@ -742,7 +742,21 @@
 
 #### Status
 
-- Status: PLANNED
+- Status: ACTIVE
+- Activated by operator-approved prompt
+  `CLH-PHASE-12A-PRIVATE-PDF-CONTRACT-01`.
+- Current workflow state:
+  `PHASE 12 ACTIVE — PASS A COMPLETED, PASS B PLANNED, NOT ACTIVATED`.
+- Pass A — Private-PDF Contract is `COMPLETED`.
+- Pass A review was approved with
+  `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
+- `GET /api/v1/learning-documents/:documentId/source` provides authenticated,
+  owner-scoped, short-lived private access and exposes only `url`, `expiresAt`,
+  and `contentType`.
+- Page-aware extracted chunks remain authoritative for grounding and citations.
+- Pass B is `PLANNED` and not activated.
+- Later Learning Workspace passes require separate bounded instructions.
+- Phase 12 remains `ACTIVE` and is not completed.
 
 #### Purpose
 
