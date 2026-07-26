@@ -73,11 +73,49 @@ export interface LearningDocumentSource {
 }
 
 export interface LearningMessage {
-  _id: string;
+  id: string;
+  documentId: string;
+  conversationId: string;
   role: "user" | "assistant";
   content: string;
   sourcePages: number[];
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface LearningConversation {
+  id: string;
+  documentId: string;
+  title: string;
+  messageCount: number;
+  lastMessageAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AcceptedLearningChatJob {
+  id: string;
+  type: "learning.chat.respond";
+  status: "queued" | "processing";
+}
+
+export interface LearningChatJob {
+  id: string;
+  type: "learning.chat.respond";
+  status: "queued" | "processing" | "completed" | "failed" | "cancelled";
+  progress: number;
+  attempts: number;
+  maxAttempts: number;
+  result?: {
+    messageId: string;
+    sourcePages: number[];
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Flashcard {

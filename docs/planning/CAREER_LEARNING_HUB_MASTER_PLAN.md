@@ -746,7 +746,7 @@
 - Activated by operator-approved prompt
   `CLH-PHASE-12A-PRIVATE-PDF-CONTRACT-01`.
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS A AND PASS B COMPLETED, NEXT PASS PLANNED, NOT ACTIVATED`.
+  `PHASE 12 ACTIVE — PASS C: GROUNDED DOCUMENT CHAT`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -757,8 +757,13 @@
 - Pass B — Document Library and Workspace is `COMPLETED`.
 - Pass B visual QA was approved with
   `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
-- The next Learning Workspace pass remains `PLANNED`, is not activated, and
-  requires a separate bounded operator-approved execution prompt.
+- Pass C — Grounded Document Chat is `ACTIVE`, activated by the
+  operator-approved prompt `CLH-PHASE-12C-GROUNDED-DOCUMENT-CHAT-01`.
+- Pass C is limited to conversation creation and listing, the route-bound
+  conversation workspace, canonical message history, grounded question
+  submission, chat-response job polling, canonical message refresh, factual
+  source-page rendering, and accessible responsive chat UI.
+- Later Phase 12 passes remain `PLANNED` and are not activated.
 - Phase 12 remains `ACTIVE` and is not completed.
 
 #### Pass B completion record

@@ -6,9 +6,14 @@ import {
 } from "../../api/apiClient";
 import {
   parseDocumentChunks,
+  parseLearningChatJob,
+  parseLearningConversationCreate,
+  parseLearningConversationList,
   parseLearningDocumentDetail,
   parseLearningDocumentList,
   parseLearningJob,
+  parseLearningMessageAcceptance,
+  parseLearningMessageList,
   parseLearningSource,
   parseLearningUpload,
 } from "./learningContracts";
@@ -162,54 +167,133 @@ export async function fetchLearningDocumentSource(
   };
 }
 
-export function createLearningConversation(
+export async function createLearningConversation(
   documentId: string,
   title: string,
-  accessToken: string,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
+  const response = await requestWithStatusMetadata<unknown>(
     `/learning-documents/${documentId}/conversations`,
     {
       method: "POST",
       body: { title },
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  if (response.status !== 201) {
+    throw new ApiError(
+      502,
+      "INVALID_LEARNING_RESPONSE",
+      "The server returned an invalid learning response.",
+      response.requestId,
+    );
+  }
+  return {
+    ...parseLearningConversationCreate(response.data, documentId),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
 }
 
-export function sendLearningMessage(
+export async function listLearningConversations(
+  documentId: string,
+  input: { page?: number; limit?: number } = {},
+  signal?: AbortSignal,
+) {
+  const page = boundedInteger(input.page, 1, 1, Number.MAX_SAFE_INTEGER);
+  const limit = boundedInteger(input.limit, 10, 1, 100);
+  const response = await requestWithMetadata<unknown>(
+    `/learning-documents/${documentId}/conversations?page=${page}&limit=${limit}`,
+    {
+      authentication: "required",
+      signal,
+    },
+  );
+  return {
+    ...parseLearningConversationList(response.data, documentId),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
+}
+
+export async function sendLearningMessage(
   documentId: string,
   conversationId: string,
   content: string,
-  accessToken: string,
-  requestId = crypto.randomUUID(),
+  requestId: string,
+  pageCount: number,
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
+  const response = await requestWithStatusMetadata<unknown>(
     `/learning-documents/${documentId}/conversations/${conversationId}/messages`,
     {
       method: "POST",
       body: { requestId, content },
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  if (response.status !== 202) {
+    throw new ApiError(
+      502,
+      "INVALID_LEARNING_RESPONSE",
+      "The server returned an invalid learning response.",
+      response.requestId,
+    );
+  }
+  return {
+    ...parseLearningMessageAcceptance(response.data, {
+      documentId,
+      conversationId,
+      pageCount,
+    }),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
 }
 
-export function listLearningMessages(
+export async function listLearningMessages(
   documentId: string,
   conversationId: string,
-  accessToken: string,
-  page = 1,
-  limit = 50,
+  pageCount: number,
+  input: { page?: number; limit?: number } = {},
+  signal?: AbortSignal,
 ) {
-  return apiRequest<unknown>(
+  const page = boundedInteger(input.page, 1, 1, Number.MAX_SAFE_INTEGER);
+  const limit = boundedInteger(input.limit, 20, 1, 100);
+  const response = await requestWithMetadata<unknown>(
     `/learning-documents/${documentId}/conversations/${conversationId}/messages?page=${page}&limit=${limit}`,
     {
       authentication: "required",
-      accessToken,
+      signal,
     },
   );
+  return {
+    ...parseLearningMessageList(response.data, {
+      documentId,
+      conversationId,
+      pageCount,
+    }),
+    ...(response.requestId === undefined
+      ? {}
+      : { requestId: response.requestId }),
+  };
+}
+
+export async function fetchLearningChatJob(
+  jobId: string,
+  pageCount: number,
+  signal?: AbortSignal,
+) {
+  const response = await requestWithMetadata<unknown>(`/jobs/${jobId}`, {
+    authentication: "required",
+    signal,
+  });
+  return parseLearningChatJob(response.data, { jobId, pageCount });
 }
 
 export function generateFlashcardSet(

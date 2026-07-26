@@ -47,7 +47,7 @@ export function DocumentChat({
           messages.map((message) => (
             <article
               className={`learning-message learning-message-${message.role}`}
-              key={message._id}
+              key={message.id}
             >
               <strong>
                 {message.role === "user" ? "You" : "Assistant"}

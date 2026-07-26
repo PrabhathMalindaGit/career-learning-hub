@@ -13,6 +13,7 @@ import {
   fetchLearningDocumentSource,
   listDocumentChunks,
 } from "./learningApi";
+import { DocumentConversations } from "./DocumentConversations";
 import type {
   DocumentChunk,
   LearningDocument,
@@ -414,7 +415,7 @@ type WorkspaceLoadState =
       error: SafeError;
     };
 
-type WorkspaceView = "overview" | "original" | "extracted";
+type WorkspaceView = "overview" | "original" | "extracted" | "chat";
 
 const workspaceViews: Array<{
   id: WorkspaceView;
@@ -423,6 +424,7 @@ const workspaceViews: Array<{
   { id: "overview", label: "Overview" },
   { id: "original", label: "Original PDF" },
   { id: "extracted", label: "Extracted Content" },
+  { id: "chat", label: "Grounded Chat" },
 ];
 
 export function LearningDocumentWorkspace() {
@@ -594,6 +596,7 @@ export function LearningDocumentWorkspace() {
               : "Document processing"}
           </h2>
           <p>Processing is continuing in the background.</p>
+          <p>Processing must finish before grounded chat is available.</p>
           <button
             type="button"
             className="learning-secondary-button"
@@ -616,6 +619,7 @@ export function LearningDocumentWorkspace() {
             {document.processingError?.message ??
               "The PDF could not be processed. Scanned files may fail because OCR is not supported."}
           </p>
+          <p>Failed documents cannot be used for grounded chat.</p>
           <RequestId value={loadState.requestId} />
           <button
             type="button"
@@ -633,6 +637,7 @@ export function LearningDocumentWorkspace() {
         <div className="learning-state learning-state--compact">
           <h2>Document is being deleted</h2>
           <p>This workspace is unavailable while deletion completes.</p>
+          <p>Grounded chat is unavailable while deletion completes.</p>
         </div>
       ) : null}
 
@@ -729,6 +734,13 @@ export function LearningDocumentWorkspace() {
             {view === "extracted" ? (
               <ExtractedContentReader
                 key={document.id}
+                document={document}
+              />
+            ) : null}
+            {view === "chat" ? (
+              <DocumentConversations
+                key={`${accountId}:${document.id}`}
+                accountId={accountId}
                 document={document}
               />
             ) : null}

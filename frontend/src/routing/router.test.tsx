@@ -134,6 +134,8 @@ vi.mock("../features/interviews/interviewApi", () => ({
 }));
 
 vi.mock("../features/learning/learningApi", () => ({
+  createLearningConversation: vi.fn(),
+  fetchLearningChatJob: vi.fn(),
   fetchLearningDocument: vi.fn().mockResolvedValue({
     document: {
       id: "507f1f77bcf86cd799439011",
@@ -153,10 +155,19 @@ vi.mock("../features/learning/learningApi", () => ({
   fetchLearningDocumentSource: vi.fn(),
   fetchLearningJob: vi.fn(),
   listDocumentChunks: vi.fn(),
+  listLearningConversations: vi.fn().mockResolvedValue({
+    conversations: [],
+    pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+  }),
   listLearningDocuments: vi.fn().mockResolvedValue({
     documents: [],
     pagination: { page: 1, limit: 10, total: 0, pages: 0 },
   }),
+  listLearningMessages: vi.fn().mockResolvedValue({
+    messages: [],
+    pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+  }),
+  sendLearningMessage: vi.fn(),
   uploadLearningDocument: vi.fn(),
 }));
 
@@ -249,6 +260,7 @@ describe("application routing", () => {
     "/interviews/session-test-id",
     "/learning",
     "/learning/documents/507f1f77bcf86cd799439011",
+    "/learning/documents/507f1f77bcf86cd799439011/conversations/507f1f77bcf86cd799439012",
     "/settings",
   ])("redirects anonymous users from protected path %s", async (path) => {
     vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
@@ -293,6 +305,10 @@ describe("application routing", () => {
     [
       "/learning/documents/507f1f77bcf86cd799439011",
       "Connected learning document",
+    ],
+    [
+      "/learning/documents/507f1f77bcf86cd799439011/conversations/507f1f77bcf86cd799439012",
+      "Ask the document",
     ],
     ["/settings", "Session settings"],
   ])("matches protected target path %s", async (path, heading) => {

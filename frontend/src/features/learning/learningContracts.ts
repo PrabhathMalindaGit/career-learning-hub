@@ -1,11 +1,15 @@
 import { ApiError } from "../../api/apiClient";
 import type {
+  AcceptedLearningChatJob,
   AcceptedLearningJob,
   DocumentChunk,
+  LearningChatJob,
+  LearningConversation,
   LearningDocument,
   LearningDocumentSource,
   LearningDocumentStatus,
   LearningJob,
+  LearningMessage,
   LearningPagination,
 } from "./types";
 
@@ -24,6 +28,10 @@ const jobStatuses = new Set<LearningJob["status"]>([
   "completed",
   "failed",
   "cancelled",
+]);
+const messageRoles = new Set<LearningMessage["role"]>([
+  "user",
+  "assistant",
 ]);
 
 function invalid(): never {
@@ -202,6 +210,314 @@ function parsePagination(value: unknown): LearningPagination {
     invalid();
   }
   return pagination;
+}
+
+function parseSourcePages(value: unknown, pageCount: number): number[] {
+  if (!Array.isArray(value) || value.length > 100) invalid();
+  const pages = value.map((page) =>
+    integer(page, 1, pageCount > 0 ? pageCount : Number.MAX_SAFE_INTEGER),
+  );
+  for (let index = 1; index < pages.length; index += 1) {
+    if (pages[index - 1]! >= pages[index]!) invalid();
+  }
+  return pages;
+}
+
+function parseConversation(
+  value: unknown,
+  expectedDocumentId: string,
+): LearningConversation {
+  const item = record(value);
+  exactKeys(
+    item,
+    [
+      "_id",
+      "userId",
+      "documentId",
+      "title",
+      "messageCount",
+      "createdAt",
+      "updatedAt",
+    ],
+    ["lastMessageAt"],
+  );
+  id(item.userId);
+  const documentId = id(item.documentId);
+  if (documentId !== expectedDocumentId) invalid();
+  return {
+    id: id(item._id),
+    documentId,
+    title: text(item.title, 200, 1),
+    messageCount: integer(item.messageCount, 0),
+    ...(item.lastMessageAt === undefined
+      ? {}
+      : { lastMessageAt: isoDate(item.lastMessageAt) }),
+    createdAt: isoDate(item.createdAt),
+    updatedAt: isoDate(item.updatedAt),
+  };
+}
+
+export function parseLearningConversationCreate(
+  value: unknown,
+  expectedDocumentId: string,
+): { conversation: LearningConversation } {
+  const item = record(value);
+  exactKeys(item, ["conversation"]);
+  return {
+    conversation: parseConversation(
+      item.conversation,
+      expectedDocumentId,
+    ),
+  };
+}
+
+export function parseLearningConversationList(
+  value: unknown,
+  expectedDocumentId: string,
+): {
+  conversations: LearningConversation[];
+  pagination: LearningPagination;
+} {
+  const item = record(value);
+  exactKeys(item, ["conversations", "pagination"]);
+  if (!Array.isArray(item.conversations) || item.conversations.length > 100) {
+    invalid();
+  }
+  const conversations = item.conversations.map((conversation) =>
+    parseConversation(conversation, expectedDocumentId),
+  );
+  if (
+    new Set(conversations.map((conversation) => conversation.id)).size !==
+    conversations.length
+  ) {
+    invalid();
+  }
+  return {
+    conversations,
+    pagination: parsePagination(item.pagination),
+  };
+}
+
+function parseMessage(
+  value: unknown,
+  expected: {
+    documentId: string;
+    conversationId: string;
+    pageCount: number;
+    accepted?: boolean;
+  },
+): LearningMessage {
+  const item = record(value);
+  exactKeys(
+    item,
+    [
+      "_id",
+      "userId",
+      "documentId",
+      "conversationId",
+      "role",
+      "content",
+      "sourceChunkIds",
+      "sourcePages",
+      "createdAt",
+      "updatedAt",
+    ],
+    [
+      "clientRequestId",
+      "responseJobId",
+      "replyToMessageId",
+    ],
+  );
+  id(item.userId);
+  const documentId = id(item.documentId);
+  const conversationId = id(item.conversationId);
+  if (
+    documentId !== expected.documentId ||
+    conversationId !== expected.conversationId ||
+    typeof item.role !== "string" ||
+    !messageRoles.has(item.role as LearningMessage["role"])
+  ) {
+    invalid();
+  }
+  if (!Array.isArray(item.sourceChunkIds) || item.sourceChunkIds.length > 20) {
+    invalid();
+  }
+  item.sourceChunkIds.forEach(id);
+  if (item.clientRequestId !== undefined) {
+    text(item.clientRequestId, 100, 1);
+  }
+  if (expected.accepted && item.clientRequestId === undefined) invalid();
+  if (item.responseJobId !== undefined) id(item.responseJobId);
+  if (item.replyToMessageId !== undefined) id(item.replyToMessageId);
+  const sourcePages = parseSourcePages(
+    item.sourcePages,
+    expected.pageCount,
+  );
+  if (item.role === "user" && sourcePages.length > 0) invalid();
+  return {
+    id: id(item._id),
+    documentId,
+    conversationId,
+    role: item.role as LearningMessage["role"],
+    content: text(item.content, 50_000, 1),
+    sourcePages,
+    createdAt: isoDate(item.createdAt),
+    updatedAt: isoDate(item.updatedAt),
+  };
+}
+
+export function parseLearningMessageList(
+  value: unknown,
+  expected: {
+    documentId: string;
+    conversationId: string;
+    pageCount: number;
+  },
+): {
+  messages: LearningMessage[];
+  pagination: LearningPagination;
+} {
+  const item = record(value);
+  exactKeys(item, ["messages", "pagination"]);
+  if (!Array.isArray(item.messages) || item.messages.length > 100) {
+    invalid();
+  }
+  const messages = item.messages.map((message) =>
+    parseMessage(message, expected),
+  );
+  const ids = new Set<string>();
+  for (let index = 0; index < messages.length; index += 1) {
+    const current = messages[index]!;
+    if (ids.has(current.id)) invalid();
+    ids.add(current.id);
+    const previous = messages[index - 1];
+    if (
+      previous &&
+      (previous.createdAt > current.createdAt ||
+        (previous.createdAt === current.createdAt &&
+          previous.id >= current.id))
+    ) {
+      invalid();
+    }
+  }
+  return {
+    messages,
+    pagination: parsePagination(item.pagination),
+  };
+}
+
+function parseAcceptedChatJob(value: unknown): AcceptedLearningChatJob {
+  const item = record(value);
+  exactKeys(item, ["id", "type", "status"]);
+  if (
+    item.type !== "learning.chat.respond" ||
+    (item.status !== "queued" && item.status !== "processing")
+  ) {
+    invalid();
+  }
+  return {
+    id: id(item.id),
+    type: "learning.chat.respond",
+    status: item.status,
+  };
+}
+
+export function parseLearningMessageAcceptance(
+  value: unknown,
+  expected: {
+    documentId: string;
+    conversationId: string;
+    pageCount: number;
+  },
+): {
+  userMessage: LearningMessage;
+  job: AcceptedLearningChatJob;
+} {
+  const item = record(value);
+  exactKeys(item, ["userMessage", "job"]);
+  const userMessage = parseMessage(item.userMessage, {
+    ...expected,
+    accepted: true,
+  });
+  if (userMessage.role !== "user") invalid();
+  return {
+    userMessage,
+    job: parseAcceptedChatJob(item.job),
+  };
+}
+
+function parseChatJobResult(
+  value: unknown,
+  pageCount: number,
+): NonNullable<LearningChatJob["result"]> {
+  const item = record(value);
+  exactKeys(item, ["messageId", "sourcePages"]);
+  return {
+    messageId: id(item.messageId),
+    sourcePages: parseSourcePages(item.sourcePages, pageCount),
+  };
+}
+
+function parseJobError(
+  value: unknown,
+): NonNullable<LearningChatJob["error"]> {
+  const item = record(value);
+  exactKeys(item, ["code", "message"], ["stack"]);
+  if (item.stack !== undefined) text(item.stack, 8_000);
+  return {
+    code: text(item.code, 120, 1),
+    message: text(item.message, 2_000, 1),
+  };
+}
+
+export function parseLearningChatJob(
+  value: unknown,
+  expected: { jobId: string; pageCount: number },
+): LearningChatJob {
+  const envelope = record(value);
+  exactKeys(envelope, ["job"]);
+  const item = record(envelope.job);
+  exactKeys(
+    item,
+    [
+      "id",
+      "type",
+      "status",
+      "progress",
+      "attempts",
+      "maxAttempts",
+      "createdAt",
+      "updatedAt",
+    ],
+    ["result", "error"],
+  );
+  if (
+    item.type !== "learning.chat.respond" ||
+    typeof item.status !== "string" ||
+    !jobStatuses.has(item.status as LearningChatJob["status"])
+  ) {
+    invalid();
+  }
+  const jobId = id(item.id);
+  if (jobId !== expected.jobId) invalid();
+  const result =
+    item.result === undefined
+      ? undefined
+      : parseChatJobResult(item.result, expected.pageCount);
+  const error =
+    item.error === undefined ? undefined : parseJobError(item.error);
+  return {
+    id: jobId,
+    type: "learning.chat.respond",
+    status: item.status as LearningChatJob["status"],
+    progress: integer(item.progress, 0, 100),
+    attempts: integer(item.attempts, 0, 10),
+    maxAttempts: integer(item.maxAttempts, 1, 10),
+    ...(result === undefined ? {} : { result }),
+    ...(error === undefined ? {} : { error }),
+    createdAt: isoDate(item.createdAt),
+    updatedAt: isoDate(item.updatedAt),
+  };
 }
 
 export function parseLearningDocumentList(value: unknown): {

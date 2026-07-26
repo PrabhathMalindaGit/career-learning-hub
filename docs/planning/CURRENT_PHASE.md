@@ -7,20 +7,21 @@
 - Active implementation phase: Phase 12, Learning Workspace Implementation
 - Next planned phase: Phase 13, Shared Design and UX Hardening (`PLANNED`)
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS A AND PASS B COMPLETED, NEXT PASS PLANNED, NOT ACTIVATED`
+  `PHASE 12 ACTIVE — PASS C: GROUNDED DOCUMENT CHAT`
 - Controlling skills: `karpathy-guidelines`, `test-driven-development`,
   `security-best-practices`
 
 ## Objective
 
-- Pass B — Document Library and Workspace is completed with:
-  - owned document library;
-  - PDF upload;
-  - document-processing status;
-  - document workspace;
-  - secure original-PDF viewer;
-  - page-aware extracted chunks;
-  - stored summary and key points.
+- Pass C — Grounded Document Chat is active with scope limited to:
+  - conversation creation and listing;
+  - route-bound conversation workspace;
+  - paginated canonical message history;
+  - grounded question submission;
+  - owned chat-response job polling;
+  - canonical message refresh;
+  - factual source-page rendering;
+  - accessible and responsive chat UI.
 - Preserve the completed Pass A private-source contract, existing
   authentication and ownership boundaries, safe owned-404 behavior,
   request-ID handling, and private-data controls.
@@ -37,8 +38,8 @@
 - Pass B — Document Library and Workspace is `COMPLETED`.
 - Pass B visual QA was approved with
   `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
-- The next Learning Workspace pass remains `PLANNED`, is not activated, and
-  requires a separate bounded operator-approved execution prompt.
+- Pass C — Grounded Document Chat is `ACTIVE`.
+- Later Phase 12 passes remain `PLANNED` and are not activated.
 - Phase 12 is not completed.
 
 ## Pass A completion record
@@ -75,8 +76,8 @@
 
 ## Explicit exclusions
 
-- Grounded chat, conversations, flashcards, quizzes, attempts, answer review,
-  deletion UI, persisted study state, and later Phase 12 passes.
+- Flashcards, quizzes, attempts, answer review, deletion UI, persisted study
+  state, and later Phase 12 passes.
 - Backend, shared types, unrelated frontend features, shared-design hardening,
   provider configuration, package changes, migrations, seeds, and deployment
   configuration.
@@ -97,5 +98,5 @@
 
 - Pass B human visual QA was approved with
   `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
-- The next pass remains planned and requires separate bounded operator
-  approval before activation.
+- Pass C requires human visual QA and the exact approval token
+  `PHASE_12C_GROUNDED_CHAT_VISUAL_QA_APPROVED` before commit.

@@ -1,5 +1,5 @@
 import { ApiError } from "../../api/apiClient";
-import type { LearningJob } from "./types";
+import type { LearningChatJob, LearningJob } from "./types";
 
 export const LEARNING_POLLING_MAX_DURATION_MS = 5 * 60 * 1_000;
 const TRANSIENT_FAILURE_LIMIT = 3;
@@ -25,15 +25,19 @@ function defaultWait(
   });
 }
 
-export type LearningPollResult =
-  | { reason: "terminal"; job: LearningJob }
+type PollableLearningJob = LearningJob | LearningChatJob;
+
+export type LearningPollResult<
+  Job extends PollableLearningJob = LearningJob,
+> =
+  | { reason: "terminal"; job: Job }
   | {
       reason: "paused";
       cause: "timeout" | "transport-failure";
-      job: LearningJob | undefined;
+      job: Job | undefined;
       error?: unknown;
     }
-  | { reason: "cancelled"; job: LearningJob | undefined };
+  | { reason: "cancelled"; job: Job | undefined };
 
 function isFatalPollingError(error: unknown): boolean {
   return (
@@ -45,28 +49,30 @@ function isFatalPollingError(error: unknown): boolean {
   );
 }
 
-export async function pollLearningJob(input: {
+export async function pollLearningJob<
+  Job extends PollableLearningJob = LearningJob,
+>(input: {
   jobId: string;
   documentId: string;
   fetchJob(
     jobId: string,
     documentId: string,
     signal?: AbortSignal,
-  ): Promise<LearningJob>;
+  ): Promise<Job>;
   signal?: AbortSignal;
-  onUpdate?(job: LearningJob): void;
+  onUpdate?(job: Job): void;
   now?: () => number;
   wait?: (
     milliseconds: number,
     signal?: AbortSignal,
   ) => Promise<void>;
-}): Promise<LearningPollResult> {
+}): Promise<LearningPollResult<Job>> {
   const now = input.now ?? Date.now;
   const wait = input.wait ?? defaultWait;
   const startedAt = now();
   let attempt = 0;
   let transientFailures = 0;
-  let lastJob: LearningJob | undefined;
+  let lastJob: Job | undefined;
   let lastError: unknown;
 
   while (true) {

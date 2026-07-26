@@ -1,11 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as apiClient from "../../api/apiClient";
 import {
+  createLearningConversation,
+  fetchLearningChatJob,
   fetchLearningDocument,
   fetchLearningDocumentSource,
   fetchLearningJob,
   listDocumentChunks,
+  listLearningConversations,
   listLearningDocuments,
+  listLearningMessages,
+  sendLearningMessage,
   uploadLearningDocument,
 } from "./learningApi";
 
@@ -22,6 +27,9 @@ vi.mock("../../api/apiClient", async () => {
 
 const documentId = "507f1f77bcf86cd799439011";
 const jobId = "507f1f77bcf86cd799439012";
+const conversationId = "507f1f77bcf86cd799439013";
+const messageId = "507f1f77bcf86cd799439014";
+const userId = "507f1f77bcf86cd799439015";
 const createdAt = "2026-07-26T01:00:00.000Z";
 
 function document(status = "ready") {
@@ -180,6 +188,161 @@ describe("Learning API", () => {
     expect(apiClient.requestWithMetadata).toHaveBeenNthCalledWith(
       4,
       `/learning-documents/${documentId}/source`,
+      expect.objectContaining({ authentication: "required" }),
+    );
+  });
+
+  it("creates and lists route-bound conversations without a userId", async () => {
+    const canonicalConversation = {
+      _id: conversationId,
+      userId,
+      documentId,
+      title: "Synthetic conversation",
+      messageCount: 0,
+      createdAt,
+      updatedAt: createdAt,
+    };
+    vi.mocked(apiClient.requestWithStatusMetadata).mockResolvedValue({
+      status: 201,
+      data: { conversation: canonicalConversation },
+      requestId: "request-create-chat-0001",
+    });
+    vi.mocked(apiClient.requestWithMetadata).mockResolvedValue({
+      data: {
+        conversations: [canonicalConversation],
+        pagination: { page: 1, limit: 10, total: 1, pages: 1 },
+      },
+      requestId: "request-list-chat-0001",
+    });
+
+    const created = await createLearningConversation(
+      documentId,
+      "Synthetic conversation",
+    );
+    const listed = await listLearningConversations(documentId, {
+      page: 1,
+      limit: 10,
+    });
+
+    expect(apiClient.requestWithStatusMetadata).toHaveBeenCalledWith(
+      `/learning-documents/${documentId}/conversations`,
+      expect.objectContaining({
+        method: "POST",
+        body: { title: "Synthetic conversation" },
+        authentication: "required",
+      }),
+    );
+    expect(
+      vi.mocked(apiClient.requestWithStatusMetadata).mock.calls[0]?.[1]
+        ?.body,
+    ).not.toHaveProperty("userId");
+    expect(created.requestId).toBe("request-create-chat-0001");
+    expect(listed.requestId).toBe("request-list-chat-0001");
+  });
+
+  it("requires canonical HTTP statuses for conversation creation and message acceptance", async () => {
+    vi.mocked(apiClient.requestWithStatusMetadata).mockResolvedValue({
+      status: 200,
+      data: {},
+    });
+
+    await expect(
+      createLearningConversation(documentId, "Synthetic conversation"),
+    ).rejects.toMatchObject({ code: "INVALID_LEARNING_RESPONSE" });
+
+    vi.mocked(apiClient.requestWithStatusMetadata).mockResolvedValue({
+      status: 201,
+      data: {},
+    });
+    await expect(
+      sendLearningMessage(
+        documentId,
+        conversationId,
+        "Grounded question",
+        "3159bf41-e3ac-409c-bad4-a77981000d52",
+        3,
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_LEARNING_RESPONSE" });
+  });
+
+  it("lists messages, submits one explicit idempotency UUID and polls the exact chat job", async () => {
+    const canonicalMessage = {
+      _id: messageId,
+      userId,
+      documentId,
+      conversationId,
+      role: "user",
+      content: "Grounded question",
+      sourceChunkIds: [],
+      sourcePages: [],
+      createdAt,
+      updatedAt: createdAt,
+    };
+    vi.mocked(apiClient.requestWithMetadata)
+      .mockResolvedValueOnce({
+        data: {
+          messages: [canonicalMessage],
+          pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          job: {
+            id: jobId,
+            type: "learning.chat.respond",
+            status: "processing",
+            progress: 10,
+            attempts: 1,
+            maxAttempts: 3,
+            createdAt,
+            updatedAt: createdAt,
+          },
+        },
+      });
+    vi.mocked(apiClient.requestWithStatusMetadata).mockResolvedValue({
+      status: 202,
+      data: {
+        userMessage: {
+          ...canonicalMessage,
+          clientRequestId: "3159bf41-e3ac-409c-bad4-a77981000d52",
+        },
+        job: {
+          id: jobId,
+          type: "learning.chat.respond",
+          status: "queued",
+        },
+      },
+      requestId: "request-send-chat-0001",
+    });
+
+    await listLearningMessages(
+      documentId,
+      conversationId,
+      3,
+      { page: 1, limit: 20 },
+    );
+    const accepted = await sendLearningMessage(
+      documentId,
+      conversationId,
+      "Grounded question",
+      "3159bf41-e3ac-409c-bad4-a77981000d52",
+      3,
+    );
+    await fetchLearningChatJob(jobId, 3);
+
+    expect(apiClient.requestWithStatusMetadata).toHaveBeenCalledWith(
+      `/learning-documents/${documentId}/conversations/${conversationId}/messages`,
+      expect.objectContaining({
+        method: "POST",
+        body: {
+          content: "Grounded question",
+          requestId: "3159bf41-e3ac-409c-bad4-a77981000d52",
+        },
+      }),
+    );
+    expect(accepted.requestId).toBe("request-send-chat-0001");
+    expect(apiClient.requestWithMetadata).toHaveBeenLastCalledWith(
+      `/jobs/${jobId}`,
       expect.objectContaining({ authentication: "required" }),
     );
   });

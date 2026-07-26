@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   parseDocumentChunks,
+  parseLearningChatJob,
+  parseLearningConversationCreate,
+  parseLearningConversationList,
   parseLearningDocumentDetail,
   parseLearningDocumentList,
   parseLearningJob,
+  parseLearningMessageAcceptance,
+  parseLearningMessageList,
   parseLearningSource,
   parseLearningUpload,
   parseStandardErrorEnvelope,
@@ -11,6 +16,10 @@ import {
 
 const documentId = "507f1f77bcf86cd799439011";
 const jobId = "507f1f77bcf86cd799439012";
+const conversationId = "507f1f77bcf86cd799439013";
+const messageId = "507f1f77bcf86cd799439014";
+const assistantMessageId = "507f1f77bcf86cd799439015";
+const userId = "507f1f77bcf86cd799439016";
 const createdAt = "2026-07-26T01:00:00.000Z";
 
 function safeDocument(overrides: Record<string, unknown> = {}) {
@@ -331,5 +340,285 @@ describe("Learning response contracts", () => {
         pagination: value,
       }),
     ).toThrow(/invalid learning response/i);
+  });
+});
+
+function conversation(overrides: Record<string, unknown> = {}) {
+  return {
+    _id: conversationId,
+    userId,
+    documentId,
+    title: "Synthetic grounded discussion",
+    messageCount: 0,
+    createdAt,
+    updatedAt: createdAt,
+    ...overrides,
+  };
+}
+
+function message(overrides: Record<string, unknown> = {}) {
+  return {
+    _id: messageId,
+    userId,
+    documentId,
+    conversationId,
+    role: "user",
+    content: "What does the document say?",
+    sourceChunkIds: [],
+    sourcePages: [],
+    createdAt,
+    updatedAt: createdAt,
+    ...overrides,
+  };
+}
+
+describe("Grounded chat response contracts", () => {
+  it("validates a canonical conversation creation and strips owner identity", () => {
+    const result = parseLearningConversationCreate(
+      { conversation: conversation() },
+      documentId,
+    );
+
+    expect(result.conversation).toEqual({
+      id: conversationId,
+      documentId,
+      title: "Synthetic grounded discussion",
+      messageCount: 0,
+      createdAt,
+      updatedAt: createdAt,
+    });
+    expect(result.conversation).not.toHaveProperty("userId");
+  });
+
+  it("validates conversation pagination and document identity", () => {
+    const result = parseLearningConversationList(
+      {
+        conversations: [conversation()],
+        pagination: pagination(),
+      },
+      documentId,
+    );
+
+    expect(result.conversations[0]?.documentId).toBe(documentId);
+    expect(result.pagination).toEqual(pagination());
+
+    expect(() =>
+      parseLearningConversationList(
+        {
+          conversations: [
+            conversation({
+              documentId: "507f1f77bcf86cd799439099",
+            }),
+          ],
+          pagination: pagination(),
+        },
+        documentId,
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("rejects unknown conversation fields", () => {
+    expect(() =>
+      parseLearningConversationCreate(
+        {
+          conversation: conversation({
+            provider: "must-not-enter-state",
+          }),
+        },
+        documentId,
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("validates ordered canonical messages and strips private fields", () => {
+    const result = parseLearningMessageList(
+      {
+        messages: [
+          message(),
+          message({
+            _id: assistantMessageId,
+            role: "assistant",
+            content: "A canonical answer.",
+            replyToMessageId: messageId,
+            sourceChunkIds: ["507f1f77bcf86cd799439017"],
+            sourcePages: [1, 3],
+            createdAt: "2026-07-26T01:00:01.000Z",
+            updatedAt: "2026-07-26T01:00:01.000Z",
+          }),
+        ],
+        pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+      },
+      { documentId, conversationId, pageCount: 3 },
+    );
+
+    expect(result.messages.map((item) => item.id)).toEqual([
+      messageId,
+      assistantMessageId,
+    ]);
+    expect(result.messages[1]?.sourcePages).toEqual([1, 3]);
+    expect(result.messages[1]).not.toHaveProperty("sourceChunkIds");
+    expect(result.messages[1]).not.toHaveProperty("userId");
+  });
+
+  it.each([
+    [[0], "Page 0"],
+    [[4], "out of range"],
+    [[1, 1], "duplicate"],
+    [[3, 1], "unordered"],
+  ])("rejects invalid assistant source pages: %s (%s)", (sourcePages) => {
+    expect(() =>
+      parseLearningMessageList(
+        {
+          messages: [
+            message({
+              role: "assistant",
+              sourcePages,
+            }),
+          ],
+          pagination: pagination(),
+        },
+        { documentId, conversationId, pageCount: 3 },
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("rejects wrong conversation identity, duplicate IDs and reversed chronology", () => {
+    expect(() =>
+      parseLearningMessageList(
+        {
+          messages: [
+            message({
+              conversationId: "507f1f77bcf86cd799439099",
+            }),
+          ],
+          pagination: pagination(),
+        },
+        { documentId, conversationId, pageCount: 3 },
+      ),
+    ).toThrow(/invalid learning response/i);
+
+    expect(() =>
+      parseLearningMessageList(
+        {
+          messages: [
+            message({ createdAt: "2026-07-26T01:00:02.000Z" }),
+            message({ createdAt }),
+          ],
+          pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+        },
+        { documentId, conversationId, pageCount: 3 },
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("validates accepted canonical user message and exact chat job", () => {
+    const result = parseLearningMessageAcceptance(
+      {
+        userMessage: message({
+          clientRequestId: "3159bf41-e3ac-409c-bad4-a77981000d52",
+        }),
+        job: {
+          id: jobId,
+          type: "learning.chat.respond",
+          status: "queued",
+        },
+      },
+      { documentId, conversationId, pageCount: 3 },
+    );
+
+    expect(result.userMessage.id).toBe(messageId);
+    expect(result.userMessage).not.toHaveProperty("clientRequestId");
+    expect(result.job).toEqual({
+      id: jobId,
+      type: "learning.chat.respond",
+      status: "queued",
+    });
+  });
+
+  it("rejects a message acceptance with the wrong job type", () => {
+    expect(() =>
+      parseLearningMessageAcceptance(
+        {
+          userMessage: message({
+            clientRequestId: "3159bf41-e3ac-409c-bad4-a77981000d52",
+          }),
+          job: {
+            id: jobId,
+            type: "learning.document.process",
+            status: "queued",
+          },
+        },
+        { documentId, conversationId, pageCount: 3 },
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("validates a completed chat job and exact job identity", () => {
+    const result = parseLearningChatJob(
+      {
+        job: {
+          id: jobId,
+          type: "learning.chat.respond",
+          status: "completed",
+          progress: 100,
+          attempts: 1,
+          maxAttempts: 3,
+          result: {
+            messageId: assistantMessageId,
+            sourcePages: [1, 3],
+          },
+          createdAt,
+          updatedAt: createdAt,
+        },
+      },
+      { jobId, pageCount: 3 },
+    );
+
+    expect(result.result?.messageId).toBe(assistantMessageId);
+    expect(() =>
+      parseLearningChatJob(
+        {
+          job: {
+            id: "507f1f77bcf86cd799439099",
+            type: "learning.chat.respond",
+            status: "processing",
+            progress: 10,
+            attempts: 1,
+            maxAttempts: 3,
+            createdAt,
+            updatedAt: createdAt,
+          },
+        },
+        { jobId, pageCount: 3 },
+      ),
+    ).toThrow(/invalid learning response/i);
+  });
+
+  it("strips development stack data from a safe failed chat job", () => {
+    const result = parseLearningChatJob(
+      {
+        job: {
+          id: jobId,
+          type: "learning.chat.respond",
+          status: "failed",
+          progress: 10,
+          attempts: 3,
+          maxAttempts: 3,
+          error: {
+            code: "AI_PROVIDER_UNAVAILABLE",
+            message: "Grounded response generation is unavailable.",
+            stack: "private development stack",
+          },
+          createdAt,
+          updatedAt: createdAt,
+        },
+      },
+      { jobId, pageCount: 3 },
+    );
+
+    expect(result.error).toEqual({
+      code: "AI_PROVIDER_UNAVAILABLE",
+      message: "Grounded response generation is unavailable.",
+    });
   });
 });

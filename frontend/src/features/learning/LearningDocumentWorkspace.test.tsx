@@ -28,10 +28,12 @@ vi.mock("../auth/AuthProvider", () => ({
 }));
 
 vi.mock("./learningApi", () => ({
+  createLearningConversation: vi.fn(),
   fetchLearningDocument: vi.fn(),
   fetchLearningDocumentSource: vi.fn(),
   fetchLearningJob: vi.fn(),
   listDocumentChunks: vi.fn(),
+  listLearningConversations: vi.fn(),
   listLearningDocuments: vi.fn(),
   uploadLearningDocument: vi.fn(),
 }));
@@ -128,6 +130,10 @@ beforeEach(() => {
       contentType: "application/pdf",
     },
     requestId: "request-source-0001",
+  });
+  vi.mocked(learningApi.listLearningConversations).mockResolvedValue({
+    conversations: [],
+    pagination: { page: 1, limit: 10, total: 0, pages: 0 },
   });
 });
 
@@ -275,6 +281,49 @@ describe("Learning document workspace", () => {
       document: learningDocument({ title: "Stale first title" }),
     });
     expect(screen.queryByText("Stale first title")).toBeNull();
+  });
+
+  it("offers owned conversations only for a ready document", async () => {
+    renderWorkspace();
+    await userEvent.click(
+      await screen.findByRole("tab", { name: "Grounded Chat" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Conversations" }),
+    ).not.toBeNull();
+    expect(screen.getByText("No conversations yet.")).not.toBeNull();
+    expect(learningApi.listLearningConversations).toHaveBeenCalledWith(
+      firstDocumentId,
+      { page: 1, limit: 10 },
+      expect.any(AbortSignal),
+    );
+  });
+
+  it.each([
+    [
+      "processing",
+      "Processing must finish before grounded chat is available.",
+    ],
+    [
+      "failed",
+      "Failed documents cannot be used for grounded chat.",
+    ],
+    [
+      "deleting",
+      "Grounded chat is unavailable while deletion completes.",
+    ],
+  ] as const)("does not expose active chat controls for %s documents", async (status, message) => {
+    vi.mocked(learningApi.fetchLearningDocument).mockResolvedValue({
+      document: learningDocument({ status }),
+    });
+    renderWorkspace();
+
+    expect(await screen.findByText(message)).not.toBeNull();
+    expect(
+      screen.queryByRole("tab", { name: "Grounded Chat" }),
+    ).toBeNull();
+    expect(learningApi.listLearningConversations).not.toHaveBeenCalled();
   });
 });
 
