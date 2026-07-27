@@ -2,19 +2,20 @@
 
 - Phase: 12
 - Name: Learning Workspace Implementation
-- Status: ACTIVE
-- Most recently completed phase: Phase 11, Learning Legacy Inspection
-- Active implementation phase: Phase 12, Learning Workspace Implementation
+- Status: COMPLETED
+- Most recently completed phase: Phase 12, Learning Workspace Implementation
+- Active implementation phase: None; Phase 12 is completed
 - Next planned phase: Phase 13, Shared Design and UX Hardening (`PLANNED`)
 - Current workflow state:
-  `PHASE 12 ACTIVE — PASS F: DOCUMENT CASCADE DELETION AND FINAL VERIFICATION`
+  `PHASE 12 COMPLETED — LEARNING WORKSPACE IMPLEMENTATION VERIFIED`
 - Controlling skills: `karpathy-guidelines`, `test-driven-development`,
   `security-best-practices`
 
 ## Objective
 
-- Preserve completed Passes A through E.
-- Implement Pass F confirmed owned document cascade deletion,
+- Preserve completed Passes A through F and the verified Phase 12 Learning
+  Workspace implementation.
+- Record the completed Pass F owned document cascade deletion,
   dependent-record verification, private-source asset verification, User
   A/User B deletion ownership, deletion-state cleanup, and final integrated
   Phase 12 verification.
@@ -26,7 +27,7 @@
 ## Phase status controls
 
 - Phase 11 remains `COMPLETED`.
-- Phase 12 is `ACTIVE`.
+- Phase 12 is `COMPLETED`.
 - Phase 13 remains `PLANNED`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -42,8 +43,57 @@
 - Pass E human visual QA was approved with
   `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
 - Pass F — Document Cascade Deletion and Phase 12 Final Verification is
-  `ACTIVE`.
-- Phase 12 is not completed.
+  `COMPLETED`.
+- Pass F human visual QA was approved with
+  `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
+- Phase 12 is completed.
+
+## Pass F completion record
+
+- Delivered owned document-level cascade deletion with explicit exact-title
+  destructive confirmation, asynchronous deletion-job acceptance, same-job
+  polling, duplicate-delete prevention, safe pause and same-job resume, and
+  uncertain-outcome canonical reconciliation.
+- Delivered canonical redirect after deletion, secure PDF object-URL
+  revocation, and stale document, conversation, flashcard, quiz, and review
+  state clearing.
+- Preserved a single document-level destructive action with no standalone
+  child-resource deletion controls, User A/User B ownership protection, safe
+  missing/foreign equivalence, and a responsive and accessible workflow.
+- Preserved the private bounded document work fence, transactional final-write
+  fencing, new-work rejection after deletion begins, scoped queued-job
+  cancellation, processing-job safe terminalization, deletion-job
+  preservation, and other-document and other-user isolation.
+- Runtime cascade verification confirmed zero post-deletion orphan records:
+  the Learning Document, chunks, conversations, messages, flashcard sets,
+  flashcards, quizzes, quiz questions, and quiz attempts were removed.
+- The queued non-deletion job was cancelled; the deletion job was retained
+  under the existing safe retention policy; the Asset record was retained
+  with status `deleted`; and the private stored object was removed.
+- Focused frontend deletion verification passed with 80 tests. The complete
+  frontend suite passed with 534 tests.
+- Backend unit, integration, security, and concurrency regression verification
+  passed with 19, 42, 7, and 21 tests respectively.
+- Frontend, backend, and root typechecks passed. The root production build and
+  `npm ls --depth=0` passed.
+- Runtime deletion and cascade verification and the integrated Passes A
+  through E smoke verification passed.
+- Responsive QA passed at 1440px, 1024px, 768px, 390px, and 320px. Human
+  visual QA approved native 200% zoom and keyboard behavior with
+  `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
+- No unresolved Critical or Important findings remained. Real provider and S3
+  calls were not required or claimed.
+
+## Phase 12 completion record
+
+- Pass A — Private PDF Contract: `COMPLETED`.
+- Pass B — Document Library and Workspace: `COMPLETED`.
+- Pass C — Grounded Document Chat: `COMPLETED`.
+- Pass D — Flashcard Generation and Study: `COMPLETED`.
+- Pass E — Quiz Generation, Submission and Review: `COMPLETED`.
+- Pass F — Document Cascade Deletion and Phase 12 Final Verification:
+  `COMPLETED`.
+- Phase 13 remains `PLANNED` and is not activated.
 
 ## Pass E completion record
 
@@ -168,10 +218,10 @@
 
 ## Verification
 
-- Pass E focused and complete automated verification, runtime QA, ownership
-  checks, responsive QA, and human visual QA passed as recorded above.
-- Gemini remained unconfigured, and real-provider generation success was not
-  claimed.
+- Pass F focused and complete automated verification, runtime cascade QA,
+  ownership checks, integrated Passes A through E smoke verification,
+  responsive QA, and human visual QA passed as recorded above.
+- Real provider and S3 calls were not required or claimed.
 
 ## Human approval gate
 
@@ -183,3 +233,5 @@
   `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.
 - Pass E human visual QA was approved with
   `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
+- Pass F human visual QA was approved with
+  `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
