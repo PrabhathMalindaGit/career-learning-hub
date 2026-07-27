@@ -5,8 +5,8 @@ import {
   useState,
 } from "react";
 import { ApiError } from "../../api/apiClient";
+import { PageHeader } from "../../components/PageHeader";
 import { ActivityFeed } from "./ActivityFeed";
-import { DashboardLayout } from "./DashboardLayout";
 import {
   fetchDashboardActivity,
   fetchProgressSnapshot,
@@ -479,34 +479,57 @@ export function MainDashboard() {
   };
 
   return (
-    <DashboardLayout
-      title="Unified dashboard"
-      subtitle={`Owned progress recorded across resumes, interviews, learning, quizzes, and AI usage in the last ${windowDays} days.`}
-      generatedAt={progress?.generatedAt}
-      controls={
-        <div>
-          <span className="dashboard-control-label">
-            Progress window
-          </span>
-          <div
-            className="dashboard-window-options"
-            role="group"
-            aria-label="Progress window"
-          >
-            {dashboardWindowDays.map((days) => (
-              <button
-                key={days}
-                type="button"
-                aria-pressed={windowDays === days}
-                onClick={() => setWindowDays(days)}
-              >
-                {days} days
-              </button>
-            ))}
-          </div>
-        </div>
-      }
+    <section
+      className="dashboard-layout"
+      aria-labelledby="main-dashboard-title"
     >
+      <PageHeader
+        className="dashboard-heading"
+        heading={
+          <>
+            <p className="eyebrow">Workspace overview</p>
+            <h1 id="main-dashboard-title">Unified dashboard</h1>
+          </>
+        }
+        description={
+          <>
+            <p>
+              Owned progress recorded across resumes, interviews,
+              learning, quizzes, and AI usage in the last {windowDays}{" "}
+              days.
+            </p>
+            {progress?.generatedAt ? (
+              <small>
+                Updated{" "}
+                {new Date(progress.generatedAt).toLocaleString()}
+              </small>
+            ) : null}
+          </>
+        }
+        actions={
+          <div>
+            <span className="dashboard-control-label">
+              Progress window
+            </span>
+            <div
+              className="dashboard-window-options"
+              role="group"
+              aria-label="Progress window"
+            >
+              {dashboardWindowDays.map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  aria-pressed={windowDays === days}
+                  onClick={() => setWindowDays(days)}
+                >
+                  {days} days
+                </button>
+              ))}
+            </div>
+          </div>
+        }
+      />
       <section aria-label="Progress overview">
         {progressLoading ? (
           <div
@@ -616,6 +639,6 @@ export function MainDashboard() {
           />
         ) : null}
       </section>
-    </DashboardLayout>
+    </section>
   );
 }

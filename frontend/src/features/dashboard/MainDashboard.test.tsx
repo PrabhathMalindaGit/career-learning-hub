@@ -297,6 +297,28 @@ describe("MainDashboard", () => {
         name: "Unified dashboard",
       }),
     ).not.toBeNull();
+    expect(
+      screen.getByText(
+        "Owned progress recorded across resumes, interviews, learning, quizzes, and AI usage in the last 30 days.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("group", { name: "Progress window" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "7 days" }),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "30 days" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      screen.getByRole("button", { name: "90 days" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "365 days" }),
+    ).not.toBeNull();
     expect(await screen.findByText("84%")).not.toBeNull();
     expect(screen.getByText("76%")).not.toBeNull();
     expect(screen.getByText("75%")).not.toBeNull();

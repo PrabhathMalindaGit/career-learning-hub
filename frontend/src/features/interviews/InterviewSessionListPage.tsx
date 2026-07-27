@@ -6,6 +6,7 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { PageHeader } from "../../components/PageHeader";
 import {
   createInterviewSession,
   listInterviewSessions,
@@ -231,16 +232,21 @@ export function InterviewSessionListPage() {
       className="interview-list-page"
       aria-labelledby="interview-list-title"
     >
-      <header className="interview-page-heading">
-        <div>
-          <p className="eyebrow">Interview preparation</p>
-          <h1 id="interview-list-title">Interview Coach</h1>
+      <PageHeader
+        className="interview-page-heading"
+        heading={
+          <>
+            <p className="eyebrow">Interview preparation</p>
+            <h1 id="interview-list-title">Interview Coach</h1>
+          </>
+        }
+        description={
           <p>
             Organize role-specific questions, written practice, and
             model-generated guidance in private session records.
           </p>
-        </div>
-      </header>
+        }
+      />
 
       <div className="interview-list-layout">
         <section

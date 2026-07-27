@@ -6,6 +6,7 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { PageHeader } from "../../components/PageHeader";
 import {
   createResume,
   fetchJob,
@@ -207,16 +208,21 @@ export function ResumeListPage() {
 
   return (
     <section className="resume-list-page" aria-labelledby="resume-list-title">
-      <header className="resume-page-heading">
-        <div>
-          <p className="eyebrow">Career documents</p>
-          <h1 id="resume-list-title">Resume Studio</h1>
+      <PageHeader
+        className="resume-page-heading"
+        heading={
+          <>
+            <p className="eyebrow">Career documents</p>
+            <h1 id="resume-list-title">Resume Studio</h1>
+          </>
+        }
+        description={
           <p>
             Create, import, and open your private resume records. Only
             validated server data is shown.
           </p>
-        </div>
-      </header>
+        }
+      />
 
       <div className="resume-list-layout">
         <section className="resume-collection" aria-labelledby="your-resumes">

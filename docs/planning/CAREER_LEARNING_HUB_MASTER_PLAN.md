@@ -984,14 +984,18 @@
 - Status: ACTIVE
 - Activated by operator-approved prompt
   `CLH-PHASE-13A-ACTIVATE-AND-AUDIT-01`.
-- Most recently completed pass: Phase 13A — Shared Design and UX Audit
+- Most recently completed pass: Phase 13B — Shared Foundations and Approved
+  Tokens
   (`COMPLETED`).
-- Active pass: None; Phase 13B requires separate activation.
-- Next planned pass: Phase 13B — Shared Foundations and Approved Tokens
+- Active pass: None.
+- Next planned pass: Phase 13C — Forms, Buttons, and Action Hierarchy
   (`PLANNED` / `INACTIVE`).
+- Next planned major phase: Phase 14 — End-to-End Browser Testing
+  (`PLANNED`).
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS A COMPLETED — PASS B PLANNED, NOT ACTIVATED`.
+  `PHASE 13 ACTIVE — PASS B COMPLETED — PASS C PLANNED, NOT ACTIVATED`.
 - Phase 13A was audit-only and made no production UI changes.
+- Phase 13A remains `COMPLETED`.
 - Consolidation recommendations must demonstrate genuine duplication.
 - The evidence-led audit and six-pass implementation structure were approved
   with `PHASE_13A_SHARED_DESIGN_AUDIT_APPROVED`.
@@ -1001,8 +1005,42 @@
 - The approval did not authorize production implementation. The
   documentation-only closeout commit was separately authorized by
   `CLH-PHASE-13A-DOCUMENTATION-CLOSEOUT-01`.
-- Phase 13B through Phase 13G remain `PLANNED` and `INACTIVE`.
+- Phase 13B was activated by
+  `CLH-PHASE-13B-ACTIVATE-AND-IMPLEMENT-01` from implementation baseline
+  `3e16017` (`Complete Phase 13 shared design audit`).
+- Decisions D13-01, D13-02, D13-03, D13-05, D13-06, D13-11, and D13-12
+  controlled Phase 13B.
+- Phase 13B is `COMPLETED`. Human visual QA was approved with
+  `PHASE_13B_SHARED_FOUNDATIONS_VISUAL_QA_APPROVED`.
+- Phase 13C through Phase 13G remain `PLANNED` and `INACTIVE`.
 - Phase 14 remains `PLANNED` and is not activated.
+
+#### Phase 13B completion evidence
+
+- Additive shared tokens were created from existing canonical values, and one
+  minimal neutral `PageHeader` was added without introducing a second design
+  system.
+- Dashboard, Resume list, and Interview list were the only migrated
+  consumers. Learning and all domain workspaces remained unchanged.
+- No generic Card, Workspace, Tabs, dialog, pager, form system, toast
+  provider, or cross-domain job component was created.
+- Focused tests passed: `PageHeader` 5/5, Dashboard 15/15, Resume list 9/9,
+  and Interview list 7/7. The complete frontend suite passed 541/541;
+  frontend and root typechecks passed; and the production build passed.
+- Rendered QA passed for Dashboard, Resume list, Interview list, and the
+  unchanged Learning comparison route at 1440px, 1024px, 768px, 390px, and
+  320px. The browser console had no relevant warnings or errors, and
+  synthetic cleanup passed.
+- Human review approved native 200% zoom, keyboard focus and activation,
+  header wrapping, action ordering, visual identity preservation, typography
+  preservation, and the absence of new header-level overflow.
+- Existing React Router directive and production chunk-size warnings remain.
+  The pre-existing approximately 15px global root overflow at 320px remains
+  deferred to Phase 13F.
+- `DashboardLayout.tsx` remains untouched and requires separate authorization
+  if later removal is justified. Backend tests and AI-provider configuration
+  were not required because no backend code changed and no provider success
+  was in scope.
 
 #### Purpose
 

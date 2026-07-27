@@ -3,23 +3,25 @@
 - Phase: 13
 - Name: Shared Design and UX Hardening
 - Status: ACTIVE
-- Most recently completed pass: Phase 13A, Shared Design and UX Audit
+- Most recently completed pass: Phase 13B, Shared Foundations and Approved
+  Tokens
   (`COMPLETED`)
-- Active pass: None; Phase 13B requires separate activation
-- Next planned pass: Phase 13B, Shared Foundations and Approved Tokens
+- Active pass: None
+- Next planned pass: Phase 13C, Forms, Buttons, and Action Hierarchy
   (`PLANNED` / `INACTIVE`)
 - Next planned major phase: Phase 14, End-to-End Browser Testing (`PLANNED`)
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS A COMPLETED — PASS B PLANNED, NOT ACTIVATED`
+  `PHASE 13 ACTIVE — PASS B COMPLETED — PASS C PLANNED, NOT ACTIVATED`
 - Controlling skills: `karpathy-guidelines`, `web-design-guidelines`,
-  `writing-plans`, `browser:control-in-app-browser`
+  `test-driven-development`, `systematic-debugging`,
+  `browser:control-in-app-browser`
 
 ## Objective
 
-- Preserve the approved Phase 13A audit evidence, six-pass implementation
-  structure, and operator decisions.
-- Keep Phase 13 active while awaiting a separate Phase 13B activation and
-  implementation prompt.
+- Preserve the completed Phase 13B shared presentation foundation, the
+  Phase 13A audit evidence, the six-pass implementation structure, and the
+  operator decisions.
+- Keep later Phase 13 passes inactive until separately activated.
 - Preserve the existing visual identity and avoid a second design system.
 - Phase 13A made no production UI changes.
 
@@ -29,8 +31,7 @@
 - Phase 12 is `COMPLETED`.
 - Phase 13 is `ACTIVE`.
 - Phase 13A — Shared Design and UX Audit is `COMPLETED`.
-- Phase 13B — Shared Foundations and Approved Tokens is `PLANNED` and
-  `INACTIVE`.
+- Phase 13B — Shared Foundations and Approved Tokens is `COMPLETED`.
 - Phase 13C through Phase 13G are `PLANNED` and `INACTIVE`.
 - Phase 14 remains `PLANNED` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
@@ -64,8 +65,51 @@
   builds, browser work, staging, commit, or push.
 - The separate documentation-only closeout commit was authorized by
   `CLH-PHASE-13A-DOCUMENTATION-CLOSEOUT-01`.
-- Phase 13 remains `ACTIVE`; Phase 13B through Phase 13G remain `PLANNED` and
-  `INACTIVE`; Phase 14 remains `PLANNED`.
+- At the Phase 13A closeout, Phase 13 remained `ACTIVE`; Phase 13B through
+  Phase 13G were `PLANNED` and `INACTIVE`; Phase 14 remained `PLANNED`.
+
+## Phase 13B completion record
+
+- Activated by operator-approved prompt
+  `CLH-PHASE-13B-ACTIVATE-AND-IMPLEMENT-01`.
+- Implementation baseline: branch `phase-12-unified-frontend`, HEAD
+  `3e16017` (`Complete Phase 13 shared design audit`).
+- Decisions D13-01, D13-02, D13-03, D13-05, D13-06, D13-11, and D13-12
+  controlled the pass.
+- Human visual QA was approved with:
+  `PHASE_13B_SHARED_FOUNDATIONS_VISUAL_QA_APPROVED`.
+- Human review approved the Dashboard, Resume-list, and Interview-list page
+  headers and the unchanged Learning comparison route at 1440px, 1024px,
+  768px, 390px, and 320px.
+- Human review also approved native 200% zoom, keyboard focus and activation,
+  header wrapping, action ordering, visual identity preservation, typography
+  preservation, and the absence of new header-level overflow.
+- Phase 13B is `COMPLETED`. No pass is active; Phase 13C requires a separate
+  activation and implementation prompt.
+- Phase 13C through Phase 13G remain `PLANNED` and `INACTIVE`; Phase 14
+  remains `PLANNED` and is not activated.
+
+### Implementation and verification evidence
+
+- Additive shared tokens were created from existing canonical values. One
+  minimal neutral `PageHeader` was added, and Dashboard, Resume list, and
+  Interview list were migrated.
+- Learning and all domain workspaces remained unchanged. No second design
+  system or generic Card, Workspace, Tabs, dialog, pager, form system, toast
+  provider, or cross-domain job component was created.
+- Focused tests passed: `PageHeader` 5/5, Dashboard 15/15, Resume list 9/9,
+  and Interview list 7/7.
+- The complete frontend suite passed 541/541. Frontend and root typechecks
+  passed, and the production build passed.
+- Rendered QA passed at 1440px, 1024px, 768px, 390px, and 320px. The browser
+  console had no relevant warnings or errors, and synthetic cleanup passed.
+- Existing React Router directive and production chunk-size warnings remain.
+  The pre-existing approximately 15px global root overflow at 320px was not
+  fixed and remains deferred to Phase 13F.
+- `DashboardLayout.tsx` remains untouched and requires separate authorization
+  if later removal is justified.
+- Backend tests were not required because no backend code changed. AI-provider
+  configuration was not required.
 
 ## Pass F completion record
 
@@ -211,25 +255,27 @@
 - Gemini remained unconfigured. Truthful provider-unavailable behavior was
   verified; real-provider success was not claimed.
 
-## Authorized audit scope
+## Authorized Phase 13B scope
 
-- Read-only inspection of frontend source, directly relevant frontend tests,
-  frontend test utilities, and frontend package metadata.
-- Read-only backend inspection only when required to understand a visible
-  frontend state.
-- Bounded local runtime inspection with synthetic `.test` users and content.
-- Status updates in `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md` and
-  this file.
-- Audit and implementation-planning documents at
-  `docs/planning/PHASE_13_SHARED_DESIGN_UX_AUDIT.md` and
-  `docs/planning/PHASE_13_IMPLEMENTATION_PLAN.md`.
+- Additive approved tokens in `frontend/src/styles.css`.
+- One minimal shared page-header primitive under
+  `frontend/src/components/**`.
+- Page-header migration for Dashboard, Resume list, and Interview list only,
+  with their directly relevant tests and CSS.
+- Bounded local browser QA with synthetic `.test` records when authenticated
+  populated routes require them.
+- Phase 13B status updates in the three controlling planning files.
 
 ## Explicit exclusions
 
-- Production frontend changes, frontend test changes, backend changes, shared
-  type changes, dependency changes, and package or lockfile changes.
+- Backend, shared type, package, lockfile, environment, database, migration,
+  seed, deployment, authentication-provider, API-client, route, polling, and
+  response-contract changes.
+- Broad feature migration; Learning header or tab migration; dialogs,
+  pagination, job status, form validation, generic Card, generic Workspace,
+  generic Tabs, or a toast provider.
 - Speculative abstractions, a second design system, unrelated visual redesign,
-  and new product features.
+  typography changes, status-color remapping, and new product features.
 - Database, migration, seed, deployment, provider-configuration, and legacy
   project work.
 - Phase 14 activation or end-to-end implementation.
@@ -238,15 +284,16 @@
 
 ## Verification
 
-- Phase 13A requires static evidence, one bounded rendered browser audit,
-  keyboard and responsive checks, synthetic-data cleanup, exact changed-file
-  scope verification, and `git diff --check`.
-- Complete automated suites are not required for this audit-only pass.
+- Phase 13B focused component and consumer tests, frontend and root typechecks,
+  production build, complete frontend suite, rendered browser pass,
+  synthetic-data cleanup, and exact changed-file checks passed as recorded
+  above.
 - No real AI-provider call is required or authorized.
 
 ## Human approval gate
 
-- Phase 13A was approved with
-  `PHASE_13A_SHARED_DESIGN_AUDIT_APPROVED`.
-- The Phase 13A documentation-only closeout commit was separately authorized.
-- Phase 13B requires a separate activation and implementation prompt.
+- Phase 13B human visual QA was approved with:
+  `PHASE_13B_SHARED_FOUNDATIONS_VISUAL_QA_APPROVED`.
+- The closeout and implementation commit was authorized by
+  `CLH-PHASE-13B-CLOSEOUT-AND-COMMIT-01`.
+- No push or Phase 13C activation is authorized.

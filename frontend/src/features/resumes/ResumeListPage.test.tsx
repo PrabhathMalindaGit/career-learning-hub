@@ -105,6 +105,32 @@ describe("ResumeListPage", () => {
     });
   });
 
+  it("preserves the page heading, supporting copy, and list actions", () => {
+    renderPage();
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Resume Studio",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(
+        "Create, import, and open your private resume records. Only validated server data is shown.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Create blank resume",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Import private PDF",
+      }),
+    ).not.toBeNull();
+  });
+
   it("shows factual loading and empty states", async () => {
     let resolveList:
       | ((value: Awaited<ReturnType<typeof resumeApi.listResumes>>) => void)

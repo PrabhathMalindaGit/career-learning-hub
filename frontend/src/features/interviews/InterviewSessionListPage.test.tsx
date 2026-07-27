@@ -60,6 +60,25 @@ describe("InterviewSessionListPage", () => {
     });
   });
 
+  it("preserves the page heading, supporting copy, and create action", () => {
+    renderPage();
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Interview Coach",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(
+        "Organize role-specific questions, written practice, and model-generated guidance in private session records.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Create session" }),
+    ).not.toBeNull();
+  });
+
   it("shows factual loading and empty states", async () => {
     let resolveList:
       | ((

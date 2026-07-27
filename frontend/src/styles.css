@@ -13,8 +13,19 @@
   --border: #d8e2dc;
   --text-muted: #53635a;
   --error: #9f2d2d;
+  --error-text: #762020;
+  --error-border: #efc7c3;
   --error-surface: #fff3f2;
   --shadow: 0 18px 50px rgba(20, 45, 31, 0.08);
+  --focus-ring-color: #0e6fce;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 3px;
+  /* Applied only to approved common controls in later bounded passes. */
+  --minimum-interactive-target: 44px;
+  --control-height: 46px;
+  --page-header-surface: var(--surface);
+  --page-header-border: var(--border);
+  --page-header-shadow: var(--shadow);
 }
 
 * {
@@ -59,8 +70,8 @@ button:disabled {
 }
 
 :focus-visible {
-  outline: 3px solid #0e6fce;
-  outline-offset: 3px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .skip-link {
@@ -98,6 +109,33 @@ h1 {
 
 h2 {
   margin: 0;
+}
+
+.page-header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 28px;
+  border: 1px solid var(--page-header-border);
+  border-radius: 22px;
+  background: var(--page-header-surface);
+  box-shadow: var(--page-header-shadow);
+}
+
+.page-header__copy {
+  min-width: 0;
+}
+
+.page-header__actions {
+  display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .auth-layout {
@@ -185,9 +223,9 @@ h2 {
   display: grid;
   gap: 6px;
   padding: 13px 14px;
-  border: 1px solid #efc7c3;
+  border: 1px solid var(--error-border);
   border-radius: 10px;
-  color: #762020;
+  color: var(--error-text);
   background: var(--error-surface);
   overflow-wrap: anywhere;
 }
@@ -203,7 +241,7 @@ h2 {
 .secondary-button,
 .primary-link {
   display: inline-flex;
-  min-height: 46px;
+  min-height: var(--control-height);
   align-items: center;
   justify-content: center;
   padding: 10px 16px;
