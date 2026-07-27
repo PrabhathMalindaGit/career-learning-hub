@@ -1,34 +1,38 @@
 # Current Execution Phase
 
-- Phase: 12
-- Name: Learning Workspace Implementation
-- Status: COMPLETED
-- Most recently completed phase: Phase 12, Learning Workspace Implementation
-- Active implementation phase: None; Phase 12 is completed
-- Next planned phase: Phase 13, Shared Design and UX Hardening (`PLANNED`)
+- Phase: 13
+- Name: Shared Design and UX Hardening
+- Status: ACTIVE
+- Most recently completed pass: Phase 13A, Shared Design and UX Audit
+  (`COMPLETED`)
+- Active pass: None; Phase 13B requires separate activation
+- Next planned pass: Phase 13B, Shared Foundations and Approved Tokens
+  (`PLANNED` / `INACTIVE`)
+- Next planned major phase: Phase 14, End-to-End Browser Testing (`PLANNED`)
 - Current workflow state:
-  `PHASE 12 COMPLETED — LEARNING WORKSPACE IMPLEMENTATION VERIFIED`
-- Controlling skills: `karpathy-guidelines`, `test-driven-development`,
-  `security-best-practices`
+  `PHASE 13 ACTIVE — PASS A COMPLETED — PASS B PLANNED, NOT ACTIVATED`
+- Controlling skills: `karpathy-guidelines`, `web-design-guidelines`,
+  `writing-plans`, `browser:control-in-app-browser`
 
 ## Objective
 
-- Preserve completed Passes A through F and the verified Phase 12 Learning
-  Workspace implementation.
-- Record the completed Pass F owned document cascade deletion,
-  dependent-record verification, private-source asset verification, User
-  A/User B deletion ownership, deletion-state cleanup, and final integrated
-  Phase 12 verification.
-- Preserve the private-source contract, authentication and ownership
-  boundaries, safe owned-404 behavior, request-ID handling, and private-data
-  controls.
-- Keep page-aware extracted chunks authoritative for page references.
+- Preserve the approved Phase 13A audit evidence, six-pass implementation
+  structure, and operator decisions.
+- Keep Phase 13 active while awaiting a separate Phase 13B activation and
+  implementation prompt.
+- Preserve the existing visual identity and avoid a second design system.
+- Phase 13A made no production UI changes.
 
 ## Phase status controls
 
 - Phase 11 remains `COMPLETED`.
 - Phase 12 is `COMPLETED`.
-- Phase 13 remains `PLANNED`.
+- Phase 13 is `ACTIVE`.
+- Phase 13A — Shared Design and UX Audit is `COMPLETED`.
+- Phase 13B — Shared Foundations and Approved Tokens is `PLANNED` and
+  `INACTIVE`.
+- Phase 13C through Phase 13G are `PLANNED` and `INACTIVE`.
+- Phase 14 remains `PLANNED` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -47,6 +51,21 @@
 - Pass F human visual QA was approved with
   `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
 - Phase 12 is completed.
+
+## Phase 13A completion record
+
+- The operator reviewed and approved the evidence-led audit and six-pass
+  implementation structure with
+  `PHASE_13A_SHARED_DESIGN_AUDIT_APPROVED`.
+- Approved decisions D13-01 through D13-12 are recorded once as the
+  controlling Phase 13 direction in
+  `docs/planning/PHASE_13_IMPLEMENTATION_PLAN.md`.
+- The approval did not authorize production implementation, tests, typechecks,
+  builds, browser work, staging, commit, or push.
+- The separate documentation-only closeout commit was authorized by
+  `CLH-PHASE-13A-DOCUMENTATION-CLOSEOUT-01`.
+- Phase 13 remains `ACTIVE`; Phase 13B through Phase 13G remain `PLANNED` and
+  `INACTIVE`; Phase 14 remains `PLANNED`.
 
 ## Pass F completion record
 
@@ -93,7 +112,8 @@
 - Pass E — Quiz Generation, Submission and Review: `COMPLETED`.
 - Pass F — Document Cascade Deletion and Phase 12 Final Verification:
   `COMPLETED`.
-- Phase 13 remains `PLANNED` and is not activated.
+- Phase 13 was activated separately by the operator-approved
+  `CLH-PHASE-13A-ACTIVATE-AND-AUDIT-01` prompt after Phase 12 completion.
 
 ## Pass E completion record
 
@@ -191,47 +211,42 @@
 - Gemini remained unconfigured. Truthful provider-unavailable behavior was
   verified; real-provider success was not claimed.
 
-## Authorized implementation scope
+## Authorized audit scope
 
-- `frontend/src/features/learning/**`.
-- The minimum Learning routes under `frontend/src/routing/**`.
-- `frontend/src/api/apiClient.ts` and its focused test only if a reproduced
-  limitation requires a shared-client change.
-- Existing frontend test support required by the Learning feature.
-- The Phase 12 status records in the master plan and this file.
+- Read-only inspection of frontend source, directly relevant frontend tests,
+  frontend test utilities, and frontend package metadata.
+- Read-only backend inspection only when required to understand a visible
+  frontend state.
+- Bounded local runtime inspection with synthetic `.test` users and content.
+- Status updates in `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md` and
+  this file.
+- Audit and implementation-planning documents at
+  `docs/planning/PHASE_13_SHARED_DESIGN_UX_AUDIT.md` and
+  `docs/planning/PHASE_13_IMPLEMENTATION_PLAN.md`.
 
 ## Explicit exclusions
 
-- Standalone quiz deletion, attempt deletion, mutable attempts, persistent
-  answer drafts, offline quizzes, quiz exports, quiz sharing, question
-  editing, answer editing after submission, timers, streaks, leaderboards,
-  badges, mastery scores, and later Phase 12 passes.
-- Flashcard changes and Grounded Chat changes.
-- Backend behavior outside the job-response privacy correction, shared types,
-  unrelated frontend features, shared-design hardening, provider
-  configuration, package changes, migrations, seeds, and deployment
-  configuration.
-- New storage mechanisms, public URLs, unrelated API or data-model changes,
-  dependency changes, migrations, and legacy access.
-- Exposure of storage keys, provider names, checksums, internal paths, Asset
-  metadata, owner IDs, credentials, or arbitrary headers.
+- Production frontend changes, frontend test changes, backend changes, shared
+  type changes, dependency changes, and package or lockfile changes.
+- Speculative abstractions, a second design system, unrelated visual redesign,
+  and new product features.
+- Database, migration, seed, deployment, provider-configuration, and legacy
+  project work.
+- Phase 14 activation or end-to-end implementation.
+- Exposure of credentials, tokens, private document content, answer keys,
+  storage keys, internal paths, or personal data.
 
 ## Verification
 
-- Pass F focused and complete automated verification, runtime cascade QA,
-  ownership checks, integrated Passes A through E smoke verification,
-  responsive QA, and human visual QA passed as recorded above.
-- Real provider and S3 calls were not required or claimed.
+- Phase 13A requires static evidence, one bounded rendered browser audit,
+  keyboard and responsive checks, synthetic-data cleanup, exact changed-file
+  scope verification, and `git diff --check`.
+- Complete automated suites are not required for this audit-only pass.
+- No real AI-provider call is required or authorized.
 
 ## Human approval gate
 
-- Pass B human visual QA was approved with
-  `PHASE_12B_DOCUMENT_WORKSPACE_VISUAL_QA_APPROVED`.
-- Pass C human visual QA was approved with
-  `PHASE_12C_GROUNDED_CHAT_VISUAL_QA_APPROVED`.
-- Pass D human visual QA was approved with
-  `PHASE_12D_FLASHCARDS_VISUAL_QA_APPROVED`.
-- Pass E human visual QA was approved with
-  `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
-- Pass F human visual QA was approved with
-  `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
+- Phase 13A was approved with
+  `PHASE_13A_SHARED_DESIGN_AUDIT_APPROVED`.
+- The Phase 13A documentation-only closeout commit was separately authorized.
+- Phase 13B requires a separate activation and implementation prompt.

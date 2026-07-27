@@ -816,7 +816,8 @@
 - Pass E — Quiz Generation, Submission and Review: `COMPLETED`.
 - Pass F — Document Cascade Deletion and Phase 12 Final Verification:
   `COMPLETED`.
-- Phase 13 remains `PLANNED` and is not activated.
+- Phase 13 was activated separately by the operator-approved
+  `CLH-PHASE-13A-ACTIVATE-AND-AUDIT-01` prompt after Phase 12 completion.
 
 #### Pass E completion record
 
@@ -980,7 +981,28 @@
 
 #### Status
 
-- Status: PLANNED
+- Status: ACTIVE
+- Activated by operator-approved prompt
+  `CLH-PHASE-13A-ACTIVATE-AND-AUDIT-01`.
+- Most recently completed pass: Phase 13A — Shared Design and UX Audit
+  (`COMPLETED`).
+- Active pass: None; Phase 13B requires separate activation.
+- Next planned pass: Phase 13B — Shared Foundations and Approved Tokens
+  (`PLANNED` / `INACTIVE`).
+- Current workflow state:
+  `PHASE 13 ACTIVE — PASS A COMPLETED — PASS B PLANNED, NOT ACTIVATED`.
+- Phase 13A was audit-only and made no production UI changes.
+- Consolidation recommendations must demonstrate genuine duplication.
+- The evidence-led audit and six-pass implementation structure were approved
+  with `PHASE_13A_SHARED_DESIGN_AUDIT_APPROVED`.
+- Approved decisions D13-01 through D13-12 are recorded once as the
+  controlling Phase 13 direction in
+  `docs/planning/PHASE_13_IMPLEMENTATION_PLAN.md`.
+- The approval did not authorize production implementation. The
+  documentation-only closeout commit was separately authorized by
+  `CLH-PHASE-13A-DOCUMENTATION-CLOSEOUT-01`.
+- Phase 13B through Phase 13G remain `PLANNED` and `INACTIVE`.
+- Phase 14 remains `PLANNED` and is not activated.
 
 #### Purpose
 

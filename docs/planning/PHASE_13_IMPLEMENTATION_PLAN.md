@@ -1,0 +1,852 @@
+# Phase 13 Shared Design and UX Hardening Implementation Plan
+
+## Document control
+
+- Derived from:
+  `docs/planning/PHASE_13_SHARED_DESIGN_UX_AUDIT.md`
+- Parent phase: Phase 13 — Shared Design and UX Hardening (`ACTIVE`)
+- Most recently completed pass: Phase 13A — Shared Design and UX Audit
+  (`COMPLETED`)
+- Active pass: none
+- Next planned pass: Phase 13B — Shared Foundations and Approved Tokens
+  (`PLANNED` / `INACTIVE`)
+- Implementation-pass state: all passes below are `PLANNED` and `INACTIVE`
+- Plan date: 2026-07-27
+- Audited baseline: branch `phase-12-unified-frontend`, HEAD `98c3f11`
+- Audit approval received:
+  `PHASE_13A_SHARED_DESIGN_AUDIT_APPROVED`
+- Documentation closeout authorized by:
+  `CLH-PHASE-13A-DOCUMENTATION-CLOSEOUT-01`
+- Planning rule: the pass order is a proposal, not implementation authority.
+
+## Planning principles
+
+1. Preserve the React/Vite architecture, feature boundaries, visual identity,
+   API contracts, authentication behavior, ownership-safe errors, and private
+   data controls.
+2. Consolidate only where the audit demonstrates two or more equivalent
+   semantic and behavioral implementations.
+3. Prefer an existing successful pattern over a new invention.
+4. Keep API, polling, domain copy, status vocabulary, and recovery logic inside
+   their feature.
+5. Introduce no dependency or second design system.
+6. Define focused tests before implementation and run targeted checks before
+   broader checks.
+7. Every visible pass stops at the human visual-QA gate before commit.
+8. Each pass is a separate reviewable commit boundary after explicit commit
+   authorization; this plan authorizes no stage, commit, or push.
+
+## Proposed pass sequence
+
+| Pass | Name | Status | Depends on |
+| --- | --- | --- | --- |
+| Phase 13B | Shared foundations and approved tokens | PLANNED / INACTIVE | Phase 13A approval |
+| Phase 13C | Forms, buttons, and action hierarchy | PLANNED / INACTIVE | Phase 13B |
+| Phase 13D | State presentation, pagination, and job status | PLANNED / INACTIVE | Phase 13B |
+| Phase 13E | Dialogs, focus, and navigation | PLANNED / INACTIVE | Phase 13B; approved dialog decision |
+| Phase 13F | Responsive and touch-target hardening | PLANNED / INACTIVE | Phase 13C–13E |
+| Phase 13G | Integrated accessibility and visual QA | PLANNED / INACTIVE | Phase 13B–13F |
+
+Six passes are the smallest safe sequence because foundations must precede
+consumer migrations, interaction mechanics require independent keyboard
+verification, global responsive changes require all earlier component shapes
+to be stable, and final integrated QA must not be combined with production
+changes.
+
+## Phase 13B — Shared foundations and approved tokens
+
+### Pass ID and status
+
+- Pass ID: Phase 13B
+- Status: `PLANNED` / `INACTIVE`
+
+### Purpose
+
+Create the minimum shared presentation foundations and explicit tokens needed
+by later passes, without migrating domain workflows or changing the visual
+identity.
+
+### Exact problem being solved
+
+`frontend/src/styles.css` already defines nine useful variables and common
+button/form/state classes, while the four feature stylesheets repeat the same
+surface, border, error, focus, and control values. The lack of a bounded
+canonical layer causes drift, but mass replacement would erase intentional
+domain differences.
+
+### Evidence from the audit
+
+- Existing global variables and implicit focus/control behavior:
+  `frontend/src/styles.css`.
+- Repeated literals and control dimensions:
+  `frontend/src/features/dashboard/dashboard.css`,
+  `frontend/src/features/resumes/resumeWorkspace.css`,
+  `frontend/src/features/interviews/interviewCoach.css`, and
+  `frontend/src/features/learning/learningWorkspace.css`.
+- The audit rejects typography, breakpoint, radius, and status-color mass
+  replacement.
+
+### Authorized file scope
+
+- `frontend/src/styles.css`.
+- A minimum shared presentation directory under
+  `frontend/src/components/**` only if approved components need it.
+- New focused tests under `frontend/src/components/**`.
+- Existing feature files only when necessary to prove one foundation has two
+  consumers; broad migration is deferred.
+- Planning status records for Phase 13B only.
+
+### Protected paths
+
+- `backend/**`, `packages/**`, database/migrations/seeds, environment files,
+  deployment files, package manifests, lockfile, and legacy projects.
+- Authentication/token behavior in `frontend/src/features/auth/AuthProvider.tsx`
+  and `frontend/src/api/apiClient.ts`.
+- Domain API, polling, and contract files.
+
+### Components or tokens affected
+
+- Explicit focus-ring token.
+- Minimum interactive-target token.
+- Common control-height token only if it preserves native/file/radio behavior.
+- Shared error surface/border/text tokens.
+- Approved page/panel surface values.
+- A minimal page-header layout primitive only if decision `D13-01` is approved.
+
+### Required tests
+
+- New focused render/semantic tests for any shared component.
+- `frontend/src/routing/router.test.tsx`.
+- Existing Dashboard, Resume list, Interview list, and Learning dashboard tests
+  that consume a changed foundation.
+- `npm run typecheck`.
+- `npm run build`.
+
+### Runtime requirements
+
+- Browser: required, one bounded session after targeted tests.
+- Frontend: required.
+- Backend: required only for authenticated populated-route verification.
+- MongoDB: required only for synthetic authenticated records.
+- AI provider: prohibited/not required.
+
+### Accessibility acceptance criteria
+
+- Global `:focus-visible` remains at least as visible as the baseline.
+- Shared header has one caller-supplied heading level and does not invent
+  landmarks.
+- Tokens do not lower contrast or remove non-color status text.
+- Native radios, checkboxes, file inputs, and dialog semantics are unchanged.
+
+### Responsive acceptance criteria
+
+- No new overflow at 1440, 1024, 768, 390, or 320px.
+- Header actions wrap without overlap or clipped content.
+- No global breakpoint is replaced without reproduced route evidence.
+
+### Human visual-QA gate
+
+- Required on Dashboard, Resume list, Interview list, and Learning library at
+  all five widths.
+- Expected token:
+  `PHASE_13B_SHARED_FOUNDATIONS_VISUAL_QA_APPROVED`.
+
+### Expected commit boundary
+
+One phase-scoped commit containing only approved foundations, focused tests,
+and Phase 13B planning records, after explicit commit authorization.
+
+### Dependencies
+
+- Phase 13A audit approval.
+- Decisions `D13-01`, `D13-02`, `D13-03`, and `D13-05` as applicable.
+
+### Rollback risk
+
+Medium. A global token or selector can affect every route. Keep changes
+additive and migrate a small, named consumer set.
+
+### Out of scope
+
+- Feature-wide migrations.
+- Typography replacement.
+- Status-color remapping.
+- Breakpoint normalization.
+- Generic Card or Workspace components.
+- Dependencies or a component library.
+
+## Phase 13C — Forms, buttons, and action hierarchy
+
+### Pass ID and status
+
+- Pass ID: Phase 13C
+- Status: `PLANNED` / `INACTIVE`
+
+### Purpose
+
+Standardize field semantics, validation recovery, common action variants,
+loading/disabled presentation, and target sizes while retaining specialized
+editors, files, radios, and checkboxes.
+
+### Exact problem being solved
+
+Auth, Resume, Interview, and Learning expose inconsistent required
+communication, error association, validation focus, control height, disabled
+cursor/opacity, and button hierarchy. The Resume “Discard draft changes”
+action renders 25px high and is a confirmed local defect.
+
+### Evidence from the audit
+
+- Canonical validation summary:
+  `frontend/src/features/interviews/InterviewSessionListPage.tsx`.
+- Auth associated field errors but submit-button focus:
+  `frontend/src/features/auth/LoginPage.tsx` and
+  `frontend/src/features/auth/RegisterPage.tsx`.
+- Resume create/import association gaps:
+  `frontend/src/features/resumes/ResumeListPage.tsx`.
+- Learning upload association gaps:
+  `frontend/src/features/learning/LearningDashboard.tsx`.
+- Button family differences in `frontend/src/styles.css` and all four feature
+  stylesheets.
+- 25px Resume discard action:
+  `frontend/src/features/resumes/ResumeWorkspace.tsx` and
+  `frontend/src/features/resumes/resumeWorkspace.css`.
+
+### Authorized file scope
+
+- `frontend/src/styles.css`.
+- Approved shared field/action files under `frontend/src/components/**`.
+- Auth page and focused test files.
+- Resume list/workspace/recommendation page, CSS, and focused test files.
+- Interview list/workspace page, CSS, and focused test files.
+- Learning dashboard/quiz form files, CSS, and focused test files.
+- Planning status records for Phase 13C.
+
+### Protected paths
+
+- All API, contract, polling, and authentication-provider behavior.
+- Backend, shared types, package files, lockfile, and database files.
+- Resume editor data model, quiz answer secrecy, and file-upload contract.
+
+### Components or tokens affected
+
+- Shared field shell or standardized class contract.
+- Label, help, required, field-error, and error-summary presentation.
+- Primary, secondary, destructive, and quiet action variants.
+- Disabled/loading behavior.
+- Minimum target/control tokens from Phase 13B.
+
+### Required tests
+
+- Tests written first for required communication, label/help/error association,
+  error-summary focus, disabled/loading state, and button semantics.
+- `frontend/src/features/auth/*.test.tsx` relevant to pages/provider routing.
+- `frontend/src/features/resumes/ResumeListPage.test.tsx`.
+- `frontend/src/features/resumes/ResumeWorkspace.test.tsx`.
+- `frontend/src/features/interviews/InterviewSessionListPage.test.tsx`.
+- `frontend/src/features/interviews/InterviewSessionWorkspace.test.tsx`.
+- `frontend/src/features/learning/LearningDashboard.test.tsx`.
+- `frontend/src/features/learning/QuizTaker.test.tsx`.
+- `npm run typecheck` and `npm run build`.
+
+### Runtime requirements
+
+- Browser: required.
+- Frontend: required.
+- Backend: required for submission/loading/disabled behavior.
+- MongoDB: required only for synthetic authenticated routes.
+- AI provider: not required; unavailable states remain truthful.
+
+### Accessibility acceptance criteria
+
+- Every visible field has a programmatic label.
+- Required state is communicated in text and/or native semantics.
+- Field errors are associated with the affected input.
+- Multi-field invalid submission focuses a summary or the first invalid field
+  according to one documented rule.
+- Native radio arrow behavior and grouping remain intact.
+- Loading and disabled state are exposed without relying only on opacity.
+- Common actions have a minimum 44px target, including Resume discard.
+
+### Responsive acceptance criteria
+
+- Forms collapse without horizontal overflow or label/control clipping at all
+  five widths.
+- Actions wrap in a stable primary/secondary order.
+- File input content and validation remain visible at 320px.
+
+### Human visual-QA gate
+
+- Required for Login, Registration, Resume list/workspace, Interview
+  list/workspace, Learning upload, quiz taking, and validation states.
+- Expected token:
+  `PHASE_13C_FORMS_ACTIONS_VISUAL_QA_APPROVED`.
+
+### Expected commit boundary
+
+One phase-scoped commit after focused tests, integrated build, browser QA,
+operator visual approval, and explicit commit authorization.
+
+### Dependencies
+
+- Phase 13B foundations.
+- Decisions `D13-01`, `D13-02`, and any destructive-color portion of `D13-05`.
+
+### Rollback risk
+
+Medium. Shared field markup can break accessible relationships and tests;
+shared button selectors can affect toolbars. Migrate by named action category,
+not broad element selectors.
+
+### Out of scope
+
+- Schema-driven form generation.
+- Resume editor redesign.
+- File-upload contract changes.
+- Quiz behavior or answer changes.
+- New form library.
+
+## Phase 13D — State presentation, pagination, and job status
+
+### Pass ID and status
+
+- Pass ID: Phase 13D
+- Status: `PLANNED` / `INACTIVE`
+
+### Purpose
+
+Consolidate genuine state-surface and pager duplication and the near-identical
+Learning Flashcard/Quiz job-status presentation.
+
+### Exact problem being solved
+
+More than a dozen loading/empty/error/not-found surfaces and more than nine
+pagers repeat the same presentation with inconsistent roles, landmarks,
+heights, and spacing. Flashcard and Quiz job states contain nearly identical
+markup. Domain polling, copy, and recovery remain intentionally different.
+
+### Evidence from the audit
+
+- Route error foundation: `frontend/src/routing/RouteErrorPage.tsx`.
+- State families in Dashboard, Resume, Interview, and Learning page/workspace
+  files.
+- Pagination in
+  `frontend/src/features/dashboard/ActivityFeed.tsx`,
+  Resume list/workspace, Interview list/workspace, and the Learning dashboard,
+  conversation, document, flashcard, quiz, and attempt files.
+- Job-status duplication:
+  `frontend/src/features/learning/DocumentFlashcards.tsx` and
+  `frontend/src/features/learning/DocumentQuizzes.tsx`.
+- Distinct job behavior to preserve in Resume, Interview, grounded
+  conversation, and Learning deletion.
+
+### Authorized file scope
+
+- Approved shared presentation files under `frontend/src/components/**`.
+- `frontend/src/styles.css`.
+- `frontend/src/routing/RouteErrorPage.tsx` and focused router tests.
+- Named feature page/workspace and CSS files that currently render state or
+  pagination.
+- Learning Flashcard/Quiz presentation and focused tests.
+- Planning status records for Phase 13D.
+
+### Protected paths
+
+- API clients, response validation, request-ID preservation logic, polling,
+  retries, cancellation, ownership-safe 404 behavior, quiz answer secrecy, and
+  backend jobs.
+- Package, lockfile, shared type, database, and environment files.
+
+### Components or tokens affected
+
+- State surface with explicit semantic mode.
+- Safe-not-found presentation slots.
+- Labelled pager.
+- Learning job-status presentation.
+- Shared request-ID placement.
+- Base status-chip geometry only if decision `D13-05` permits it.
+
+### Required tests
+
+- Component tests for heading/body/action slots, status versus alert mode,
+  required pagination accessible label, disabled boundary state, and job-state
+  action slots.
+- Existing focused Dashboard, Resume, Interview, and Learning tests for
+  loading, empty, error, safe-not-found, pagination, and job states.
+- Contract/polling tests must continue passing unchanged where affected.
+- `npm run typecheck` and `npm run build`.
+
+### Runtime requirements
+
+- Browser: required.
+- Frontend: required.
+- Backend: required for real empty/populated/error-safe route transitions.
+- MongoDB: required for synthetic pagination and ready records.
+- AI provider: not required; queued/failed/provider-unavailable UI may use
+  sanitized test fixtures or controlled existing behavior.
+
+### Accessibility acceptance criteria
+
+- Pagination has a unique accessible navigation label.
+- Current page is announced in text; boundary buttons are natively disabled.
+- Static errors do not become assertive live regions without reason.
+- Dynamic job state uses suitable `status`/progress semantics.
+- Request IDs remain selectable text and are not part of the heading.
+- Safe 404 wording remains ownership neutral.
+
+### Responsive acceptance criteria
+
+- Pager controls wrap or remain contained at 320px.
+- State actions do not clip or overlap.
+- Long status/request text wraps without horizontal scrolling.
+- No fixed width is introduced.
+
+### Human visual-QA gate
+
+- Required for empty/loading/error/safe-not-found states, first/last pagination
+  pages, Flashcard/Quiz ready and unavailable states, and all five widths.
+- Expected token:
+  `PHASE_13D_STATES_PAGINATION_VISUAL_QA_APPROVED`.
+
+### Expected commit boundary
+
+One pass-scoped commit after all affected focused tests and explicit operator
+commit authorization.
+
+### Dependencies
+
+- Phase 13B.
+- `D13-05` for any status visual changes.
+- `D13-06` must remain “no toast” unless separately approved.
+
+### Rollback risk
+
+Medium. A generic state component can accidentally alter live-region behavior
+or hide domain remediation. Keep semantic mode required and keep copy/actions
+at call sites.
+
+### Out of scope
+
+- One cross-domain job engine.
+- Polling/API refactors.
+- Toast provider.
+- Status vocabulary changes.
+- New retry or cancellation behavior.
+
+## Phase 13E — Dialogs, focus, and navigation
+
+### Pass ID and status
+
+- Pass ID: Phase 13E
+- Status: `PLANNED` / `INACTIVE`
+
+### Purpose
+
+Remove duplicated Resume dialog mechanics, preserve Learning deletion safety,
+and standardize focus and navigation interaction without restructuring the
+application.
+
+### Exact problem being solved
+
+Two Resume custom dialogs independently implement the same focus trap,
+Escape, initial focus, and restoration behavior. Navigation and back links are
+semantically sound but use inconsistent target sizes. The mobile shell behavior
+works and should be hardened, not redesigned.
+
+### Evidence from the audit
+
+- Duplicated dialog mechanics:
+  `frontend/src/features/resumes/ResumeWorkspace.tsx` and
+  `frontend/src/features/resumes/AiRecommendations.tsx`.
+- Strong native-dialog reference:
+  `frontend/src/features/learning/LearningDocumentDeletion.tsx`.
+- Mobile menu:
+  `frontend/src/AppShell.tsx` and `frontend/src/routing/router.test.tsx`.
+- Learning tabs:
+  `frontend/src/features/learning/LearningDocumentWorkspace.tsx` and its
+  focused tests.
+- Back links across Resume, Interview, and Learning workspace files.
+
+### Authorized file scope
+
+- Approved dialog files under `frontend/src/components/**`.
+- Resume dialog callers, Resume CSS, and focused tests.
+- Learning deletion only if required by the approved dialog decision; deletion
+  orchestration and ownership behavior remain protected.
+- `frontend/src/AppShell.tsx`, `frontend/src/styles.css`, and focused router
+  tests for local navigation/touch/focus fixes.
+- Workspace back-link CSS/call sites.
+- Planning status records for Phase 13E.
+
+### Protected paths
+
+- Route structure unless `D13-04` is explicitly approved.
+- Authentication/logout behavior.
+- Learning deletion API, typed-title rule, owned-resource protections, and
+  cleanup behavior.
+- Domain workspace tabs/data logic.
+- Backend, shared types, packages, and database.
+
+### Components or tokens affected
+
+- Dialog shell and focus contract, if approved.
+- Back-link common style.
+- Mobile menu target/focus behavior.
+- Existing global focus-ring token.
+- No new tab component unless another genuine consumer exists.
+
+### Required tests
+
+- Tests written first for accessible name/description, initial focus, Tab and
+  Shift+Tab containment, Escape, action dismissal, focus return, and nested
+  form behavior.
+- `frontend/src/features/resumes/ResumeWorkspace.test.tsx`.
+- Focused AiRecommendations tests added at its behavior boundary.
+- `frontend/src/features/learning/LearningDocumentDeletion.test.tsx`.
+- `frontend/src/routing/router.test.tsx`.
+- `frontend/src/features/learning/LearningDocumentWorkspace.test.tsx`.
+- `npm run typecheck` and `npm run build`.
+
+### Runtime requirements
+
+- Browser: required with real keyboard checks.
+- Frontend: required.
+- Backend: required for authenticated routes and safe deletion-dialog setup.
+- MongoDB: required only for synthetic dialog/resource records.
+- AI provider: not required.
+
+### Accessibility acceptance criteria
+
+- Dialog has an accessible name and, where useful, description.
+- Initial focus is deterministic and non-destructive.
+- Tab and Shift+Tab remain within the modal.
+- Escape follows the caller’s documented cancellation policy.
+- Focus returns to the exact invoker.
+- Destructive action cannot become the accidental initial focus.
+- Mobile menu Escape/focus return and Learning tab arrows remain unchanged.
+
+### Responsive acceptance criteria
+
+- Dialog remains within the viewport at 390 and 320px and at human-verified
+  200% zoom.
+- Dialog actions wrap without reversing meaning.
+- Mobile navigation has no clipped links or overflow.
+- Back links wrap and retain a 44px target.
+
+### Human visual-QA gate
+
+- Required for both Resume dialogs, Learning deletion, mobile navigation, back
+  links, and all audited widths plus 200% zoom.
+- Expected token:
+  `PHASE_13E_DIALOGS_FOCUS_VISUAL_QA_APPROVED`.
+
+### Expected commit boundary
+
+One pass-scoped commit after keyboard/browser QA and explicit commit
+authorization.
+
+### Dependencies
+
+- Phase 13B.
+- Decision `D13-07` is mandatory.
+- Decisions `D13-04` and `D13-08` constrain navigation scope.
+
+### Rollback risk
+
+Medium to high. Dialog regressions can trap focus or enable destructive
+misactivation. Migrate one Resume dialog, verify, then migrate the second
+without changing the deletion workflow in the same step.
+
+### Out of scope
+
+- Navigation-information architecture changes.
+- Breadcrumbs.
+- Route changes.
+- Modal replacement beyond audited dialogs.
+- Deletion contract changes.
+
+## Phase 13F — Responsive and touch-target hardening
+
+### Pass ID and status
+
+- Pass ID: Phase 13F
+- Status: `PLANNED` / `INACTIVE`
+
+### Purpose
+
+Repair the confirmed 320px overflow and remaining target, wrapping, and
+containment defects after shared component shapes are stable.
+
+### Exact problem being solved
+
+The global 320px minimum width produces a 320px document inside a 305px layout
+viewport when a vertical scrollbar is present. Learning avoids the defect with
+a feature-only `html:has(...)` override. Several navigation, back, pager, auth,
+form, and action targets remain below 44px.
+
+### Evidence from the audit
+
+- Global minimum-width rule: `frontend/src/styles.css`.
+- Learning-only successful override:
+  `frontend/src/features/learning/learningWorkspace.css`.
+- Confirmed overflow on Dashboard, Resume, and Interview at 320px.
+- No overflow on Auth or Learning at 320px.
+- Sub-44px geometry across AppShell, back links, auth secondary links,
+  pagination, Resume/Interview controls, and the 25px Resume discard action.
+
+### Authorized file scope
+
+- `frontend/src/styles.css`.
+- The four existing feature stylesheets.
+- `frontend/src/AppShell.tsx`.
+- Exact page/workspace files required for wrapping structure.
+- Focused responsive/semantic tests where stable assertions are possible.
+- Planning status records for Phase 13F.
+
+### Protected paths
+
+- API/domain behavior, routes, data contracts, backend, shared types, packages,
+  lockfile, environment, database, and deployment.
+- Visual redesign, typography change, navigation reorganization, and new
+  breakpoints without evidence.
+
+### Components or tokens affected
+
+- Global minimum-width/reflow rule.
+- Interactive-target token.
+- Header/action/pager wrapping.
+- Back-link and navigation target styles.
+- Dialog containment styles only if Phase 13E changes them.
+
+### Required tests
+
+- Focused layout-class and interaction tests for modified structure.
+- All affected Dashboard, Resume, Interview, Learning, router, and Auth focused
+  tests.
+- `npm run typecheck`.
+- `npm run build`.
+- No claim that jsdom proves layout; rendered measurement is mandatory.
+
+### Runtime requirements
+
+- Browser: mandatory.
+- Frontend: mandatory.
+- Backend: mandatory for complete authenticated route coverage.
+- MongoDB: mandatory only for synthetic populated resources.
+- AI provider: not required.
+
+### Accessibility acceptance criteria
+
+- No horizontal scrolling at 320px for normal page content.
+- All common interactive targets are at least 44 by 44 CSS pixels or have an
+  equivalent enclosing label/click target.
+- Focus outlines are not clipped.
+- Content order remains logical after column collapse.
+- Human 200% zoom check has no loss of content or functionality.
+
+### Responsive acceptance criteria
+
+- Verify 1440, 1024, 768, 390, and 320px on every requested route group.
+- Verify 200% browser zoom manually.
+- No clipped navigation, overlap, fixed-width overflow, off-screen dialog,
+  inaccessible action, or broken long-title wrapping.
+- Do not merge content-driven breakpoints solely to reduce breakpoint count.
+
+### Human visual-QA gate
+
+- Mandatory full route matrix at all five widths and 200% zoom.
+- Expected token:
+  `PHASE_13F_RESPONSIVE_HARDENING_VISUAL_QA_APPROVED`.
+
+### Expected commit boundary
+
+One pass-scoped commit after exact route/viewport evidence, human approval, and
+explicit commit authorization.
+
+### Dependencies
+
+- Phase 13C, Phase 13D, and Phase 13E complete.
+- Decision `D13-09` for the global minimum-width rule.
+
+### Rollback risk
+
+High for the global minimum-width change, low to medium for local target
+repairs. Apply the global change separately inside the pass and verify every
+route before local cleanup.
+
+### Out of scope
+
+- New responsive navigation model.
+- New grid system.
+- Breakpoint normalization.
+- Typography scaling redesign.
+- Device-specific product behavior.
+
+## Phase 13G — Integrated accessibility and visual QA
+
+### Pass ID and status
+
+- Pass ID: Phase 13G
+- Status: `PLANNED` / `INACTIVE`
+
+### Purpose
+
+Perform integrated regression verification of Phase 13B–13F without adding
+production behavior, then record Phase 13 completion evidence.
+
+### Exact problem being solved
+
+Shared presentation and global responsive changes can pass focused tests yet
+interact poorly across routes. A dedicated no-feature-change pass is required
+to verify the complete UI, keyboard behavior, focus, state variants, and
+responsive matrix before Phase 13 can complete.
+
+### Evidence from the audit
+
+- Cross-domain foundations affect at least five UI families.
+- Static tests cannot prove geometry, overflow, zoom, focus visibility, or
+  visual hierarchy.
+- Phase 13A driver limitations require human 200% zoom and real-keyboard
+  confirmation.
+
+### Authorized file scope
+
+- Focused test repairs only when a verified production regression requires
+  them and the correction does not weaken expectations.
+- Planning/status documents and Phase 13 verification report.
+- Production files are read-only unless a separately approved bounded repair
+  is opened; Phase 13G itself is verification-first.
+
+### Protected paths
+
+- Backend, shared types, dependencies, environment, database, migrations,
+  seeds, deployment, legacy projects, and all unrelated production code.
+- No test deletion, skipping, loosening, or snapshot replacement to hide
+  regressions.
+
+### Components or tokens affected
+
+- None expected. This is an integrated QA pass.
+
+### Required tests
+
+- All focused tests changed or depended upon by Phase 13B–13F.
+- `npm run typecheck`.
+- `npm run build`.
+- Broader frontend-relevant test command supported by the repository at that
+  time; do not invent a root frontend test script.
+- Exact command outcomes recorded.
+
+### Runtime requirements
+
+- Browser: mandatory, one bounded integrated session.
+- Frontend: mandatory.
+- Backend: mandatory.
+- MongoDB: mandatory for synthetic empty/populated states.
+- AI provider: not required.
+- Synthetic records must be removed and verified zero after QA.
+
+### Accessibility acceptance criteria
+
+- Logical Tab/Shift+Tab order on global navigation, forms, tabs, pagination,
+  dialogs, radio groups, quiz submission, and settings.
+- Enter/Space/arrow/Escape behavior confirmed with real keyboard input.
+- Visible, unclipped focus.
+- No keyboard trap.
+- Dialog initial focus, containment, Escape, and return confirmed.
+- Labels, errors, live regions, landmarks, and heading hierarchy verified.
+
+### Responsive acceptance criteria
+
+- Complete requested route matrix at 1440, 1024, 768, 390, and 320px.
+- Human native 200% zoom.
+- No horizontal overflow, clipped content/navigation, action overlap,
+  inaccessible control, or dialog containment defect.
+
+### Human visual-QA gate
+
+- Mandatory final integrated inspection.
+- Expected token:
+  `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
+- Phase 13 may not be marked completed before this token and all command
+  evidence exist.
+
+### Expected commit boundary
+
+One documentation/test-only verification commit if changes exist, after
+explicit commit authorization. If no repository changes are required, record a
+no-commit verification result.
+
+### Dependencies
+
+- Phase 13B through Phase 13F completed and individually approved.
+
+### Rollback risk
+
+Low if verification-only. Any reproduced defect must return to a bounded repair
+with its own attempt count and verification; do not fold speculative fixes into
+the final QA pass.
+
+### Out of scope
+
+- New UI features.
+- New abstractions.
+- Backend or database work.
+- Phase 14 activation.
+- Security-review scope reserved for later phases.
+
+## Decision register
+
+The operator approved every decision below with
+`PHASE_13A_SHARED_DESIGN_AUDIT_APPROVED`. Approval resolves the design
+direction but does not activate an implementation pass.
+
+| Decision ID | Status | Implementation pass | Controlling direction and preserved constraints | Explicitly rejected alternative |
+| --- | --- | --- | --- | --- |
+| D13-01 | APPROVED | Phase 13B and Phase 13C | Allow only small shared page-header and presentation primitives with caller-owned headings, actions, semantics, copy, and domain behavior. | Generic Workspace or domain-resource abstractions. |
+| D13-02 | APPROVED | Phase 13B | Promote only proven common tokens for focus rings, minimum interactive targets, approved control height, common error treatment, and selected shared surfaces. | Mass replacement of colors, radii, spacing, or breakpoints. |
+| D13-03 | APPROVED | Phase 13B through Phase 13G | Preserve the current application typography. Align existing sizes or line heights only where an approved shared pattern requires it. | A new application type scale or font. |
+| D13-04 | APPROVED | Phase 13E and Phase 13F | Preserve navigation structure, routes, destinations, active-state behavior, skip link, and information architecture. Permit only bounded size, wrapping, target, and focus repairs. | Route, destination, ordering, breadcrumb, or information-architecture changes. |
+| D13-05 | APPROVED | Phase 13B and Phase 13D | Preserve domain-specific status-color mappings. Shared geometry or semantic tokens require an explicit state map and contrast verification. | Normalizing all statuses into one global palette. |
+| D13-06 | APPROVED | Phase 13B through Phase 13G | Preserve contextual inline feedback unless a separate concrete use case is approved. | A Phase 13 toast provider. |
+| D13-07 | APPROVED | Phase 13E | Create one minimal dialog shell derived from verified native Learning-dialog behavior. Migrate the two Resume dialogs separately and preserve their domain content, Learning deletion orchestration, typed-title confirmation, ownership, and cleanup. | Changing Learning deletion behavior or replacing unrelated dialogs. |
+| D13-08 | APPROVED | Phase 13E and Phase 13F | Preserve the mobile-navigation model and breakpoint. Increase target sizes and verify tab order, Escape behavior, and focus return. | A drawer, sidebar, new breakpoint, or new navigation model. |
+| D13-09 | APPROVED | Phase 13F | Remove or safely scope the effective global 320px minimum-width behavior and verify every requested route at the real narrow layout viewport. | More route-specific overrides that preserve the defective global rule. |
+| D13-10 | APPROVED | Phase 13D | Permit a minimal presentational pager with a required accessible label and caller-owned pagination data, loading state, and actions. | A pager that owns domain pagination or loading behavior. |
+| D13-11 | APPROVED | All Phase 13 passes | Share only proven presentation tokens. | A shared cross-domain Card or Workspace component. |
+| D13-12 | APPROVED | All Phase 13 passes | Keep Learning tabs domain-specific until another genuine consumer exists. | A speculative generic Tabs abstraction. |
+
+## Verification policy for every implementation pass
+
+- Inspect `git status --short` before editing.
+- Define exact success criteria and focused tests before production changes.
+- Run targeted tests first.
+- Never weaken, skip, or delete a failing test.
+- Apply the three-attempt failure-loop rule per root cause.
+- Run typecheck and production build when applicable.
+- Start only required services and stop services started by the pass.
+- Use synthetic `.test` data and remove it after browser QA.
+- Inspect five widths; use human native 200% zoom where required.
+- Show `git status --short`, `git diff --stat`, scoped diff, and
+  `git diff --check`.
+- Check for secrets, generated artifacts, and unrelated changes.
+- Stop before stage/commit until the pass-specific visual token and explicit
+  commit authorization are supplied.
+
+## Phase 13 completion conditions
+
+Phase 13 may be marked `COMPLETED` only after:
+
+1. Phase 13A is approved.
+2. Every activated implementation pass has its tests, browser evidence, human
+   visual-QA token, and reviewable commit boundary.
+3. No unresolved Critical or Important Phase 13 finding remains, unless an
+   explicit operator decision accepts and documents it.
+4. Auth, ownership, request-ID, private-data, quiz-answer, upload, and polling
+   behavior remains unchanged or is separately authorized.
+5. The integrated route/viewport/keyboard/zoom matrix passes.
+6. Synthetic data and temporary artifacts are verified removed.
+7. Phase 14 remains `PLANNED` until separately activated.
+
+This plan does not activate Phase 13B, authorize implementation, or authorize
+staging, commit, or push.
