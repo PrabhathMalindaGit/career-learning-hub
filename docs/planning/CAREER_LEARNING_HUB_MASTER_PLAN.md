@@ -1383,7 +1383,43 @@
 
 #### Status
 
-- Status: PLANNED
+- Status: ACTIVE
+- Active pass: Phase 15A — Threat Model, Ownership Map, and Validated Audit
+- Activation prompt: `CLH-PHASE-15A-ACTIVATE-AND-AUDIT-01`
+- Activation baseline: branch `phase-12-unified-frontend`, full HEAD
+  `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
+  (`Add end-to-end application coverage`).
+- Current workflow state:
+  `PHASE 15 ACTIVE — PASS A: SECURITY AND PRIVACY AUDIT`.
+- Phase 14 remains `COMPLETED`.
+- Phase 15A is `ACTIVE`; production and tests are read-only, and fixes require
+  separate authorization.
+- Phase 16 remains `PLANNED` / `INACTIVE`.
+- Required audit-review token:
+  `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
+- Phase 15A audit status:
+  - 317 tracked files scope-accounted;
+  - 74 HTTP handlers across 14 backend routers traced with their trust and
+    ownership boundaries;
+  - security validation passed 4/4 files and 7/7 tests;
+  - focused integration validation passed 5/5 files and 40/40 tests;
+  - focused backend unit validation passed 4/4 files and 14/14 tests;
+  - focused frontend validation passed 5/5 files and 128/128 tests;
+  - confirmed findings: 0 Critical, 0 High, 3 Medium, 2 Low;
+  - informational observations: 5;
+  - rejected candidates: 7;
+  - deferred candidates: 3;
+  - accepted risks: 2;
+  - external provider calls: none;
+  - production and test changes: none.
+- Phase 15A pre-approval decision: `BLOCKED`.
+- Blocking limitations:
+  - required canonical Codex Security repository/diff scan skills and
+    workspace are unavailable; and
+  - current online dependency advisory coverage could not be obtained without
+    an external inventory disclosure that was not explicitly approved.
+- The review token is not requested until those limitations are resolved or
+  explicitly accepted.
 
 #### Purpose
 
@@ -1404,12 +1440,13 @@
 #### In scope
 
 - Evidence-based security and privacy review.
-- Validated fixes for confirmed findings.
+- Validation and classification of candidate findings.
 - Ownership-map creation or update.
 
 #### Out of scope
 
 - Speculative hardening without a validated finding.
+- Production or test repair during Phase 15A.
 - Weakening tests or controls.
 - Raw production data exposure.
 

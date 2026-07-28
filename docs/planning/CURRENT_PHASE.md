@@ -1,30 +1,33 @@
 # Current Execution Phase
 
-- Phase: 14
-- Name: End-to-End Browser Testing
-- Status: COMPLETED
+- Phase: 15
+- Name: Security and Privacy Review
+- Status: ACTIVE
 - Baseline branch: `phase-12-unified-frontend`
-- Baseline full HEAD: `d32e584702eceae6383bb88e7411bba6e482ebdd`
-- Baseline subject: `Complete Phase 13 integrated QA closeout`
+- Baseline full HEAD: `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
+- Baseline subject: `Add end-to-end application coverage`
 - Most recently completed major phase: Phase 14, End-to-End Browser Testing
   (`COMPLETED`)
-- Active pass: None
-- Next planned major phase: Phase 15, Security and Privacy Review
+- Active pass: Phase 15A, Threat Model, Ownership Map, and Validated Audit
+- Next planned major phase: Phase 16, Accessibility and Performance Review
   (`PLANNED` / `INACTIVE`)
 - Current workflow state:
-  `PHASE 14 COMPLETED — PHASE 15 PLANNED, NOT ACTIVATED`
+  `PHASE 15 ACTIVE — PASS A: SECURITY AND PRIVACY AUDIT`
 - Controlling skills: `using-superpowers`, `karpathy-guidelines`,
-  `define-goal`, `technical-writing`, `finishing-a-development-branch`,
+  `define-goal`, `security-best-practices`, `privacy`,
+  `security-ownership-map`, `security-threat-model`,
+  `requesting-code-review`, `receiving-code-review`,
+  `systematic-debugging`, `technical-writing`, and
   `verification-before-completion`
 
 ## Objective
 
-- Establish real-browser E2E coverage for authentication, Dashboard, Resume,
-  Interview, Learning, ownership, private-data, quiz-secrecy, and responsive
-  behavior, including the separately authorized bounded Learning chat repair.
-- Preserve the completed backend, runtime, desktop, tablet, mobile, cleanup,
-  and human-review evidence.
-- Preserve Phase 13 as completed and Phase 15 as planned and inactive.
+- Perform an evidence-led, read-only security and privacy audit of the current
+  repository snapshot.
+- Build a repository-grounded threat model, trace owned-resource
+  authorization, validate candidates before classification, and define
+  bounded repair batches without changing production or test code.
+- Preserve Phase 14 as completed and Phase 16 as planned and inactive.
 
 ## Phase status controls
 
@@ -40,7 +43,11 @@
 - Phase 13G — Integrated Accessibility and Visual QA is `COMPLETED`.
 - Phase 14 — End-to-End Browser Testing is
   `COMPLETED`.
-- Phase 15 remains `PLANNED` / `INACTIVE` and is not activated.
+- Phase 15 — Security and Privacy Review is `ACTIVE`.
+- Phase 15A — Threat Model, Ownership Map, and Validated Audit is `ACTIVE`.
+- Phase 15A production and test code are read-only. Fixes require separate
+  operator authorization.
+- Phase 16 remains `PLANNED` / `INACTIVE` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -59,6 +66,69 @@
 - Pass F human visual QA was approved with
   `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
 - Phase 12 is completed.
+
+## Phase 15A activation record
+
+- Activated by operator-approved prompt
+  `CLH-PHASE-15A-ACTIVATE-AND-AUDIT-01`.
+- Activation baseline: branch `phase-12-unified-frontend`, full HEAD
+  `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
+  (`Add end-to-end application coverage`).
+- Phase 14 remains `COMPLETED`.
+- Phase 15 and Phase 15A are `ACTIVE`.
+- Phase 16 remains `PLANNED` / `INACTIVE`.
+- The audit is documentation-only. Production, tests, packages, lockfiles,
+  environment files, migrations, database models, and deployment
+  configuration are read-only.
+- Confirmed findings must be validated through a reachable source, missing or
+  broken control, affected sink or asset, existing guard review, and relevant
+  test evidence before classification.
+- The six requested `codex-security:*` skills and a Codex Security app
+  workspace are unavailable in this host. No scan ID, external scan
+  directory, canonical SARIF, or generated report will be invented.
+- The available Git ownership-map workflow cannot run because its required
+  `networkx` module is absent and dependency installation is prohibited.
+  Domain-resource ownership will be traced directly from code; contributor
+  bus-factor automation remains an explicit coverage limitation.
+- Phase 15A produced the repository-grounded threat model, owned-resource map,
+  finding register, audit plan, and audit report at the approved paths.
+- Fresh validation passed:
+  - security: 4/4 files and 7/7 tests;
+  - integration: 5/5 files and 40/40 tests;
+  - focused backend unit: 4/4 files and 14/14 tests;
+  - focused frontend: 5/5 files and 128/128 tests.
+- Validated finding counts:
+  - Critical: 0;
+  - High: 0;
+  - Medium: 3;
+  - Low: 2;
+  - Informational: 5.
+- The Medium finding is non-atomic per-user asset quota enforcement under
+  concurrent valid uploads.
+- The second Medium finding is the production frontend API and backend
+  private-asset public-origin fallback to HTTP localhost when explicit
+  production configuration is omitted.
+- The third Medium finding is non-atomic refresh rotation, which can force
+  benign reauthentication and permits a stolen refresh token to win a race
+  and receive a fresh access token before reuse is recognized.
+- The Low finding is the bounded post-revocation lifetime of an already issued
+  access token after logout or logout-all.
+- The second Low finding is public registration disclosure of whether a
+  supplied personal email already has an account.
+- Seven candidates were rejected, three remain deferred, and two residual
+  risks are accepted for review.
+- No external AI provider was called, no production or test file changed, and
+  isolated runtime state was cleaned.
+- The Phase 15A pre-approval decision is `BLOCKED`: canonical repository/diff
+  scan capabilities are unavailable, and current online dependency-advisory
+  coverage could not be obtained. An offline audit reporting zero advisories
+  is recorded only as limited evidence.
+- The required audit-review token is therefore defined but not requested until
+  those coverage limitations are resolved or explicitly accepted.
+- Required audit-review token:
+  `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
+- Phase 15A and Phase 15 must not be marked completed, and Phase 16 must not
+  be activated, without separate operator authorization.
 
 ## Phase 14 verification record
 
