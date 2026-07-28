@@ -165,7 +165,7 @@
 .resume-notice button,
 .resume-route-state button,
 .resume-snapshot > header button {
-  min-height: 40px;
+  min-height: var(--minimum-interactive-target);
   padding: 8px 12px;
   border: 1px solid #bfd0c5;
   border-radius: 9px;
@@ -716,6 +716,11 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.resume-entry-controls button,
+.resume-bullet-row button {
+  min-height: 40px;
 }
 
 @media (max-width: 1080px) {

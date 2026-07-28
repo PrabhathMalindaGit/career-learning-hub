@@ -984,15 +984,16 @@
 - Status: ACTIVE
 - Activated by operator-approved prompt
   `CLH-PHASE-13A-ACTIVATE-AND-AUDIT-01`.
-- Most recently completed pass: Phase 13E — Dialogs, Focus, and Navigation
+- Most recently completed pass: Phase 13F — Responsive and Touch-Target
+  Hardening
   (`COMPLETED`).
 - Active pass: None.
-- Next planned pass: Phase 13F — Responsive and Touch-Target Hardening
+- Next planned pass: Phase 13G — Integrated Accessibility and Visual QA
   (`PLANNED` / `INACTIVE`).
 - Next planned major phase: Phase 14 — End-to-End Browser Testing
   (`PLANNED`).
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS E COMPLETED — PASS F PLANNED, NOT ACTIVATED`.
+  `PHASE 13 ACTIVE — PASS F COMPLETED — PASS G PLANNED, NOT ACTIVATED`.
 - Phase 13A was audit-only and made no production UI changes.
 - Phase 13A remains `COMPLETED`.
 - Consolidation recommendations must demonstrate genuine duplication.
@@ -1035,8 +1036,18 @@
   navigation, responsive, zoom, and physical-keyboard checks.
 - Phase 13E closeout and the implementation commit were authorized by
   `CLH-PHASE-13E-CLOSEOUT-AND-COMMIT-01`.
-- Phase 13F and Phase 13G remain `PLANNED` and `INACTIVE`.
-- Phase 13F requires a separate activation and implementation prompt.
+- Phase 13F was activated by operator-approved prompt
+  `CLH-PHASE-13F-ACTIVATE-AND-IMPLEMENT-01` from implementation baseline
+  branch `phase-12-unified-frontend`, HEAD
+  `dcd31da81c7ed886dc8f83da339a8d112abd6aab`
+  (`Complete Phase 13 dialogs and navigation`).
+- Decisions D13-02, D13-03, D13-04, D13-08, D13-09, D13-10, D13-11, and
+  D13-12 control Phase 13F.
+- Phase 13F is `COMPLETED`. Human visual QA was approved with
+  `PHASE_13F_RESPONSIVE_HARDENING_VISUAL_QA_APPROVED`.
+- Phase 13F closeout and the implementation commit were authorized by
+  `CLH-PHASE-13F-CLOSEOUT-AND-COMMIT-01`.
+- Phase 13G remains `PLANNED` and `INACTIVE`.
 - Phase 14 remains `PLANNED` and is not activated.
 
 #### Phase 13B completion evidence
@@ -1156,6 +1167,40 @@
   responsive and touch-target work remain assigned to Phase 13F. Integrated
   cross-route accessibility QA remains assigned to Phase 13G. Backend tests
   and external AI-provider configuration were not required.
+
+#### Phase 13F completion evidence
+
+- Changed the global `html` and `body` minimum widths from 320px to 0,
+  correcting the scrollbar-reduced 320px layout overflow without hiding or
+  clipping overflow. The redundant Learning-only root-width workaround was
+  removed.
+- Hardened approved common targets with the existing 44px token through
+  bounded selectors. No ordinary audited target below 44px remained. The
+  native Resume file input, native checkbox and radio controls with enclosing
+  labels, and specialized dense Resume controls retained their local
+  semantics.
+- Long headings, role labels, suggestions, request IDs, chat content, quiz
+  questions, and attempt explanations wrapped safely. Both Resume dialogs and
+  Learning deletion remained contained, with no action overlap, off-screen
+  control, or clipped focus indicator.
+- PageHeader, Pager, StateSurface, and Dialog contracts were unchanged.
+  Navigation routes, destinations, order, active state, skip link, logout,
+  and the 980px breakpoint were preserved. API and domain behavior,
+  typography, visual identity, and status colors were unchanged.
+- Focused router verification passed 47 tests; bounded route/component
+  verification passed 14 files and 210 tests; and the complete frontend suite
+  passed 41 files and 569 tests exactly once. Frontend and root typechecks and
+  the production build passed.
+- Browser QA passed the requested route matrix at 1440px, 1024px, 768px,
+  390px, and 320px with equal document client and scroll widths for normal
+  content and a healthy console. Human review approved native 200% zoom,
+  physical-keyboard behavior, focus, wrapping, target sizing, dialogs, and
+  responsive containment.
+- Synthetic cleanup passed and generated artifacts were absent. The existing
+  production bundle-size advisory remains non-failing. Integrated
+  cross-route accessibility and visual regression verification remains
+  assigned to Phase 13G. Backend tests and external AI-provider configuration
+  were not required.
 
 #### Purpose
 

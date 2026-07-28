@@ -1486,13 +1486,6 @@
 }
 
 @media (max-width: 390px) {
-  html:has(.learning-library),
-  html:has(.learning-workspace),
-  body:has(.learning-library),
-  body:has(.learning-workspace) {
-    min-width: 0;
-  }
-
   .learning-header-actions,
   .learning-form-actions,
   .learning-deletion-actions,
