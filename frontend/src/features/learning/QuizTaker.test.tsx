@@ -150,5 +150,10 @@ describe("Quiz taker", () => {
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
+    const submit = screen.getByRole("button", {
+      name: "Submitting quiz answers…",
+    });
+    expect(submit.classList.contains("primary-button")).toBe(true);
+    expect(submit.getAttribute("aria-busy")).toBe("true");
   });
 });

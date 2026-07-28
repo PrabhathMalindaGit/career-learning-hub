@@ -202,6 +202,8 @@ describe("InterviewSessionListPage", () => {
     expect(summary.textContent).toContain("Review the highlighted fields");
     expect(summary.textContent).toContain("Session title");
     expect(summary.textContent).toContain("Target role");
+    expect(summary.classList.contains("validation-summary")).toBe(true);
+    expect(document.activeElement).toBe(summary);
 
     await user.type(
       screen.getByRole("textbox", { name: "Session title" }),
@@ -246,6 +248,30 @@ describe("InterviewSessionListPage", () => {
       expect.any(AbortSignal),
     );
     expect((submit as HTMLButtonElement).disabled).toBe(true);
+    expect(submit.getAttribute("aria-busy")).toBe("true");
+  });
+
+  it("focuses the only invalid field instead of rendering a summary", async () => {
+    renderPage();
+    await screen.findByText(
+      "No interview sessions match this view. Create a private session to begin.",
+    );
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByRole("textbox", { name: "Session title" }),
+      "Platform preparation",
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Create session" }),
+    );
+
+    const targetRole = screen.getByRole("textbox", {
+      name: "Target role",
+    });
+    expect(document.activeElement).toBe(targetRole);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(interviewApi.createInterviewSession).not.toHaveBeenCalled();
   });
 
   it("navigates only after a validated create response", async () => {

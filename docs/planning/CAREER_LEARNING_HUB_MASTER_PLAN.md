@@ -984,16 +984,16 @@
 - Status: ACTIVE
 - Activated by operator-approved prompt
   `CLH-PHASE-13A-ACTIVATE-AND-AUDIT-01`.
-- Most recently completed pass: Phase 13B — Shared Foundations and Approved
-  Tokens
+- Most recently completed pass: Phase 13C — Forms, Buttons, and Action
+  Hierarchy
   (`COMPLETED`).
 - Active pass: None.
-- Next planned pass: Phase 13C — Forms, Buttons, and Action Hierarchy
+- Next planned pass: Phase 13D — State Presentation, Pagination, and Job Status
   (`PLANNED` / `INACTIVE`).
 - Next planned major phase: Phase 14 — End-to-End Browser Testing
   (`PLANNED`).
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS B COMPLETED — PASS C PLANNED, NOT ACTIVATED`.
+  `PHASE 13 ACTIVE — PASS C COMPLETED — PASS D PLANNED, NOT ACTIVATED`.
 - Phase 13A was audit-only and made no production UI changes.
 - Phase 13A remains `COMPLETED`.
 - Consolidation recommendations must demonstrate genuine duplication.
@@ -1012,7 +1012,13 @@
   controlled Phase 13B.
 - Phase 13B is `COMPLETED`. Human visual QA was approved with
   `PHASE_13B_SHARED_FOUNDATIONS_VISUAL_QA_APPROVED`.
-- Phase 13C through Phase 13G remain `PLANNED` and `INACTIVE`.
+- Phase 13C was activated by
+  `CLH-PHASE-13C-ACTIVATE-AND-IMPLEMENT-01` from implementation baseline
+  `78b9fee` (`Complete Phase 13 shared foundations`).
+- Phase 13C is `COMPLETED`. Human visual QA was approved with
+  `PHASE_13C_FORMS_ACTIONS_VISUAL_QA_APPROVED`, and closeout was authorized by
+  `CLH-PHASE-13C-CLOSEOUT-AND-COMMIT-01`.
+- Phase 13D through Phase 13G remain `PLANNED` and `INACTIVE`.
 - Phase 14 remains `PLANNED` and is not activated.
 
 #### Phase 13B completion evidence
@@ -1041,6 +1047,36 @@
   if later removal is justified. Backend tests and AI-provider configuration
   were not required because no backend code changed and no provider success
   was in scope.
+
+#### Phase 13C completion evidence
+
+- Shared field, required-state, help, error, validation-summary, primary,
+  secondary, destructive, quiet, disabled, loading, and minimum-target
+  foundations were implemented without a generic Form framework,
+  schema-generated forms, a toast provider, or a second design system.
+- Login, Registration, Resume list and workspace, Interview list and
+  workspace, Learning upload, and Quiz submit behavior were migrated. The
+  Resume “Discard draft changes” action was repaired to a 46px target.
+- Multiple field failures focus a validation summary, one independently
+  invalid field receives direct focus, field-level errors remain associated,
+  and server or background failures do not move focus without a field target.
+- Focused GREEN verification passed. The complete frontend suite passed
+  545/545; frontend and root typechecks passed; and the production build
+  passed.
+- Browser QA passed at 1440px, 1024px, 768px, 390px, and 320px with no
+  relevant console errors or warnings. Human review approved the Auth,
+  Resume, Interview, Learning, and Quiz validation and action flows, visible
+  focus, native 200% zoom, physical keyboard behavior, typography, visual
+  identity, and the absence of new form- or action-level clipping or overlap.
+- Human review also approved native file-input usability, native quiz answer
+  controls, and the absence of pre-submission answer-key exposure.
+- Synthetic cleanup passed and generated artifacts were absent. Backend tests
+  and AI-provider configuration were not required.
+- Existing React Router directive and production chunk-size warnings remain.
+  The existing approximately 15px global root overflow at 320px remains
+  deferred to Phase 13F. Dialog mechanics remain assigned to Phase 13E;
+  pagination, shared state surfaces, and job-status presentation remain
+  assigned to Phase 13D.
 
 #### Purpose
 

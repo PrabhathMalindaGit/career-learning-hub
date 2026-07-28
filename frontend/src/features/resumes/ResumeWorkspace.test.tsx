@@ -476,9 +476,15 @@ describe("ResumeWorkspace", () => {
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
-    await user.click(
-      screen.getByRole("button", { name: "Discard draft changes" }),
-    );
+    const discard = screen.getByRole("button", {
+      name: "Discard draft changes",
+    });
+    const save = screen.getByRole("button", {
+      name: "Save new version",
+    });
+    expect(discard.classList.contains("quiet-button")).toBe(true);
+    expect(save.classList.contains("primary-button")).toBe(true);
+    await user.click(discard);
     await user.click(
       screen.getByRole("button", {
         name: "Run AI-assisted assessment",
@@ -630,6 +636,7 @@ describe("ResumeWorkspace", () => {
     const leaveAgain = screen.getByRole("button", {
       name: "Leave without saving",
     });
+    expect(leaveAgain.classList.contains("destructive-button")).toBe(true);
     await user.tab({ shift: true });
     expect(document.activeElement).toBe(leaveAgain);
     await user.tab();

@@ -5,14 +5,14 @@
 - Derived from:
   `docs/planning/PHASE_13_SHARED_DESIGN_UX_AUDIT.md`
 - Parent phase: Phase 13 — Shared Design and UX Hardening (`ACTIVE`)
-- Most recently completed pass: Phase 13B — Shared Foundations and Approved
-  Tokens
+- Most recently completed pass: Phase 13C — Forms, Buttons, and Action
+  Hierarchy
   (`COMPLETED`)
 - Active pass: none
-- Next planned pass: Phase 13C — Forms, Buttons, and Action Hierarchy
+- Next planned pass: Phase 13D — State Presentation, Pagination, and Job Status
   (`PLANNED` / `INACTIVE`)
-- Implementation-pass state: Phase 13B is `COMPLETED`; Phase 13C through
-  Phase 13G are `PLANNED` and `INACTIVE`
+- Implementation-pass state: Phase 13B and Phase 13C are `COMPLETED`; Phase
+  13D through Phase 13G are `PLANNED` and `INACTIVE`
 - Plan date: 2026-07-27
 - Audited baseline: branch `phase-12-unified-frontend`, HEAD `98c3f11`
 - Phase 13B implementation baseline: branch `phase-12-unified-frontend`, HEAD
@@ -29,7 +29,15 @@
   `PHASE_13B_SHARED_FOUNDATIONS_VISUAL_QA_APPROVED`
 - Phase 13B closeout and implementation commit authorized by:
   `CLH-PHASE-13B-CLOSEOUT-AND-COMMIT-01`
-- Planning rule: Phase 13C through Phase 13G remain proposals without
+- Phase 13C activated by:
+  `CLH-PHASE-13C-ACTIVATE-AND-IMPLEMENT-01`
+- Phase 13C implementation baseline: branch `phase-12-unified-frontend`, HEAD
+  `78b9fee` (`Complete Phase 13 shared foundations`)
+- Phase 13C visual-QA approval received:
+  `PHASE_13C_FORMS_ACTIONS_VISUAL_QA_APPROVED`
+- Phase 13C closeout and implementation commit authorized by:
+  `CLH-PHASE-13C-CLOSEOUT-AND-COMMIT-01`
+- Planning rule: Phase 13D through Phase 13G remain proposals without
   implementation authority.
 
 ## Planning principles
@@ -47,15 +55,15 @@
    broader checks.
 7. Every visible pass stops at the human visual-QA gate before commit.
 8. Each pass is a separate reviewable commit boundary after explicit commit
-   authorization. Phase 13B received that authority; no later pass or push is
-   authorized.
+   authorization. Phase 13B and Phase 13C received that authority; no later
+   pass or push is authorized.
 
 ## Proposed pass sequence
 
 | Pass | Name | Status | Depends on |
 | --- | --- | --- | --- |
 | Phase 13B | Shared foundations and approved tokens | COMPLETED | Phase 13A approval |
-| Phase 13C | Forms, buttons, and action hierarchy | PLANNED / INACTIVE | Phase 13B |
+| Phase 13C | Forms, buttons, and action hierarchy | COMPLETED | Phase 13B |
 | Phase 13D | State presentation, pagination, and job status | PLANNED / INACTIVE | Phase 13B |
 | Phase 13E | Dialogs, focus, and navigation | PLANNED / INACTIVE | Phase 13B; approved dialog decision |
 | Phase 13F | Responsive and touch-target hardening | PLANNED / INACTIVE | Phase 13C–13E |
@@ -221,7 +229,7 @@ additive and migrate a small, named consumer set.
 ### Pass ID and status
 
 - Pass ID: Phase 13C
-- Status: `PLANNED` / `INACTIVE`
+- Status: `COMPLETED`
 
 ### Purpose
 
@@ -309,6 +317,15 @@ action renders 25px high and is a confirmed local defect.
 - Loading and disabled state are exposed without relying only on opacity.
 - Common actions have a minimum 44px target, including Resume discard.
 
+### Validation-focus rule
+
+- A multi-field invalid submission with multiple field failures renders and
+  focuses a focusable error summary while retaining associated field errors.
+- A submission with one independently invalid field focuses that field and
+  retains its associated error.
+- Server errors without a field target, background-job failures, and passive
+  inline status changes do not move focus.
+
 ### Responsive acceptance criteria
 
 - Forms collapse without horizontal overflow or label/control clipping at all
@@ -318,10 +335,40 @@ action renders 25px high and is a confirmed local defect.
 
 ### Human visual-QA gate
 
-- Required for Login, Registration, Resume list/workspace, Interview
+- Approved for Login, Registration, Resume list/workspace, Interview
   list/workspace, Learning upload, quiz taking, and validation states.
-- Expected token:
+- Approval token:
   `PHASE_13C_FORMS_ACTIONS_VISUAL_QA_APPROVED`.
+- Human review approved keyboard Tab, Shift+Tab, Enter, Space, and radio-arrow
+  behavior; visible focus; native 200% zoom; all five required viewport
+  widths; typography and visual-identity preservation; native file and quiz
+  controls; the absence of new form- or action-level clipping and overlap; and
+  the absence of pre-submission answer-key exposure.
+
+### Completion evidence
+
+- Shared field, required-state, help, error, validation-summary, and action
+  foundations were implemented without a generic Form framework,
+  schema-generated forms, a toast provider, or a second design system.
+- Login, Registration, Resume list/workspace, Interview list/workspace,
+  Learning upload, and Quiz submit behavior were migrated. The Resume discard
+  action was repaired to a 46px target.
+- Multiple field failures focus a validation summary; one independently
+  invalid field receives direct focus; field-level errors remain associated;
+  and server or background failures do not move focus without a field target.
+- Focused GREEN verification passed. The complete frontend suite passed
+  545/545; frontend and root typechecks passed; and the production build
+  passed.
+- Browser QA passed at 1440px, 1024px, 768px, 390px, and 320px with no
+  relevant console errors or warnings. Human visual QA approved native 200%
+  zoom and physical keyboard behavior.
+- Synthetic cleanup passed and generated artifacts were absent. Backend tests
+  and AI-provider configuration were not required.
+- Existing React Router directive and production chunk-size warnings remain.
+  The existing approximately 15px global root overflow at 320px remains
+  assigned to Phase 13F. Dialog mechanics remain assigned to Phase 13E;
+  pagination, shared state surfaces, and job-status presentation remain
+  assigned to Phase 13D.
 
 ### Expected commit boundary
 
@@ -890,6 +937,6 @@ Phase 13 may be marked `COMPLETED` only after:
 6. Synthetic data and temporary artifacts are verified removed.
 7. Phase 14 remains `PLANNED` until separately activated.
 
-Phase 13B is completed. Phase 13 remains `ACTIVE`; Phase 13C through Phase 13G
-remain `PLANNED` and `INACTIVE`; and Phase 14 remains `PLANNED` and is not
-activated. No push is authorized.
+Phase 13B and Phase 13C are completed. Phase 13 remains `ACTIVE`; Phase 13D
+through Phase 13G remain `PLANNED` and `INACTIVE`; and Phase 14 remains
+`PLANNED` and is not activated. No push or Phase 13D activation is authorized.

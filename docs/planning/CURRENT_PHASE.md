@@ -3,15 +3,15 @@
 - Phase: 13
 - Name: Shared Design and UX Hardening
 - Status: ACTIVE
-- Most recently completed pass: Phase 13B, Shared Foundations and Approved
-  Tokens
+- Most recently completed pass: Phase 13C, Forms, Buttons, and Action
+  Hierarchy
   (`COMPLETED`)
 - Active pass: None
-- Next planned pass: Phase 13C, Forms, Buttons, and Action Hierarchy
+- Next planned pass: Phase 13D, State Presentation, Pagination, and Job Status
   (`PLANNED` / `INACTIVE`)
 - Next planned major phase: Phase 14, End-to-End Browser Testing (`PLANNED`)
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS B COMPLETED — PASS C PLANNED, NOT ACTIVATED`
+  `PHASE 13 ACTIVE — PASS C COMPLETED — PASS D PLANNED, NOT ACTIVATED`
 - Controlling skills: `karpathy-guidelines`, `web-design-guidelines`,
   `test-driven-development`, `systematic-debugging`,
   `browser:control-in-app-browser`
@@ -32,7 +32,8 @@
 - Phase 13 is `ACTIVE`.
 - Phase 13A — Shared Design and UX Audit is `COMPLETED`.
 - Phase 13B — Shared Foundations and Approved Tokens is `COMPLETED`.
-- Phase 13C through Phase 13G are `PLANNED` and `INACTIVE`.
+- Phase 13C — Forms, Buttons, and Action Hierarchy is `COMPLETED`.
+- Phase 13D through Phase 13G are `PLANNED` and `INACTIVE`.
 - Phase 14 remains `PLANNED` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -110,6 +111,57 @@
   if later removal is justified.
 - Backend tests were not required because no backend code changed. AI-provider
   configuration was not required.
+
+## Phase 13C completion record
+
+- Activated by operator-approved prompt
+  `CLH-PHASE-13C-ACTIVATE-AND-IMPLEMENT-01`.
+- Implementation baseline: branch `phase-12-unified-frontend`, HEAD
+  `78b9fee` (`Complete Phase 13 shared foundations`).
+- Phase 13C standardizes only proven common field semantics, validation
+  recovery, action hierarchy, loading/disabled presentation, and approved
+  target sizing across Auth, Resume, Interview, and Learning.
+- Validation-focus rule:
+  - when one invalid submission produces multiple field failures, render and
+    focus a focusable error summary while retaining associated field errors;
+  - when one independently validated field fails, focus that invalid field and
+    retain its associated error;
+  - do not move focus for server errors without a field target, background-job
+    failures, or passive inline status changes.
+- Native file, radio, checkbox, editor, progress, and specialized domain
+  controls retain their local semantics and behavior.
+- Human visual QA was approved with:
+  `PHASE_13C_FORMS_ACTIONS_VISUAL_QA_APPROVED`.
+- Human review approved Login and Registration validation, summary and
+  single-field focus, Resume create/import validation and workspace action
+  hierarchy, the repaired Resume discard target, Interview creation and
+  written-attempt behavior, Learning upload and native file-input usability,
+  and native Quiz answer and submit behavior.
+- Human review also approved Tab, Shift+Tab, Enter, Space, radio-arrow
+  behavior, visible focus, native 200% zoom, 1440px, 1024px, 768px, 390px,
+  and 320px, typography and visual-identity preservation, the absence of new
+  form- or action-level clipping and overlap, and the absence of
+  pre-submission answer-key exposure.
+- Shared field, required-state, help, error, validation-summary, and action
+  foundations were implemented without a generic Form framework,
+  schema-generated forms, a toast provider, or a second design system.
+- Login, Registration, Resume list/workspace, Interview list/workspace,
+  Learning upload, and Quiz submit behavior were migrated. The Resume
+  “Discard draft changes” action was repaired to a 46px target.
+- Focused GREEN verification passed. The complete frontend suite passed
+  545/545; frontend and root typechecks passed; and the production build
+  passed.
+- Browser QA passed at all five required viewport widths with no relevant
+  console errors or warnings. Synthetic cleanup passed and generated artifacts
+  were absent.
+- Existing React Router directive and production chunk-size warnings remain.
+  The existing approximately 15px global root overflow at 320px remains
+  deferred to Phase 13F. Backend tests and AI-provider configuration were not
+  required.
+- Phase 13C closeout and the implementation commit were authorized by
+  `CLH-PHASE-13C-CLOSEOUT-AND-COMMIT-01`.
+- Phase 13D through Phase 13G remain `PLANNED` and `INACTIVE`; Phase 14
+  remains `PLANNED` and is not activated.
 
 ## Pass F completion record
 
@@ -255,25 +307,25 @@
 - Gemini remained unconfigured. Truthful provider-unavailable behavior was
   verified; real-provider success was not claimed.
 
-## Authorized Phase 13B scope
+## Authorized Phase 13C scope
 
-- Additive approved tokens in `frontend/src/styles.css`.
-- One minimal shared page-header primitive under
-  `frontend/src/components/**`.
-- Page-header migration for Dashboard, Resume list, and Interview list only,
-  with their directly relevant tests and CSS.
+- The shared field/action contract and approved target sizing in
+  `frontend/src/styles.css` and `frontend/src/components/**` only when a proven
+  presentational helper is required.
+- Bounded Auth, Resume, Interview, and Learning form/action files, their
+  directly relevant tests, and their existing feature CSS.
 - Bounded local browser QA with synthetic `.test` records when authenticated
   populated routes require them.
-- Phase 13B status updates in the three controlling planning files.
+- Phase 13C status updates in the three controlling planning files.
 
 ## Explicit exclusions
 
 - Backend, shared type, package, lockfile, environment, database, migration,
   seed, deployment, authentication-provider, API-client, route, polling, and
   response-contract changes.
-- Broad feature migration; Learning header or tab migration; dialogs,
-  pagination, job status, form validation, generic Card, generic Workspace,
-  generic Tabs, or a toast provider.
+- Broad feature migration; Learning header or tab migration; dialog mechanics,
+  pagination, job status, generic Card, generic Workspace, generic Tabs, or a
+  toast provider.
 - Speculative abstractions, a second design system, unrelated visual redesign,
   typography changes, status-color remapping, and new product features.
 - Database, migration, seed, deployment, provider-configuration, and legacy
@@ -284,16 +336,16 @@
 
 ## Verification
 
-- Phase 13B focused component and consumer tests, frontend and root typechecks,
-  production build, complete frontend suite, rendered browser pass,
-  synthetic-data cleanup, and exact changed-file checks passed as recorded
-  above.
+- Phase 13C focused Auth, Resume, Interview, and Learning tests passed.
+  Frontend and root typechecks, the production build, the complete 545/545
+  frontend suite, rendered browser QA, synthetic-data cleanup, and exact
+  changed-file checks passed.
 - No real AI-provider call is required or authorized.
 
 ## Human approval gate
 
-- Phase 13B human visual QA was approved with:
-  `PHASE_13B_SHARED_FOUNDATIONS_VISUAL_QA_APPROVED`.
-- The closeout and implementation commit was authorized by
-  `CLH-PHASE-13B-CLOSEOUT-AND-COMMIT-01`.
-- No push or Phase 13C activation is authorized.
+- Phase 13C human visual QA was approved with:
+  `PHASE_13C_FORMS_ACTIONS_VISUAL_QA_APPROVED`.
+- The closeout and implementation commit were authorized by
+  `CLH-PHASE-13C-CLOSEOUT-AND-COMMIT-01`.
+- No push or Phase 13D activation is authorized.

@@ -214,10 +214,18 @@ describe("ResumeListPage", () => {
     await user.click(
       screen.getByRole("button", { name: "Create blank resume" }),
     );
-    expect(screen.getByText("Enter a title with 1–120 characters.")).not
-      .toBeNull();
+    const createTitle = screen.getByRole("textbox", {
+      name: "New resume title",
+    });
+    const createTitleError = screen.getByText(
+      "Enter a title with 1–120 characters.",
+    );
+    expect(createTitle.getAttribute("aria-describedby")).toContain(
+      createTitleError.id,
+    );
+    expect(document.activeElement).toBe(createTitle);
     await user.type(
-      screen.getByRole("textbox", { name: "New resume title" }),
+      createTitle,
       "Synthetic Resume",
     );
     const submit = screen.getByRole("button", {
@@ -228,6 +236,37 @@ describe("ResumeListPage", () => {
 
     expect(resumeApi.createResume).toHaveBeenCalledTimes(1);
     expect((submit as HTMLButtonElement).disabled).toBe(true);
+    expect(submit.getAttribute("aria-busy")).toBe("true");
+    expect(submit.textContent).toBe("Creating…");
+  });
+
+  it("associates import errors and focuses a summary for multiple failures", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await screen.findByText(
+      "No resumes yet. Create a blank resume or import a private PDF.",
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Import private PDF" }),
+    );
+
+    const title = screen.getByRole("textbox", {
+      name: "Imported resume title",
+    });
+    const file = screen.getByLabelText("Private PDF");
+    const titleError = screen.getByText(
+      "Enter a title with 1–120 characters.",
+    );
+    const fileError = screen.getByText(
+      "Choose one PDF no larger than 15 MB.",
+    );
+    const summary = screen.getByRole("alert");
+
+    expect(title.getAttribute("aria-describedby")).toContain(titleError.id);
+    expect(file.getAttribute("aria-describedby")).toContain(fileError.id);
+    expect(document.activeElement).toBe(summary);
+    expect(resumeApi.importResumePdf).not.toHaveBeenCalled();
   });
 
   it("navigates only after a validated create response", async () => {
@@ -380,6 +419,12 @@ describe("ResumeListPage", () => {
     expect(
       screen.getByText("Choose one PDF no larger than 15 MB."),
     ).not.toBeNull();
+    const file = screen.getByLabelText("Private PDF");
+    const fileError = screen.getByText(
+      "Choose one PDF no larger than 15 MB.",
+    );
+    expect(file.getAttribute("aria-describedby")).toContain(fileError.id);
+    expect(document.activeElement).toBe(file);
     expect(resumeApi.importResumePdf).not.toHaveBeenCalled();
   });
 });

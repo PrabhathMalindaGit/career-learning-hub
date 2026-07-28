@@ -278,7 +278,7 @@
 .resume-secondary-button,
 .resume-danger-button {
   display: inline-flex;
-  min-height: 42px;
+  min-height: var(--minimum-interactive-target);
   align-items: center;
   justify-content: center;
   padding: 10px 16px;
@@ -305,9 +305,16 @@
 }
 
 .resume-primary-button:disabled,
-.resume-secondary-button:disabled {
+.resume-secondary-button:disabled,
+.resume-danger-button:disabled {
   cursor: not-allowed;
-  opacity: 0.48;
+  opacity: 0.62;
+}
+
+.resume-primary-button[aria-busy="true"],
+.resume-secondary-button[aria-busy="true"],
+.resume-danger-button[aria-busy="true"] {
+  cursor: wait;
 }
 
 .resume-workspace-actions,

@@ -61,6 +61,11 @@ type SafeError = {
   requestId?: string;
 };
 
+type UploadFieldErrors = {
+  title?: string;
+  file?: string;
+};
+
 function safeError(error: unknown, fallback: string): SafeError {
   if (error instanceof ApiError) {
     return {
@@ -100,13 +105,17 @@ export function LearningDashboard() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File>();
+  const [uploadFieldErrors, setUploadFieldErrors] =
+    useState<UploadFieldErrors>({});
   const [uploadError, setUploadError] = useState<SafeError>();
   const [uploading, setUploading] = useState(false);
   const [processingCheck, setProcessingCheck] =
     useState<ProcessingCheck>();
   const requestSequence = useRef(0);
   const uploadTriggerRef = useRef<HTMLButtonElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadErrorSummaryRef = useRef<HTMLDivElement>(null);
   const uploadControllerRef = useRef<AbortController | undefined>(
     undefined,
   );
@@ -193,6 +202,7 @@ export function LearningDashboard() {
     setUploadOpen(false);
     setTitle("");
     setFile(undefined);
+    setUploadFieldErrors({});
     setUploadError(undefined);
     setUploading(false);
     setProcessingCheck(undefined);
@@ -208,6 +218,19 @@ export function LearningDashboard() {
       setFile(undefined);
     };
   }, [accountId]);
+
+  useEffect(() => {
+    const errorFields = Object.keys(
+      uploadFieldErrors,
+    ) as (keyof UploadFieldErrors)[];
+    if (errorFields.length > 1) {
+      uploadErrorSummaryRef.current?.focus();
+    } else if (errorFields[0] === "title") {
+      titleInputRef.current?.focus();
+    } else if (errorFields[0] === "file") {
+      fileInputRef.current?.focus();
+    }
+  }, [uploadFieldErrors]);
 
   const runProcessingCheck = useCallback(
     (
@@ -262,6 +285,7 @@ export function LearningDashboard() {
     setUploadOpen(false);
     setTitle("");
     setFile(undefined);
+    setUploadFieldErrors({});
     setUploadError(undefined);
     if (fileInputRef.current) fileInputRef.current.value = "";
     window.setTimeout(() => uploadTriggerRef.current?.focus(), 0);
@@ -271,29 +295,30 @@ export function LearningDashboard() {
     event.preventDefault();
     if (uploading) return;
     const normalizedTitle = title.trim();
+    const nextFieldErrors: UploadFieldErrors = {};
     if (!normalizedTitle) {
-      setUploadError({ message: "Enter a document title." });
-      return;
+      nextFieldErrors.title = "Enter a document title.";
     }
     if (!file) {
-      setUploadError({ message: "Choose a PDF file." });
-      return;
-    }
-    if (
+      nextFieldErrors.file = "Choose a PDF file.";
+    } else if (
       file.type !== "application/pdf" ||
       !file.name.toLocaleLowerCase().endsWith(".pdf") ||
       file.size > MAX_PDF_BYTES
     ) {
-      setUploadError({
-        message: "Choose a PDF file no larger than 15 MB.",
-      });
+      nextFieldErrors.file = "Choose a PDF file no larger than 15 MB.";
+    }
+    setUploadFieldErrors(nextFieldErrors);
+    if (Object.keys(nextFieldErrors).length > 0) {
       return;
     }
+    if (!file) return;
 
     uploadControllerRef.current?.abort();
     const controller = new AbortController();
     uploadControllerRef.current = controller;
     setUploading(true);
+    setUploadFieldErrors({});
     setUploadError(undefined);
 
     try {
@@ -340,11 +365,12 @@ export function LearningDashboard() {
           <button
             ref={uploadTriggerRef}
             type="button"
-            className="learning-primary-button"
+            className="primary-button learning-primary-button"
             aria-expanded={uploadOpen}
             aria-controls="learning-upload-form"
             onClick={() => {
               setUploadOpen(true);
+              setUploadFieldErrors({});
               setUploadError(undefined);
             }}
           >
@@ -352,7 +378,7 @@ export function LearningDashboard() {
           </button>
           <button
             type="button"
-            className="learning-secondary-button"
+            className="secondary-button learning-secondary-button"
             disabled={loading}
             onClick={refresh}
           >
@@ -370,30 +396,96 @@ export function LearningDashboard() {
           <div>
             <p className="learning-kicker">New document</p>
             <h2 id="learning-upload-title">Upload a private PDF</h2>
-            <p>
+            <p id="learning-upload-guidance">
               PDF only, up to 15 MB. Scanned or image-only PDFs may fail
               because OCR is not supported. These checks are guidance;
               server validation remains authoritative.
             </p>
           </div>
-          <form className="learning-upload-form" onSubmit={submitUpload}>
-            <label>
-              <span>Document title</span>
+          <form
+            className="learning-upload-form"
+            onSubmit={submitUpload}
+            noValidate
+          >
+            {Object.keys(uploadFieldErrors).length > 1 ? (
+              <div
+                className="validation-summary"
+                role="alert"
+                tabIndex={-1}
+                ref={uploadErrorSummaryRef}
+              >
+                <strong>Review the highlighted fields.</strong>
+                <ul>
+                  {uploadFieldErrors.title ? (
+                    <li>
+                      <a href="#learning-upload-title-input">
+                        Document title
+                      </a>
+                    </li>
+                  ) : null}
+                  {uploadFieldErrors.file ? (
+                    <li>
+                      <a href="#learning-upload-file">PDF file</a>
+                    </li>
+                  ) : null}
+                </ul>
+              </div>
+            ) : null}
+            <div className="field-shell">
+              <label
+                className="field-label required-label"
+                htmlFor="learning-upload-title-input"
+              >
+                Document title
+              </label>
               <input
+                ref={titleInputRef}
+                id="learning-upload-title-input"
+                name="learningDocumentTitle"
+                className="field-control"
                 type="text"
+                required
                 maxLength={200}
                 value={title}
                 disabled={uploading}
+                aria-invalid={Boolean(uploadFieldErrors.title)}
+                aria-describedby={
+                  uploadFieldErrors.title
+                    ? "learning-upload-title-error"
+                    : undefined
+                }
                 onChange={(event) => setTitle(event.target.value)}
               />
-            </label>
-            <label>
-              <span>PDF file</span>
+            </div>
+            {uploadFieldErrors.title ? (
+              <p
+                className="field-error"
+                id="learning-upload-title-error"
+              >
+                {uploadFieldErrors.title}
+              </p>
+            ) : null}
+            <div className="field-shell">
+              <label
+                className="field-label required-label"
+                htmlFor="learning-upload-file"
+              >
+                PDF file
+              </label>
               <input
                 ref={fileInputRef}
+                id="learning-upload-file"
+                name="learningDocumentPdf"
                 type="file"
                 accept="application/pdf,.pdf"
+                required
                 disabled={uploading}
+                aria-invalid={Boolean(uploadFieldErrors.file)}
+                aria-describedby={`learning-upload-guidance${
+                  uploadFieldErrors.file
+                    ? " learning-upload-file-error"
+                    : ""
+                }`}
                 onChange={(event) => {
                   const selected = event.target.files?.[0];
                   setFile(selected);
@@ -405,16 +497,28 @@ export function LearningDashboard() {
                         .endsWith(".pdf") ||
                       selected.size > MAX_PDF_BYTES)
                   ) {
-                    setUploadError({
-                      message:
-                        "Choose a PDF file no larger than 15 MB.",
-                    });
+                    setUploadFieldErrors((current) => ({
+                      ...current,
+                      file: "Choose a PDF file no larger than 15 MB.",
+                    }));
                   } else {
-                    setUploadError(undefined);
+                    setUploadFieldErrors((current) => {
+                      const next = { ...current };
+                      delete next.file;
+                      return next;
+                    });
                   }
                 }}
               />
-            </label>
+            </div>
+            {uploadFieldErrors.file ? (
+              <p
+                className="field-error"
+                id="learning-upload-file-error"
+              >
+                {uploadFieldErrors.file}
+              </p>
+            ) : null}
             {uploadError ? (
               <div className="learning-error" role="alert">
                 <p>{uploadError.message}</p>
@@ -428,14 +532,15 @@ export function LearningDashboard() {
             <div className="learning-form-actions">
               <button
                 type="submit"
-                className="learning-primary-button"
+                className="primary-button learning-primary-button"
                 disabled={uploading}
+                aria-busy={uploading}
               >
                 {uploading ? "Uploading…" : "Upload document"}
               </button>
               <button
                 type="button"
-                className="learning-secondary-button"
+                className="secondary-button learning-secondary-button"
                 disabled={uploading}
                 onClick={closeUpload}
               >

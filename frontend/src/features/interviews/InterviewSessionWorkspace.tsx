@@ -89,12 +89,14 @@ function generationSubmissionMayHaveSucceeded(error: unknown): boolean {
 function SafeErrorMessage({
   error,
   className = "interview-field-error",
+  id,
 }: {
   error: SafeError;
   className?: string;
+  id?: string;
 }) {
   return (
-    <div className={className} role="alert">
+    <div className={className} id={id} role="alert">
       <span>{error.message}</span>
       {error.requestId ? (
         <small>Request ID: {error.requestId}</small>
@@ -1885,28 +1887,56 @@ export function InterviewSessionWorkspace() {
                     Recording creates an immutable practice record. Another
                     try creates a separate attempt.
                   </p>
-                  <label className="interview-answer-field">
-                    Written answer
+                  <label
+                    className="field-label interview-answer-field"
+                    htmlFor="interview-written-answer"
+                  >
+                    <span>
+                      Written answer{" "}
+                      <span
+                        className="field-required"
+                        aria-hidden="true"
+                      >
+                        (required)
+                      </span>
+                    </span>
                     <textarea
+                      id="interview-written-answer"
+                      name="writtenAnswer"
+                      className="field-control"
+                      required
                       rows={9}
                       maxLength={ANSWER_MAX_LENGTH}
                       value={answerDraft}
+                      aria-invalid={Boolean(answerError)}
+                      aria-describedby={`interview-written-answer-count${
+                        answerError
+                          ? " interview-written-answer-error"
+                          : ""
+                      }`}
                       onChange={(event) =>
                         setAnswerDraft(event.target.value)
                       }
                     />
                   </label>
-                  <small>
+                  <small
+                    className="field-help"
+                    id="interview-written-answer-count"
+                  >
                     {answerDraft.length.toLocaleString()} /{" "}
                     {ANSWER_MAX_LENGTH.toLocaleString()}
                   </small>
                   {answerError ? (
-                    <SafeErrorMessage error={answerError} />
+                    <SafeErrorMessage
+                      error={answerError}
+                      id="interview-written-answer-error"
+                    />
                   ) : null}
                   <button
                     type="button"
-                    className="interview-primary-button"
+                    className="primary-button interview-primary-button"
                     disabled={answerBusy || answerDraft.trim() === ""}
+                    aria-busy={answerBusy}
                     onClick={() => void submitAttempt()}
                   >
                     {answerBusy

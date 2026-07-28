@@ -563,6 +563,7 @@ export function ResumeWorkspace() {
           )}
           <button
             type="button"
+            className="quiet-button"
             disabled={!dirty || saving || applying}
             onClick={() => {
               const next = resumeContentToDraft(workspace.version.content);
@@ -575,8 +576,9 @@ export function ResumeWorkspace() {
           </button>
           <button
             type="button"
-            className="resume-primary-button"
+            className="primary-button resume-primary-button"
             disabled={!dirty || saving || applying}
+            aria-busy={saving}
             onClick={() => void handleSave()}
           >
             {saving ? "Saving…" : "Save new version"}
@@ -691,12 +693,13 @@ export function ResumeWorkspace() {
           <div className="resume-button-row">
             <button
               type="button"
-              className="resume-primary-button"
+              className="primary-button resume-primary-button"
               disabled={
                 dirty ||
                 analysisBusy ||
                 targetRole.trim().length < 2
               }
+              aria-busy={analysisBusy}
               onClick={() => void handleRunAnalysis()}
             >
               {analysisBusy
@@ -890,7 +893,7 @@ export function ResumeWorkspace() {
               </button>
               <button
                 type="button"
-                className="resume-danger-button"
+                className="destructive-button resume-danger-button"
                 onClick={() => blocker.proceed()}
               >
                 Leave without saving

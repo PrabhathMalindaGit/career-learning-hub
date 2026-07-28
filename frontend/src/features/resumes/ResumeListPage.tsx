@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
 } from "react";
@@ -29,6 +30,11 @@ type SafeError = {
   requestId?: string;
 };
 
+type ImportFieldErrors = {
+  title?: string;
+  file?: string;
+};
+
 function safeError(error: unknown): SafeError {
   if (error instanceof ApiError) {
     return {
@@ -48,6 +54,9 @@ function validTitle(value: string): boolean {
 
 export function ResumeListPage() {
   const navigate = useNavigate();
+  const createTitleId = useId();
+  const importTitleId = useId();
+  const importFileId = useId();
   const [page, setPage] = useState(1);
   const [resumes, setResumes] = useState<ResumeRecord[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
@@ -62,14 +71,18 @@ export function ResumeListPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState<SafeError | null>(null);
-  const [importValidationError, setImportValidationError] =
-    useState<string | null>(null);
+  const [importFieldErrors, setImportFieldErrors] =
+    useState<ImportFieldErrors>({});
   const [importJob, setImportJob] = useState<
     Pick<ResumeJob, "id" | "type" | "status"> | ResumeJob | null
   >(null);
   const [pollPaused, setPollPaused] = useState(false);
   const listSequence = useRef(0);
   const importController = useRef<AbortController | null>(null);
+  const createTitleRef = useRef<HTMLInputElement>(null);
+  const importTitleRef = useRef<HTMLInputElement>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+  const importErrorSummaryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const sequence = ++listSequence.current;
@@ -105,6 +118,19 @@ export function ResumeListPage() {
     },
     [],
   );
+
+  useEffect(() => {
+    const errorFields = Object.keys(
+      importFieldErrors,
+    ) as (keyof ImportFieldErrors)[];
+    if (errorFields.length > 1) {
+      importErrorSummaryRef.current?.focus();
+    } else if (errorFields[0] === "title") {
+      importTitleRef.current?.focus();
+    } else if (errorFields[0] === "file") {
+      importFileRef.current?.focus();
+    }
+  }, [importFieldErrors]);
 
   const startPolling = useCallback(
     async (
@@ -143,6 +169,7 @@ export function ResumeListPage() {
     if (createBusy) return;
     if (!validTitle(createTitle)) {
       setCreateTitleError(true);
+      createTitleRef.current?.focus();
       return;
     }
     setCreateBusy(true);
@@ -165,11 +192,9 @@ export function ResumeListPage() {
   async function submitImport(event: React.FormEvent) {
     event.preventDefault();
     if (importBusy) return;
+    const nextFieldErrors: ImportFieldErrors = {};
     if (!validTitle(importTitle)) {
-      setImportValidationError(
-        "Enter a title with 1–120 characters.",
-      );
-      return;
+      nextFieldErrors.title = "Enter a title with 1–120 characters.";
     }
     if (
       !importFile ||
@@ -177,18 +202,20 @@ export function ResumeListPage() {
       importFile.size <= 0 ||
       importFile.size > MAX_PDF_SIZE
     ) {
-      setImportValidationError(
-        "Choose one PDF no larger than 15 MB.",
-      );
+      nextFieldErrors.file = "Choose one PDF no larger than 15 MB.";
+    }
+    setImportFieldErrors(nextFieldErrors);
+    if (Object.keys(nextFieldErrors).length > 0) {
       return;
     }
+    if (!importFile) return;
 
     importController.current?.abort();
     const controller = new AbortController();
     importController.current = controller;
     setImportBusy(true);
     setImportError(null);
-    setImportValidationError(null);
+    setImportFieldErrors({});
     try {
       const accepted = await importResumePdf(
         importTitle.trim(),
@@ -318,17 +345,35 @@ export function ResumeListPage() {
               <p className="resume-kicker">Start clean</p>
               <h2>Create a blank resume</h2>
             </div>
-            <label>
-              New resume title
+            <div className="field-shell">
+              <label
+                className="field-label required-label"
+                htmlFor={createTitleId}
+              >
+                New resume title
+              </label>
               <input
+                ref={createTitleRef}
+                id={createTitleId}
+                name="createResumeTitle"
+                className="field-control"
+                required
                 value={createTitle}
                 maxLength={120}
                 aria-invalid={createTitleError}
+                aria-describedby={
+                  createTitleError
+                    ? `${createTitleId}-error`
+                    : undefined
+                }
                 onChange={(event) => setCreateTitle(event.target.value)}
               />
-            </label>
+            </div>
             {createTitleError ? (
-              <p className="resume-field-error">
+              <p
+                className="field-error resume-field-error"
+                id={`${createTitleId}-error`}
+              >
                 Enter a title with 1–120 characters.
               </p>
             ) : null}
@@ -341,8 +386,9 @@ export function ResumeListPage() {
               </p>
             ) : null}
             <button
-              className="resume-primary-button"
+              className="primary-button resume-primary-button"
               disabled={createBusy}
+              aria-busy={createBusy}
               type="submit"
             >
               {createBusy ? "Creating…" : "Create blank resume"}
@@ -358,33 +404,104 @@ export function ResumeListPage() {
               <p className="resume-kicker">Private import</p>
               <h2>Import a PDF</h2>
             </div>
-            <label>
-              Imported resume title
+            {Object.keys(importFieldErrors).length > 1 ? (
+              <div
+                className="validation-summary"
+                role="alert"
+                tabIndex={-1}
+                ref={importErrorSummaryRef}
+              >
+                <strong>Review the highlighted fields.</strong>
+                <ul>
+                  {importFieldErrors.title ? (
+                    <li>
+                      <a href={`#${importTitleId}`}>
+                        Imported resume title
+                      </a>
+                    </li>
+                  ) : null}
+                  {importFieldErrors.file ? (
+                    <li>
+                      <a href={`#${importFileId}`}>Private PDF</a>
+                    </li>
+                  ) : null}
+                </ul>
+              </div>
+            ) : null}
+            <div className="field-shell">
+              <label
+                className="field-label required-label"
+                htmlFor={importTitleId}
+              >
+                Imported resume title
+              </label>
               <input
+                ref={importTitleRef}
+                id={importTitleId}
+                name="importResumeTitle"
+                className="field-control"
+                required
                 value={importTitle}
                 maxLength={120}
+                aria-invalid={Boolean(importFieldErrors.title)}
+                aria-describedby={
+                  importFieldErrors.title
+                    ? `${importTitleId}-error`
+                    : undefined
+                }
                 onChange={(event) => setImportTitle(event.target.value)}
               />
-            </label>
-            <label>
-              Private PDF
+            </div>
+            {importFieldErrors.title ? (
+              <p
+                className="field-error resume-field-error"
+                id={`${importTitleId}-error`}
+              >
+                {importFieldErrors.title}
+              </p>
+            ) : null}
+            <div className="field-shell">
+              <label
+                className="field-label required-label"
+                htmlFor={importFileId}
+              >
+                Private PDF
+              </label>
               <input
+                ref={importFileRef}
+                id={importFileId}
+                name="importResumePdf"
                 type="file"
                 accept="application/pdf,.pdf"
+                required
+                aria-invalid={Boolean(importFieldErrors.file)}
+                aria-describedby={`${importFileId}-help${
+                  importFieldErrors.file
+                    ? ` ${importFileId}-error`
+                    : ""
+                }`}
                 onChange={(event) =>
                   setImportFile(event.target.files?.[0] ?? null)
                 }
               />
-            </label>
+            </div>
             {importFile ? (
               <p className="resume-file-name">{importFile.name}</p>
             ) : null}
-            <p className="resume-privacy-note">
+            <p
+              className="field-help resume-privacy-note"
+              id={`${importFileId}-help`}
+            >
               The private PDF is processed to create canonical resume
               content. Scanned-image OCR is not available.
             </p>
-            {importValidationError ? (
-              <p className="resume-field-error">{importValidationError}</p>
+            {importFieldErrors.file ? (
+              <p
+                className="field-error resume-field-error"
+                id={`${importFileId}-error`}
+              >
+                {importFieldErrors.file}
+              </p>
             ) : null}
             {importError ? (
               <p className="resume-field-error" role="alert">
@@ -425,8 +542,9 @@ export function ResumeListPage() {
               </div>
             ) : null}
             <button
-              className="resume-secondary-button"
+              className="secondary-button resume-secondary-button"
               disabled={importBusy}
+              aria-busy={importBusy}
               type="submit"
             >
               {importBusy ? "Checking import…" : "Import private PDF"}

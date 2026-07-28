@@ -466,6 +466,13 @@ describe("InterviewSessionWorkspace", () => {
     expect(
       await screen.findByText(/The attempt could not be recorded\./),
     ).not.toBeNull();
+    const answerError = screen.getByText(
+      /The attempt could not be recorded\./,
+    ).closest('[role="alert"]');
+    expect(answer.getAttribute("aria-invalid")).toBe("true");
+    expect(answer.getAttribute("aria-describedby")).toContain(
+      answerError?.id,
+    );
     expect((answer as HTMLTextAreaElement).value).toBe(
       "My private answer draft.",
     );

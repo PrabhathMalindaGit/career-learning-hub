@@ -343,7 +343,7 @@
 .interview-primary-button,
 .interview-secondary-button {
   display: inline-flex;
-  min-height: 43px;
+  min-height: var(--minimum-interactive-target);
   width: fit-content;
   align-items: center;
   justify-content: center;
@@ -366,6 +366,17 @@
   border: 1px solid #bfd0c5;
   color: #245e3c;
   background: #f6faf7;
+}
+
+.interview-primary-button:disabled,
+.interview-secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.interview-primary-button[aria-busy="true"],
+.interview-secondary-button[aria-busy="true"] {
+  cursor: wait;
 }
 
 .interview-context-chips {

@@ -580,13 +580,59 @@ describe("authentication forms and shell interaction", () => {
     const passwordError = screen.getByText(
       "Enter your password.",
     );
+    const summary = screen.getByRole("alert");
+    expect((email as HTMLInputElement).required).toBe(true);
+    expect((password as HTMLInputElement).required).toBe(true);
     expect(email.getAttribute("aria-describedby")).toContain(
       emailError.id,
     );
     expect(password.getAttribute("aria-describedby")).toContain(
       passwordError.id,
     );
+    expect(document.activeElement).toBe(summary);
     expect(authApi.login).not.toHaveBeenCalled();
+  });
+
+  it("connects registration errors and focuses the multi-field summary", async () => {
+    vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
+    renderRoute("/register");
+    await screen.findByRole("heading", {
+      name: "Create your account",
+    });
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", { name: "Create account" }),
+    );
+
+    const displayName = screen.getByRole("textbox", {
+      name: "Display name",
+    });
+    const email = screen.getByRole("textbox", {
+      name: "Email address",
+    });
+    const password = screen.getByLabelText("Password");
+    const displayNameError = screen.getByText(
+      "Enter a display name between 2 and 100 characters.",
+    );
+    const emailError = screen.getByText("Enter a valid email address.");
+    const passwordError = screen.getByText(
+      "Password does not meet the requirements above.",
+    );
+    const summary = screen.getByRole("alert");
+
+    expect((displayName as HTMLInputElement).required).toBe(true);
+    expect((email as HTMLInputElement).required).toBe(true);
+    expect((password as HTMLInputElement).required).toBe(true);
+    expect(displayName.getAttribute("aria-describedby")).toContain(
+      displayNameError.id,
+    );
+    expect(email.getAttribute("aria-describedby")).toContain(emailError.id);
+    expect(password.getAttribute("aria-describedby")).toContain(
+      passwordError.id,
+    );
+    expect(document.activeElement).toBe(summary);
+    expect(authApi.register).not.toHaveBeenCalled();
   });
 
   it("shows backend-aligned registration password requirements", async () => {

@@ -1,4 +1,10 @@
-import { useId, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   Link,
   useLocation,
@@ -50,6 +56,10 @@ export function RegisterPage() {
   const displayNameId = useId();
   const emailId = useId();
   const passwordId = useId();
+  const errorSummaryRef = useRef<HTMLDivElement>(null);
+  const displayNameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -59,6 +69,21 @@ export function RegisterPage() {
     requestId?: string;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const errorFields = Object.keys(
+      errors,
+    ) as (keyof RegistrationErrors)[];
+    if (errorFields.length > 1) {
+      errorSummaryRef.current?.focus();
+    } else if (errorFields[0] === "displayName") {
+      displayNameRef.current?.focus();
+    } else if (errorFields[0] === "email") {
+      emailRef.current?.focus();
+    } else if (errorFields[0] === "password") {
+      passwordRef.current?.focus();
+    }
+  }, [errors]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -117,12 +142,45 @@ export function RegisterPage() {
           onSubmit={handleSubmit}
           noValidate
         >
+          {Object.keys(errors).length > 1 ? (
+            <div
+              className="validation-summary"
+              role="alert"
+              tabIndex={-1}
+              ref={errorSummaryRef}
+            >
+              <strong>Review the highlighted fields.</strong>
+              <ul>
+                {errors.displayName ? (
+                  <li>
+                    <a href={`#${displayNameId}`}>Display name</a>
+                  </li>
+                ) : null}
+                {errors.email ? (
+                  <li>
+                    <a href={`#${emailId}`}>Email address</a>
+                  </li>
+                ) : null}
+                {errors.password ? (
+                  <li>
+                    <a href={`#${passwordId}`}>Password</a>
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+          ) : null}
+
           <div className="form-field">
-            <label htmlFor={displayNameId}>Display name</label>
+            <label className="required-label" htmlFor={displayNameId}>
+              Display name
+            </label>
             <input
+              ref={displayNameRef}
               id={displayNameId}
+              name="displayName"
               type="text"
               autoComplete="name"
+              required
               maxLength={100}
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
@@ -145,11 +203,17 @@ export function RegisterPage() {
           </div>
 
           <div className="form-field">
-            <label htmlFor={emailId}>Email address</label>
+            <label className="required-label" htmlFor={emailId}>
+              Email address
+            </label>
             <input
+              ref={emailRef}
               id={emailId}
+              name="email"
               type="email"
               autoComplete="email"
+              spellCheck={false}
+              required
               maxLength={320}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -170,11 +234,16 @@ export function RegisterPage() {
           </div>
 
           <div className="form-field">
-            <label htmlFor={passwordId}>Password</label>
+            <label className="required-label" htmlFor={passwordId}>
+              Password
+            </label>
             <input
+              ref={passwordRef}
               id={passwordId}
+              name="password"
               type="password"
               autoComplete="new-password"
+              required
               maxLength={128}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -212,7 +281,12 @@ export function RegisterPage() {
             </div>
           ) : null}
 
-          <button className="primary-button" type="submit" disabled={busy}>
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={busy}
+            aria-busy={busy}
+          >
             {busy ? "Creating account…" : "Create account"}
           </button>
         </form>

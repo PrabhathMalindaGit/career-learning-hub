@@ -265,12 +265,21 @@ describe("Learning PDF upload", () => {
   it("requires a title before submission", async () => {
     renderLibrary();
     await openUploadForm();
+    await userEvent.upload(
+      screen.getByLabelText("PDF file"),
+      new File(["%PDF"], "synthetic.pdf", {
+        type: "application/pdf",
+      }),
+    );
 
     await userEvent.click(
       screen.getByRole("button", { name: "Upload document" }),
     );
 
-    expect(screen.getByText("Enter a document title.")).not.toBeNull();
+    const title = screen.getByLabelText("Document title");
+    const error = screen.getByText("Enter a document title.");
+    expect(title.getAttribute("aria-describedby")).toContain(error.id);
+    expect(document.activeElement).toBe(title);
   });
 
   it("requires a PDF file before submission", async () => {
@@ -285,6 +294,29 @@ describe("Learning PDF upload", () => {
       screen.getByRole("button", { name: "Upload document" }),
     );
 
+    const file = screen.getByLabelText("PDF file");
+    const error = screen.getByText("Choose a PDF file.");
+    const guidance = screen.getByText(/PDF only, up to 15 MB\./);
+    expect(guidance.id).toBe("learning-upload-guidance");
+    expect(file.getAttribute("aria-describedby")).toContain(error.id);
+    expect(file.getAttribute("aria-describedby")).toContain(guidance.id);
+    expect(document.activeElement).toBe(file);
+  });
+
+  it("focuses an upload summary when multiple fields are invalid", async () => {
+    renderLibrary();
+    await openUploadForm();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Upload document" }),
+    );
+
+    const summary = screen.getByRole("alert");
+    expect(summary.classList.contains("validation-summary")).toBe(true);
+    expect(document.activeElement).toBe(summary);
+    expect(
+      screen.getByText("Enter a document title."),
+    ).not.toBeNull();
     expect(screen.getByText("Choose a PDF file.")).not.toBeNull();
   });
 
@@ -333,6 +365,8 @@ describe("Learning PDF upload", () => {
       expect(learningApi.uploadLearningDocument).toHaveBeenCalledTimes(1);
     });
     expect((submit as HTMLButtonElement).disabled).toBe(true);
+    expect(submit.getAttribute("aria-busy")).toBe("true");
+    expect(submit.textContent).toBe("Uploading…");
   });
 
   it("binds an accepted upload to its exact processing job", async () => {

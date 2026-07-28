@@ -34,6 +34,16 @@ type FieldErrors = Partial<
     string
   >
 >;
+type FieldErrorKey = keyof FieldErrors;
+
+const fieldIdByError: Record<FieldErrorKey, string> = {
+  title: "interview-title",
+  targetRole: "interview-target-role",
+  experienceLevel: "interview-experience",
+  focusTopics: "interview-focus-topics",
+  skillGaps: "interview-skill-gaps",
+  jobDescription: "interview-job-description",
+};
 
 function safeError(error: unknown): SafeError {
   if (error instanceof ApiError) {
@@ -173,8 +183,11 @@ export function InterviewSessionListPage() {
   );
 
   useEffect(() => {
-    if (Object.keys(fieldErrors).length > 0) {
+    const errorFields = Object.keys(fieldErrors) as FieldErrorKey[];
+    if (errorFields.length > 1) {
       errorSummary.current?.focus();
+    } else if (errorFields[0]) {
+      document.getElementById(fieldIdByError[errorFields[0]])?.focus();
     }
   }, [fieldErrors]);
 
@@ -382,9 +395,9 @@ export function InterviewSessionListPage() {
             </div>
           </div>
 
-          {Object.keys(fieldErrors).length > 0 ? (
+          {Object.keys(fieldErrors).length > 1 ? (
             <div
-              className="interview-error-summary"
+              className="validation-summary interview-error-summary"
               role="alert"
               tabIndex={-1}
               ref={errorSummary}
@@ -430,9 +443,10 @@ export function InterviewSessionListPage() {
           ) : null}
 
           <div className="interview-form">
-            <label htmlFor="interview-title">
+            <label className="field-label" htmlFor="interview-title">
               Session title <span aria-hidden="true">(required)</span>
               <input
+                className="field-control"
                 id="interview-title"
                 required
                 value={title}
@@ -446,16 +460,20 @@ export function InterviewSessionListPage() {
             </label>
             {fieldErrors.title ? (
               <p
-                className="interview-field-error"
+                className="field-error interview-field-error"
                 id="interview-title-error"
               >
                 {fieldErrors.title}
               </p>
             ) : null}
 
-            <label htmlFor="interview-target-role">
+            <label
+              className="field-label"
+              htmlFor="interview-target-role"
+            >
               Target role <span aria-hidden="true">(required)</span>
               <input
+                className="field-control"
                 id="interview-target-role"
                 required
                 value={targetRole}
@@ -471,7 +489,7 @@ export function InterviewSessionListPage() {
             </label>
             {fieldErrors.targetRole ? (
               <p
-                className="interview-field-error"
+                className="field-error interview-field-error"
                 id="interview-target-role-error"
               >
                 {fieldErrors.targetRole}
@@ -479,10 +497,14 @@ export function InterviewSessionListPage() {
             ) : null}
 
             <div className="interview-form-row">
-              <label htmlFor="interview-experience">
+              <label
+                className="field-label"
+                htmlFor="interview-experience"
+              >
                 Experience level{" "}
                 <span aria-hidden="true">(required)</span>
                 <input
+                  className="field-control"
                   id="interview-experience"
                   required
                   value={experienceLevel}
@@ -498,9 +520,11 @@ export function InterviewSessionListPage() {
                   }
                 />
               </label>
-              <label>
+              <label className="field-label" htmlFor="interview-mode">
                 Practice mode
                 <select
+                  id="interview-mode"
+                  className="field-control"
                   value={mode}
                   onChange={(event) =>
                     setMode(event.target.value as CreateInterviewMode)
@@ -515,68 +539,90 @@ export function InterviewSessionListPage() {
             </div>
             {fieldErrors.experienceLevel ? (
               <p
-                className="interview-field-error"
+                className="field-error interview-field-error"
                 id="interview-experience-error"
               >
                 {fieldErrors.experienceLevel}
               </p>
             ) : null}
 
-            <label htmlFor="interview-focus-topics">
+            <label
+              className="field-label"
+              htmlFor="interview-focus-topics"
+            >
               Focus topics
               <input
+                className="field-control"
                 id="interview-focus-topics"
                 value={focusTopics}
                 maxLength={6_000}
                 aria-invalid={Boolean(fieldErrors.focusTopics)}
-                aria-describedby={
+                aria-describedby={`interview-focus-topics-help${
                   fieldErrors.focusTopics
-                    ? "interview-focus-topics-error"
-                    : undefined
-                }
+                    ? " interview-focus-topics-error"
+                    : ""
+                }`}
                 placeholder="API design, reliability, communication"
                 onChange={(event) => setFocusTopics(event.target.value)}
               />
-              <small>Separate topics with commas.</small>
+              <small
+                className="field-help"
+                id="interview-focus-topics-help"
+              >
+                Separate topics with commas.
+              </small>
             </label>
             {fieldErrors.focusTopics ? (
               <p
-                className="interview-field-error"
+                className="field-error interview-field-error"
                 id="interview-focus-topics-error"
               >
                 {fieldErrors.focusTopics}
               </p>
             ) : null}
 
-            <label htmlFor="interview-skill-gaps">
+            <label
+              className="field-label"
+              htmlFor="interview-skill-gaps"
+            >
               Skill gaps
               <input
+                className="field-control"
                 id="interview-skill-gaps"
                 value={skillGaps}
                 maxLength={6_000}
                 aria-invalid={Boolean(fieldErrors.skillGaps)}
-                aria-describedby={
+                aria-describedby={`interview-skill-gaps-help${
                   fieldErrors.skillGaps
-                    ? "interview-skill-gaps-error"
-                    : undefined
-                }
+                    ? " interview-skill-gaps-error"
+                    : ""
+                }`}
                 placeholder="Concurrency, testing strategy"
                 onChange={(event) => setSkillGaps(event.target.value)}
               />
-              <small>Separate gaps with commas.</small>
+              <small
+                className="field-help"
+                id="interview-skill-gaps-help"
+              >
+                Separate gaps with commas.
+              </small>
             </label>
             {fieldErrors.skillGaps ? (
               <p
-                className="interview-field-error"
+                className="field-error interview-field-error"
                 id="interview-skill-gaps-error"
               >
                 {fieldErrors.skillGaps}
               </p>
             ) : null}
 
-            <label htmlFor="interview-job-description">
+            <label
+              className="field-label"
+              htmlFor="interview-job-description"
+            >
               Job description <span>(optional)</span>
               <textarea
+                className="field-control"
                 id="interview-job-description"
                 rows={6}
                 maxLength={30_000}
@@ -594,7 +640,7 @@ export function InterviewSessionListPage() {
             </label>
             {fieldErrors.jobDescription ? (
               <p
-                className="interview-field-error"
+                className="field-error interview-field-error"
                 id="interview-job-description-error"
               >
                 {fieldErrors.jobDescription}
@@ -612,9 +658,10 @@ export function InterviewSessionListPage() {
           ) : null}
 
           <button
-            className="interview-primary-button"
+            className="primary-button interview-primary-button"
             type="submit"
             disabled={createBusy}
+            aria-busy={createBusy}
           >
             {createBusy ? "Creating…" : "Create session"}
           </button>

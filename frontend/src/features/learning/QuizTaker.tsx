@@ -99,8 +99,9 @@ export function QuizTaker({
 
       <button
         type="button"
-        className="learning-primary-button"
+        className="primary-button learning-primary-button"
         disabled={!complete || submitting || locked}
+        aria-busy={submitting}
         onClick={() =>
           onSubmit(
             [...answers.entries()]
