@@ -16,6 +16,8 @@ import {
 } from "./token.service.js";
 import type { LoginInput, RegisterInput } from "./auth.schemas.js";
 
+const REFRESH_REUSE_CONCURRENCY_GRACE_MS = 5_000;
+
 const refreshCookieOptions = {
   httpOnly: true,
   secure: env.isProduction,
@@ -73,6 +75,14 @@ async function createSession(
     ),
     refreshToken,
   };
+}
+
+function invalidSessionError(): AppError {
+  return new AppError(
+    401,
+    "INVALID_SESSION",
+    "The session is invalid or expired.",
+  );
 }
 
 export async function registerUser(
@@ -133,51 +143,26 @@ export async function refreshSession(
   request: Request,
 ) {
   const payload = verifyRefreshToken(refreshToken);
-  const session = await AuthSessionModel.findById(payload.sid);
-
-  if (!session || session.userId.toString() !== payload.sub) {
-    throw new AppError(
-      401,
-      "INVALID_SESSION",
-      "The session is invalid or expired.",
-    );
-  }
-
   const suppliedHash = hashToken(refreshToken);
-  const tokenWasReused = session.refreshTokenHash !== suppliedHash;
-
-  if (tokenWasReused) {
-    session.revokedAt = new Date();
-    session.revokeReason = "refresh-token-reuse-detected";
-    await session.save();
-
-    throw new AppError(
-      401,
-      "SESSION_REVOKED",
-      "The session has been revoked.",
-    );
-  }
-
-  if (
-    session.revokedAt ||
-    session.expiresAt.getTime() <= Date.now()
-  ) {
-    throw new AppError(
-      401,
-      "INVALID_SESSION",
-      "The session is invalid or expired.",
-    );
-  }
-
   const user = await UserModel.findOne({
     _id: payload.sub,
     accountStatus: "active",
   });
 
   if (!user) {
-    session.revokedAt = new Date();
-    session.revokeReason = "user-unavailable";
-    await session.save();
+    await AuthSessionModel.updateOne(
+      {
+        _id: payload.sid,
+        userId: payload.sub,
+        revokedAt: { $exists: false },
+      },
+      {
+        $set: {
+          revokedAt: new Date(),
+          revokeReason: "user-unavailable",
+        },
+      },
+    );
 
     throw new AppError(
       401,
@@ -188,14 +173,75 @@ export async function refreshSession(
 
   const nextRefreshToken = signRefreshToken(
     user._id.toString(),
-    session._id.toString(),
+    payload.sid,
+  );
+  const rotatedAt = new Date();
+  const session = await AuthSessionModel.findOneAndUpdate(
+    {
+      _id: payload.sid,
+      userId: payload.sub,
+      refreshTokenHash: suppliedHash,
+      revokedAt: { $exists: false },
+      expiresAt: { $gt: rotatedAt },
+    },
+    {
+      $set: {
+        refreshTokenHash: hashToken(nextRefreshToken),
+        lastUsedAt: rotatedAt,
+        userAgent: request.get("user-agent")?.slice(0, 500),
+        ipAddressHash: hashIpAddress(request.ip),
+      },
+    },
+    {
+      new: true,
+    },
   );
 
-  session.refreshTokenHash = hashToken(nextRefreshToken);
-  session.lastUsedAt = new Date();
-  session.userAgent = request.get("user-agent")?.slice(0, 500);
-  session.ipAddressHash = hashIpAddress(request.ip);
-  await session.save();
+  if (!session) {
+    const currentSession = await AuthSessionModel.findOne({
+      _id: payload.sid,
+      userId: payload.sub,
+    })
+      .select(
+        "refreshTokenHash lastUsedAt revokedAt expiresAt",
+      )
+      .lean();
+
+    if (
+      currentSession &&
+      !currentSession.revokedAt &&
+      currentSession.expiresAt.getTime() > rotatedAt.getTime() &&
+      currentSession.refreshTokenHash !== suppliedHash
+    ) {
+      const staleBefore = new Date(
+        rotatedAt.getTime() -
+          REFRESH_REUSE_CONCURRENCY_GRACE_MS,
+      );
+
+      if (currentSession.lastUsedAt <= staleBefore) {
+        await AuthSessionModel.updateOne(
+          {
+            _id: payload.sid,
+            userId: payload.sub,
+            refreshTokenHash:
+              currentSession.refreshTokenHash,
+            lastUsedAt: currentSession.lastUsedAt,
+            revokedAt: { $exists: false },
+            expiresAt: { $gt: rotatedAt },
+          },
+          {
+            $set: {
+              revokedAt: rotatedAt,
+              revokeReason:
+                "refresh-token-reuse-detected",
+            },
+          },
+        );
+      }
+    }
+
+    throw invalidSessionError();
+  }
 
   return {
     user,
