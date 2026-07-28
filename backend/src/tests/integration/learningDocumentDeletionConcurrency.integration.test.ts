@@ -1,5 +1,5 @@
 import { Readable } from "node:stream";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 import { app } from "../../app.js";
@@ -303,6 +303,123 @@ describe("Learning Document deletion concurrency fencing", () => {
         documentId: document._id,
       }),
     ).toBe(1);
+  });
+
+  it("accepts and reconciles one owned chat intent without duplicate work", async () => {
+    const owner = await registerTestUser(app, {
+      email: "learning-chat-acceptance@example.test",
+      displayName: "Learning Chat Acceptance",
+    });
+    const document = await createDocument({
+      userId: new Types.ObjectId(owner.userId),
+    });
+    const conversation = await ConversationModel.create({
+      userId: owner.userId,
+      documentId: document._id,
+      title: "Accepted conversation",
+    });
+    const requestId = "4684087a-98b7-4090-ab70-928193be5893";
+    const endpoint =
+      `/api/v1/learning-documents/${document._id.toString()}` +
+      `/conversations/${conversation._id.toString()}/messages`;
+    const body = {
+      requestId,
+      content: "What is the provider-free state?",
+    };
+    const startSession = vi.spyOn(mongoose, "startSession");
+
+    const first = await request(app)
+      .post(endpoint)
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send(body);
+    const repeated = await request(app)
+      .post(endpoint)
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send(body);
+
+    expect(first.status).toBe(202);
+    expect(repeated.status).toBe(202);
+    expect(Object.keys(first.body).sort()).toEqual([
+      "data",
+      "success",
+    ]);
+    expect(first.body.success).toBe(true);
+    expect(first.body.data.userMessage).toMatchObject({
+      userId: owner.userId,
+      documentId: document._id.toString(),
+      conversationId: conversation._id.toString(),
+      role: "user",
+      content: body.content,
+      clientRequestId: requestId,
+      sourceChunkIds: [],
+      sourcePages: [],
+    });
+    expect(first.body.data.job).toEqual({
+      id: expect.any(String),
+      type: "learning.chat.respond",
+      status: "queued",
+    });
+    expect(repeated.body.data.userMessage._id).toBe(
+      first.body.data.userMessage._id,
+    );
+    expect(repeated.body.data.job).toEqual(first.body.data.job);
+
+    const idempotencyKey = [
+      "learning.chat.respond",
+      owner.userId,
+      conversation._id.toString(),
+      requestId,
+    ].join(":");
+    const [messages, jobs, canonicalConversation] =
+      await Promise.all([
+        MessageModel.find({
+          userId: owner.userId,
+          documentId: document._id,
+          conversationId: conversation._id,
+        }).lean(),
+        JobRecordModel.find({
+          userId: owner.userId,
+          idempotencyKey,
+        }).lean(),
+        ConversationModel.findById(conversation._id).lean(),
+      ]);
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toMatchObject({
+      role: "user",
+      clientRequestId: requestId,
+      responseJobId: jobs[0]?._id,
+    });
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]).toMatchObject({
+      type: "learning.chat.respond",
+      status: "queued",
+      userId: new Types.ObjectId(owner.userId),
+      payload: {
+        userId: owner.userId,
+        documentId: document._id.toString(),
+        conversationId: conversation._id.toString(),
+        userMessageId: messages[0]?._id.toString(),
+      },
+    });
+    expect(canonicalConversation?.messageCount).toBe(1);
+    expect(
+      await MessageModel.countDocuments({
+        userId: owner.userId,
+        conversationId: conversation._id,
+        role: "assistant",
+      }),
+    ).toBe(0);
+    expect(
+      JSON.stringify(first.body),
+    ).not.toContain(document.title);
+    expect(aiGatewayMock.generateStructuredOutput).not.toHaveBeenCalled();
+
+    const sessions = await Promise.all(
+      startSession.mock.results.map((result) => result.value),
+    );
+    expect(sessions).toHaveLength(4);
+    expect(sessions.every((session) => session.hasEnded)).toBe(true);
   });
 
   it("rejects document-owned job attachment after deletion begins", async () => {

@@ -1,28 +1,30 @@
 # Current Execution Phase
 
-- Phase: 13
-- Name: Shared Design and UX Hardening
+- Phase: 14
+- Name: End-to-End Browser Testing
 - Status: COMPLETED
-- Most recently completed pass: Phase 13G, Integrated Accessibility and
-  Visual QA
+- Baseline branch: `phase-12-unified-frontend`
+- Baseline full HEAD: `d32e584702eceae6383bb88e7411bba6e482ebdd`
+- Baseline subject: `Complete Phase 13 integrated QA closeout`
+- Most recently completed major phase: Phase 14, End-to-End Browser Testing
   (`COMPLETED`)
 - Active pass: None
-- Next planned major phase: Phase 14, End-to-End Browser Testing
+- Next planned major phase: Phase 15, Security and Privacy Review
   (`PLANNED` / `INACTIVE`)
 - Current workflow state:
-  `PHASE 13 COMPLETED — PHASE 14 PLANNED, NOT ACTIVATED`
-- Controlling skills: `karpathy-guidelines`, `web-design-guidelines`,
-  `test-driven-development`, `systematic-debugging`,
-  `browser:control-in-app-browser`
+  `PHASE 14 COMPLETED — PHASE 15 PLANNED, NOT ACTIVATED`
+- Controlling skills: `using-superpowers`, `karpathy-guidelines`,
+  `define-goal`, `technical-writing`, `finishing-a-development-branch`,
+  `verification-before-completion`
 
 ## Objective
 
-- Preserve the completed Phase 13B shared presentation foundation, the
-  Phase 13A audit evidence, the six-pass implementation structure, and the
-  operator decisions.
-- Keep later Phase 13 passes inactive until separately activated.
-- Preserve the existing visual identity and avoid a second design system.
-- Phase 13A made no production UI changes.
+- Establish real-browser E2E coverage for authentication, Dashboard, Resume,
+  Interview, Learning, ownership, private-data, quiz-secrecy, and responsive
+  behavior, including the separately authorized bounded Learning chat repair.
+- Preserve the completed backend, runtime, desktop, tablet, mobile, cleanup,
+  and human-review evidence.
+- Preserve Phase 13 as completed and Phase 15 as planned and inactive.
 
 ## Phase status controls
 
@@ -36,7 +38,9 @@
 - Phase 13E — Dialogs, Focus, and Navigation is `COMPLETED`.
 - Phase 13F — Responsive and Touch-Target Hardening is `COMPLETED`.
 - Phase 13G — Integrated Accessibility and Visual QA is `COMPLETED`.
-- Phase 14 remains `PLANNED` / `INACTIVE` and is not activated.
+- Phase 14 — End-to-End Browser Testing is
+  `COMPLETED`.
+- Phase 15 remains `PLANNED` / `INACTIVE` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -55,6 +59,48 @@
 - Pass F human visual QA was approved with
   `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
 - Phase 12 is completed.
+
+## Phase 14 verification record
+
+- Activated by operator-approved prompt
+  `CLH-PHASE-14-ACTIVATE-AND-BUILD-E2E-COVERAGE-01`.
+- Activation baseline: branch `phase-12-unified-frontend`, HEAD
+  `d32e584702eceae6383bb88e7411bba6e482ebdd`
+  (`Complete Phase 13 integrated QA closeout`).
+- Local Playwright `1.61.1` and installed Google Chrome
+  `150.0.7871.187` passed the infrastructure gate without installing a
+  dependency or browser.
+- The original desktop smoke stopped when Learning returned HTTP 500 after
+  durably committing its user message and queued job.
+- A bounded diagnostic proved that the Learning user message and job were
+  committed before the error. `attachChatResponseJob` then completed a
+  `void` transaction; `withMongoTransaction` treats an `undefined` return as
+  an error.
+- Separate repair prompt
+  `CLH-PHASE-14-LEARNING-CHAT-TRANSACTION-REPAIR-AND-RESUME-01`
+  authorized one service repair and one successful-path integration
+  regression. The transaction callback now returns an explicit success
+  sentinel without changing the public `Promise<void>` contract.
+- The regression was RED at HTTP 500, then GREEN at HTTP 202. The complete
+  backend unit, integration, security, typecheck, and build gates passed.
+- A fresh runtime request and same-intent retry both returned HTTP 202,
+  reconciled one canonical message and one queued job, created no assistant
+  message, disclosed no private document metadata, and made no provider call.
+- The corrected desktop smoke gate passed 6/6. The complete Playwright matrix
+  passed 21/21 across desktop 1440 × 900, tablet 768 × 1024, and mobile
+  390 × 844 with zero browser console/page errors and zero final fixtures.
+- The frontend suite passed 41/41 files and 569/569 tests. Frontend and root
+  typechecks and the production build passed. Generated output and external
+  failure artifacts were removed.
+- Human review approved the Learning repair, backend regression, six-spec
+  Playwright architecture, assertion quality, synthetic fixtures, ownership
+  and private-data protections, Quiz secrecy, responsive matrix,
+  failure-only artifact policy, cleanup, and final repository scope with
+  `PHASE_14_E2E_BROWSER_TESTING_APPROVED`.
+- Phase 14 is completed with no unresolved Critical, Important, Minor,
+  product, fixture, environment, or verification blocker. Phase 15 remains
+  planned and inactive and requires a separate operator-approved activation
+  prompt.
 
 ## Phase 13A completion record
 

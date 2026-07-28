@@ -239,6 +239,8 @@ export async function attachChatResponseJob(input: {
     if (attached.matchedCount !== 1) {
       throw learningDocumentWorkInvalidatedError();
     }
+
+    return true;
   });
 }
 

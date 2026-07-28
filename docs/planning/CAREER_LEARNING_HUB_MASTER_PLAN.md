@@ -1298,7 +1298,38 @@
 
 #### Status
 
-- Status: PLANNED
+- Status: COMPLETED
+- Activation baseline: branch `phase-12-unified-frontend`, full HEAD
+  `d32e584702eceae6383bb88e7411bba6e482ebdd`
+  (`Complete Phase 13 integrated QA closeout`).
+- Current workflow state:
+  `PHASE 14 COMPLETED — PHASE 15 PLANNED, NOT ACTIVATED`.
+- Phase 13 remains `COMPLETED`.
+- Phase 15 remains `PLANNED` / `INACTIVE`.
+- The separately authorized Learning chat repair changed one backend service
+  file and one existing integration-test file.
+- Frontend production and shared-type source remain unchanged.
+- Package manifests and lockfiles are read-only.
+- External AI providers are prohibited.
+- Failure screenshots, traces, and reports remain outside tracked repository
+  files.
+- Human review approved the Learning repair, backend regression, E2E
+  architecture and assertions, synthetic data, ownership and privacy checks,
+  Quiz secrecy, responsive matrix, artifact policy, cleanup, and final scope.
+- Human approval token:
+  `PHASE_14_E2E_BROWSER_TESTING_APPROVED`.
+- The Learning chat post-commit HTTP 500 was repaired by returning an explicit
+  success sentinel from the existing `attachChatResponseJob` transaction
+  callback. The route continues to return the documented HTTP 202 response
+  with one canonical owned user message and one queued job.
+- The focused desktop smoke gate passed 6/6. The complete Playwright matrix
+  passed 21/21 across desktop, tablet, and mobile. Backend, frontend,
+  typecheck, build, ownership, private-data, quiz-secrecy, console, artifact,
+  and synthetic-cleanup gates passed.
+- No unresolved Critical, Important, Minor, product, fixture, environment, or
+  verification blocker remains. Phase 14 is completed.
+- Phase 15 remains planned and inactive and requires a separate
+  operator-approved activation prompt.
 
 #### Purpose
 
