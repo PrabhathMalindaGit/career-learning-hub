@@ -8,6 +8,8 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { PageHeader } from "../../components/PageHeader";
+import { Pager } from "../../components/Pager";
+import { StateSurface } from "../../components/StateSurface";
 import {
   createResume,
   fetchJob,
@@ -266,26 +268,32 @@ export function ResumeListPage() {
           </div>
 
           {loading ? (
-            <p className="resume-state" role="status">
-              Loading resumes…
-            </p>
+            <StateSurface
+              mode="status"
+              className="resume-state"
+              body="Loading resumes…"
+            />
           ) : listError ? (
-            <div className="resume-state resume-state--error" role="alert">
-              <p>{listError.message}</p>
-              {listError.requestId ? (
-                <small>Request ID: {listError.requestId}</small>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => setReloadKey((key) => key + 1)}
-              >
-                Retry list
-              </button>
-            </div>
+            <StateSurface
+              mode="alert"
+              className="resume-state resume-state--error"
+              body={<p>{listError.message}</p>}
+              requestId={listError.requestId}
+              actions={
+                <button
+                  type="button"
+                  onClick={() => setReloadKey((key) => key + 1)}
+                >
+                  Retry list
+                </button>
+              }
+            />
           ) : resumes.length === 0 ? (
-            <p className="resume-state">
-              No resumes yet. Create a blank resume or import a private PDF.
-            </p>
+            <StateSurface
+              mode="static"
+              className="resume-state"
+              body="No resumes yet. Create a blank resume or import a private PDF."
+            />
           ) : (
             <ul className="resume-record-list">
               {resumes.map((resume) => (
@@ -311,28 +319,23 @@ export function ResumeListPage() {
             </ul>
           )}
 
-          <div className="resume-pagination" aria-label="Resume pages">
-            <button
-              type="button"
-              disabled={loading || page <= 1}
-              onClick={() => setPage((current) => current - 1)}
-            >
-              Previous
-            </button>
-            <span>Page {page}</span>
-            <button
-              type="button"
-              disabled={
-                loading ||
-                !pagination ||
-                pagination.pages === 0 ||
-                page >= pagination.pages
-              }
-              onClick={() => setPage((current) => current + 1)}
-            >
-              Next
-            </button>
-          </div>
+          <Pager
+            className="resume-pagination"
+            label="Resume pages"
+            currentPage={`Page ${page}`}
+            previousLabel="Previous"
+            nextLabel="Next"
+            previousDisabled={loading || page <= 1}
+            nextDisabled={
+              loading ||
+              !pagination ||
+              pagination.pages === 0 ||
+              page >= pagination.pages
+            }
+            busy={loading}
+            onPrevious={() => setPage((current) => current - 1)}
+            onNext={() => setPage((current) => current + 1)}
+          />
         </section>
 
         <div className="resume-entry-actions">

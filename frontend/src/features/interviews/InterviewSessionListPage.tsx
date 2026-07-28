@@ -7,6 +7,8 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { PageHeader } from "../../components/PageHeader";
+import { Pager } from "../../components/Pager";
+import { StateSurface } from "../../components/StateSurface";
 import {
   createInterviewSession,
   listInterviewSessions,
@@ -295,30 +297,32 @@ export function InterviewSessionListPage() {
           </div>
 
           {loading ? (
-            <p className="interview-state" role="status">
-              Loading interview sessions…
-            </p>
+            <StateSurface
+              mode="status"
+              className="interview-state"
+              body="Loading interview sessions…"
+            />
           ) : listError ? (
-            <div
+            <StateSurface
+              mode="alert"
               className="interview-state interview-state--error"
-              role="alert"
-            >
-              <p>{listError.message}</p>
-              {listError.requestId ? (
-                <small>Request ID: {listError.requestId}</small>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => setReloadKey((key) => key + 1)}
-              >
-                Retry list
-              </button>
-            </div>
+              body={<p>{listError.message}</p>}
+              requestId={listError.requestId}
+              actions={
+                <button
+                  type="button"
+                  onClick={() => setReloadKey((key) => key + 1)}
+                >
+                  Retry list
+                </button>
+              }
+            />
           ) : sessions.length === 0 ? (
-            <p className="interview-state">
-              No interview sessions match this view. Create a private
-              session to begin.
-            </p>
+            <StateSurface
+              mode="static"
+              className="interview-state"
+              body="No interview sessions match this view. Create a private session to begin."
+            />
           ) : (
             <ul className="interview-session-list">
               {sessions.map((session) => (
@@ -356,31 +360,23 @@ export function InterviewSessionListPage() {
             </ul>
           )}
 
-          <div
+          <Pager
             className="interview-pagination"
-            aria-label="Interview session pages"
-          >
-            <button
-              type="button"
-              disabled={loading || page <= 1}
-              onClick={() => setPage((current) => current - 1)}
-            >
-              Previous
-            </button>
-            <span>Page {page}</span>
-            <button
-              type="button"
-              disabled={
-                loading ||
-                !pagination ||
-                pagination.pages === 0 ||
-                page >= pagination.pages
-              }
-              onClick={() => setPage((current) => current + 1)}
-            >
-              Next
-            </button>
-          </div>
+            label="Interview session pages"
+            currentPage={`Page ${page}`}
+            previousLabel="Previous"
+            nextLabel="Next"
+            previousDisabled={loading || page <= 1}
+            nextDisabled={
+              loading ||
+              !pagination ||
+              pagination.pages === 0 ||
+              page >= pagination.pages
+            }
+            busy={loading}
+            onPrevious={() => setPage((current) => current - 1)}
+            onNext={() => setPage((current) => current + 1)}
+          />
         </section>
 
         <form

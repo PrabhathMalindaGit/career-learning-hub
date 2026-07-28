@@ -984,16 +984,16 @@
 - Status: ACTIVE
 - Activated by operator-approved prompt
   `CLH-PHASE-13A-ACTIVATE-AND-AUDIT-01`.
-- Most recently completed pass: Phase 13C — Forms, Buttons, and Action
-  Hierarchy
+- Most recently completed pass: Phase 13D — State Presentation, Pagination,
+  and Job Status
   (`COMPLETED`).
 - Active pass: None.
-- Next planned pass: Phase 13D — State Presentation, Pagination, and Job Status
+- Next planned pass: Phase 13E — Dialogs, Focus, and Navigation
   (`PLANNED` / `INACTIVE`).
 - Next planned major phase: Phase 14 — End-to-End Browser Testing
   (`PLANNED`).
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS C COMPLETED — PASS D PLANNED, NOT ACTIVATED`.
+  `PHASE 13 ACTIVE — PASS D COMPLETED — PASS E PLANNED, NOT ACTIVATED`.
 - Phase 13A was audit-only and made no production UI changes.
 - Phase 13A remains `COMPLETED`.
 - Consolidation recommendations must demonstrate genuine duplication.
@@ -1018,7 +1018,16 @@
 - Phase 13C is `COMPLETED`. Human visual QA was approved with
   `PHASE_13C_FORMS_ACTIONS_VISUAL_QA_APPROVED`, and closeout was authorized by
   `CLH-PHASE-13C-CLOSEOUT-AND-COMMIT-01`.
-- Phase 13D through Phase 13G remain `PLANNED` and `INACTIVE`.
+- Phase 13D was activated by operator-approved prompt
+  `CLH-PHASE-13D-ACTIVATE-AND-IMPLEMENT-01` from implementation baseline
+  `d44fe63` (`Complete Phase 13 forms and actions`).
+- Decisions D13-03, D13-05, D13-06, D13-10, D13-11, and D13-12 control
+  Phase 13D.
+- Phase 13D is `COMPLETED`. Human visual QA approved the required state,
+  pagination, Learning job-state, responsive, zoom, and keyboard checks.
+- Phase 13D closeout and the implementation commit were authorized by
+  `CLH-PHASE-13D-CLOSEOUT-AND-COMMIT-01`.
+- Phase 13E through Phase 13G remain `PLANNED` and `INACTIVE`.
 - Phase 14 remains `PLANNED` and is not activated.
 
 #### Phase 13B completion evidence
@@ -1077,6 +1086,32 @@
   deferred to Phase 13F. Dialog mechanics remain assigned to Phase 13E;
   pagination, shared state surfaces, and job-status presentation remain
   assigned to Phase 13D.
+
+#### Phase 13D completion evidence
+
+- Created caller-owned `StateSurface` static, status, and alert presentation;
+  a labelled, caller-controlled `Pager`; and Learning-specific
+  `LearningGenerationJobStatus`.
+- Migrated the unknown route, Dashboard activity, Resume list, Interview list,
+  Learning library, Flashcard generation, and Quiz generation states.
+  Dashboard activity, Resume list, Interview list, and Learning library were
+  the only pager migrations; specialized domain workflows remained local.
+- Preserved routes, API and polling behavior, retry, resume, refresh,
+  cancellation, timeout, completion validation, recovery, request IDs,
+  ownership-neutral not-found wording, quiz answer secrecy, status colors,
+  and typography. No toast provider or cross-domain job engine was added.
+- Focused verification passed 10 files and 132 tests. The complete frontend
+  suite passed 39 files and 563 tests; frontend and root typechecks and the
+  production build passed.
+- Browser QA passed at 1440px, 1024px, 768px, 390px, and 320px with a healthy
+  console. Human review approved state and pagination behavior, Learning
+  generation presentation, native 200% zoom, physical keyboard operation,
+  visible focus, wrapping, and mobile containment.
+- Synthetic cleanup passed and generated artifacts were absent. Existing
+  React Router directive and production chunk-size warnings remain. The
+  existing approximately 15px global root overflow at 320px remains deferred
+  to Phase 13F; dialogs and navigation mechanics remain assigned to Phase
+  13E. Backend tests and AI-provider configuration were not required.
 
 #### Purpose
 

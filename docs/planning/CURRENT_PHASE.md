@@ -3,15 +3,15 @@
 - Phase: 13
 - Name: Shared Design and UX Hardening
 - Status: ACTIVE
-- Most recently completed pass: Phase 13C, Forms, Buttons, and Action
-  Hierarchy
+- Most recently completed pass: Phase 13D, State Presentation, Pagination,
+  and Job Status
   (`COMPLETED`)
 - Active pass: None
-- Next planned pass: Phase 13D, State Presentation, Pagination, and Job Status
+- Next planned pass: Phase 13E, Dialogs, Focus, and Navigation
   (`PLANNED` / `INACTIVE`)
 - Next planned major phase: Phase 14, End-to-End Browser Testing (`PLANNED`)
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS C COMPLETED — PASS D PLANNED, NOT ACTIVATED`
+  `PHASE 13 ACTIVE — PASS D COMPLETED — PASS E PLANNED, NOT ACTIVATED`
 - Controlling skills: `karpathy-guidelines`, `web-design-guidelines`,
   `test-driven-development`, `systematic-debugging`,
   `browser:control-in-app-browser`
@@ -33,7 +33,8 @@
 - Phase 13A — Shared Design and UX Audit is `COMPLETED`.
 - Phase 13B — Shared Foundations and Approved Tokens is `COMPLETED`.
 - Phase 13C — Forms, Buttons, and Action Hierarchy is `COMPLETED`.
-- Phase 13D through Phase 13G are `PLANNED` and `INACTIVE`.
+- Phase 13D — State Presentation, Pagination, and Job Status is `COMPLETED`.
+- Phase 13E through Phase 13G are `PLANNED` and `INACTIVE`.
 - Phase 14 remains `PLANNED` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -160,8 +161,44 @@
   required.
 - Phase 13C closeout and the implementation commit were authorized by
   `CLH-PHASE-13C-CLOSEOUT-AND-COMMIT-01`.
-- Phase 13D through Phase 13G remain `PLANNED` and `INACTIVE`; Phase 14
+- Phase 13D was activated by operator-approved prompt
+  `CLH-PHASE-13D-ACTIVATE-AND-IMPLEMENT-01`.
+- Phase 13D implementation baseline: branch `phase-12-unified-frontend`, HEAD
+  `d44fe63` (`Complete Phase 13 forms and actions`).
+- Decisions D13-03, D13-05, D13-06, D13-10, D13-11, and D13-12 control
+  Phase 13D.
+- Phase 13D human visual QA was approved with
+  `PHASE_13D_STATES_PAGINATION_VISUAL_QA_APPROVED`.
+- Phase 13D closeout and the implementation commit were authorized by
+  `CLH-PHASE-13D-CLOSEOUT-AND-COMMIT-01`.
+- Phase 13E through Phase 13G remain `PLANNED` and `INACTIVE`; Phase 14
   remains `PLANNED` and is not activated.
+
+## Phase 13D completion record
+
+- Added caller-owned `StateSurface` static, status, and alert presentation;
+  a labelled, caller-controlled `Pager`; and the Learning-specific
+  `LearningGenerationJobStatus`.
+- Migrated the unknown route, Dashboard activity, Resume list, Interview list,
+  Learning library, Flashcard generation, and Quiz generation states.
+  Dashboard activity, Resume list, Interview list, and Learning library were
+  the only pager migrations.
+- Preserved routes, API and polling behavior, retry, resume, refresh,
+  cancellation, timeout, completion validation, recovery, ownership-neutral
+  not-found wording, request-ID placement, quiz answer secrecy, status colors,
+  and typography. No toast provider or cross-domain job engine was added.
+- Focused verification passed 10 files and 132 tests. The complete frontend
+  suite passed 39 files and 563 tests; frontend and root typechecks and the
+  production build passed.
+- Browser QA passed at 1440px, 1024px, 768px, 390px, and 320px with a healthy
+  console. Human review approved the required state, pagination, Learning job,
+  native 200% zoom, physical keyboard, focus, activation, wrapping, and mobile
+  containment checks.
+- Synthetic cleanup passed and generated artifacts were absent. Existing
+  React Router directive and production chunk-size warnings remain. The
+  existing approximately 15px global root overflow at 320px remains deferred
+  to Phase 13F; dialogs and navigation mechanics remain assigned to Phase
+  13E. Backend tests and AI-provider configuration were not required.
 
 ## Pass F completion record
 
@@ -307,25 +344,28 @@
 - Gemini remained unconfigured. Truthful provider-unavailable behavior was
   verified; real-provider success was not claimed.
 
-## Authorized Phase 13C scope
+## Authorized Phase 13D scope
 
-- The shared field/action contract and approved target sizing in
-  `frontend/src/styles.css` and `frontend/src/components/**` only when a proven
-  presentational helper is required.
-- Bounded Auth, Resume, Interview, and Learning form/action files, their
-  directly relevant tests, and their existing feature CSS.
+- One minimal state-surface primitive and one minimal labelled pager under
+  `frontend/src/components/**`, with only the shared CSS required for their
+  bounded presentation.
+- One Learning-specific generation-job presentation component for Flashcard
+  and Quiz generation states.
+- Bounded route, Dashboard, Resume, Interview, and Learning consumers that
+  currently render a proven duplicated state surface or pager, plus directly
+  relevant tests and existing feature CSS.
 - Bounded local browser QA with synthetic `.test` records when authenticated
   populated routes require them.
-- Phase 13C status updates in the three controlling planning files.
+- Phase 13D status updates in the three controlling planning files.
 
 ## Explicit exclusions
 
 - Backend, shared type, package, lockfile, environment, database, migration,
   seed, deployment, authentication-provider, API-client, route, polling, and
   response-contract changes.
-- Broad feature migration; Learning header or tab migration; dialog mechanics,
-  pagination, job status, generic Card, generic Workspace, generic Tabs, or a
-  toast provider.
+- Broad feature migration; Learning header or tab migration; dialog mechanics;
+  a fetching pager, pagination hook, cross-domain job engine, generic Card,
+  generic Workspace, generic Tabs, or a toast provider.
 - Speculative abstractions, a second design system, unrelated visual redesign,
   typography changes, status-color remapping, and new product features.
 - Database, migration, seed, deployment, provider-configuration, and legacy
@@ -336,16 +376,15 @@
 
 ## Verification
 
-- Phase 13C focused Auth, Resume, Interview, and Learning tests passed.
-  Frontend and root typechecks, the production build, the complete 545/545
-  frontend suite, rendered browser QA, synthetic-data cleanup, and exact
-  changed-file checks passed.
-- No real AI-provider call is required or authorized.
+- Phase 13D focused verification passed 10 files and 132 tests, and the
+  complete frontend suite passed 39 files and 563 tests.
+- Frontend and root typechecks, the production build, rendered browser QA,
+  synthetic-data cleanup, and exact changed-file checks passed.
+- No backend test or real AI-provider call was required.
 
 ## Human approval gate
 
-- Phase 13C human visual QA was approved with:
-  `PHASE_13C_FORMS_ACTIONS_VISUAL_QA_APPROVED`.
-- The closeout and implementation commit were authorized by
-  `CLH-PHASE-13C-CLOSEOUT-AND-COMMIT-01`.
-- No push or Phase 13D activation is authorized.
+- Phase 13D human visual QA is approved, including native 200% zoom and
+  physical keyboard behavior.
+- Phase 13D closeout and one implementation commit are authorized. No push,
+  Phase 13E activation, or Phase 13 completion is authorized.

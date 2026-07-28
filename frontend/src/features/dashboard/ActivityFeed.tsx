@@ -2,6 +2,8 @@ import type {
   DashboardActivityItem,
   DashboardActivityPage,
 } from "./types";
+import { Pager } from "../../components/Pager";
+import { StateSurface } from "../../components/StateSurface";
 
 interface ActivityFeedProps {
   events: DashboardActivityItem[];
@@ -76,13 +78,17 @@ export function ActivityFeed({
 
       <div className="dashboard-activity-list">
         {refreshing && events.length === 0 ? (
-          <div className="dashboard-loading-page" role="status">
-            Loading selected activity page
-          </div>
+          <StateSurface
+            mode="status"
+            className="dashboard-loading-page"
+            body="Loading selected activity page"
+          />
         ) : events.length === 0 ? (
-          <div className="dashboard-empty-state">
-            No recorded activity is available.
-          </div>
+          <StateSurface
+            mode="static"
+            className="dashboard-empty-state"
+            body="No recorded activity is available."
+          />
         ) : (
           events.map((event) => (
             <article
@@ -104,33 +110,22 @@ export function ActivityFeed({
         )}
       </div>
 
-      <nav
+      <Pager
         className="dashboard-pagination"
-        aria-label="Activity pagination"
-      >
-        <button
-          type="button"
-          aria-label="Previous activity page"
-          disabled={currentPage <= 1}
-          onClick={onPrevious}
-        >
-          Previous
-        </button>
-        <span aria-live="polite">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          type="button"
-          aria-label="Next activity page"
-          disabled={
-            pagination.pages === 0 ||
-            currentPage >= pagination.pages
-          }
-          onClick={onNext}
-        >
-          Next
-        </button>
-      </nav>
+        label="Activity pagination"
+        currentPage={`Page ${currentPage} of ${totalPages}`}
+        previousLabel="Previous"
+        nextLabel="Next"
+        previousAriaLabel="Previous activity page"
+        nextAriaLabel="Next activity page"
+        previousDisabled={currentPage <= 1}
+        nextDisabled={
+          pagination.pages === 0 || currentPage >= pagination.pages
+        }
+        busy={refreshing}
+        onPrevious={onPrevious}
+        onNext={onNext}
+      />
     </section>
   );
 }

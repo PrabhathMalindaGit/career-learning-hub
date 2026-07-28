@@ -1,5 +1,6 @@
 import { Link, isRouteErrorResponse, useRouteError } from "react-router-dom";
 import { ApiError } from "../api/apiClient";
+import { StateSurface } from "../components/StateSurface";
 
 export function RouteErrorPage({
   notFound = false,
@@ -14,24 +15,36 @@ export function RouteErrorPage({
     routeError instanceof ApiError ? routeError.requestId : undefined;
 
   return (
-    <main className="route-state route-state--full">
-      <p className="eyebrow">
-        {isNotFound ? "Navigation" : "Something went wrong"}
-      </p>
-      <h1>
-        {isNotFound ? "Page not found" : "This page could not be shown"}
-      </h1>
-      <p>
-        {isNotFound
-          ? "The requested page is not available."
-          : "A safe recovery is available. Try returning to the workspace."}
-      </p>
-      {requestId ? (
-        <p className="request-id">Request ID: {requestId}</p>
-      ) : null}
-      <Link className="primary-link" to="/">
-        Return to the workspace
-      </Link>
+    <main>
+      <StateSurface
+        mode="static"
+        className="route-state route-state--full"
+        heading={
+          <>
+            <p className="eyebrow">
+              {isNotFound ? "Navigation" : "Something went wrong"}
+            </p>
+            <h1>
+              {isNotFound
+                ? "Page not found"
+                : "This page could not be shown"}
+            </h1>
+          </>
+        }
+        body={
+          <p>
+            {isNotFound
+              ? "The requested page is not available."
+              : "A safe recovery is available. Try returning to the workspace."}
+          </p>
+        }
+        requestId={requestId}
+        actions={
+          <Link className="primary-link" to="/">
+            Return to the workspace
+          </Link>
+        }
+      />
     </main>
   );
 }

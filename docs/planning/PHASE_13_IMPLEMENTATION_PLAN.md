@@ -5,14 +5,14 @@
 - Derived from:
   `docs/planning/PHASE_13_SHARED_DESIGN_UX_AUDIT.md`
 - Parent phase: Phase 13 — Shared Design and UX Hardening (`ACTIVE`)
-- Most recently completed pass: Phase 13C — Forms, Buttons, and Action
-  Hierarchy
+- Most recently completed pass: Phase 13D — State Presentation, Pagination,
+  and Job Status
   (`COMPLETED`)
 - Active pass: none
-- Next planned pass: Phase 13D — State Presentation, Pagination, and Job Status
+- Next planned pass: Phase 13E — Dialogs, Focus, and Navigation
   (`PLANNED` / `INACTIVE`)
-- Implementation-pass state: Phase 13B and Phase 13C are `COMPLETED`; Phase
-  13D through Phase 13G are `PLANNED` and `INACTIVE`
+- Implementation-pass state: Phase 13B through Phase 13D are `COMPLETED`;
+  Phase 13E through Phase 13G are `PLANNED` and `INACTIVE`
 - Plan date: 2026-07-27
 - Audited baseline: branch `phase-12-unified-frontend`, HEAD `98c3f11`
 - Phase 13B implementation baseline: branch `phase-12-unified-frontend`, HEAD
@@ -37,7 +37,15 @@
   `PHASE_13C_FORMS_ACTIONS_VISUAL_QA_APPROVED`
 - Phase 13C closeout and implementation commit authorized by:
   `CLH-PHASE-13C-CLOSEOUT-AND-COMMIT-01`
-- Planning rule: Phase 13D through Phase 13G remain proposals without
+- Phase 13D activated by:
+  `CLH-PHASE-13D-ACTIVATE-AND-IMPLEMENT-01`
+- Phase 13D implementation baseline: branch `phase-12-unified-frontend`, HEAD
+  `d44fe63` (`Complete Phase 13 forms and actions`)
+- Phase 13D controlling decisions: D13-03, D13-05, D13-06, D13-10, D13-11,
+  and D13-12
+- Phase 13D human visual QA was approved, and closeout and the implementation
+  commit were authorized by `CLH-PHASE-13D-CLOSEOUT-AND-COMMIT-01`
+- Planning rule: Phase 13E through Phase 13G remain proposals without
   implementation authority.
 
 ## Planning principles
@@ -55,8 +63,8 @@
    broader checks.
 7. Every visible pass stops at the human visual-QA gate before commit.
 8. Each pass is a separate reviewable commit boundary after explicit commit
-   authorization. Phase 13B and Phase 13C received that authority; no later
-   pass or push is authorized.
+   authorization. Phase 13B through Phase 13D received that authority; no
+   later pass or push is authorized.
 
 ## Proposed pass sequence
 
@@ -64,7 +72,7 @@
 | --- | --- | --- | --- |
 | Phase 13B | Shared foundations and approved tokens | COMPLETED | Phase 13A approval |
 | Phase 13C | Forms, buttons, and action hierarchy | COMPLETED | Phase 13B |
-| Phase 13D | State presentation, pagination, and job status | PLANNED / INACTIVE | Phase 13B |
+| Phase 13D | State presentation, pagination, and job status | COMPLETED | Phase 13B |
 | Phase 13E | Dialogs, focus, and navigation | PLANNED / INACTIVE | Phase 13B; approved dialog decision |
 | Phase 13F | Responsive and touch-target hardening | PLANNED / INACTIVE | Phase 13C–13E |
 | Phase 13G | Integrated accessibility and visual QA | PLANNED / INACTIVE | Phase 13B–13F |
@@ -399,7 +407,14 @@ not broad element selectors.
 ### Pass ID and status
 
 - Pass ID: Phase 13D
-- Status: `PLANNED` / `INACTIVE`
+- Status: `COMPLETED`
+- Activated by operator-approved prompt
+  `CLH-PHASE-13D-ACTIVATE-AND-IMPLEMENT-01`.
+- Implementation baseline: branch `phase-12-unified-frontend`, HEAD
+  `d44fe63` (`Complete Phase 13 forms and actions`).
+- Controlling decisions: D13-03, D13-05, D13-06, D13-10, D13-11, and D13-12.
+- Human visual QA was approved. Closeout and the implementation commit were
+  authorized by `CLH-PHASE-13D-CLOSEOUT-AND-COMMIT-01`.
 
 ### Purpose
 
@@ -491,10 +506,42 @@ markup. Domain polling, copy, and recovery remain intentionally different.
 
 ### Human visual-QA gate
 
-- Required for empty/loading/error/safe-not-found states, first/last pagination
-  pages, Flashcard/Quiz ready and unavailable states, and all five widths.
-- Expected token:
-  `PHASE_13D_STATES_PAGINATION_VISUAL_QA_APPROVED`.
+- Approved for loading, empty, error, safe-not-found, unknown-route,
+  request-ID, recovery, and back-action presentation; static, status, and
+  alert semantics; and long-message wrapping.
+- Approved for Dashboard, Resume, Interview, and Learning pagination,
+  including first, middle, and last pages, accessible labels, visible current
+  pages, disabled controls, keyboard operation, and mobile containment.
+- Approved for Flashcard and Quiz queued, processing, provider-unavailable,
+  and ready presentation; distinct resource copy; retry, refresh, recovery,
+  and polling preservation; and no pre-submission answer-key exposure.
+- Approved at 1440px, 1024px, 768px, 390px, 320px, and native 200% zoom,
+  including Tab, Shift+Tab, Enter, Space, visible focus, wrapping, and no new
+  component-level clipping, overlap, or overflow.
+
+### Completion evidence
+
+- Created `StateSurface` with explicit static, status, and alert modes;
+  `Pager` with a required accessible label and caller-owned state and actions;
+  and Learning-specific `LearningGenerationJobStatus`.
+- Migrated only the approved state and pager consumers. Specialized Resume,
+  Interview, conversation, document, study, upload, import, analysis,
+  deletion, grounded-chat, Flashcard, Quiz, and attempt workflows remained
+  local.
+- Preserved API and polling behavior, retry, resume, refresh, cancellation,
+  timeout, completion validation, recovery, request IDs, ownership-neutral
+  not-found wording, status colors, typography, and quiz answer secrecy. No
+  toast provider or cross-domain job engine was introduced.
+- Focused verification passed 10 files and 132 tests; the complete frontend
+  suite passed 39 files and 563 tests; frontend and root typechecks and the
+  production build passed.
+- Browser QA passed at all five required widths with a healthy console. Human
+  review approved native 200% zoom and physical keyboard behavior. Synthetic
+  cleanup passed and generated artifacts were absent.
+- Existing React Router directive and production chunk-size warnings remain.
+  The existing approximately 15px global root overflow at 320px remains
+  deferred to Phase 13F. Dialog and navigation mechanics remain assigned to
+  Phase 13E. Backend tests and AI-provider configuration were not required.
 
 ### Expected commit boundary
 
@@ -937,6 +984,8 @@ Phase 13 may be marked `COMPLETED` only after:
 6. Synthetic data and temporary artifacts are verified removed.
 7. Phase 14 remains `PLANNED` until separately activated.
 
-Phase 13B and Phase 13C are completed. Phase 13 remains `ACTIVE`; Phase 13D
-through Phase 13G remain `PLANNED` and `INACTIVE`; and Phase 14 remains
-`PLANNED` and is not activated. No push or Phase 13D activation is authorized.
+Phase 13B through Phase 13D are completed. Phase 13 remains `ACTIVE`; Phase
+13E through Phase 13G remain `PLANNED` and `INACTIVE`; and Phase 14 remains
+`PLANNED` and is not activated. Phase 13D closeout and one implementation
+commit are authorized. No push, Phase 13E activation, or Phase 13 completion
+is authorized.

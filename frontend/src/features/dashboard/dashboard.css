@@ -514,9 +514,10 @@
 }
 
 .dashboard-pagination {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 14px;
   margin-top: 18px;
   padding-top: 16px;
@@ -524,6 +525,7 @@
 }
 
 .dashboard-pagination span {
+  flex: 1 1 120px;
   color: #5d6b63;
   font-size: 0.84rem;
   font-weight: 700;

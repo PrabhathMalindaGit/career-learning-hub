@@ -18,6 +18,7 @@ import {
   pollLearningJob,
   type LearningPollResult,
 } from "./learningPolling";
+import { LearningGenerationJobStatus } from "./LearningGenerationJobStatus";
 import type {
   AcceptedLearningFlashcardJob,
   FlashcardSet,
@@ -657,57 +658,65 @@ function GenerationStatus({
   if (state.status === "idle") return null;
   if (state.status === "queued" || state.status === "processing") {
     return (
-      <div className="learning-response-status" role="status">
-        <p>
-          {state.status === "queued"
-            ? "Flashcard generation is queued."
-            : "Flashcard generation is processing."}
-        </p>
-        <RequestId value={requestId} />
-      </div>
+      <LearningGenerationJobStatus
+        status={state.status}
+        message={
+          <p>
+            {state.status === "queued"
+              ? "Flashcard generation is queued."
+              : "Flashcard generation is processing."}
+          </p>
+        }
+        requestId={requestId}
+      />
     );
   }
   if (state.status === "paused") {
     return (
-      <div className="learning-response-status">
-        <p>
-          Generation checks are paused locally. This does not mean the
-          backend job failed or was cancelled.
-        </p>
-        <RequestId value={requestId} />
-        <button
-          type="button"
-          className="learning-secondary-button"
-          onClick={onResume}
-        >
-          Resume generation checks
-        </button>
-      </div>
+      <LearningGenerationJobStatus
+        status="paused"
+        message={
+          <p>
+            Generation checks are paused locally. This does not mean the
+            backend job failed or was cancelled.
+          </p>
+        }
+        requestId={requestId}
+        actions={
+          <button
+            type="button"
+            className="learning-secondary-button"
+            onClick={onResume}
+          >
+            Resume generation checks
+          </button>
+        }
+      />
     );
   }
   if (state.status === "cancelled") {
     return (
-      <div className="learning-response-status" role="status">
-        Flashcard generation was cancelled. No completed set is claimed.
-      </div>
+      <LearningGenerationJobStatus
+        status="cancelled"
+        message="Flashcard generation was cancelled. No completed set is claimed."
+      />
     );
   }
   if (state.status === "completed") {
     return (
-      <div className="learning-response-status" role="status">
-        Canonical flashcards are ready.
-      </div>
+      <LearningGenerationJobStatus
+        status="completed"
+        message="Canonical flashcards are ready."
+      />
     );
   }
   if (state.status === "failed" || state.status === "unavailable") {
     return (
-      <div
-        className="learning-response-status learning-state--error"
-        role="alert"
-      >
-        <p>{state.error.message}</p>
-        <RequestId value={state.error.requestId} />
-      </div>
+      <LearningGenerationJobStatus
+        status={state.status}
+        message={<p>{state.error.message}</p>}
+        requestId={state.error.requestId}
+      />
     );
   }
   return null;

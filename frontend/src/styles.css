@@ -272,6 +272,20 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.state-surface,
+.pager {
+  min-inline-size: 0;
+}
+
+.state-surface,
+.pager > span {
+  overflow-wrap: anywhere;
+}
+
+.pager {
+  flex-wrap: wrap;
+}
+
 .primary-button,
 .secondary-button,
 .destructive-button,

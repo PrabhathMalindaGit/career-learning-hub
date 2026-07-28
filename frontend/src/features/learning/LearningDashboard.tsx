@@ -7,6 +7,8 @@ import {
 } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { Pager } from "../../components/Pager";
+import { StateSurface } from "../../components/StateSurface";
 import { useAuth } from "../auth/AuthProvider";
 import {
   fetchLearningJob,
@@ -619,33 +621,39 @@ export function LearningDashboard() {
       </div>
 
       {loading ? (
-        <div className="learning-state" role="status">
-          Loading your documents…
-        </div>
+        <StateSurface
+          mode="status"
+          className="learning-state"
+          body="Loading your documents…"
+        />
       ) : loadError ? (
-        <div className="learning-state learning-state--error" role="alert">
-          <h2>Documents unavailable</h2>
-          <p>{loadError.message}</p>
-          {loadError.requestId ? (
-            <p className="request-id">
-              Request ID: {loadError.requestId}
-            </p>
-          ) : null}
-          <button
-            type="button"
-            className="learning-secondary-button"
-            onClick={refresh}
-          >
-            Try loading again
-          </button>
-        </div>
+        <StateSurface
+          mode="alert"
+          className="learning-state learning-state--error"
+          heading={<h2>Documents unavailable</h2>}
+          body={<p>{loadError.message}</p>}
+          requestId={loadError.requestId}
+          actions={
+            <button
+              type="button"
+              className="learning-secondary-button"
+              onClick={refresh}
+            >
+              Try loading again
+            </button>
+          }
+        />
       ) : documents.length === 0 ? (
-        <div className="learning-state">
-          <h2>No documents yet</h2>
-          <p>
-            No documents match this view. Upload a private PDF to begin.
-          </p>
-        </div>
+        <StateSurface
+          mode="static"
+          className="learning-state"
+          heading={<h2>No documents yet</h2>}
+          body={
+            <p>
+              No documents match this view. Upload a private PDF to begin.
+            </p>
+          }
+        />
       ) : (
         <ol className="learning-document-list">
           {documents.map((document) => (
@@ -705,32 +713,21 @@ export function LearningDashboard() {
       )}
 
       {pagination && pagination.pages > 1 ? (
-        <nav
+        <Pager
           className="learning-pagination"
-          aria-label="Document pages"
-        >
-          <button
-            type="button"
-            className="learning-secondary-button"
-            aria-label="Previous page"
-            disabled={loading || page <= 1}
-            onClick={() => setPage((current) => current - 1)}
-          >
-            Previous
-          </button>
-          <span>
-            Page {page} of {pagination.pages}
-          </span>
-          <button
-            type="button"
-            className="learning-secondary-button"
-            aria-label="Next page"
-            disabled={loading || page >= pagination.pages}
-            onClick={() => setPage((current) => current + 1)}
-          >
-            Next
-          </button>
-        </nav>
+          buttonClassName="learning-secondary-button"
+          label="Document pages"
+          currentPage={`Page ${page} of ${pagination.pages}`}
+          previousLabel="Previous"
+          nextLabel="Next"
+          previousAriaLabel="Previous page"
+          nextAriaLabel="Next page"
+          previousDisabled={loading || page <= 1}
+          nextDisabled={loading || page >= pagination.pages}
+          busy={loading}
+          onPrevious={() => setPage((current) => current - 1)}
+          onNext={() => setPage((current) => current + 1)}
+        />
       ) : null}
     </section>
   );

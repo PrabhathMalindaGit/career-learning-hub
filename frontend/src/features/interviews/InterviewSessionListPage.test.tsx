@@ -182,6 +182,40 @@ describe("InterviewSessionListPage", () => {
     ).not.toBeNull();
   });
 
+  it("uses a labelled pager with caller-owned boundaries and page loading", async () => {
+    vi.mocked(interviewApi.listInterviewSessions).mockImplementation(
+      async (query) => ({
+        sessions: [sessionSummary()],
+        pagination: {
+          page: query?.page ?? 1,
+          limit: 20,
+          total: 21,
+          pages: 2,
+        },
+      }),
+    );
+    renderPage();
+
+    const pager = await screen.findByRole("navigation", {
+      name: "Interview session pages",
+    });
+    const previous = screen.getByRole("button", { name: "Previous" });
+    const next = screen.getByRole("button", { name: "Next" });
+    expect((previous as HTMLButtonElement).disabled).toBe(true);
+    expect((next as HTMLButtonElement).disabled).toBe(false);
+    expect(pager.textContent).toContain("Page 1");
+
+    await userEvent.click(next);
+    await waitFor(() => {
+      expect(
+        interviewApi.listInterviewSessions,
+      ).toHaveBeenLastCalledWith(
+        { page: 2, limit: 20 },
+        expect.any(AbortSignal),
+      );
+    });
+  });
+
   it("validates the create form, excludes unsupported modes, and prevents duplicate submits", async () => {
     vi.mocked(interviewApi.createInterviewSession).mockReturnValue(
       new Promise(() => undefined),
