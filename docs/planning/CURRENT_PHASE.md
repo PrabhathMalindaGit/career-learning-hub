@@ -8,11 +8,15 @@
 - Baseline subject: `Add end-to-end application coverage`
 - Most recently completed major phase: Phase 14, End-to-End Browser Testing
   (`COMPLETED`)
-- Active pass: Phase 15A, Threat Model, Ownership Map, and Validated Audit
+- Most recently completed Phase 15 pass:
+  Phase 15A, Threat Model, Ownership Map, and Validated Audit
+- Active Phase 15 repair pass: None
+- Next possible pass: Phase 15B, Validated Security Repair Batches
+  (`PLANNED` / `INACTIVE`)
 - Next planned major phase: Phase 16, Accessibility and Performance Review
   (`PLANNED` / `INACTIVE`)
 - Current workflow state:
-  `PHASE 15 ACTIVE — PASS A: SECURITY AND PRIVACY AUDIT`
+  `PHASE 15 ACTIVE — PHASE 15A COMPLETED WITH ACCEPTED LIMITATIONS`
 - Controlling skills: `using-superpowers`, `karpathy-guidelines`,
   `define-goal`, `security-best-practices`, `privacy`,
   `security-ownership-map`, `security-threat-model`,
@@ -44,9 +48,11 @@
 - Phase 14 — End-to-End Browser Testing is
   `COMPLETED`.
 - Phase 15 — Security and Privacy Review is `ACTIVE`.
-- Phase 15A — Threat Model, Ownership Map, and Validated Audit is `ACTIVE`.
-- Phase 15A production and test code are read-only. Fixes require separate
-  operator authorization.
+- Phase 15A — Threat Model, Ownership Map, and Validated Audit is `COMPLETED`
+  with decision `APPROVED WITH ACCEPTED LIMITATIONS`.
+- Phase 15A production and test code remained read-only.
+- Phase 15B — Validated Security Repair Batches is `PLANNED` / `INACTIVE`,
+  requires a separate operator-approved prompt, and authorizes no repair.
 - Phase 16 remains `PLANNED` / `INACTIVE` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -148,6 +154,40 @@
   unaccepted.
 - The required review token remains:
   `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
+
+## Phase 15A approval closeout
+
+- Documentation history:
+  1. audit baseline
+     `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
+     (`Add end-to-end application coverage`);
+  2. seven-file audit-documentation commit
+     `2399f4d5a191d1409c3bc399051083d82654d742`
+     (`Activate Phase 15A security and privacy audit`);
+  3. three-file post-audit evidence-recording commit
+     `af6ddbe74e9b912172d966772cdb709df92c3bb8`
+     (`Document Phase 15A post-audit evidence`).
+- The original audit execution created no commit. Neither documentation commit
+  changed production or test code.
+- The operator accepted the documented coverage limitations for the current
+  academic MVP and approved the evidence-led manual audit with
+  `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
+- Unavailable canonical repository/diff scans; the absent scan ID, SARIF,
+  manifest, coverage ledger, and external scan artifact; unavailable current
+  online dependency advisories; automated contributor/co-change analysis; and
+  the deferred deployment topology, crafted-PDF exhaustion, and multi-worker
+  fencing work remain technically unresolved.
+- Historical audit blockers: 2.
+- Final human-approval blockers: 0, because the operator explicitly accepted
+  the documented limitations.
+- Phase 15 remains `ACTIVE`.
+- Phase 15A is `COMPLETED` with decision
+  `APPROVED WITH ACCEPTED LIMITATIONS`.
+- Phase 15B remains `PLANNED` / `INACTIVE`.
+- Phase 16 remains `PLANNED` / `INACTIVE`.
+- Confirmed findings `P15-001`, `P15-002`, `P15-003`, `P15-004`, and
+  `P15-005` remain open.
+- The four proposed repair batches remain inactive. No repair is authorized.
 
 ## Phase 14 verification record
 

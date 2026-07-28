@@ -9,17 +9,18 @@
 - Subject: `Add end-to-end application coverage`
 - Phase 14: `COMPLETED`
 - Phase 15: `ACTIVE`
-- Phase 15A: `ACTIVE`
+- Phase 15A: `COMPLETED`
+- Final review decision: `APPROVED WITH ACCEPTED LIMITATIONS`
+- Phase 15B: `PLANNED` / `INACTIVE`
 - Phase 16: `PLANNED` / `INACTIVE`
 - Production and test code: read-only
 - External AI provider calls: none
-- Pre-approval decision: `BLOCKED`
+- Historical pre-approval decision: `BLOCKED`
 - Reason: the six required canonical `codex-security:*` skills/workspace are
   unavailable, and a current online dependency advisory query could not be
   completed. No scan IDs, SARIF, manifests, or coverage artifacts were
   invented.
-- Required token after the coverage limitation is explicitly resolved or
-  accepted: `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`
+- Accepted approval token: `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`
 
 ## Requested outcome
 
@@ -431,7 +432,7 @@ batches.
   - canonical Codex Security scan capability unavailable;
   - current online dependency advisory coverage unavailable.
 
-## Final decision
+## Historical audit decision
 
 The repository-grounded threat model, ownership map, manual audit, candidate
 validation, runtime checks, finding register, and repair proposals are
@@ -487,3 +488,59 @@ unavailable canonical repository or diff security-scan coverage, resolve
 current online dependency-advisory coverage, or authorize a security repair.
 The human review token remains:
 `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
+
+The post-audit evidence above was committed in the separate three-file
+documentation commit `af6ddbe74e9b912172d966772cdb709df92c3bb8`
+(`Document Phase 15A post-audit evidence`). That commit could not contain its
+own hash; this closeout records it from verified Git history.
+
+## Phase 15A approval closeout
+
+- Documentation history:
+  1. audit baseline
+     `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
+     (`Add end-to-end application coverage`);
+  2. seven-file audit-documentation commit
+     `2399f4d5a191d1409c3bc399051083d82654d742`
+     (`Activate Phase 15A security and privacy audit`);
+  3. three-file post-audit evidence-recording commit
+     `af6ddbe74e9b912172d966772cdb709df92c3bb8`
+     (`Document Phase 15A post-audit evidence`).
+- Original audit execution commit: none.
+- Phase 15A final status: `COMPLETED`.
+- Final review decision: `APPROVED WITH ACCEPTED LIMITATIONS`.
+- Approval token: `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
+- Approval date: `2026-07-28`.
+- Phase 15: `ACTIVE`.
+- Phase 15B: `PLANNED` / `INACTIVE`.
+- Phase 16: `PLANNED` / `INACTIVE`.
+- Historical audit blockers: 2.
+  - canonical repository/diff scan capability unavailable;
+  - current online dependency-advisory coverage unavailable.
+- Final human-approval blockers: 0, because the operator explicitly accepted
+  the documented limitations for the current academic MVP.
+- Accepted coverage limitations:
+  - canonical repository and diff scans were unavailable;
+  - no canonical scan ID, SARIF, manifest, coverage ledger, or external scan
+    artifact was generated;
+  - current online dependency-advisory coverage was unavailable;
+  - automated contributor/co-change ownership analysis was unavailable; and
+  - deployment topology, crafted-PDF resource exhaustion, and multi-worker
+    lease/claim fencing remain deferred.
+- Confirmed Critical: 0.
+- Confirmed High: 0.
+- Confirmed Medium: 3.
+- Confirmed Low: 2.
+- Informational: 5.
+- Rejected candidates: 7.
+- Deferred candidates: 3.
+- Accepted risks: 2.
+- Open confirmed findings: 5 (`P15-001`, `P15-002`, `P15-003`, `P15-004`,
+  `P15-005`).
+- Repair authorization: not granted.
+
+The accepted limitations remain technically unresolved. Canonical scan
+coverage and current dependency safety are not claimed. Deferred candidates
+remain deferred, accepted risks retain their existing classification, all
+five confirmed findings remain open, and every proposed repair batch remains
+inactive.

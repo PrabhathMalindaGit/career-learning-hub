@@ -1384,18 +1384,23 @@
 #### Status
 
 - Status: ACTIVE
-- Active pass: Phase 15A — Threat Model, Ownership Map, and Validated Audit
+- Most recently completed Phase 15 pass:
+  Phase 15A — Threat Model, Ownership Map, and Validated Audit
+- Active Phase 15 repair pass: none
+- Next possible pass: Phase 15B — Validated Security Repair Batches
 - Activation prompt: `CLH-PHASE-15A-ACTIVATE-AND-AUDIT-01`
 - Activation baseline: branch `phase-12-unified-frontend`, full HEAD
   `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
   (`Add end-to-end application coverage`).
 - Current workflow state:
-  `PHASE 15 ACTIVE — PASS A: SECURITY AND PRIVACY AUDIT`.
+  `PHASE 15 ACTIVE — PHASE 15A COMPLETED WITH ACCEPTED LIMITATIONS`.
 - Phase 14 remains `COMPLETED`.
-- Phase 15A is `ACTIVE`; production and tests are read-only, and fixes require
-  separate authorization.
+- Phase 15A is `COMPLETED`; its review decision is
+  `APPROVED WITH ACCEPTED LIMITATIONS`.
+- Phase 15B is `PLANNED` / `INACTIVE` and requires a separate
+  operator-approved prompt.
 - Phase 16 remains `PLANNED` / `INACTIVE`.
-- Required audit-review token:
+- Accepted audit-review token:
   `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
 - Phase 15A audit status:
   - 317 tracked files scope-accounted;
@@ -1412,7 +1417,7 @@
   - accepted risks: 2;
   - external provider calls: none;
   - production and test changes: none.
-- Phase 15A pre-approval decision: `BLOCKED`.
+- Historical Phase 15A pre-approval decision: `BLOCKED`.
 - Blocking limitations:
   - required canonical Codex Security repository/diff scan skills and
     workspace are unavailable; and
@@ -1427,10 +1432,28 @@
   - the reviewed seven-file documentation-only result was committed
     separately as `2399f4d5a191d1409c3bc399051083d82654d742`
     with subject `Activate Phase 15A security and privacy audit`;
+  - the post-audit evidence was recorded in the three-file documentation
+    commit `af6ddbe74e9b912172d966772cdb709df92c3bb8` with subject
+    `Document Phase 15A post-audit evidence`;
   - Phase 15 remains `ACTIVE`, and Phase 16 remains `PLANNED` / `INACTIVE`;
   - canonical security-scan and current dependency-advisory coverage
     limitations remain documented and unresolved or unaccepted; and
   - security repairs require separate operator authorization.
+- Phase 15A approval closeout:
+  - the operator explicitly accepted the unavailable canonical repository and
+    diff scans; the absence of a scan ID, SARIF, manifest, coverage ledger,
+    and external scan artifact; unavailable current online dependency
+    advisories; unavailable automated contributor/co-change graph; and the
+    deferred deployment topology, crafted-PDF exhaustion, and multi-worker
+    fencing work;
+  - these limitations remain technically unresolved but are accepted for the
+    current academic MVP;
+  - the evidence-led manual audit is sufficient for this project stage;
+  - historical audit blockers remain 2, while final human-approval blockers
+    are 0 because the limitations were explicitly accepted;
+  - confirmed findings `P15-001` through `P15-005` remain open;
+  - all four Phase 15B repair batches remain proposed and inactive; and
+  - no repair is authorized by this closeout.
 
 #### Purpose
 

@@ -4,12 +4,17 @@
 
 - Activation prompt: `CLH-PHASE-15A-ACTIVATE-AND-AUDIT-01`
 - Phase: 15, Security and Privacy Review
-- Active pass: Phase 15A, Threat Model, Ownership Map, and Validated Audit
-- Pass status: ACTIVE
-- Required review token: `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`
-- Production and tests: read-only
+- Most recently completed pass:
+  Phase 15A, Threat Model, Ownership Map, and Validated Audit
+- Active repair pass: none
+- Pass status: COMPLETED
+- Review decision: APPROVED WITH ACCEPTED LIMITATIONS
+- Required review token: accepted,
+  `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`
+- Production and tests: remained read-only
 - Finding repairs: require separate operator authorization
-- Staging and commit: not authorized
+- Staging and commit: authorized only by
+  `CLH-PHASE-15A-APPROVAL-CLOSEOUT-AND-COMMIT-03`
 - Push: prohibited
 
 ## 2. Baseline
@@ -20,7 +25,8 @@
 - Subject: `Add end-to-end application coverage`
 - Phase 14: COMPLETED
 - Phase 15: ACTIVE
-- Phase 15A: ACTIVE
+- Phase 15A: COMPLETED / APPROVED WITH ACCEPTED LIMITATIONS
+- Phase 15B: PLANNED / INACTIVE
 - Phase 16: PLANNED / INACTIVE
 - Starting worktree: clean, with nothing staged or untracked
 
@@ -189,7 +195,7 @@ Stop and report when:
 - production or test code changes;
 - an unavailable capability would have to be fabricated.
 
-## 11. Human review gate
+## 11. Historical human review gate
 
 Phase 15A remains active while the operator reviews the threat model, ownership
 map, findings, rejected candidates, accepted risks, coverage limitations,
@@ -254,7 +260,7 @@ planned and inactive.
 
 No repair is authorized by this plan or audit pass.
 
-## 14. Pre-approval decision
+## 14. Historical pre-approval decision
 
 - Decision: `BLOCKED`.
 - Blocking coverage limitations:
@@ -267,3 +273,38 @@ No repair is authorized by this plan or audit pass.
   current advisory coverage.
 - Phase 15 and Phase 15A remain `ACTIVE`.
 - Phase 16 remains `PLANNED` / `INACTIVE`.
+
+## 15. Phase 15A approval closeout
+
+- Documentation history:
+  1. audit baseline
+     `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
+     (`Add end-to-end application coverage`);
+  2. audit-documentation commit
+     `2399f4d5a191d1409c3bc399051083d82654d742`
+     (`Activate Phase 15A security and privacy audit`);
+  3. post-audit evidence-recording commit
+     `af6ddbe74e9b912172d966772cdb709df92c3bb8`
+     (`Document Phase 15A post-audit evidence`).
+- The original audit execution created no commit. Both later commits were
+  documentation-only; production and tests remained read-only.
+- The operator accepted the unavailable canonical repository/diff scans; the
+  absent scan ID, SARIF, manifest, coverage ledger, and external scan artifact;
+  unavailable current online dependency advisories; unavailable automated
+  contributor/co-change graph; and deferred deployment topology, crafted-PDF
+  exhaustion, and multi-worker fencing limitations.
+- The limitations remain technically unresolved. The evidence-led manual
+  audit is approved as sufficient for the current academic MVP.
+- Phase 15A is `COMPLETED`; review decision:
+  `APPROVED WITH ACCEPTED LIMITATIONS`.
+- Phase 15 remains `ACTIVE`.
+- Phase 15B and its four proposed repair batches remain `PLANNED` / `INACTIVE`
+  and require separate authorization.
+- Phase 16 remains `PLANNED` / `INACTIVE`.
+- Confirmed findings `P15-001`, `P15-002`, `P15-003`, `P15-004`, and
+  `P15-005` remain open.
+- Historical audit blockers: 2.
+- Final human-approval blockers: 0, because the operator explicitly accepted
+  the documented limitations.
+- No current canonical scan coverage or dependency-safety result is claimed,
+  and no repair is authorized.
