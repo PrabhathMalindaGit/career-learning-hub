@@ -981,17 +981,17 @@
 
 #### Status
 
-- Status: ACTIVE
+- Status: COMPLETED
 - Activated by operator-approved prompt
   `CLH-PHASE-13A-ACTIVATE-AND-AUDIT-01`.
-- Most recently completed pass: Phase 13F — Responsive and Touch-Target
-  Hardening
+- Most recently completed pass: Phase 13G — Integrated Accessibility and
+  Visual QA
   (`COMPLETED`).
-- Active pass: Phase 13G — Integrated Accessibility and Visual QA (`ACTIVE`).
+- Active pass: None.
 - Next planned major phase: Phase 14 — End-to-End Browser Testing
-  (`PLANNED`).
+  (`PLANNED` / `INACTIVE`).
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS G: INTEGRATED ACCESSIBILITY AND VISUAL QA`.
+  `PHASE 13 COMPLETED — PHASE 14 PLANNED, NOT ACTIVATED`.
 - Phase 13A was audit-only and made no production UI changes.
 - Phase 13A remains `COMPLETED`.
 - Consolidation recommendations must demonstrate genuine duplication.
@@ -1050,8 +1050,9 @@
   `phase-12-unified-frontend`, HEAD
   `249dec15888887a4c2cda859b1c7db0593675b14`
   (`Complete Phase 13 responsive hardening`).
-- Phase 13G is `ACTIVE` and verification-first. Phase 13 cannot complete
-  before `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
+- Phase 13G was verification-first and is now `COMPLETED`. Human integrated
+  visual QA was approved with
+  `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
 - Repair-and-resume prompt
   `CLH-PHASE-13G-TEST-HARNESS-REPAIR-AND-RESUME-01` repaired the single
   timing-sensitive test assertion with an awaited exact-call assertion. The
@@ -1075,14 +1076,23 @@
   and the completed route/width matrix had no horizontal overflow, console
   issue, framework overlay, privacy disclosure, ownership disclosure, or quiz
   answer-key exposure.
-- Phase 13G remains `ACTIVE` and is
-  `READY_FOR_HUMAN_VISUAL_QA`; native Enter, Space, Tab, Shift+Tab, complete
-  native arrow-key behavior, and 200% browser zoom remain explicit human
-  checks.
+- Human review approved native 200% zoom; Tab and Shift+Tab; Enter and Space;
+  native arrow keys, Home, and End; dialog initial focus, containment,
+  Escape, cancellation, and exact focus return; visible unclipped focus; all
+  five viewport widths; repaired Interview targets; overflow and wrapping;
+  route, typography, and visual-identity preservation; ownership-neutral
+  states; private-data presentation; and quiz answer secrecy.
+- Phase 13A through Phase 13G are `COMPLETED`. Integrated verification passed
+  with no unresolved Critical, Important, Minor, or verification-blocking
+  finding. Decisions D13-01 through D13-12 remain satisfied.
+- Phase 13 is `COMPLETED`.
 - Synthetic records, temporary fixtures, and generated build outputs were
   removed and verified absent.
-- No staging, commit, or push is authorized.
-- Phase 14 remains `PLANNED` and is not activated.
+- This governance closeout commit is authorized by
+  `CLH-PHASE-13G-RECONCILE-INTERVENING-COMMIT-AND-CLOSEOUT-01`; push is not
+  authorized.
+- Phase 14 remains `PLANNED` / `INACTIVE`, is not activated, and requires a
+  separate operator-approved activation prompt.
 
 #### Phase 13B completion evidence
 

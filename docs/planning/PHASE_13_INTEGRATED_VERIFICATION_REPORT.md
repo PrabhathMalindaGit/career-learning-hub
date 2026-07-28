@@ -8,12 +8,16 @@
 - Interview target repair-and-resume prompt:
   `CLH-PHASE-13G-INTERVIEW-TARGET-REPAIR-AND-RESUME-01`
 - Pass: Phase 13G, Integrated Accessibility and Visual QA
-- Pass status: `ACTIVE`
-- Report decision: `READY_FOR_HUMAN_VISUAL_QA`
+- Pass status: `COMPLETED`
+- Report decision: `APPROVED`
+- Phase 13 status: `COMPLETED`
+- Phase 14 status: `PLANNED` / `NOT ACTIVATED`
 - Date: 2026-07-28
-- Human approval token required:
+- Human approval token accepted:
   `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`
-- Staging, commit, and push: not authorized
+- Documentation closeout staging and commit: authorized by
+  `CLH-PHASE-13G-RECONCILE-INTERVENING-COMMIT-AND-CLOSEOUT-01`
+- Push: not authorized
 
 ## 2. Baseline
 
@@ -326,10 +330,13 @@
   - Space did not reliably activate the focused pager;
   - Tab and Shift+Tab did not reliably move focus through this Browser
     surface.
-- No pass is claimed for unsupported Enter, Space, Tab, Shift+Tab, native
-  ArrowLeft/ArrowRight/ArrowUp/ArrowDown/Home/End select behavior, or native
-  200% zoom. They remain required physical-keyboard/browser checks.
+- The in-app Browser did not claim native Enter, Space, Tab, Shift+Tab,
+  ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Home, End, or 200% zoom behavior.
+  Human review subsequently passed each of these physical-keyboard/browser
+  checks.
 - No keyboard trap was observed in the interactions the Browser could prove.
+- Human review also passed dialog initial focus and containment, Escape and
+  cancellation, exact focus restoration, and visible unclipped focus.
 
 ## 14. Privacy, ownership, and quiz secrecy
 
@@ -403,52 +410,49 @@
 - Five Vite hot-reload style nodes were correctly distinguished from error
   overlays.
 - Native 200% browser zoom is not exposed by the in-app Browser viewport
-  capability and was not claimed as passed.
-- Native 200% zoom remains a human-only requirement in the visual-QA handoff.
+  capability and was not claimed as an automated pass.
+- Human native 200% browser zoom verification passed.
 
 ## 17. Findings and decision
 
 - Critical findings: 0.
-- Important findings: 0 unresolved.
-  - The one previously confirmed Important finding was resolved by the
-    authorized bounded CSS repair and reverified at all five widths.
+- Important findings: 0.
+- The one previously confirmed Important finding was resolved by the
+  authorized bounded CSS repair and reverified at all five widths.
 - Minor findings: 0.
 - Verification blockers: 0.
-- Human-only limitations: native Enter, Space, Tab, Shift+Tab, complete
-  native arrow-key behavior, and 200% zoom remain unproven by the in-app
-  Browser and require physical-browser confirmation.
+- Human native-keyboard and 200% zoom verification passed.
 - The original timing-sensitive test-harness blocker is repaired and all
   automated gates pass.
 - The Important target-size blocker is repaired; the post-repair automated
   gates and Browser matrix pass.
+- Phase 13A through Phase 13G are `COMPLETED`; Phase 13 is `COMPLETED`.
+- Phase 14 remains `PLANNED` / `INACTIVE` and was not activated.
 
 ## 18. Final repository review
 
-- Expected modified files:
+- Intervening implementation/evidence commit:
+  `f955e3adbf0f0fc4cad1a72421942c87a1d22040`
+  (`Activate Phase 13G visual QA and harden Interview targets`).
+- That commit contains exactly:
   - `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md`
   - `docs/planning/CURRENT_PHASE.md`
   - `docs/planning/PHASE_13_IMPLEMENTATION_PLAN.md`
+  - `docs/planning/PHASE_13_INTEGRATED_VERIFICATION_REPORT.md`
   - `frontend/src/features/interviews/interviewCoach.css`
   - `frontend/src/features/learning/LearningConversationWorkspace.test.tsx`
-- Expected untracked file:
-  - `docs/planning/PHASE_13_INTEGRATED_VERIFICATION_REPORT.md`
 - Production scope: only
   `frontend/src/features/interviews/interviewCoach.css` changed.
 - Backend, shared-type, package, lock, environment, and generated files:
   unchanged.
 - Final branch: `phase-12-unified-frontend`.
-- Final HEAD:
-  `249dec15888887a4c2cda859b1c7db0593675b14`, unchanged.
-- Staged files: none.
-- Commit: none.
+- The documentation-only Phase 13 governance closeout commit is separately
+  authorized by the reconciliation prompt.
 - Push: none.
 
-## 19. Human visual-QA handoff
+## 19. Human visual-QA approval
 
-- Status: ready for human visual QA.
-- Tested local URL: `http://localhost:5173/`. The verification-owned
-  frontend and backend processes were stopped after cleanup and must be
-  restarted for human inspection.
+- Status: approved.
 - Repaired Interview controls: Question count, Categories, Difficulty,
   Category, and Attempt status.
 - Before: text inputs 39.5px, selects 41.5px, all with
@@ -459,25 +463,29 @@
   one attempt; safe-missing Interview; cross-user Interview unavailable;
   Learning library; Settings; plus the preserved populated Resume, Learning,
   private-PDF, quiz, dialog, polling, and seven-resource ownership evidence.
-- Human keyboard confirmation required: Tab, Shift+Tab, Enter, Space, and
-  native ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Home, and End behavior.
-- Native browser 200% zoom remains required.
+- Human review passed Tab, Shift+Tab, Enter, Space, native ArrowLeft,
+  ArrowRight, ArrowUp, ArrowDown, Home, End, and 200% browser zoom.
+- Human review also passed responsive behavior and repaired target geometry
+  at 1440, 1024, 768, 390, and 320px; overflow and wrapping; dialog
+  containment; navigation, routes, typography, and visual identity;
+  ownership-neutral states; private-data presentation; and quiz answer
+  secrecy.
 - Unresolved counts: Critical 0, Important 0, Minor 0, verification blockers
   0.
-- Required approval token:
-  `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
 
-## 20. Final pre-approval decision
+## 20. Final approval decision
 
-`READY_FOR_HUMAN_VISUAL_QA`
+`APPROVED`
 
-The exact test-harness repair passed its isolated test, the original 25-file
-gate, the complete frontend suite, both typechecks, and the production build.
+The timing-sensitive test harness was repaired without weakening coverage.
+The exact repair passed its isolated test, the original 25-file gate, the
+complete frontend suite, both typechecks, and the production build.
 The bounded Interview CSS repair passed focused tests, the complete frontend
 suite, both typechecks, and the production build. All five repaired controls
 now measure 44px high at every required width; the completed Browser matrix
 passes service, auth, ownership, privacy, quiz-secrecy, state, dialog,
-console, overlay, wrapping, target, and overflow checks. Phase 13G remains
-`ACTIVE` pending human native-keyboard and 200% zoom confirmation.
+console, overlay, wrapping, target, and overflow checks. Human native-keyboard
+and 200% zoom checks passed, and cleanup passed. Phase 13G and Phase 13 are
+`COMPLETED`; Phase 14 remains `PLANNED` / `INACTIVE`.
 
-`PHASE_13G_INTEGRATED_QA_READY_FOR_VISUAL_QA`
+`PHASE_13G_INTEGRATED_QA_APPROVED`

@@ -2,14 +2,15 @@
 
 - Phase: 13
 - Name: Shared Design and UX Hardening
-- Status: ACTIVE
-- Most recently completed pass: Phase 13F, Responsive and Touch-Target
-  Hardening
+- Status: COMPLETED
+- Most recently completed pass: Phase 13G, Integrated Accessibility and
+  Visual QA
   (`COMPLETED`)
-- Active pass: Phase 13G, Integrated Accessibility and Visual QA (`ACTIVE`)
-- Next planned major phase: Phase 14, End-to-End Browser Testing (`PLANNED`)
+- Active pass: None
+- Next planned major phase: Phase 14, End-to-End Browser Testing
+  (`PLANNED` / `INACTIVE`)
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS G: INTEGRATED ACCESSIBILITY AND VISUAL QA`
+  `PHASE 13 COMPLETED — PHASE 14 PLANNED, NOT ACTIVATED`
 - Controlling skills: `karpathy-guidelines`, `web-design-guidelines`,
   `test-driven-development`, `systematic-debugging`,
   `browser:control-in-app-browser`
@@ -27,15 +28,15 @@
 
 - Phase 11 remains `COMPLETED`.
 - Phase 12 is `COMPLETED`.
-- Phase 13 is `ACTIVE`.
+- Phase 13 is `COMPLETED`.
 - Phase 13A — Shared Design and UX Audit is `COMPLETED`.
 - Phase 13B — Shared Foundations and Approved Tokens is `COMPLETED`.
 - Phase 13C — Forms, Buttons, and Action Hierarchy is `COMPLETED`.
 - Phase 13D — State Presentation, Pagination, and Job Status is `COMPLETED`.
 - Phase 13E — Dialogs, Focus, and Navigation is `COMPLETED`.
 - Phase 13F — Responsive and Touch-Target Hardening is `COMPLETED`.
-- Phase 13G — Integrated Accessibility and Visual QA is `ACTIVE`.
-- Phase 14 remains `PLANNED` and is not activated.
+- Phase 13G — Integrated Accessibility and Visual QA is `COMPLETED`.
+- Phase 14 remains `PLANNED` / `INACTIVE` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -240,8 +241,9 @@
   `frontend/src/features/learning/LearningConversationWorkspace.test.tsx`,
   and the later target-repair prompt authorized only
   `frontend/src/features/interviews/interviewCoach.css`.
-- Phase 13A through Phase 13F remain `COMPLETED`; Phase 13 remains `ACTIVE`.
-- Phase 13G and Phase 13 cannot be completed before the operator provides
+- Phase 13A through Phase 13F remain `COMPLETED`; Phase 13G and Phase 13 are
+  `COMPLETED`.
+- Human integrated visual QA was approved with
   `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
 - Repair-and-resume prompt
   `CLH-PHASE-13G-TEST-HARNESS-REPAIR-AND-RESUME-01` replaced the single
@@ -264,16 +266,23 @@
 - At 1440, 1024, 768, 390, and 320 CSS pixels, all five repaired controls
   measured exactly 44px high, no ordinary Interview target remained below
   44px, and the completed route/width matrix had no horizontal overflow.
-- Phase 13G remains `ACTIVE` and is
-  `READY_FOR_HUMAN_VISUAL_QA`. Native Enter, Space, Tab, Shift+Tab, complete
-  native arrow-key behavior, and 200% browser zoom remain explicit human
-  checks. The required token is
-  `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
+- Human review approved native 200% zoom; Tab and Shift+Tab; Enter and Space;
+  native arrow keys, Home, and End; dialog initial focus, containment,
+  Escape, cancellation, and exact focus return; visible unclipped focus; the
+  repaired Interview targets; all five viewport widths; overflow and
+  long-content wrapping; responsive dialog containment; navigation, route,
+  typography, and visual-identity preservation; ownership-neutral states;
+  private-data presentation; and quiz answer secrecy.
+- Integrated verification passed with no unresolved Critical, Important,
+  Minor, or verification-blocking finding. Decisions D13-01 through D13-12
+  remain satisfied.
 - Synthetic data cleanup passed with every tagged collection at zero.
   Generated build outputs and temporary QA files were removed; frontend and
   backend services started for verification were stopped.
-- Phase 14 remains `PLANNED` and is not activated.
-- No staging, commit, or push is authorized.
+- Phase 14 remains `PLANNED` / `INACTIVE`, is not activated, and requires a
+  separate operator-approved activation prompt.
+- This documentation-only governance closeout commit is authorized; push is
+  not authorized.
 
 ## Phase 13D completion record
 
