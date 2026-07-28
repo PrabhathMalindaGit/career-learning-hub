@@ -8,11 +8,9 @@
 - Most recently completed pass: Phase 13F — Responsive and Touch-Target
   Hardening
   (`COMPLETED`)
-- Active pass: None
-- Next planned pass: Phase 13G — Integrated Accessibility and Visual QA
-  (`PLANNED` / `INACTIVE`)
+- Active pass: Phase 13G — Integrated Accessibility and Visual QA (`ACTIVE`)
 - Implementation-pass state: Phase 13B through Phase 13F are `COMPLETED`;
-  Phase 13G is `PLANNED` and `INACTIVE`
+  Phase 13G is `ACTIVE`
 - Plan date: 2026-07-27
 - Audited baseline: branch `phase-12-unified-frontend`, HEAD `98c3f11`
 - Phase 13B implementation baseline: branch `phase-12-unified-frontend`, HEAD
@@ -64,6 +62,16 @@
   `PHASE_13F_RESPONSIVE_HARDENING_VISUAL_QA_APPROVED`
 - Phase 13F closeout and implementation commit authorized by:
   `CLH-PHASE-13F-CLOSEOUT-AND-COMMIT-01`
+- Phase 13G activated by:
+  `CLH-PHASE-13G-ACTIVATE-AND-VERIFY-01`
+- Phase 13G verification baseline: branch `phase-12-unified-frontend`, HEAD
+  `249dec15888887a4c2cda859b1c7db0593675b14`
+  (`Complete Phase 13 responsive hardening`)
+- Phase 13G is verification-first; writes require an exact operator-approved
+  repair scope
+- Phase 13G and Phase 13 require
+  `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED` before completion
+- Phase 14 remains `PLANNED`; no staging, commit, or push is authorized
 
 ## Planning principles
 
@@ -92,7 +100,7 @@
 | Phase 13D | State presentation, pagination, and job status | COMPLETED | Phase 13B |
 | Phase 13E | Dialogs, focus, and navigation | COMPLETED | Phase 13B; approved dialog decision |
 | Phase 13F | Responsive and touch-target hardening | COMPLETED | Phase 13C–13E |
-| Phase 13G | Integrated accessibility and visual QA | PLANNED / INACTIVE | Phase 13B–13F |
+| Phase 13G | Integrated accessibility and visual QA | ACTIVE | Phase 13B–13F |
 
 Six passes are the smallest safe sequence because foundations must precede
 consumer migrations, interaction mechanics require independent keyboard
@@ -917,7 +925,45 @@ route before local cleanup.
 ### Pass ID and status
 
 - Pass ID: Phase 13G
-- Status: `PLANNED` / `INACTIVE`
+- Status: `ACTIVE`
+- Activated by: `CLH-PHASE-13G-ACTIVATE-AND-VERIFY-01`
+- Verification baseline: branch `phase-12-unified-frontend`, HEAD
+  `249dec15888887a4c2cda859b1c7db0593675b14`
+  (`Complete Phase 13 responsive hardening`)
+- The test-harness repair prompt authorized only
+  `frontend/src/features/learning/LearningConversationWorkspace.test.tsx`.
+  The target-repair prompt later authorized only
+  `frontend/src/features/interviews/interviewCoach.css`. No staging, commit,
+  or push is authorized.
+- Phase 13G and Phase 13 cannot complete before
+  `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
+- Repair-and-resume prompt:
+  `CLH-PHASE-13G-TEST-HARNESS-REPAIR-AND-RESUME-01`.
+- The authorized single test-harness repair preserved the exact
+  `listLearningMessages` arguments while awaiting the asynchronous effect.
+  The isolated test, 25-file focused gate (290/290), complete frontend suite
+  (569/569), frontend and root typechecks, and production build passed.
+- Integrated Browser verification found five ordinary Interview workspace
+  controls at 39.5–41.5px with `min-height: auto`, below the Phase 13F 44px
+  acceptance criterion.
+- Repair-and-resume prompt:
+  `CLH-PHASE-13G-INTERVIEW-TARGET-REPAIR-AND-RESUME-01`.
+- One narrow Interview-only selector group now applies
+  `min-height: var(--minimum-interactive-target)` to exactly the five
+  affected text/select controls. No width, markup, breakpoint, or behavior
+  changed.
+- Focused Interview/router verification passed 3 files and 93 tests. The
+  post-repair complete frontend suite passed 41 files and 569 tests exactly
+  once; frontend and root typechecks and the production build passed.
+- At 1440, 1024, 768, 390, and 320 CSS pixels, all five repaired controls
+  measured exactly 44px high, no ordinary Interview control remained below
+  44px, and the completed route/width matrix had no horizontal overflow.
+- Current decision: Phase 13G remains `ACTIVE` and is
+  `READY_FOR_HUMAN_VISUAL_QA`. Request
+  `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED` only after the human confirms
+  native keyboard behavior and 200% browser zoom.
+- Synthetic data, temporary fixtures, and generated outputs were cleaned and
+  verified absent.
 
 ### Purpose
 
@@ -1079,9 +1125,9 @@ Phase 13 may be marked `COMPLETED` only after:
 6. Synthetic data and temporary artifacts are verified removed.
 7. Phase 14 remains `PLANNED` until separately activated.
 
-Phase 13B through Phase 13F are completed. Phase 13 remains `ACTIVE`; no pass
-is active; Phase 13G remains `PLANNED` and `INACTIVE`; and Phase 14 remains
+Phase 13B through Phase 13F are completed. Phase 13 and Phase 13G remain
+`ACTIVE`; Phase 13G is `READY_FOR_HUMAN_VISUAL_QA`; and Phase 14 remains
 `PLANNED` and is not activated. The current workflow state is
-`PHASE 13 ACTIVE — PASS F COMPLETED — PASS G PLANNED, NOT ACTIVATED`. No
-push, Phase 13G activation, Phase 14 activation, or Phase 13 completion is
-authorized.
+`PHASE 13 ACTIVE — PASS G: INTEGRATED ACCESSIBILITY AND VISUAL QA`. No
+staging, commit, push, Phase 14 activation, Phase 13G completion, or Phase 13
+completion is authorized.

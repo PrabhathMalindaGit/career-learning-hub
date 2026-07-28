@@ -6,12 +6,10 @@
 - Most recently completed pass: Phase 13F, Responsive and Touch-Target
   Hardening
   (`COMPLETED`)
-- Active pass: None
-- Next planned pass: Phase 13G, Integrated Accessibility and Visual QA
-  (`PLANNED` / `INACTIVE`)
+- Active pass: Phase 13G, Integrated Accessibility and Visual QA (`ACTIVE`)
 - Next planned major phase: Phase 14, End-to-End Browser Testing (`PLANNED`)
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS F COMPLETED — PASS G PLANNED, NOT ACTIVATED`
+  `PHASE 13 ACTIVE — PASS G: INTEGRATED ACCESSIBILITY AND VISUAL QA`
 - Controlling skills: `karpathy-guidelines`, `web-design-guidelines`,
   `test-driven-development`, `systematic-debugging`,
   `browser:control-in-app-browser`
@@ -36,7 +34,7 @@
 - Phase 13D — State Presentation, Pagination, and Job Status is `COMPLETED`.
 - Phase 13E — Dialogs, Focus, and Navigation is `COMPLETED`.
 - Phase 13F — Responsive and Touch-Target Hardening is `COMPLETED`.
-- Phase 13G is `PLANNED` and `INACTIVE`.
+- Phase 13G — Integrated Accessibility and Visual QA is `ACTIVE`.
 - Phase 14 remains `PLANNED` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -229,6 +227,53 @@
   accessibility and visual regression verification remains assigned to Phase
   13G. Backend tests and external AI-provider configuration were not
   required.
+
+## Phase 13G activation record
+
+- Activated by operator-approved prompt
+  `CLH-PHASE-13G-ACTIVATE-AND-VERIFY-01`.
+- Verification baseline: branch `phase-12-unified-frontend`, HEAD
+  `249dec15888887a4c2cda859b1c7db0593675b14`
+  (`Complete Phase 13 responsive hardening`).
+- Phase 13G is verification-first. The test-harness repair prompt authorized
+  only
+  `frontend/src/features/learning/LearningConversationWorkspace.test.tsx`,
+  and the later target-repair prompt authorized only
+  `frontend/src/features/interviews/interviewCoach.css`.
+- Phase 13A through Phase 13F remain `COMPLETED`; Phase 13 remains `ACTIVE`.
+- Phase 13G and Phase 13 cannot be completed before the operator provides
+  `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
+- Repair-and-resume prompt
+  `CLH-PHASE-13G-TEST-HARNESS-REPAIR-AND-RESUME-01` replaced the single
+  immediate history-call assertion with an awaited exact equivalent.
+- The repaired isolated test passed; the original focused gate passed 25
+  files and 290 tests; the complete frontend suite passed 41 files and 569
+  tests exactly once; frontend and root typechecks and the production build
+  passed.
+- Integrated Browser verification confirmed one Important product finding:
+  five ordinary Interview workspace inputs/selects rendered at 39.5–41.5px
+  rather than the required 44px minimum.
+- Repair-and-resume prompt
+  `CLH-PHASE-13G-INTERVIEW-TARGET-REPAIR-AND-RESUME-01` authorized one
+  bounded CSS repair. The narrow Interview-only selector group now applies
+  `min-height: var(--minimum-interactive-target)` to exactly those five
+  controls without changing widths, markup, behavior, or breakpoints.
+- Focused Interview/router tests passed 3 files and 93 tests. The post-repair
+  complete frontend suite passed 41 files and 569 tests exactly once;
+  frontend and root typechecks and the production build passed.
+- At 1440, 1024, 768, 390, and 320 CSS pixels, all five repaired controls
+  measured exactly 44px high, no ordinary Interview target remained below
+  44px, and the completed route/width matrix had no horizontal overflow.
+- Phase 13G remains `ACTIVE` and is
+  `READY_FOR_HUMAN_VISUAL_QA`. Native Enter, Space, Tab, Shift+Tab, complete
+  native arrow-key behavior, and 200% browser zoom remain explicit human
+  checks. The required token is
+  `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
+- Synthetic data cleanup passed with every tagged collection at zero.
+  Generated build outputs and temporary QA files were removed; frontend and
+  backend services started for verification were stopped.
+- Phase 14 remains `PLANNED` and is not activated.
+- No staging, commit, or push is authorized.
 
 ## Phase 13D completion record
 

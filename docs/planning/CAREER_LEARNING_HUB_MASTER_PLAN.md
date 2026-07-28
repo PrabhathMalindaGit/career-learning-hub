@@ -987,13 +987,11 @@
 - Most recently completed pass: Phase 13F — Responsive and Touch-Target
   Hardening
   (`COMPLETED`).
-- Active pass: None.
-- Next planned pass: Phase 13G — Integrated Accessibility and Visual QA
-  (`PLANNED` / `INACTIVE`).
+- Active pass: Phase 13G — Integrated Accessibility and Visual QA (`ACTIVE`).
 - Next planned major phase: Phase 14 — End-to-End Browser Testing
   (`PLANNED`).
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS F COMPLETED — PASS G PLANNED, NOT ACTIVATED`.
+  `PHASE 13 ACTIVE — PASS G: INTEGRATED ACCESSIBILITY AND VISUAL QA`.
 - Phase 13A was audit-only and made no production UI changes.
 - Phase 13A remains `COMPLETED`.
 - Consolidation recommendations must demonstrate genuine duplication.
@@ -1047,7 +1045,43 @@
   `PHASE_13F_RESPONSIVE_HARDENING_VISUAL_QA_APPROVED`.
 - Phase 13F closeout and the implementation commit were authorized by
   `CLH-PHASE-13F-CLOSEOUT-AND-COMMIT-01`.
-- Phase 13G remains `PLANNED` and `INACTIVE`.
+- Phase 13G was activated by operator-approved prompt
+  `CLH-PHASE-13G-ACTIVATE-AND-VERIFY-01` from verification baseline branch
+  `phase-12-unified-frontend`, HEAD
+  `249dec15888887a4c2cda859b1c7db0593675b14`
+  (`Complete Phase 13 responsive hardening`).
+- Phase 13G is `ACTIVE` and verification-first. Phase 13 cannot complete
+  before `PHASE_13G_INTEGRATED_VISUAL_QA_APPROVED`.
+- Repair-and-resume prompt
+  `CLH-PHASE-13G-TEST-HARNESS-REPAIR-AND-RESUME-01` repaired the single
+  timing-sensitive test assertion with an awaited exact-call assertion. The
+  isolated test, 25-file focused gate (290/290), complete frontend suite
+  (569/569), frontend and root typechecks, and production build passed.
+- Integrated Browser verification then confirmed one Important product
+  finding: five ordinary Interview workspace controls rendered at
+  39.5–41.5px instead of the required 44px minimum.
+- Repair-and-resume prompt
+  `CLH-PHASE-13G-INTERVIEW-TARGET-REPAIR-AND-RESUME-01` authorized one
+  bounded production repair in
+  `frontend/src/features/interviews/interviewCoach.css`. A narrow
+  Interview-only selector group now applies
+  `min-height: var(--minimum-interactive-target)` to exactly those five
+  controls.
+- Focused Interview/router verification passed 3 files and 93 tests; the
+  post-repair complete frontend suite passed 41 files and 569 tests exactly
+  once; both typechecks and the production build passed.
+- The five repaired controls measured exactly 44px high at 1440, 1024, 768,
+  390, and 320 CSS pixels. No ordinary Interview target remained below 44px,
+  and the completed route/width matrix had no horizontal overflow, console
+  issue, framework overlay, privacy disclosure, ownership disclosure, or quiz
+  answer-key exposure.
+- Phase 13G remains `ACTIVE` and is
+  `READY_FOR_HUMAN_VISUAL_QA`; native Enter, Space, Tab, Shift+Tab, complete
+  native arrow-key behavior, and 200% browser zoom remain explicit human
+  checks.
+- Synthetic records, temporary fixtures, and generated build outputs were
+  removed and verified absent.
+- No staging, commit, or push is authorized.
 - Phase 14 remains `PLANNED` and is not activated.
 
 #### Phase 13B completion evidence

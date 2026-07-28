@@ -319,6 +319,14 @@
   background: #fbfdfc;
 }
 
+.interview-generation-form input,
+.interview-generation-form select,
+.interview-question-filters input:not([type="checkbox"]),
+.interview-question-filters select,
+.interview-attempt-status-filter select {
+  min-height: var(--minimum-interactive-target);
+}
+
 .interview-attempt-status-filter {
   max-width: 240px;
 }

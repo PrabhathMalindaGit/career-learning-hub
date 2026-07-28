@@ -157,13 +157,15 @@ describe("Learning conversation workspace", () => {
       await screen.findByRole("heading", { name: "Ask the document" }),
     ).not.toBeNull();
     expect(screen.getByText("No messages yet.")).not.toBeNull();
-    expect(learningApi.listLearningMessages).toHaveBeenCalledWith(
-      documentId,
-      conversationId,
-      4,
-      { page: 1, limit: 20 },
-      expect.any(AbortSignal),
-    );
+    await waitFor(() => {
+      expect(learningApi.listLearningMessages).toHaveBeenCalledWith(
+        documentId,
+        conversationId,
+        4,
+        { page: 1, limit: 20 },
+        expect.any(AbortSignal),
+      );
+    });
     expect(
       screen.getByRole("textbox", { name: "Question" }),
     ).not.toBeNull();
