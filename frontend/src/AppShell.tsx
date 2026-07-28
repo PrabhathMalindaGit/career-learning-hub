@@ -6,6 +6,7 @@ import {
 import {
   NavLink,
   Outlet,
+  useLocation,
 } from "react-router-dom";
 import { useAuth } from "./features/auth/AuthProvider";
 
@@ -23,14 +24,26 @@ function navigationClass({ isActive }: { isActive: boolean }) {
 
 export function AppShell() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const mobileToggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.key]);
 
   useEffect(() => {
     if (!mobileOpen) return;
 
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
+      if (
+        event.defaultPrevented ||
+        (event.target instanceof Element &&
+          event.target.closest("dialog[open]"))
+      ) {
+        return;
+      }
       setMobileOpen(false);
       mobileToggleRef.current?.focus();
     }
@@ -107,7 +120,6 @@ export function AppShell() {
               className={navigationClass}
               key={item.to}
               to={item.to}
-              onClick={() => setMobileOpen(false)}
             >
               {item.label}
             </NavLink>

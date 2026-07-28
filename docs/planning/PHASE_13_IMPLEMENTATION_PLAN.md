@@ -5,14 +5,13 @@
 - Derived from:
   `docs/planning/PHASE_13_SHARED_DESIGN_UX_AUDIT.md`
 - Parent phase: Phase 13 — Shared Design and UX Hardening (`ACTIVE`)
-- Most recently completed pass: Phase 13D — State Presentation, Pagination,
-  and Job Status
+- Most recently completed pass: Phase 13E — Dialogs, Focus, and Navigation
   (`COMPLETED`)
-- Active pass: none
-- Next planned pass: Phase 13E — Dialogs, Focus, and Navigation
+- Active pass: None
+- Next planned pass: Phase 13F — Responsive and Touch-Target Hardening
   (`PLANNED` / `INACTIVE`)
-- Implementation-pass state: Phase 13B through Phase 13D are `COMPLETED`;
-  Phase 13E through Phase 13G are `PLANNED` and `INACTIVE`
+- Implementation-pass state: Phase 13B through Phase 13E are `COMPLETED`;
+  Phase 13F and Phase 13G are `PLANNED` and `INACTIVE`
 - Plan date: 2026-07-27
 - Audited baseline: branch `phase-12-unified-frontend`, HEAD `98c3f11`
 - Phase 13B implementation baseline: branch `phase-12-unified-frontend`, HEAD
@@ -45,8 +44,14 @@
   and D13-12
 - Phase 13D human visual QA was approved, and closeout and the implementation
   commit were authorized by `CLH-PHASE-13D-CLOSEOUT-AND-COMMIT-01`
-- Planning rule: Phase 13E through Phase 13G remain proposals without
-  implementation authority.
+- Phase 13E activated by:
+  `CLH-PHASE-13E-ACTIVATE-AND-IMPLEMENT-01`
+- Phase 13E implementation baseline: branch `phase-12-unified-frontend`, HEAD
+  `6658e2b` (`Complete Phase 13 states and pagination`)
+- Phase 13E controlling decisions: D13-03, D13-04, D13-06, D13-07, D13-08,
+  D13-11, and D13-12
+- Phase 13E human visual QA was approved, and closeout and the implementation
+  commit were authorized by `CLH-PHASE-13E-CLOSEOUT-AND-COMMIT-01`
 
 ## Planning principles
 
@@ -63,7 +68,7 @@
    broader checks.
 7. Every visible pass stops at the human visual-QA gate before commit.
 8. Each pass is a separate reviewable commit boundary after explicit commit
-   authorization. Phase 13B through Phase 13D received that authority; no
+   authorization. Phase 13B through Phase 13E received that authority; no
    later pass or push is authorized.
 
 ## Proposed pass sequence
@@ -73,7 +78,7 @@
 | Phase 13B | Shared foundations and approved tokens | COMPLETED | Phase 13A approval |
 | Phase 13C | Forms, buttons, and action hierarchy | COMPLETED | Phase 13B |
 | Phase 13D | State presentation, pagination, and job status | COMPLETED | Phase 13B |
-| Phase 13E | Dialogs, focus, and navigation | PLANNED / INACTIVE | Phase 13B; approved dialog decision |
+| Phase 13E | Dialogs, focus, and navigation | COMPLETED | Phase 13B; approved dialog decision |
 | Phase 13F | Responsive and touch-target hardening | PLANNED / INACTIVE | Phase 13C–13E |
 | Phase 13G | Integrated accessibility and visual QA | PLANNED / INACTIVE | Phase 13B–13F |
 
@@ -573,7 +578,7 @@ at call sites.
 ### Pass ID and status
 
 - Pass ID: Phase 13E
-- Status: `PLANNED` / `INACTIVE`
+- Status: `COMPLETED`
 
 ### Purpose
 
@@ -672,8 +677,45 @@ works and should be hardened, not redesigned.
 
 - Required for both Resume dialogs, Learning deletion, mobile navigation, back
   links, and all audited widths plus 200% zoom.
-- Expected token:
-  `PHASE_13E_DIALOGS_FOCUS_VISUAL_QA_APPROVED`.
+- Human visual QA approved all required dialog, focus, navigation, responsive,
+  zoom, and physical-keyboard checks.
+
+### Completion evidence
+
+- Created one minimal native `Dialog` presentation shell. Migrated the AI
+  recommendation confirmation first and the Resume unsaved-navigation blocker
+  second while preserving caller-owned copy, actions, forms, state, and
+  domain behavior.
+- Accessible naming and descriptions, safe deterministic initial focus,
+  forward and reverse focus containment, caller-owned Escape policy, exact
+  focus restoration, nested forms, destructive initial-focus prevention, and
+  Dialog Escape isolation passed review.
+- Hardened mobile-menu targets, Escape, committed-navigation close, and exact
+  focus restoration while preserving the navigation model, routes, order,
+  active state, 980px breakpoint, skip link, and logout behavior.
+- Hardened Interview normal/error and Learning normal/error back links to 44px
+  targets without changing labels or destinations. No Resume back link was
+  invented.
+- Learning tabs remained domain-specific. Learning deletion production
+  behavior, typed-title gating, ownership, polling, orchestration, duplicate
+  prevention, recovery, and cleanup remained unchanged.
+- No generic modal manager, Tabs component, toast provider, drawer, sidebar,
+  breadcrumb system, or second design system was introduced.
+- Final focused verification passed 7 files and 139 tests. The complete
+  frontend suite passed 41 files and 567 tests before a later
+  Browser-discovered integration repair. The final repair passed affected
+  focused tests, frontend and root typechecks, the production build, and
+  Browser recheck; the complete suite was intentionally not rerun.
+- Browser QA passed at 1440px, 1024px, 768px, 390px, and 320px with a healthy
+  console. Human review approved native 200% zoom, physical-keyboard operation,
+  visible focus, target sizing, wrapping, and the absence of new
+  component-level clipping, overlap, or overflow. Synthetic cleanup passed
+  and generated artifacts were absent.
+- Existing React Router directive and production chunk-size warnings remain.
+  The existing approximately 15px global root overflow at 320px and broader
+  responsive and touch-target work remain assigned to Phase 13F. Integrated
+  cross-route accessibility QA remains assigned to Phase 13G. Backend tests
+  and external AI-provider configuration were not required.
 
 ### Expected commit boundary
 
@@ -984,8 +1026,9 @@ Phase 13 may be marked `COMPLETED` only after:
 6. Synthetic data and temporary artifacts are verified removed.
 7. Phase 14 remains `PLANNED` until separately activated.
 
-Phase 13B through Phase 13D are completed. Phase 13 remains `ACTIVE`; Phase
-13E through Phase 13G remain `PLANNED` and `INACTIVE`; and Phase 14 remains
-`PLANNED` and is not activated. Phase 13D closeout and one implementation
-commit are authorized. No push, Phase 13E activation, or Phase 13 completion
-is authorized.
+Phase 13B through Phase 13E are completed. Phase 13 remains `ACTIVE`; no pass
+is active; Phase 13F and Phase 13G remain `PLANNED` and `INACTIVE`; and Phase
+14 remains `PLANNED` and is not activated. The current workflow state is
+`PHASE 13 ACTIVE — PASS E COMPLETED — PASS F PLANNED, NOT ACTIVATED`. Phase
+13F requires a separate activation and implementation prompt. No push, Phase
+13F activation, Phase 14 activation, or Phase 13 completion is authorized.

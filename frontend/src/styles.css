@@ -447,6 +447,18 @@ h2 {
   box-shadow: inset 0 -2px 0 var(--accent);
 }
 
+.workspace-back-link {
+  display: inline-flex;
+  width: fit-content;
+  min-height: var(--minimum-interactive-target);
+  max-width: 100%;
+  align-items: center;
+  padding-block: 8px;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .session-summary {
   display: flex;
   min-width: 0;
@@ -619,8 +631,13 @@ h2 {
   .mobile-nav .nav-link,
   .mobile-logout {
     width: 100%;
+    min-height: var(--minimum-interactive-target);
     justify-content: flex-start;
     white-space: normal;
+  }
+
+  .mobile-nav-toggle {
+    min-height: var(--minimum-interactive-target);
   }
 }
 

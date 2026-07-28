@@ -984,16 +984,15 @@
 - Status: ACTIVE
 - Activated by operator-approved prompt
   `CLH-PHASE-13A-ACTIVATE-AND-AUDIT-01`.
-- Most recently completed pass: Phase 13D — State Presentation, Pagination,
-  and Job Status
+- Most recently completed pass: Phase 13E — Dialogs, Focus, and Navigation
   (`COMPLETED`).
 - Active pass: None.
-- Next planned pass: Phase 13E — Dialogs, Focus, and Navigation
+- Next planned pass: Phase 13F — Responsive and Touch-Target Hardening
   (`PLANNED` / `INACTIVE`).
 - Next planned major phase: Phase 14 — End-to-End Browser Testing
   (`PLANNED`).
 - Current workflow state:
-  `PHASE 13 ACTIVE — PASS D COMPLETED — PASS E PLANNED, NOT ACTIVATED`.
+  `PHASE 13 ACTIVE — PASS E COMPLETED — PASS F PLANNED, NOT ACTIVATED`.
 - Phase 13A was audit-only and made no production UI changes.
 - Phase 13A remains `COMPLETED`.
 - Consolidation recommendations must demonstrate genuine duplication.
@@ -1027,7 +1026,17 @@
   pagination, Learning job-state, responsive, zoom, and keyboard checks.
 - Phase 13D closeout and the implementation commit were authorized by
   `CLH-PHASE-13D-CLOSEOUT-AND-COMMIT-01`.
-- Phase 13E through Phase 13G remain `PLANNED` and `INACTIVE`.
+- Phase 13E was activated by operator-approved prompt
+  `CLH-PHASE-13E-ACTIVATE-AND-IMPLEMENT-01` from implementation baseline
+  `6658e2b` (`Complete Phase 13 states and pagination`).
+- Decisions D13-03, D13-04, D13-06, D13-07, D13-08, D13-11, and D13-12
+  control Phase 13E.
+- Phase 13E is `COMPLETED`. Human review approved the required dialog, focus,
+  navigation, responsive, zoom, and physical-keyboard checks.
+- Phase 13E closeout and the implementation commit were authorized by
+  `CLH-PHASE-13E-CLOSEOUT-AND-COMMIT-01`.
+- Phase 13F and Phase 13G remain `PLANNED` and `INACTIVE`.
+- Phase 13F requires a separate activation and implementation prompt.
 - Phase 14 remains `PLANNED` and is not activated.
 
 #### Phase 13B completion evidence
@@ -1112,6 +1121,41 @@
   existing approximately 15px global root overflow at 320px remains deferred
   to Phase 13F; dialogs and navigation mechanics remain assigned to Phase
   13E. Backend tests and AI-provider configuration were not required.
+
+#### Phase 13E completion evidence
+
+- Created one minimal native `Dialog` presentation shell. The AI
+  recommendation confirmation was migrated first and the Resume
+  unsaved-navigation blocker second, while caller-owned copy, actions, forms,
+  state, and domain behavior were preserved.
+- Deterministic non-destructive initial focus, accessible names and
+  descriptions, forward and reverse focus containment, caller-owned Escape
+  policy, exact focus restoration, nested forms, and Dialog Escape isolation
+  passed review.
+- Hardened mobile-menu targets, Escape handling, committed-navigation close,
+  and exact focus restoration. Existing routes, order, active state, 980px
+  breakpoint, skip link, logout behavior, and navigation model were
+  preserved.
+- Hardened equivalent Interview and Learning back links to 44px targets.
+  Learning tabs remained domain-specific, Learning deletion production
+  behavior remained unchanged, and no Resume back link was invented.
+- No generic modal manager, Tabs component, toast provider, drawer, sidebar,
+  breadcrumb system, or second design system was introduced.
+- Final focused verification passed 7 files and 139 tests. The complete
+  frontend suite passed 41 files and 567 tests before a later
+  Browser-discovered integration repair; the final repair passed affected
+  focused tests, frontend and root typechecks, the production build, and
+  Browser recheck. The complete suite was intentionally not rerun.
+- Browser QA passed at 1440px, 1024px, 768px, 390px, and 320px with a healthy
+  console. Human review approved native 200% zoom, physical-keyboard behavior,
+  visible focus, wrapping, and the absence of new component-level clipping,
+  overlap, or overflow. Synthetic cleanup passed and generated artifacts were
+  absent.
+- Existing React Router directive and production chunk-size warnings remain.
+  The existing approximately 15px global root overflow at 320px and broader
+  responsive and touch-target work remain assigned to Phase 13F. Integrated
+  cross-route accessibility QA remains assigned to Phase 13G. Backend tests
+  and external AI-provider configuration were not required.
 
 #### Purpose
 

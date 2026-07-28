@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { Dialog } from "../../components/Dialog";
 import type { ResumeAnalysis } from "./types";
 
 interface AiRecommendationsProps {
@@ -21,17 +22,6 @@ export function AiRecommendations({
   const [confirming, setConfirming] = useState(false);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const applyButtonRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!confirming) return;
-    cancelButtonRef.current?.focus();
-    return () => {
-      if (applyButtonRef.current?.isConnected) {
-        applyButtonRef.current.focus();
-      }
-    };
-  }, [confirming]);
 
   return (
     <aside
@@ -173,80 +163,45 @@ export function AiRecommendations({
         Apply selected suggestions
       </button>
 
-      {confirming ? (
-        <div
-          className="resume-dialog-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setConfirming(false);
-          }}
-        >
-          <div
-            ref={dialogRef}
-            className="resume-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="resume-apply-dialog-title"
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                setConfirming(false);
-                return;
-              }
-              if (event.key !== "Tab") return;
-              const focusable = Array.from(
-                dialogRef.current?.querySelectorAll<HTMLButtonElement>(
-                  "button:not([disabled])",
-                ) ?? [],
-              );
-              const first = focusable[0];
-              const last = focusable[focusable.length - 1];
-              if (
-                event.shiftKey &&
-                document.activeElement === first
-              ) {
-                event.preventDefault();
-                last?.focus();
-              } else if (
-                !event.shiftKey &&
-                document.activeElement === last
-              ) {
-                event.preventDefault();
-                first?.focus();
-              }
+      <Dialog
+        open={confirming}
+        className="resume-dialog"
+        labelledBy="resume-apply-dialog-title"
+        describedBy="resume-apply-dialog-description"
+        initialFocusRef={cancelButtonRef}
+        returnFocusRef={applyButtonRef}
+        onCancel={() => setConfirming(false)}
+        canDismissOnBackdrop
+      >
+        <h2 id="resume-apply-dialog-title">
+          Apply selected suggestions
+        </h2>
+        <p id="resume-apply-dialog-description">
+          This creates a new immutable resume version. Review the
+          resulting content for accuracy; this assessment will become
+          stale.
+        </p>
+        <div className="resume-dialog-actions">
+          <button
+            type="button"
+            ref={cancelButtonRef}
+            onClick={() => setConfirming(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="resume-primary-button"
+            disabled={busy}
+            onClick={() => {
+              setConfirming(false);
+              onConfirmApply();
             }}
           >
-            <h2 id="resume-apply-dialog-title">
-              Apply selected suggestions
-            </h2>
-            <p>
-              This creates a new immutable resume version. Review the
-              resulting content for accuracy; this assessment will become
-              stale.
-            </p>
-            <div className="resume-dialog-actions">
-              <button
-                type="button"
-                ref={cancelButtonRef}
-                onClick={() => setConfirming(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="resume-primary-button"
-                disabled={busy}
-                onClick={() => {
-                  setConfirming(false);
-                  onConfirmApply();
-                }}
-              >
-                Create new version
-              </button>
-            </div>
-          </div>
+            Create new version
+          </button>
         </div>
-      ) : null}
+      </Dialog>
     </aside>
   );
 }

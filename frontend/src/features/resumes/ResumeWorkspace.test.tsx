@@ -556,11 +556,12 @@ describe("ResumeWorkspace", () => {
       }),
     );
     await user.click(apply);
-    expect(
-      screen.getByRole("dialog", {
-        name: "Apply selected suggestions",
-      }),
-    ).not.toBeNull();
+    const applyDialog = screen.getByRole("dialog", {
+      name: "Apply selected suggestions",
+      description:
+        "This creates a new immutable resume version. Review the resulting content for accuracy; this assessment will become stale.",
+    });
+    expect(applyDialog.tagName).toBe("DIALOG");
     const cancelApply = screen.getByRole("button", { name: "Cancel" });
     const createVersion = screen.getByRole("button", {
       name: "Create new version",
@@ -605,11 +606,12 @@ describe("ResumeWorkspace", () => {
     await user.type(fullName, " changed");
 
     void router.navigate("/dashboard");
-    expect(
-      await screen.findByRole("dialog", {
-        name: "Unsaved changes",
-      }),
-    ).not.toBeNull();
+    const navigationDialog = await screen.findByRole("dialog", {
+      name: "Unsaved changes",
+      description:
+        "Leaving now will discard changes that have not been saved as a new version.",
+    });
+    expect(navigationDialog.tagName).toBe("DIALOG");
     const keepEditing = screen.getByRole("button", {
       name: "Keep editing",
     });

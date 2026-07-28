@@ -663,6 +663,39 @@ describe("Page-aware extracted content", () => {
         "aria-selected",
       ),
     ).toBe("true");
+    const backLink = screen.getByRole("link", {
+      name: "← Document library",
+    });
+    expect(backLink.getAttribute("href")).toBe("/learning");
+    expect(
+      backLink.classList.contains("workspace-back-link"),
+    ).toBe(true);
+  });
+
+  it("preserves wrapping arrow-key selection and focus behavior", async () => {
+    renderWorkspace();
+    const overview = await screen.findByRole("tab", {
+      name: "Overview",
+    });
+    const original = screen.getByRole("tab", {
+      name: "Original PDF",
+    });
+    const quizzes = screen.getByRole("tab", {
+      name: "Quizzes",
+    });
+
+    overview.focus();
+    await userEvent.keyboard("{ArrowLeft}");
+    expect(document.activeElement).toBe(quizzes);
+    expect(quizzes.getAttribute("aria-selected")).toBe("true");
+
+    await userEvent.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(overview);
+    expect(overview.getAttribute("aria-selected")).toBe("true");
+
+    await userEvent.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(original);
+    expect(original.getAttribute("aria-selected")).toBe("true");
   });
 
   it("does not persist private source or document content", async () => {

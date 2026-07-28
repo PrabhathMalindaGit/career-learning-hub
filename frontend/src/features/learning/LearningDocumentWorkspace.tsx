@@ -574,7 +574,10 @@ export function LearningDocumentWorkspace() {
         <h1>{title}</h1>
         <p className="section-intro">{loadState.error.message}</p>
         <RequestId value={loadState.error.requestId} />
-        <Link className="learning-back-link" to="/learning">
+        <Link
+          className="workspace-back-link learning-back-link"
+          to="/learning"
+        >
           Return to document library
         </Link>
       </section>
@@ -585,7 +588,10 @@ export function LearningDocumentWorkspace() {
 
   return (
     <section className="workspace-section learning-workspace">
-      <Link className="learning-back-link" to="/learning">
+      <Link
+        className="workspace-back-link learning-back-link"
+        to="/learning"
+      >
         ← Document library
       </Link>
       <header className="learning-workspace-header">

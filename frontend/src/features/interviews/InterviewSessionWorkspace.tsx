@@ -1325,7 +1325,12 @@ export function InterviewSessionWorkspace() {
         >
           Retry session
         </button>
-        <Link to="/interviews">Back to Interview Coach</Link>
+        <Link
+          className="workspace-back-link interview-back-link"
+          to="/interviews"
+        >
+          Back to Interview Coach
+        </Link>
       </section>
     );
   }
@@ -1344,7 +1349,10 @@ export function InterviewSessionWorkspace() {
       className="interview-workspace"
       aria-labelledby="interview-workspace-title"
     >
-      <Link className="interview-back-link" to="/interviews">
+      <Link
+        className="workspace-back-link interview-back-link"
+        to="/interviews"
+      >
         ← All interview sessions
       </Link>
       <header className="interview-workspace-heading">

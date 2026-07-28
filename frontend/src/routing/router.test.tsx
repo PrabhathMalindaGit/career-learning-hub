@@ -723,10 +723,80 @@ describe("authentication forms and shell interaction", () => {
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     await user.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(document.activeElement).toBe(toggle);
+    const mobileNav = screen.getByRole("navigation", {
+      name: "Mobile navigation",
+    });
+    const dashboardLink = within(mobileNav).getByRole("link", {
+      name: "Dashboard",
+    });
+    const resumeLink = within(mobileNav).getByRole("link", {
+      name: "Resumes",
+    });
+    expect(dashboardLink.getAttribute("href")).toBe("/dashboard");
+    expect(
+      dashboardLink.classList.contains("nav-link--active"),
+    ).toBe(true);
+    await user.tab();
+    expect(document.activeElement).toBe(dashboardLink);
+    await user.tab();
+    expect(document.activeElement).toBe(resumeLink);
     await user.keyboard("{Escape}");
 
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(toggle);
+  });
+
+  it("keeps the exact mobile route invoker available while navigation is blocked", async () => {
+    vi.mocked(authApi.refreshSession).mockResolvedValue(
+      authenticatedSession,
+    );
+    const router = renderRoute(
+      "/resumes/507f1f77bcf86cd799439011",
+    );
+    const user = userEvent.setup();
+    const fullName = await screen.findByRole("textbox", {
+      name: "Full name",
+    });
+    await user.type(fullName, " changed");
+
+    const toggle = screen.getByRole("button", {
+      name: "Toggle navigation",
+    });
+    await user.click(toggle);
+    const mobileNav = screen.getByRole("navigation", {
+      name: "Mobile navigation",
+    });
+    const dashboardLink = within(mobileNav).getByRole("link", {
+      name: "Dashboard",
+    });
+    await user.click(dashboardLink);
+
+    expect(
+      await screen.findByRole("dialog", {
+        name: "Unsaved changes",
+      }),
+    ).not.toBeNull();
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(dashboardLink.isConnected).toBe(true);
+
+    await user.keyboard("{Escape}");
+    expect(router.state.location.pathname).toBe(
+      "/resumes/507f1f77bcf86cd799439011",
+    );
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(document.activeElement).toBe(dashboardLink);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Discard draft changes",
+      }),
+    );
+    await user.click(dashboardLink);
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/dashboard");
+    });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("closes mobile navigation after navigation", async () => {

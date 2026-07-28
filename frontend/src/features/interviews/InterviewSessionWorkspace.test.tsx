@@ -225,6 +225,13 @@ describe("InterviewSessionWorkspace", () => {
       sessionId,
       expect.any(AbortSignal),
     );
+    const backLink = screen.getByRole("link", {
+      name: "← All interview sessions",
+    });
+    expect(backLink.getAttribute("href")).toBe("/interviews");
+    expect(
+      backLink.classList.contains("workspace-back-link"),
+    ).toBe(true);
   });
 
   it("clears route-owned state and ignores late detail from the prior session", async () => {

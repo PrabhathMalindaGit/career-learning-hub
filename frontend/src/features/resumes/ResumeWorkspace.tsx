@@ -6,6 +6,7 @@ import {
 } from "react";
 import { useBlocker, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { Dialog } from "../../components/Dialog";
 import { AiRecommendations } from "./AiRecommendations";
 import { ResumeEditor } from "./ResumeEditor";
 import { ResumePreview } from "./ResumePreview";
@@ -101,29 +102,12 @@ export function ResumeWorkspace() {
   >(new Set());
   const [applying, setApplying] = useState(false);
   const activeControllers = useRef(new Set<AbortController>());
-  const dialogRef = useRef<HTMLDivElement>(null);
   const keepEditingButtonRef = useRef<HTMLButtonElement>(null);
-  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   const dirty =
     draft !== undefined &&
     draftFingerprint(draft) !== baselineFingerprint;
   const blocker = useBlocker(dirty);
-
-  useEffect(() => {
-    if (blocker.state !== "blocked") return;
-    returnFocusRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    keepEditingButtonRef.current?.focus();
-    return () => {
-      if (returnFocusRef.current?.isConnected) {
-        returnFocusRef.current.focus();
-      }
-      returnFocusRef.current = null;
-    };
-  }, [blocker.state]);
 
   function beginOperation(): AbortController {
     const controller = new AbortController();
@@ -842,65 +826,36 @@ export function ResumeWorkspace() {
       ) : null}
 
       {blocker.state === "blocked" ? (
-        <div className="resume-dialog-backdrop" role="presentation">
-          <div
-            ref={dialogRef}
-            className="resume-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="resume-navigation-dialog-title"
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                blocker.reset();
-                return;
-              }
-              if (event.key !== "Tab") return;
-              const focusable = Array.from(
-                dialogRef.current?.querySelectorAll<HTMLButtonElement>(
-                  "button:not([disabled])",
-                ) ?? [],
-              );
-              const first = focusable[0];
-              const last = focusable[focusable.length - 1];
-              if (
-                event.shiftKey &&
-                document.activeElement === first
-              ) {
-                event.preventDefault();
-                last?.focus();
-              } else if (
-                !event.shiftKey &&
-                document.activeElement === last
-              ) {
-                event.preventDefault();
-                first?.focus();
-              }
-            }}
-          >
-            <h2 id="resume-navigation-dialog-title">Unsaved changes</h2>
-            <p>
-              Leaving now will discard changes that have not been saved as
-              a new version.
-            </p>
-            <div className="resume-dialog-actions">
-              <button
-                ref={keepEditingButtonRef}
-                type="button"
-                onClick={() => blocker.reset()}
-              >
-                Keep editing
-              </button>
-              <button
-                type="button"
-                className="destructive-button resume-danger-button"
-                onClick={() => blocker.proceed()}
-              >
-                Leave without saving
-              </button>
-            </div>
+        <Dialog
+          open
+          className="resume-dialog"
+          labelledBy="resume-navigation-dialog-title"
+          describedBy="resume-navigation-dialog-description"
+          initialFocusRef={keepEditingButtonRef}
+          onCancel={() => blocker.reset()}
+        >
+          <h2 id="resume-navigation-dialog-title">Unsaved changes</h2>
+          <p id="resume-navigation-dialog-description">
+            Leaving now will discard changes that have not been saved as
+            a new version.
+          </p>
+          <div className="resume-dialog-actions">
+            <button
+              ref={keepEditingButtonRef}
+              type="button"
+              onClick={() => blocker.reset()}
+            >
+              Keep editing
+            </button>
+            <button
+              type="button"
+              className="destructive-button resume-danger-button"
+              onClick={() => blocker.proceed()}
+            >
+              Leave without saving
+            </button>
           </div>
-        </div>
+        </Dialog>
       ) : null}
     </section>
   );
