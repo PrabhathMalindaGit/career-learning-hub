@@ -130,6 +130,25 @@
 - Phase 15A and Phase 15 must not be marked completed, and Phase 16 must not
   be activated, without separate operator authorization.
 
+## Phase 15A post-audit documentation commit
+
+- The Phase 15A audit execution ended `BLOCKED` and created no commit.
+- The reviewed seven-file documentation result was committed separately at
+  full HEAD `2399f4d5a191d1409c3bc399051083d82654d742`.
+- Exact commit subject:
+  `Activate Phase 15A security and privacy audit`.
+- The commit contains only Phase 15 planning and security-governance
+  documentation. Production and tests remained unchanged.
+- Phase 15 remains `ACTIVE`.
+- Phase 15A remains `ACTIVE` / `BLOCKED`.
+- Phase 16 remains `PLANNED` / `INACTIVE`.
+- Canonical repository/diff scan coverage, current online
+  dependency-advisory coverage, automated contributor/co-change mapping, and
+  the documented deferred deployment/runtime candidates remain unresolved or
+  unaccepted.
+- The required review token remains:
+  `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
+
 ## Phase 14 verification record
 
 - Activated by operator-approved prompt

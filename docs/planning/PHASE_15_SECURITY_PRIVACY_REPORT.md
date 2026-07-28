@@ -441,3 +441,49 @@ have proposed response plans. Production and tests remain unchanged.
 Phase 15 and Phase 15A remain active. Phase 16 remains planned and inactive.
 The audit remains `BLOCKED` from human approval because the required canonical
 scan contract and current dependency advisory coverage are incomplete.
+
+## Post-audit documentation commit
+
+After the Phase 15A audit stopped with the decision `BLOCKED`, the reviewed
+documentation-only result was committed separately. The audit execution itself
+created no commit.
+
+- Audit baseline HEAD:
+  `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
+- Previous full HEAD:
+  `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
+- Documentation commit full HEAD:
+  `2399f4d5a191d1409c3bc399051083d82654d742`
+- Documentation commit short HEAD: `2399f4d`
+- Documentation commit parent:
+  `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
+- Documentation commit subject:
+  `Activate Phase 15A security and privacy audit`
+- Commit date: `2026-07-28T19:01:13+05:30`
+- Author date: `2026-07-28T19:01:13+05:30`
+- Exact committed path count: 7
+- Exact committed paths:
+  1. `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md`
+  2. `docs/planning/CURRENT_PHASE.md`
+  3. `docs/planning/PHASE_15_SECURITY_PRIVACY_PLAN.md`
+  4. `docs/planning/PHASE_15_SECURITY_PRIVACY_REPORT.md`
+  5. `docs/security/PHASE_15_THREAT_MODEL.md`
+  6. `docs/security/PHASE_15_FINDING_REGISTER.md`
+  7. `docs/security/OWNERSHIP_MAP.md`
+- Commit scope: documentation and security-governance files only.
+- Production code changed: no.
+- Test code changed: no.
+- Package or lockfile changed: no.
+- Environment file changed: no.
+- Push status: No push was performed by the audit or this recording
+  execution; remote publication status was not independently verified.
+- Phase 15: `ACTIVE`.
+- Phase 15A: `ACTIVE` / `BLOCKED`.
+- Phase 16: `PLANNED` / `INACTIVE`.
+
+The documentation commit records the completed manual audit evidence. It does
+not convert the audit decision from `BLOCKED` to `READY`, resolve the
+unavailable canonical repository or diff security-scan coverage, resolve
+current online dependency-advisory coverage, or authorize a security repair.
+The human review token remains:
+`PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.

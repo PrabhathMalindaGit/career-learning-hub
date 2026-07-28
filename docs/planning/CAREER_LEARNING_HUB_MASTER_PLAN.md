@@ -1420,6 +1420,17 @@
     an external inventory disclosure that was not explicitly approved.
 - The review token is not requested until those limitations are resolved or
   explicitly accepted.
+- Phase 15A post-audit history:
+  - the audit baseline was
+    `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`;
+  - the audit execution ended `BLOCKED` and created no commit;
+  - the reviewed seven-file documentation-only result was committed
+    separately as `2399f4d5a191d1409c3bc399051083d82654d742`
+    with subject `Activate Phase 15A security and privacy audit`;
+  - Phase 15 remains `ACTIVE`, and Phase 16 remains `PLANNED` / `INACTIVE`;
+  - canonical security-scan and current dependency-advisory coverage
+    limitations remain documented and unresolved or unaccepted; and
+  - security repairs require separate operator authorization.
 
 #### Purpose
 
