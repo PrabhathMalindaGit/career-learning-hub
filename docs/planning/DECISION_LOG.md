@@ -225,3 +225,67 @@
     repository-local Playwright execution available.
   - The temporary `test:e2e` compatibility alias reaches an approved removal
     point after it has been introduced.
+
+## DEC-012: Bound the Phase 16 academic-MVP architecture
+
+- Decision ID: `DEC-012`
+- Date: 2026-07-29
+- Status: ACCEPTED
+- Decision:
+  - Enhance the existing `AppShell` rather than introduce a second shell or
+    navigation system.
+  - Use component-session state for desktop sidebar collapse and the existing
+    accessible `Dialog` foundation for the mobile navigation drawer.
+  - Add contextual breadcrumbs only on deep routes and source dynamic labels
+    from canonical data already loaded by the owning route; never expose raw
+    database IDs as labels.
+  - Export saved canonical Resume versions through an in-place, print-first
+    ATS Classic surface using browser Print / Save as PDF. Do not add a PDF
+    dependency for a download-button abstraction.
+  - Block printing while the current draft is dirty. Support A4 and Letter
+    through the existing Resume design field; keep Standard/Narrow margins
+    temporary and defer embedded PDF metadata.
+  - Render original-versus-suggested Resume text from the existing validated
+    analysis contract with a small deterministic in-repository word diff and
+    accessible `del`/`ins` semantics. Preserve stored IDs, explicit selection,
+    confirmation, stale/version checks, and immutable version creation.
+  - Keep ATS Classic mandatory. Treat additional templates, bounded font and
+    palette controls, and line-spacing choices as conditional. Reuse the
+    canonical Resume model and existing design endpoint; do not add a second
+    design system or silently add persistence fields.
+  - Make Phase 16F evidence-first: establish reproducible accessibility and
+    performance baselines, repair only confirmed findings, and treat the
+    documented single-chunk advisory and static route imports as a measured
+    candidate rather than permission for speculative memoization.
+- Rationale:
+  - The current React/Vite application already has one protected shell, one
+    route tree, one tested native-dialog wrapper, canonical Resume versions,
+    a mutable Resume-level design record, validated AI suggestion provenance,
+    and established browser coverage.
+  - These choices satisfy the academic-MVP requirements with the smallest
+    architecture and no new dependency, provider, storage, authentication, or
+    database boundary.
+  - Phase 13's historical breadcrumb rejection reflected the scope at that
+    time. Phase 16 introduces an explicit new mandatory requirement, so the
+    earlier record is preserved rather than rewritten.
+- Consequences:
+  - Phase 16B through Phase 16G remain inactive until separately authorized.
+  - Visible Phase 16B through Phase 16E work requires desktop, tablet, and
+    mobile human visual QA and a phase-specific approval token before commit.
+  - Backend and shared-contract changes are disallowed by default. A missing
+    persistence field or verified backend defect requires a separately
+    bounded decision instead of a frontend workaround.
+  - P15-001 controlled-academic-MVP operating restrictions remain binding,
+    and no Phase 16 feature expands the deployment boundary.
+  - The operator accepted this architecture with
+    `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`.
+  - The approval closeout changed no production or test code and used no
+    browser, runtime service, provider, Atlas resource, or deployment.
+- Revisit conditions:
+  - Repository evidence disproves one of the inspected contracts.
+  - Print-preview fidelity cannot meet the bounded browser matrix without a
+    different architecture.
+  - A conditional design control requires persistence not present in the
+    current Resume design contract.
+  - Phase 16F measurements demonstrate that a different bounded performance
+    repair is necessary.

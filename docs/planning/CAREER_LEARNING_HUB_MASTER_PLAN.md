@@ -1690,93 +1690,159 @@
   `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
 - Phase 16A-1, Browser Test Naming and Folder Migration is
   `COMPLETED` / `APPROVED`.
+- Phase 16A-2, Roadmap Amendment and Architecture Audit is
+  `COMPLETED` / `APPROVED`.
 - Phase 16B through Phase 16G are `PLANNED` / `INACTIVE`.
 - Phase 17 is `PLANNED` / `INACTIVE`.
 - Accepted approval token:
   `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
+- Accepted Phase 16A-2 approval token:
+  `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`.
+- The operator accepted the Phase 16A-2 architecture with
+  `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`.
 - The migration behavior was verified with 21/21 passing browser workflows.
 - No production source, browser-test behavior, or visible UI changed.
 - The repository still has no declared or portable repository-local
   Playwright runner. `package.json` remains unchanged, neither
   `test:browser` nor `test:e2e` exists, and adding a portable command requires
   separate approval.
+- Phase 16A-2 is documentation and read-only architecture inspection only.
+  It does not activate or implement Phase 16B.
 
 #### Purpose
 
 - Complete the approved academic MVP through bounded subphases.
 - Keep the responsive application shell, feature-completion work,
   accessibility review, and performance review separately reviewable.
-- Begin by giving the executable Playwright suite a stable location and a
-  clear human-facing name.
+- Preserve the stable Full Application Browser Testing location established
+  by Phase 16A-1.
+- Use Phase 16A-2 to establish evidence-backed architecture, exact future
+  write manifests, measurable acceptance criteria, and separate human review
+  gates before feature implementation begins.
 
 #### Required skills
 
 - `karpathy-guidelines`
 - `using-superpowers`
 - `define-goal`
-- `systematic-debugging`
+- `brainstorming`
+- `frontend-skill`
+- `frontend-design`
+- `build-web-apps:react-best-practices` when available
 - `playwright`
+- `lighthouse-verification`
 - `technical-writing`
 - `verification-before-completion`
 - `finishing-a-development-branch`
 
 #### In scope
 
-- Phase 16A-1: relocate executable Playwright browser workflow tests from
-  `e2e/` to `tests/browser/`.
-- Phase 16A-1: adopt Full Application Browser Testing as the primary
-  human-facing name.
-- Phase 16A-1: update only live operational references and active
-  documentation, preserve the historical record, and run full application
-  verification from the new location.
-- Later Phase 16 subphases require separate activation prompts.
+- Phase 16A-1 — Browser Test Naming and Folder Migration:
+  `COMPLETED` / `APPROVED`.
+- Phase 16A-2 — Roadmap Amendment and Architecture Audit:
+  `COMPLETED` / `APPROVED`.
+- Phase 16B — Responsive Sidebar, AppShell and Breadcrumbs:
+  `PLANNED` / `INACTIVE`.
+- Phase 16C — Resume PDF Export and Print:
+  `PLANNED` / `INACTIVE`.
+- Phase 16D — Original-versus-Suggested AI Comparison:
+  `PLANNED` / `INACTIVE`.
+- Phase 16E — Bounded Resume Templates and Design Controls:
+  `PLANNED` / `INACTIVE`, `CONDITIONAL / TIME PERMITTING`.
+- Phase 16F — Accessibility and Performance Review:
+  `PLANNED` / `INACTIVE`.
+- Phase 16G — Integrated Verification and Phase 16 Closeout:
+  `PLANNED` / `INACTIVE`.
+- The controlling architecture and exact subphase contracts are in
+  `docs/planning/PHASE_16_ACADEMIC_MVP_IMPLEMENTATION_PLAN.md`.
+
+Mandatory academic-MVP scope:
+
+- responsive sidebar and mobile navigation drawer;
+- contextual breadcrumbs on deep routes;
+- saved-version Resume printing with A4 and Letter support and dirty-draft
+  protection;
+- original-versus-suggested Resume comparison with accessible diff
+  semantics;
+- final accessibility and performance review; and
+- integrated Phase 16 verification.
+
+Conditional, time-permitting scope:
+
+- Standard/Narrow print margins;
+- a reliable page-sized print-preview surface;
+- Modern Professional and Compact Technical Resume templates;
+- bounded font and accessible palette choices; and
+- Compact/Standard/Relaxed line spacing, only with an approved persistence
+  contract.
 
 #### Out of scope
 
-- Phase 16A-1 does not implement the sidebar, breadcrumbs, Resume PDF export,
-  AI comparison, or templates.
-- Phase 16A-1 does not begin accessibility or performance repairs.
-- No browser-test assertion, selector, route, security control, ownership
-  check, private-PDF check, Quiz-secrecy check, or application behavior may
-  be weakened or changed for the relocation.
-- Phase 16B through Phase 16G and Phase 17 remain inactive.
+- Phase 16A-2 does not implement the sidebar, breadcrumbs, Resume printing,
+  AI comparison, templates, accessibility repairs, or performance repairs.
+- Phase 16B through Phase 16G and Phase 17 remain inactive until separately
+  authorized.
+- Post-MVP scope includes command palettes, global shortcuts, a new theme
+  system, editable AI suggestions, feedback analytics, major Resume-section
+  reordering, embedded PDF metadata, audio interview work, mastery tracking,
+  additional PDF reports, analysis history, computed version diffs,
+  archive/deletion, profile photos, thumbnails, and summary regeneration.
+- ATS percentage claims, absolute ATS guarantees, arbitrary styling,
+  uploaded fonts, custom Resume CSS, copied legacy architecture, a second
+  design system, direct provider HTML, and automatic AI rewrite application
+  are rejected.
+- No security, ownership, authentication, private-file, Quiz-secrecy,
+  immutable-version, provenance, or privacy control may be weakened.
 
 #### Deliverables
 
-- Executable browser workflow suite under `tests/browser/`.
-- Full Application Browser Testing guide under `docs/testing/`.
-- Phase 16A-1 migration report.
-- Active governance that records the new path, runner decision, preserved
-  history, and review gate.
+- Existing Phase 16A-1 deliverables remain authoritative for browser-test
+  organization.
+- Phase 16 Academic MVP implementation plan.
+- Phase 16A-2 architecture audit report.
+- Revised active governance and an accepted architecture decision.
+- Later subphase implementation, verification, and review evidence only
+  after each subphase is separately activated.
 
 #### Verification
 
-- Prove all tracked browser-test files moved one-for-one and the old
-  executable directory no longer exists.
-- Verify configuration, projects, viewports, workers, retries, setup,
-  teardown, synthetic fixture paths, and cleanup paths.
-- Run the root typecheck.
-- Run the complete browser workflow suite once from
-  `tests/browser/playwright.config.cjs`.
-- Require zero final synthetic users and owned records, closed local service
-  ports, and no retained screenshots, videos, traces, results, or reports.
+- Phase 16A-2 verifies documentation scope, source/test immutability,
+  internal consistency, exact future manifests, and clean Git state.
+- Phase 16B through Phase 16E each require targeted frontend tests, affected
+  browser workflow coverage, desktop/tablet/mobile human visual QA, and their
+  phase-specific approval token.
+- Phase 16F requires reproducible accessibility and performance baselines,
+  evidence before repair, no speculative optimization, and an explicit
+  approval token.
+- Phase 16G requires root typecheck, complete frontend and backend test gates,
+  production build, Full Application Browser Testing, security/privacy
+  regression checks, cleanup evidence, and final human approval.
+- Full browser verification must retain one worker, zero retries, ownership
+  isolation, private PDF access, Quiz answer secrecy, and zero tagged
+  synthetic users/owned records after teardown.
 
 #### Human approval gate
 
-- No manual visual QA is required because Phase 16A-1 changes no visible UI.
-- The operator approved the migration with
+- Phase 16A-1 remains approved with
   `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
-- The closeout commit had not yet been created while this documentation was
-  edited.
-- Push remains prohibited and has not occurred.
-- Phase 16B and every other later Phase 16 implementation subphase remain
-  inactive.
+- Phase 16A-2 was approved with
+  `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`.
+- Phase 16A-2 changes no visible UI, so manual visual QA is not applicable.
+- No production or test code, package, lockfile, environment file, browser,
+  runtime service, provider, Atlas resource, deployment, or visible UI
+  changed during the approval closeout.
+- Commit authorization is exercised only for the five-document Phase 16A-2
+  closeout. Push remains prohibited and has not occurred.
+- Every future visible Phase 16B through Phase 16E change requires its
+  specified visual-approval token before commit authorization.
+- Phase 16B remains `PLANNED` / `INACTIVE` and requires a separate activation
+  prompt.
 
 #### Expected commit
 
-- `Organize full application browser tests`
+- `Define Phase 16 academic MVP architecture`
 
-### Execution Phase 17: Final Repository and Branch Review
+### Execution Phase 17: Final Repository and Release-Candidate Review
 
 #### Status
 

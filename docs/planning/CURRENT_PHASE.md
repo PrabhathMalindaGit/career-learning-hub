@@ -4,16 +4,18 @@
 - Name: Academic MVP Feature Completion, Responsive Application Shell,
   Accessibility and Performance Review
 - Status: ACTIVE
-- Active subphase: Phase 16A-1, Browser Test Naming and Folder Migration
+- Active subphase: none
+- Most recently completed subphase: Phase 16A-2, Roadmap Amendment and
+  Architecture Audit
 - Subphase status: COMPLETED / APPROVED
-- Baseline branch: `phase-12-unified-frontend`
-- Baseline full HEAD: `e5ee18ab3f55217fd24f4dfea04de1e2d15feddd`
-- Baseline subject: `Complete Phase 15 security and privacy review`
+- Audit baseline branch: `phase-12-unified-frontend`
+- Audit baseline full HEAD: `f3b5ecb0e1f267348b6dcb933784f37a085ef8e5`
+- Audit baseline subject: `Organize full application browser tests`
 - Most recently completed major phase: Phase 15, Security and Privacy Review
   (`COMPLETED` /
   `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`)
 - Current workflow state:
-  `PHASE 16 ACTIVE; PHASE 16A-1 COMPLETED AND APPROVED`
+  `PHASE 16 ACTIVE; PHASE 16A-1 COMPLETED AND APPROVED; PHASE 16A-2 COMPLETED AND APPROVED; PHASE 16B THROUGH PHASE 16G PLANNED AND INACTIVE`
 - Primary browser-suite name: Full Application Browser Testing
 - Executable browser-suite location: `tests/browser/`
 - Primary command: `npm run test:browser` only when a portable,
@@ -21,28 +23,29 @@
 - Current runner decision: no portable repository-local Playwright runner is
   declared, so the package scripts remain unchanged and the existing
   authorized bundled runtime is used directly.
-- Accepted approval token:
+- Accepted Phase 16A-1 approval token:
   `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`
+- Accepted Phase 16A-2 approval token:
+  `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`
+- Phase 16A-2 approval token accepted: yes
 - No later Phase 16 implementation subphase is active.
 - Controlling skills: `using-superpowers`, `karpathy-guidelines`,
-  `define-goal`, `systematic-debugging`, `playwright`, `technical-writing`,
-  `verification-before-completion`, and `finishing-a-development-branch`
+  `define-goal`, `brainstorming`, `frontend-skill`, `frontend-design`,
+  `playwright`, `lighthouse-verification`, `technical-writing`,
+  `verification-before-completion`, and `finishing-a-development-branch`.
+  The exact requested `build-web-apps:react-best-practices` skill was
+  unavailable; no skill was installed.
 
 ## Objective
 
-- Relocate the complete executable Playwright suite from `e2e/` to
-  `tests/browser/` without changing its behavior, coverage, assertions, or
-  test matrix.
-- Adopt Full Application Browser Testing as the primary human-facing name for
-  the active browser workflow suite.
-- Update only live operational references and active documentation that would
-  otherwise become incorrect.
-- Preserve Phase 14 and Phase 15 historical evidence as originally executed.
-- Preserve the completed browser workflow verification and cleaned temporary
-  state without rerunning browser or service workflows during closeout.
-- Record the accepted approval and create exactly one closeout commit without
-  pushing it.
+- Preserve the approved Phase 16A-2 architecture and its exact future write,
+  test, browser-QA, cleanup, approval, and stop contracts for Phase 16B
+  through Phase 16G.
+- Preserve the accepted Phase 15 limitations, including P15-001 operating
+  restrictions, and all ownership, private-file, Quiz-secrecy, immutable
+  Resume-version, and AI provenance safeguards.
 - Keep Phase 16B through Phase 16G and Phase 17 planned and inactive.
+- Require a separate Phase 16B activation prompt before implementation.
 
 ## Phase status controls
 
@@ -74,6 +77,8 @@
 - Phase 16 is `ACTIVE`.
 - Phase 16A-1, Browser Test Naming and Folder Migration is
   `COMPLETED` / `APPROVED`.
+- Phase 16A-2, Roadmap Amendment and Architecture Audit is
+  `COMPLETED` / `APPROVED`.
 - Phase 16B through Phase 16G remain `PLANNED` / `INACTIVE`.
 - Phase 17 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
@@ -94,6 +99,88 @@
 - Pass F human visual QA was approved with
   `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
 - Phase 12 is completed.
+
+## Phase 16A-2 activation and review handoff
+
+- Activated by operator-approved prompt
+  `CLH-PHASE-16A2-ROADMAP-AND-ARCHITECTURE-AUDIT-01`.
+- Baseline: branch `phase-12-unified-frontend`, full HEAD
+  `f3b5ecb0e1f267348b6dcb933784f37a085ef8e5`
+  (`Organize full application browser tests`).
+- The starting worktree was clean, nothing was staged or untracked, and no
+  merge, rebase, cherry-pick, revert, or bisect was active.
+- Phase 16A-2 was `ACTIVE` during the bounded documentation and read-only
+  inspection. At this handoff it is `IMPLEMENTED` /
+  `READY FOR HUMAN REVIEW`.
+- The audit changed only the master plan, current-phase control, decision log,
+  Phase 16 implementation plan, and Phase 16A-2 audit report.
+- No frontend, backend, shared type, executable test, fixture, Playwright
+  configuration, package, lockfile, environment file, or deployment file was
+  changed.
+- Source inspection was sufficient. No browser or local service was started,
+  and no provider, Atlas, cloud-storage, deployment, or legacy-project access
+  occurred.
+- Current evidence supports enhancing the existing `AppShell`, reusing the
+  existing accessible `Dialog` primitive for a mobile drawer, keeping
+  sidebar collapse in component-session state, and rendering deep-route
+  breadcrumbs from canonical data already loaded by each route.
+- Current evidence supports a dependency-free, print-first Resume flow from a
+  saved canonical version. Dirty drafts must be saved or discarded before
+  export. A4 and Letter use the existing Resume design field; Standard/Narrow
+  margins remain temporary print controls. Embedded PDF metadata remains
+  deferred.
+- Current Resume analysis contracts already provide stored suggestion IDs,
+  stable bullet IDs, original text, rewritten text, rationale, verification
+  flags, analysis ID, and source Resume-version ID. Phase 16D therefore
+  requires no backend or shared-contract change and must preserve explicit
+  selection, confirmation, stale-result rejection, and immutable version
+  creation.
+- The Resume record already persists template ID, palette ID, page size, and
+  font family. Optional templates may share the canonical Resume content
+  model and a bounded frontend registry. Line spacing has no persistence
+  field and must not silently expand the contract.
+- Phase 16F must use reproducible baselines and evidence before repair. The
+  current router statically imports every route, and prior verified builds
+  recorded a 558.23 kB minified JavaScript chunk above Vite's 500 kB advisory
+  threshold; this is a candidate for measured route-level loading work, not
+  authorization for speculative optimization.
+- The Phase 13 audit historically rejected breadcrumbs because the then-active
+  route depth was adequately served by back links. Phase 16 now makes
+  contextual breadcrumbs a mandatory academic-MVP requirement. The
+  historical finding remains unchanged; the new requirement is recorded as a
+  pending-review Phase 16 architecture decision.
+- P15-001 remains technically unresolved. Supervised academic evaluation,
+  limited accounts/upload volume, monitoring, enabled file/quota controls, no
+  intentional persistent-database upload stress, and mandatory repair before
+  public-scale/commercial/multi-tenant deployment remain binding.
+- Phase 16B through Phase 16G and Phase 17 remain `PLANNED` / `INACTIVE`.
+- Required future approval token:
+  `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`.
+- The token has not been supplied or accepted.
+- Manual visual QA is not required because this audit changes no visible UI.
+- Commit authorization remains separate. Nothing is staged, committed, or
+  pushed by Phase 16A-2.
+
+## Phase 16A-2 approval closeout
+
+- The operator accepted the architecture with
+  `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`.
+- Phase 15 remains `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
+- Phase 16 remains `ACTIVE`.
+- Phase 16A-1 is `COMPLETED` / `APPROVED`.
+- Phase 16A-2 is `COMPLETED` / `APPROVED`.
+- Phase 16B through Phase 16G remain `PLANNED` / `INACTIVE`.
+- Phase 17 remains `PLANNED` / `INACTIVE`.
+- DEC-012 is `ACCEPTED`.
+- No production or test code, package, lockfile, environment file, browser,
+  runtime service, provider, Atlas resource, deployment, or visible UI
+  changed during the approval closeout.
+- Manual visual QA was not required because no visible UI changed.
+- Commit authorization is exercised only for the five-document Phase 16A-2
+  closeout.
+- Phase 16B remains inactive and requires a separate activation prompt.
+- Push remains prohibited and has not occurred.
 
 ## Phase 16A-1 activation record
 
