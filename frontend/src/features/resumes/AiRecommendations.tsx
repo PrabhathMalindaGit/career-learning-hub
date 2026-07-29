@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Dialog } from "../../components/Dialog";
+import { ResumeSuggestionComparison } from "./ResumeSuggestionComparison";
 import type { ResumeAnalysis } from "./types";
 
 interface AiRecommendationsProps {
@@ -123,24 +124,15 @@ export function AiRecommendations({
               <p>No rewrites were suggested for this version.</p>
             ) : (
               <div className="resume-suggestion-list">
-                {analysis.suggestions.map((suggestion) => (
-                  <label className="resume-suggestion" key={suggestion.id}>
-                    <input
-                      type="checkbox"
-                      checked={selectedSuggestionIds.has(suggestion.id)}
-                      disabled={busy || stale}
-                      onChange={() => onToggleSuggestion(suggestion.id)}
-                    />
-                    <span>
-                      <strong>{suggestion.rewrittenText}</strong>
-                      <small>{suggestion.rationale}</small>
-                      {suggestion.verificationRequired ? (
-                        <em>
-                          Verify facts and placeholders before accepting.
-                        </em>
-                      ) : null}
-                    </span>
-                  </label>
+                {analysis.suggestions.map((suggestion, index) => (
+                  <ResumeSuggestionComparison
+                    key={suggestion.id}
+                    suggestion={suggestion}
+                    position={index + 1}
+                    selected={selectedSuggestionIds.has(suggestion.id)}
+                    disabled={busy || stale}
+                    onToggle={() => onToggleSuggestion(suggestion.id)}
+                  />
                 ))}
               </div>
             )}

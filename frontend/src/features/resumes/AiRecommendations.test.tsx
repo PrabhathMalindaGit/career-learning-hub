@@ -36,6 +36,39 @@ const analysis: ResumeAnalysis = {
 };
 
 describe("AiRecommendations confirmation", () => {
+  it("requires explicit selection and renders the stored comparison without exposing IDs", async () => {
+    const onToggleSuggestion = vi.fn();
+    const { container } = render(
+      <AiRecommendations
+        analysis={analysis}
+        selectedSuggestionIds={new Set()}
+        onToggleSuggestion={onToggleSuggestion}
+        onConfirmApply={vi.fn()}
+      />,
+    );
+    const user = userEvent.setup();
+    const checkbox = screen.getByRole("checkbox", {
+      name: "Select suggestion 1",
+    });
+
+    expect((checkbox as HTMLInputElement).checked).toBe(false);
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Apply selected suggestions",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    expect(screen.getByRole("heading", { name: "Original" })).not.toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Suggested rewrite" }),
+    ).not.toBeNull();
+    expect(container.textContent).not.toContain(suggestionId);
+
+    await user.click(checkbox);
+    expect(onToggleSuggestion).toHaveBeenCalledWith(suggestionId);
+  });
+
   it("preserves copy, action order, caller behavior, and native focus semantics", async () => {
     const onConfirmApply = vi.fn();
     render(
@@ -74,6 +107,13 @@ describe("AiRecommendations confirmation", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(invoker);
+    expect(
+      (
+        screen.getByRole("checkbox", {
+          name: "Select suggestion 1",
+        }) as HTMLInputElement
+      ).checked,
+    ).toBe(true);
 
     await user.click(invoker);
     await user.click(

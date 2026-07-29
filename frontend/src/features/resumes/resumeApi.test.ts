@@ -422,10 +422,14 @@ describe("resumeApi", () => {
       suggestionIds: [suggestionId, suggestionId],
     });
 
-    expect(JSON.parse(String(requestAt()[1].body))).toEqual({
+    const requestBody = JSON.parse(String(requestAt()[1].body));
+    expect(requestBody).toEqual({
       analysisId,
       suggestionIds: [suggestionId],
     });
+    expect(requestBody).not.toHaveProperty("originalText");
+    expect(requestBody).not.toHaveProperty("rewrittenText");
+    expect(requestBody).not.toHaveProperty("bulletId");
   });
 
   it("rejects malformed successful DTOs and preserves structured API errors", async () => {

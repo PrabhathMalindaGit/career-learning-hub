@@ -5,7 +5,8 @@
   Accessibility and Performance Review
 - Status: ACTIVE
 - Active subphase: none
-- Most recently completed subphase: Phase 16C, Resume PDF Export and Print
+- Most recently completed subphase: Phase 16D,
+  Original-versus-Suggested AI Comparison
 - Subphase status: COMPLETED / APPROVED
 - Audit baseline branch: `phase-12-unified-frontend`
 - Audit baseline full HEAD: `f3b5ecb0e1f267348b6dcb933784f37a085ef8e5`
@@ -14,7 +15,7 @@
   (`COMPLETED` /
   `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`)
 - Current workflow state:
-  `PHASE 16 ACTIVE; PHASE 16A-1, PHASE 16A-2, PHASE 16B, AND PHASE 16C COMPLETED AND APPROVED; PHASE 16D THROUGH PHASE 16G PLANNED AND INACTIVE`
+  `PHASE 16 ACTIVE; PHASE 16A-1, PHASE 16A-2, PHASE 16B, PHASE 16C, AND PHASE 16D COMPLETED AND APPROVED; PHASE 16E THROUGH PHASE 16G PLANNED AND INACTIVE`
 - Primary browser-suite name: Full Application Browser Testing
 - Executable browser-suite location: `tests/browser/`
 - Primary command: `npm run test:browser` only when a portable,
@@ -33,6 +34,9 @@
 - Accepted Phase 16C visual approval token:
   `PHASE_16C_RESUME_EXPORT_VISUAL_APPROVED`
 - Phase 16C visual approval token accepted: yes
+- Accepted Phase 16D visual approval token:
+  `PHASE_16D_AI_COMPARISON_VISUAL_APPROVED`
+- Phase 16D visual approval token accepted: yes
 - Controlling skills: `using-superpowers`, `karpathy-guidelines`,
   `define-goal`, `brainstorming`, `frontend-skill`, `frontend-design`,
   `playwright`, `lighthouse-verification`, `technical-writing`,
@@ -42,6 +46,9 @@
 
 ## Objective
 
+- Present every stored Resume suggestion as an accessible Original,
+  Suggested rewrite, Reason, verification warning, and explicit selection
+  comparison without changing its provenance or apply contract.
 - Preserve the approved browser Print / Save as PDF behavior for canonical
   saved Resume versions, with dirty-draft blocking and A4/Letter design
   persistence.
@@ -50,8 +57,8 @@
 - Preserve the accepted Phase 15 limitations, including P15-001 operating
   restrictions, and all ownership, private-file, Quiz-secrecy, immutable
   Resume-version, and AI provenance safeguards.
-- Keep Phase 16D through Phase 16G and Phase 17 planned and inactive.
-- Require a separate activation prompt before Phase 16D begins.
+- Keep Phase 16E through Phase 16G and Phase 17 planned and inactive.
+- Require a separate activation prompt before Phase 16E begins.
 
 ## Phase status controls
 
@@ -87,7 +94,8 @@
   `COMPLETED` / `APPROVED`.
 - Phase 16B is `COMPLETED` / `APPROVED`.
 - Phase 16C is `COMPLETED` / `APPROVED`.
-- Phase 16D through Phase 16G remain `PLANNED` / `INACTIVE`.
+- Phase 16D is `COMPLETED` / `APPROVED`.
+- Phase 16E through Phase 16G remain `PLANNED` / `INACTIVE`.
 - Phase 17 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -152,11 +160,70 @@
   corrections, with corrected targeted Resume evidence of 3/3. Phase 16G
   must run a fresh complete integrated Full Application Browser Testing
   suite.
-- Phase 16D through Phase 16G and Phase 17 remain `PLANNED` / `INACTIVE`.
-- Phase 16D requires a separate activation prompt.
+- At the Phase 16C approval closeout, Phase 16D through Phase 16G and Phase
+  17 remained `PLANNED` / `INACTIVE`.
+- Phase 16D then required a separate activation prompt.
 - Pass F human visual QA was approved with
   `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
 - Phase 12 is completed.
+
+## Phase 16D approval closeout
+
+- Activated from full HEAD
+  `ed07be20a856ca7e40f2043e1e0ef743e6755aee`
+  (`Add saved Resume printing`).
+- Each validated stored suggestion now presents Original before Suggested
+  rewrite, followed by Reason, the conditional verification warning, and the
+  explicit checkbox. No raw analysis, suggestion, bullet, Resume, or version
+  ID is rendered.
+- A pure Unicode-aware word/punctuation LCS utility produces deterministic,
+  coalesced unchanged/removed/added segments for contract-valid 2,000
+  character inputs. Whitespace is normalized; punctuation and apostrophes
+  remain readable.
+- Removed and Added text labels, borders, line-through/double-underline
+  styling, and semantic `del`/`ins` markup make meaning independent of color.
+  Wide screens use two columns; narrower layouts, including represented 200%
+  zoom, stack Original before Suggested.
+- Selection remains explicit and caller-owned. Confirmation, cancel state,
+  busy/stale blocking, deduplicated stored-ID payloads, safe 409 handling,
+  exact backend source verification, and immutable version adoption remain
+  unchanged.
+- Focused frontend verification passed 45/45 tests across six files. The
+  complete frontend suite passed 619/619 tests across 47 files. Root
+  typecheck and the production build passed.
+- The build retained its Phase 16F measurement candidate: 573.56 kB
+  JavaScript, 158.58 kB gzip.
+- Targeted Resume browser confidence passed 3/3. The single complete Full
+  Application Browser Testing run passed 21/21 in 47.6 seconds: desktop 7/7,
+  tablet 7/7, mobile 7/7, one worker, zero retries.
+- Standalone provider-free QA passed at 1440×900, 1024×768, 768×1024,
+  390×844, 320×720, and a 720×450 viewport faithfully representing 200%
+  reflow. Long content, keyboard selection, dialog focus/return, semantic
+  order, wrapping, and horizontal containment passed.
+- Browser teardown reached `users=0, owned=0`; no provider or Atlas call
+  occurred. Temporary services, reports, results, screenshots, traces,
+  videos, build output, and temporary QA files are removed at handoff.
+- The operator approved Original, Suggested rewrite, Reason, the conditional
+  verification warning, selection association, and Removed/Added meaning
+  without relying on color.
+- Punctuation and replacement readability, long-content readability, visible
+  focus, keyboard selection, confirmation, cancellation with focus return,
+  immutable-version application, stale/conflict safety, markup-as-text,
+  raw-ID absence, and provider-free behavior were approved.
+- Human visual approval covered 1440×900, 1024×768, 768×1024, 390×844,
+  320×720, and actual 200% browser zoom.
+- Accepted visual approval token:
+  `PHASE_16D_AI_COMPARISON_VISUAL_APPROVED`.
+- Approval token accepted: yes.
+- No implementation change was required during approval closeout.
+- The build advisory remains a Phase 16F measurement candidate. Phase 16G
+  still requires its own fresh complete integrated Full Application Browser
+  Testing run.
+- No backend, shared-contract, dependency, or deployment expansion occurred.
+- The closeout commit had not yet been created while this documentation was
+  being edited. Push remains prohibited and has not occurred.
+- Phase 16D is `COMPLETED` / `APPROVED`. Phase 16E remains `PLANNED` /
+  `INACTIVE` and requires a separate activation prompt.
 
 ## Phase 16A-2 activation and review handoff
 

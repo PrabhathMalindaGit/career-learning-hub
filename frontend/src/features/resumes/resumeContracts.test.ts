@@ -314,6 +314,32 @@ describe("resume contract validators", () => {
       parseAnalysis({
         analysis: {
           ...result,
+          suggestions: [
+            {
+              ...result.suggestions[0],
+              originalText: "",
+            },
+          ],
+        },
+      }),
+    ).toThrowError(/invalid resume response/i);
+    expect(() =>
+      parseAnalysis({
+        analysis: {
+          ...result,
+          suggestions: [
+            {
+              ...result.suggestions[0],
+              rewrittenText: "",
+            },
+          ],
+        },
+      }),
+    ).toThrowError(/invalid resume response/i);
+    expect(() =>
+      parseAnalysis({
+        analysis: {
+          ...result,
           scoreBreakdown: {
             ...result.scoreBreakdown,
             impact: 20,

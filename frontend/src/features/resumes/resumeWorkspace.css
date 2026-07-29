@@ -658,33 +658,146 @@
 
 .resume-suggestion {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  padding: 13px;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
   border: 1px solid #d9e2dc;
   border-radius: 12px;
+  background: #fbfdfc;
 }
 
-.resume-suggestion > span {
+.resume-suggestion h4,
+.resume-suggestion h5,
+.resume-suggestion p {
+  margin: 0;
+}
+
+.resume-suggestion h4 {
+  color: #27372e;
+  font-size: 0.9rem;
+}
+
+.resume-suggestion h5 {
+  color: #35473d;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.resume-suggestion-comparison {
   display: grid;
-  gap: 7px;
+  gap: 12px;
   min-width: 0;
 }
 
-.resume-suggestion strong {
+.resume-suggestion-copy {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #ccd8d0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.resume-suggestion-copy-original {
+  border-left: 4px solid #8d5a55;
+  background: #fffafa;
+}
+
+.resume-suggestion-copy-suggested {
+  border-left: 4px solid #34704e;
+  background: #f8fcf9;
+}
+
+.resume-suggestion-copy header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.resume-diff-indicator {
+  display: inline-flex;
+  padding: 3px 7px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  color: #5e675f;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.resume-suggestion-copy p,
+.resume-suggestion-reason p {
+  color: #3f4d45;
   font-size: 0.88rem;
-  line-height: 1.45;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.resume-suggestion small,
-.resume-suggestion em {
-  color: #637169;
-  line-height: 1.45;
+.resume-suggestion-copy del {
+  padding: 1px 2px;
+  color: #6f3f3a;
+  background: #f8e7e5;
+  text-decoration-line: line-through;
+  text-decoration-thickness: 2px;
 }
 
-.resume-suggestion em {
-  color: #80601b;
-  font-size: 0.74rem;
+.resume-suggestion-copy ins {
+  padding: 1px 2px;
+  color: #245d3d;
+  background: #e1f2e7;
+  text-decoration-line: underline;
+  text-decoration-style: double;
+  text-underline-offset: 3px;
+}
+
+.resume-suggestion-reason {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.resume-suggestion-warning {
+  padding: 10px 12px;
+  border-left: 4px solid #9b761d;
+  border-radius: 8px;
+  color: #725617;
+  background: #fff8e2;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.resume-suggestion-selection {
+  display: flex;
+  width: fit-content;
+  min-height: var(--minimum-interactive-target);
+  align-items: center;
+  gap: 10px;
+  color: #324239;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.resume-suggestion-selection input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.resume-suggestion-selection:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+@media (min-width: 1200px) {
+  .resume-suggestion-comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .resume-notice,

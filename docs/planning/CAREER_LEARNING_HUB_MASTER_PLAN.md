@@ -1695,7 +1695,9 @@
 - Phase 16B, Responsive Sidebar, AppShell and Breadcrumbs is `COMPLETED` /
   `APPROVED`.
 - Phase 16C, Resume PDF Export and Print is `COMPLETED` / `APPROVED`.
-- Phase 16D through Phase 16G are `PLANNED` / `INACTIVE`.
+- Phase 16D, Original-versus-Suggested AI Comparison is `COMPLETED` /
+  `APPROVED`.
+- Phase 16E through Phase 16G are `PLANNED` / `INACTIVE`.
 - Phase 17 is `PLANNED` / `INACTIVE`.
 - Accepted approval token:
   `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
@@ -1707,6 +1709,8 @@
   `PHASE_16B_SIDEBAR_BREADCRUMBS_VISUAL_APPROVED`.
 - The operator accepted the Phase 16C visual result with
   `PHASE_16C_RESUME_EXPORT_VISUAL_APPROVED`.
+- The operator accepted the Phase 16D visual result with
+  `PHASE_16D_AI_COMPARISON_VISUAL_APPROVED`.
 - The migration behavior was verified with 21/21 passing browser workflows.
 - No production source, browser-test behavior, or visible UI changed.
 - The repository still has no declared or portable repository-local
@@ -1718,6 +1722,10 @@
   `f63f9f488f7c2288795d69f37cf8effe9c3dce78`
   (`Build responsive application shell and breadcrumbs`) to implement
   browser Print / Save as PDF for canonical saved Resume versions.
+- Phase 16D is separately activated at full HEAD
+  `ed07be20a856ca7e40f2043e1e0ef743e6755aee`
+  (`Add saved Resume printing`) to implement the accepted stored
+  original-versus-suggested comparison without contract expansion.
 
 #### Purpose
 
@@ -1756,7 +1764,7 @@
 - Phase 16C — Resume PDF Export and Print:
   `COMPLETED` / `APPROVED`.
 - Phase 16D — Original-versus-Suggested AI Comparison:
-  `PLANNED` / `INACTIVE`.
+  `COMPLETED` / `APPROVED`.
 - Phase 16E — Bounded Resume Templates and Design Controls:
   `PLANNED` / `INACTIVE`, `CONDITIONAL / TIME PERMITTING`.
 - Phase 16F — Accessibility and Performance Review:
@@ -1792,7 +1800,7 @@ Conditional, time-permitting scope:
   responsive shell, create intents, and breadcrumb decisions.
 - Resume printing, AI comparison, templates, accessibility repairs, and
   performance repairs remain out of Phase 16B scope.
-- Phase 16D through Phase 16G and Phase 17 remain inactive until separately
+- Phase 16E through Phase 16G and Phase 17 remain inactive until separately
   authorized.
 - Post-MVP scope includes command palettes, global shortcuts, a new theme
   system, editable AI suggestions, feedback analytics, major Resume-section
@@ -1846,7 +1854,7 @@ Conditional, time-permitting scope:
   changed during the approval closeout.
 - Commit authorization is exercised only for the five-document Phase 16A-2
   closeout. Push remains prohibited and has not occurred.
-- Every future visible Phase 16D through Phase 16E change requires its
+- Every future visible Phase 16E change requires its
   specified visual-approval token before commit authorization.
 - Phase 16B was visually approved with
   `PHASE_16B_SIDEBAR_BREADCRUMBS_VISUAL_APPROVED` at 1440×900, 1024×768,
@@ -1861,11 +1869,24 @@ Conditional, time-permitting scope:
   test-only corrections, followed by corrected targeted Resume evidence of
   3/3. Phase 16G must run a fresh complete integrated Full Application
   Browser Testing suite.
-- Phase 16D remains inactive and requires separate activation.
+- Phase 16D was visually approved with
+  `PHASE_16D_AI_COMPARISON_VISUAL_APPROVED`. Approval covered Original,
+  Suggested rewrite, Reason, the conditional warning, selection,
+  non-color Removed/Added meaning, punctuation and replacement readability,
+  long-content readability, visible focus, keyboard selection, confirmation,
+  cancellation and focus return, immutable-version application,
+  stale/conflict safety, markup-as-text, raw-ID absence, and provider-free
+  behavior.
+- Human review covered 1440×900, 1024×768, 768×1024, 390×844, 320×720, and
+  actual 200% browser zoom. No implementation change was required during
+  approval closeout.
+- The Phase 16F build advisory remains a measurement candidate. Phase 16G
+  still requires its own fresh complete integrated Full Application Browser
+  Testing run. Phase 16E remains inactive and requires separate activation.
 
 #### Expected commit
 
-- `Add saved Resume printing`
+- `Add transparent AI suggestion comparison`
 
 ### Execution Phase 17: Final Repository and Release-Candidate Review
 

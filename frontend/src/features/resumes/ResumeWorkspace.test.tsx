@@ -754,7 +754,7 @@ describe("ResumeWorkspace", () => {
     expect((apply as HTMLButtonElement).disabled).toBe(true);
     await user.click(
       screen.getByRole("checkbox", {
-        name: /built a reliable service/i,
+        name: "Select suggestion 1",
       }),
     );
     await user.click(apply);
@@ -780,6 +780,13 @@ describe("ResumeWorkspace", () => {
       }),
     ).toBeNull();
     expect(document.activeElement).toBe(apply);
+    expect(
+      (
+        screen.getByRole("checkbox", {
+          name: "Select suggestion 1",
+        }) as HTMLInputElement
+      ).checked,
+    ).toBe(true);
     await user.click(apply);
     await user.click(
       screen.getByRole("button", { name: "Create new version" }),
@@ -799,6 +806,76 @@ describe("ResumeWorkspace", () => {
       await screen.findByText("1 suggestion applied in version 2."),
     ).not.toBeNull();
     expect(screen.getByText("This assessment is stale.")).not.toBeNull();
+  });
+
+  it("preserves selection and presents a safe conflict when analysis application is rejected", async () => {
+    vi.mocked(resumeApi.queueResumeAnalysis).mockResolvedValue({
+      id: jobId,
+      type: "resume.analyze",
+      status: "queued",
+    });
+    vi.mocked(polling.pollResumeJob).mockResolvedValue({
+      reason: "terminal",
+      job: {
+        id: jobId,
+        type: "resume.analyze",
+        status: "completed",
+        progress: 100,
+        attempts: 1,
+        maxAttempts: 3,
+        result: {
+          kind: "analysis",
+          analysisId,
+          resumeId,
+          resumeVersionId: versionId,
+          totalScore: 86,
+        },
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    });
+    vi.mocked(resumeApi.fetchResumeAnalysis).mockResolvedValue(analysis());
+    vi.mocked(resumeApi.applyResumeSuggestions).mockRejectedValue(
+      new ApiError(
+        409,
+        "RESUME_VERSION_CONFLICT",
+        "Stored analysis is stale.",
+        "apply-request-id-0001",
+      ),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByLabelText("Full name");
+    await user.type(
+      screen.getByRole("textbox", { name: "Target role" }),
+      "Platform Engineer",
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: "Run AI-assisted assessment",
+      }),
+    );
+    const checkbox = await screen.findByRole("checkbox", {
+      name: "Select suggestion 1",
+    });
+    await user.click(checkbox);
+    await user.click(
+      screen.getByRole("button", {
+        name: "Apply selected suggestions",
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Create new version" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "This resume or assessment changed. Reload and review before applying suggestions.",
+      ),
+    ).not.toBeNull();
+    expect(screen.getByText("Request ID: apply-request-id-0001")).not
+      .toBeNull();
+    expect((checkbox as HTMLInputElement).checked).toBe(true);
   });
 
   it("blocks in-app departure with managed keyboard focus and lets the user stay", async () => {
