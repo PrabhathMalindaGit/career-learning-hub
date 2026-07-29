@@ -2,26 +2,28 @@
 
 - Phase: 15
 - Name: Security and Privacy Review
-- Status: ACTIVE
+- Status: COMPLETED / APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL
 - Baseline branch: `phase-12-unified-frontend`
 - Baseline full HEAD: `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
 - Baseline subject: `Add end-to-end application coverage`
-- Most recently completed major phase: Phase 14, End-to-End Browser Testing
-  (`COMPLETED`)
-- Most recently approved Phase 15 passes:
-  Phase 15B-3 (`COMPLETED` / `APPROVED`) and Phase 15B-4
-  (`COMPLETED` / `APPROVED AS BOUNDED MITIGATION`).
+- Most recently completed major phase: Phase 15, Security and Privacy Review
+  (`COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`)
+- Final approved Phase 15 dispositions:
+  Phase 15B-1 (`COMPLETED` /
+  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`), Phase 15B-2 and
+  Phase 15B-3 (`COMPLETED` / `APPROVED`), and Phase 15B-4 (`COMPLETED` /
+  `APPROVED AS BOUNDED MITIGATION`).
 - Active Phase 15 repair pass: none.
-- Phase 15B-1 remains `PLANNED` / `INACTIVE`.
+- Phase 15B-1 is `COMPLETED` /
+  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`.
 - Next planned major phase: Phase 16, Accessibility and Performance Review
   (`PLANNED` / `INACTIVE`)
 - Current workflow state:
-  `PHASE 15 ACTIVE; PHASE 15B-3 COMPLETED AND APPROVED; PHASE 15B-4 COMPLETED AND APPROVED AS BOUNDED MITIGATION`
-- Controlling skills: `using-superpowers`, `karpathy-guidelines`,
-  `define-goal`, `test-driven-development`, `systematic-debugging`,
-  `security-best-practices`, `backend-api-design`, `frontend-design`,
-  `vercel-react-best-practices`, `browser:control-in-app-browser`,
-  `technical-writing`, and `verification-before-completion`
+  `PHASE 15 COMPLETED AND APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`
+- Controlling closeout skills: `using-superpowers`, `karpathy-guidelines`,
+  `define-goal`, `security-best-practices`, `technical-writing`,
+  `verification-before-completion`, and `finishing-a-development-branch`
 
 ## Objective
 
@@ -29,6 +31,9 @@
 - Preserve the approved P15-004 fail-closed origin repair and bounded P15-005
   explicit-disclosure mitigation without activating another repair batch or
   Phase 16.
+- Preserve the approved formal P15-001 deferral, its
+  controlled-academic-MVP restrictions, and the completed final regression
+  evidence.
 - Preserve Phase 14 as completed and Phase 16 as planned and inactive.
 
 ## Phase status controls
@@ -45,11 +50,13 @@
 - Phase 13G — Integrated Accessibility and Visual QA is `COMPLETED`.
 - Phase 14 — End-to-End Browser Testing is
   `COMPLETED`.
-- Phase 15 — Security and Privacy Review is `ACTIVE`.
+- Phase 15 — Security and Privacy Review is `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
 - Phase 15A — Threat Model, Ownership Map, and Validated Audit is `COMPLETED`
   with decision `APPROVED WITH ACCEPTED LIMITATIONS`.
 - Phase 15A production and test code remained read-only.
-- Phase 15B-1 — Atomic Asset Quota Enforcement is `PLANNED` / `INACTIVE`.
+- Phase 15B-1 — Atomic Asset Quota Enforcement is `COMPLETED` /
+  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`.
 - Phase 15B-2 — Session Revocation and Atomic Refresh Rotation is
   `COMPLETED` / `APPROVED`.
 - Phase 15B-3 — Fail-Closed Production API-Origin Configuration is
@@ -298,11 +305,12 @@
 - No external provider or Atlas call occurred. Packages, lockfiles,
   environment files, schemas, migrations, deployments, and legacy projects
   were unchanged; no `.env` content was inspected or printed.
-- Phase 14 remains `COMPLETED`; Phase 15 remains `ACTIVE`; Phase 15A remains
-  `COMPLETED` / `APPROVED WITH ACCEPTED LIMITATIONS`; Phase 15B-1 and Phase 16
-  remain `PLANNED` / `INACTIVE`; Phase 15B-2 remains `COMPLETED` /
-  `APPROVED`; Phase 15B-3 is `COMPLETED` / `APPROVED`; and Phase 15B-4 is
-  `COMPLETED` / `APPROVED AS BOUNDED MITIGATION`.
+- At the Phase 15B-3/15B-4 closeout, Phase 14 remained `COMPLETED`; Phase 15
+  remained `ACTIVE`; Phase 15A remained `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS`; Phase 15B-1 and Phase 16 remained
+  `PLANNED` / `INACTIVE`; Phase 15B-2 remained `COMPLETED` / `APPROVED`;
+  Phase 15B-3 was `COMPLETED` / `APPROVED`; and Phase 15B-4 was `COMPLETED` /
+  `APPROVED AS BOUNDED MITIGATION`.
 - P15-004 is `REPAIRED / CLOSED`.
 - P15-005 is
   `MITIGATED / CLOSED WITH DOCUMENTED RESIDUAL ENUMERATION SIDE CHANNEL ACCEPTED FOR THE CONTROLLED ACADEMIC MVP`.
@@ -310,14 +318,87 @@
   from an existing-address HTTP 400 neutral failure. Complete elimination
   would require an approved ownership-verification or pending-registration
   architecture.
-- P15-001 is `OPEN / UNCHANGED` and is the only remaining open confirmed
-  finding.
+- At that closeout, P15-001 was `OPEN / UNCHANGED` and was the only remaining
+  open confirmed finding.
 - The closeout commit had not yet been created when this documentation was
   edited. Push is prohibited and was not performed.
 - Accepted security-review token:
   `PHASE_15B34_SECURITY_REPAIR_APPROVED`.
 - Accepted visual-review token:
   `PHASE_15B34_AUTH_UI_VISUAL_APPROVED`.
+
+## Phase 15 final verification and approved Phase 15B-1 deferral
+
+- Final-verification baseline: branch `phase-12-unified-frontend`, full HEAD
+  `c27d39a428e20736fee40e4a77d0785c60f261f1`
+  (`Complete Phase 15B-3 and 15B-4 security repairs`).
+- P15-001 remains technically valid. Asset quota usage is aggregated from
+  active and temporary Asset records, checked separately, and followed by an
+  external storage write and a separate Asset create. No atomic reservation
+  or conditional owner quota update connects these operations.
+- Phase 15B-1 is `COMPLETED` /
+  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`. This is not a repair:
+  concurrent uploads can still exceed the configured per-user quota.
+- The proposed deferral is limited to supervised academic evaluation.
+  Unrestricted public-scale uploads are not approved; demo accounts and
+  upload volume must remain limited; file-size and per-user quota controls
+  must remain enabled; storage must be monitored; intentional concurrent
+  upload or load stress must not target a persistent deployed demo database;
+  and abnormal uploads may require manual cleanup.
+- Repair becomes mandatory before unrestricted public registration or upload
+  promotion, multi-worker or multi-instance upload handling, meaningful-scale
+  external object storage, use of quota as a security or billing boundary,
+  expected concurrent upload activity, or commercial, production, or
+  multi-tenant deployment.
+- The future repair direction is a database-backed atomic owner quota
+  reservation with conditional increments, explicit compensation,
+  idempotent upload lifecycle, concurrency tests, deletion and reconciliation
+  behavior, and no process-local lock as the primary control.
+- Final verification:
+  - `npm run test:security`: 4/4 files and 35/35 tests passed in 5.05 s after
+    one sandbox-only `listen EPERM` pre-collection attempt;
+  - `npm run test:integration`: 6/6 files and 53/53 tests passed in 9.72 s;
+  - `npm run test:unit`: 5/5 files and 19/19 tests passed in 2.52 s;
+  - `npm run test --workspace @career-learning-hub/web`: 41/41 files and
+    584/584 tests passed in 13.07 s;
+  - backend production/test, frontend, and root typechecks passed;
+  - `VITE_API_URL=https://api.example.test/api/v1 npm run build` passed;
+  - the complete existing Playwright suite passed 21/21 tests in 44.3 s
+    across desktop 1440 × 900, tablet 768 × 1024, and mobile 390 × 844; and
+  - authentication/session flows, User A/User B ownership isolation, private
+    PDF access, Quiz pre-submission answer secrecy, feature workflows, and
+    horizontal-overflow protections passed.
+- E2E global setup and teardown each reported zero tagged users and zero owned
+  records. Ports 8000 and 4173 were closed, and the temporary MongoDB/runtime,
+  private storage, Playwright output, build output, screenshots, traces,
+  videos, coverage, and generated logs were absent after cleanup. OS-wide
+  process listing was unavailable, so teardown, closed-port, directory, and
+  repository evidence provide the cleanup proof.
+- No provider or Atlas call occurred. No production, test, E2E, package,
+  lockfile, environment, schema, migration, or deployment file changed, and
+  no `.env` file was read.
+- Phase 14 remains `COMPLETED`.
+- Phase 15 is `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
+- Phase 15A remains `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS`.
+- Phase 15B-1 is `COMPLETED` /
+  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`.
+- Phase 15B-2 and Phase 15B-3 remain `COMPLETED` / `APPROVED`.
+- Phase 15B-4 remains `COMPLETED` /
+  `APPROVED AS BOUNDED MITIGATION`.
+- Phase 16 remains `PLANNED` / `INACTIVE`.
+- P15-001 is
+  `DEFERRED / CLOSED FOR PHASE 15 WITH ACCEPTED RISK LIMITED TO THE CONTROLLED ACADEMIC MVP — TECHNICALLY UNRESOLVED`.
+- No confirmed finding remains open for Phase 15 workflow disposition.
+- Accepted P15-001 deferral token:
+  `PHASE_15B1_ASSET_QUOTA_DEFERRAL_APPROVED`.
+- Accepted final Phase 15 closeout token:
+  `PHASE_15_FINAL_SECURITY_CLOSEOUT_APPROVED`.
+- Implementation baseline:
+  `c27d39a428e20736fee40e4a77d0785c60f261f1`.
+- The final closeout commit had not yet been created while this documentation
+  was edited. Push is prohibited and was not performed.
 
 ## Phase 14 verification record
 

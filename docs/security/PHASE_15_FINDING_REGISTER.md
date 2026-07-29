@@ -6,7 +6,7 @@
 - Audit pass: Phase 15A — Threat Model, Ownership Map, and Validated Audit
 - Phase 15A production and test changes: prohibited during the audit pass
 - Most recently closed repair passes: Phase 15B-3 and Phase 15B-4
-- Remaining open confirmed finding: P15-001 only
+- Remaining open confirmed findings for Phase 15 workflow disposition: none
 - Confirmed Critical: 0
 - Confirmed High: 0
 - Confirmed Medium: 3
@@ -15,8 +15,12 @@
 - Rejected candidates: 7
 - Deferred candidates: 3
 - Accepted risks: 2
-- Required review token:
+- Accepted Phase 15A review token:
   `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`
+- Accepted P15-001 deferral token:
+  `PHASE_15B1_ASSET_QUOTA_DEFERRAL_APPROVED`
+- Accepted final Phase 15 closeout token:
+  `PHASE_15_FINAL_SECURITY_CLOSEOUT_APPROVED`
 
 ## Confirmed findings
 
@@ -24,7 +28,9 @@
 
 - Severity: Medium
 - Confidence: High
-- Status: OPEN / UNCHANGED
+- Status:
+  DEFERRED / CLOSED FOR PHASE 15 WITH ACCEPTED RISK LIMITED TO THE CONTROLLED
+  ACADEMIC MVP — TECHNICALLY UNRESOLVED
 - Affected paths and lines:
   - `backend/src/modules/assets/asset.service.ts:37-69`
   - `backend/src/modules/assets/asset.service.ts:71-124`
@@ -90,6 +96,86 @@
 - Residual risk: a process crash between an external object write and
   reservation reconciliation requires an idempotent repair/reconciliation
   path.
+- Final Phase 15 revalidation:
+  - the finding remains technically valid and no code repair was implemented;
+  - `assertAssetQuota` aggregates active/temporary Asset bytes and compares
+    the result with `ASSET_USER_QUOTA_BYTES`;
+  - storage is written only after that separate read/decision, and the Asset
+    record is created in another operation;
+  - no transaction, conditional owner counter, or quota reservation makes the
+    decision atomic with the write/create;
+  - concurrent requests can observe the same remaining capacity, then each
+    write a distinct server-keyed object and create an Asset record;
+  - per-file and rate limits reduce individual or short-window impact but do
+    not eliminate the race. With defaults, 300 simultaneous generic 15 MiB
+    uploads admitted for one IP could theoretically commit 4,500 MiB, or
+    4,250 MiB over a 250 MiB quota from an empty account; this is illustrative
+    rather than a system-wide maximum because settings are configurable, the
+    generic limiter is IP-keyed, and multiple IPs/workers/instances remove a
+    hard aggregate ceiling;
+  - failed Asset creation deletes the written object, Learning document-create
+    failure deletes storage and marks the Asset deleted, and deletion excludes
+    an Asset from later quota aggregation after its storage deletion and
+    status update;
+  - authentication, owner-derived user IDs, owner-scoped reads/deletes,
+    private storage, MIME/magic-byte validation, size limits, quotas, and rate
+    limits remain effective controls, but the quota check is non-atomic; and
+  - affected consumers are authenticated generic asset upload, Resume PDF
+    import, and Learning PDF upload.
+- Approved formal deferral disposition:
+  `DEFERRED / CLOSED FOR PHASE 15 WITH ACCEPTED RISK LIMITED TO THE CONTROLLED ACADEMIC MVP — TECHNICALLY UNRESOLVED`.
+  This is not a repair, the atomic quota race remains technically possible,
+  and concurrent uploads may exceed the configured per-user quota.
+- Required operating restrictions:
+  - supervised academic evaluation only;
+  - no unrestricted public-scale uploads;
+  - monitor storage use;
+  - limit demo accounts and upload volume;
+  - keep file-size and per-user quota limits enabled;
+  - do not run load tests or intentional concurrent-upload stress against a
+    persistent deployed demo database;
+  - allow for manual cleanup after abnormal upload behavior; and
+  - complete a repair before public-scale, commercial, or multi-tenant
+    deployment.
+- Repair-trigger conditions:
+  1. unrestricted public registration is enabled for general use;
+  2. upload access is promoted outside supervised academic evaluation;
+  3. multiple backend workers or instances handle uploads;
+  4. persistent external object storage is used at meaningful scale;
+  5. storage cost or quota enforcement becomes a security or billing
+     boundary;
+  6. concurrent upload activity is expected; or
+  7. commercial, production, or multi-tenant deployment begins.
+- Required future repair direction:
+  - database-backed atomic quota reservation;
+  - conditional increment or reservation against an owner quota ledger;
+  - compensation when storage or Asset creation fails;
+  - idempotent upload lifecycle;
+  - concurrency tests proving bounded usage;
+  - deletion and reconciliation behavior; and
+  - no process-local lock as the primary security control.
+- Final regression evidence:
+  - backend security: 4/4 files, 35/35 tests;
+  - backend integration: 6/6 files, 53/53 tests;
+  - backend unit: 5/5 files, 19/19 tests;
+  - frontend: 41/41 files, 584/584 tests;
+  - backend production/test, frontend, and root typechecks passed;
+  - explicit-HTTPS production build passed; and
+  - complete Playwright E2E passed 21/21 tests across desktop, tablet, and
+    mobile, including authentication, ownership isolation, private PDF, and
+    Quiz secrecy coverage.
+- Deferral approval accepted:
+  `PHASE_15B1_ASSET_QUOTA_DEFERRAL_APPROVED`.
+- Final Phase 15 closeout approval accepted:
+  `PHASE_15_FINAL_SECURITY_CLOSEOUT_APPROVED`.
+- Phase 15 is `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
+- Phase 15 completion does not authorize unrestricted public-scale upload
+  deployment. The operating restrictions remain binding, and repair remains
+  mandatory when any documented trigger applies.
+- Historical canonical scan, dependency-advisory, contributor-analysis,
+  deployment-topology, crafted-PDF, and multi-worker limitations remain
+  accepted but technically unresolved.
 - Separate authorization required: Yes.
 
 ### P15-002 — Session revocation does not invalidate issued access tokens

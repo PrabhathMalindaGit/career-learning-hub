@@ -1383,24 +1383,26 @@
 
 #### Status
 
-- Status: ACTIVE
-- Most recently approved Phase 15 passes:
-  Phase 15B-3 — Fail-Closed Production API-Origin Configuration
-  (`COMPLETED` / `APPROVED`) and Phase 15B-4 — Registration
-  Account-Enumeration Response
-  (`COMPLETED` / `APPROVED AS BOUNDED MITIGATION`).
+- Status: COMPLETED / APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL
+- Final approved Phase 15 dispositions:
+  Phase 15B-1 (`COMPLETED` /
+  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`), Phase 15B-2 and
+  Phase 15B-3 (`COMPLETED` / `APPROVED`), and Phase 15B-4 (`COMPLETED` /
+  `APPROVED AS BOUNDED MITIGATION`).
 - Active Phase 15 repair pass: none.
-- Phase 15B-1 remains `PLANNED` / `INACTIVE`.
+- Phase 15B-1 is `COMPLETED` /
+  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`.
 - Activation prompt: `CLH-PHASE-15A-ACTIVATE-AND-AUDIT-01`
 - Activation baseline: branch `phase-12-unified-frontend`, full HEAD
   `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
   (`Add end-to-end application coverage`).
 - Current workflow state:
-  `PHASE 15 ACTIVE; PHASE 15B-3 COMPLETED AND APPROVED; PHASE 15B-4 COMPLETED AND APPROVED AS BOUNDED MITIGATION`.
+  `PHASE 15 COMPLETED AND APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
 - Phase 14 remains `COMPLETED`.
 - Phase 15A is `COMPLETED`; its review decision is
   `APPROVED WITH ACCEPTED LIMITATIONS`.
-- Phase 15B-1 is `PLANNED` / `INACTIVE`.
+- Phase 15B-1 is `COMPLETED` /
+  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`.
 - Phase 15B-2 is `COMPLETED` / `APPROVED`.
 - Phase 15B-3 is `COMPLETED` / `APPROVED`.
 - Phase 15B-4 is `COMPLETED` / `APPROVED AS BOUNDED MITIGATION`.
@@ -1556,8 +1558,76 @@
     from an existing-address HTTP 400 neutral failure. Complete elimination
     would require an approved ownership-verification or pending-registration
     architecture; and
-  - P15-001 is `OPEN / UNCHANGED` and is the only remaining open confirmed
-    finding.
+  - before final revalidation, P15-001 was `OPEN / UNCHANGED` and was the only
+    remaining open confirmed finding.
+- Phase 15 final verification and approved Phase 15B-1 deferral:
+  - baseline HEAD:
+    `c27d39a428e20736fee40e4a77d0785c60f261f1`
+    (`Complete Phase 15B-3 and 15B-4 security repairs`);
+  - P15-001 remains technically valid: each upload aggregates the owner's
+    active/temporary Asset bytes, decides against the configured quota, then
+    separately writes storage and creates the Asset record;
+  - the check, object write, and Asset create are not one atomic operation, so
+    concurrent requests can observe the same remaining capacity and commit
+    cumulative bytes above the quota;
+  - the default 15 MiB per-file ceiling and global/domain rate limits reduce
+    the short-window effect but do not serialize uploads. Under default
+    single-IP global limits, 300 simultaneous generic 15 MiB uploads could
+    theoretically commit 4,500 MiB, or 4,250 MiB above a 250 MiB quota from
+    an empty account; this is illustrative, not a system-wide bound, because
+    settings are configurable, the generic limiter is IP-keyed, and multiple
+    IPs/workers/instances remove a hard aggregate ceiling;
+  - P15-001 is
+    `DEFERRED / CLOSED FOR PHASE 15 WITH ACCEPTED RISK LIMITED TO THE CONTROLLED ACADEMIC MVP — TECHNICALLY UNRESOLVED`.
+    This is not a repair, and its operating restrictions remain binding;
+  - operation is restricted to supervised academic evaluation. Unrestricted
+    public-scale uploads are not approved; storage must be monitored; demo
+    accounts and upload volume must remain limited; per-file and per-user
+    controls must remain enabled; no intentional concurrent-upload or load
+    stress may target a persistent deployed demo database; and abnormal
+    uploads may require manual cleanup;
+  - repair is mandatory before unrestricted public registration, upload
+    promotion beyond supervised evaluation, multi-worker or multi-instance
+    upload handling, meaningful-scale persistent external object storage,
+    using storage cost or quota as a security/billing boundary, expected
+    concurrent uploads, or commercial, production, or multi-tenant
+    deployment;
+  - future repair requires a database-backed atomic owner quota reservation,
+    conditional increment/reservation, compensation for storage or Asset
+    failures, an idempotent lifecycle, concurrency proof, deletion and
+    reconciliation behavior, and no process-local lock as the primary
+    security control;
+  - final backend security passed 4/4 files and 35/35 tests; integration
+    passed 6/6 files and 53/53 tests; backend unit passed 5/5 files and 19/19
+    tests; and frontend passed 41/41 files and 584/584 tests;
+  - backend production/test, frontend, and root typechecks passed, and the
+    production build passed with
+    `VITE_API_URL=https://api.example.test/api/v1`;
+  - the complete existing Playwright suite passed 21/21 tests in 44.3 s
+    across desktop 1440 × 900, tablet 768 × 1024, and mobile 390 × 844,
+    covering authentication, protected/reload/logout flows, Dashboard,
+    Resume, Interview, Learning, private PDF access, Quiz secrecy, User A/User
+    B ownership isolation, and horizontal-overflow protections;
+  - setup and teardown reported zero tagged users and zero owned records.
+    Ports were closed and temporary database/runtime, private storage,
+    Playwright output, build output, screenshots, traces, videos, coverage,
+    and logs were absent after cleanup;
+  - no source or test changed; no provider or Atlas call occurred; and
+    packages, lockfiles, environment files, schemas, migrations, deployments,
+    and E2E files were unchanged;
+  - Phase 15 is
+    `COMPLETED / APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`;
+    Phase 15B-1 is `COMPLETED` /
+    `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`; and Phase 16
+    remains `PLANNED` / `INACTIVE`;
+  - no confirmed finding remains open for Phase 15 workflow disposition;
+  - the accepted approval tokens are:
+    `PHASE_15B1_ASSET_QUOTA_DEFERRAL_APPROVED` and
+    `PHASE_15_FINAL_SECURITY_CLOSEOUT_APPROVED`; and
+  - the implementation baseline is
+    `c27d39a428e20736fee40e4a77d0785c60f261f1`. The final closeout commit had
+    not yet been created while this documentation was edited, and push is
+    prohibited and was not performed.
 
 #### Purpose
 
