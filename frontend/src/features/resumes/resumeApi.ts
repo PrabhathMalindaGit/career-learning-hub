@@ -4,6 +4,7 @@ import {
   parseAnalysis,
   parseApplyResult,
   parseJob,
+  parseResumeEnvelope,
   parseResumeList,
   parseResumeWorkspace,
   parseVersionEnvelope,
@@ -11,6 +12,7 @@ import {
 } from "./resumeContracts";
 import type {
   ResumeContentInput,
+  ResumeDesign,
   ResumeJob,
 } from "./types";
 
@@ -103,6 +105,25 @@ export async function saveResumeVersion(
   const workspace = parseResumeWorkspace(data);
   assertResumeIdentity(resumeId, workspace.resume.id);
   return workspace;
+}
+
+export async function updateResumeDesign(
+  resumeId: string,
+  design: ResumeDesign,
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/resumes/${resumeId}/design`,
+    {
+      method: "PATCH",
+      body: design,
+      authentication: "required",
+      signal,
+    },
+  );
+  const resume = parseResumeEnvelope(data);
+  assertResumeIdentity(resumeId, resume.id);
+  return resume;
 }
 
 export async function listResumeVersions(

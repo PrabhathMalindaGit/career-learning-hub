@@ -5,8 +5,7 @@
   Accessibility and Performance Review
 - Status: ACTIVE
 - Active subphase: none
-- Most recently completed subphase: Phase 16B, Responsive Sidebar, AppShell
-  and Breadcrumbs
+- Most recently completed subphase: Phase 16C, Resume PDF Export and Print
 - Subphase status: COMPLETED / APPROVED
 - Audit baseline branch: `phase-12-unified-frontend`
 - Audit baseline full HEAD: `f3b5ecb0e1f267348b6dcb933784f37a085ef8e5`
@@ -15,7 +14,7 @@
   (`COMPLETED` /
   `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`)
 - Current workflow state:
-  `PHASE 16 ACTIVE; PHASE 16A-1, PHASE 16A-2, AND PHASE 16B COMPLETED AND APPROVED; PHASE 16C THROUGH PHASE 16G PLANNED AND INACTIVE`
+  `PHASE 16 ACTIVE; PHASE 16A-1, PHASE 16A-2, PHASE 16B, AND PHASE 16C COMPLETED AND APPROVED; PHASE 16D THROUGH PHASE 16G PLANNED AND INACTIVE`
 - Primary browser-suite name: Full Application Browser Testing
 - Executable browser-suite location: `tests/browser/`
 - Primary command: `npm run test:browser` only when a portable,
@@ -31,6 +30,9 @@
 - Accepted Phase 16B visual approval token:
   `PHASE_16B_SIDEBAR_BREADCRUMBS_VISUAL_APPROVED`
 - Phase 16B visual approval token accepted: yes
+- Accepted Phase 16C visual approval token:
+  `PHASE_16C_RESUME_EXPORT_VISUAL_APPROVED`
+- Phase 16C visual approval token accepted: yes
 - Controlling skills: `using-superpowers`, `karpathy-guidelines`,
   `define-goal`, `brainstorming`, `frontend-skill`, `frontend-design`,
   `playwright`, `lighthouse-verification`, `technical-writing`,
@@ -40,13 +42,16 @@
 
 ## Objective
 
+- Preserve the approved browser Print / Save as PDF behavior for canonical
+  saved Resume versions, with dirty-draft blocking and A4/Letter design
+  persistence.
 - Preserve the approved responsive AppShell, shared create actions, mobile
   navigation drawer, and contextual deep-route breadcrumbs.
 - Preserve the accepted Phase 15 limitations, including P15-001 operating
   restrictions, and all ownership, private-file, Quiz-secrecy, immutable
   Resume-version, and AI provenance safeguards.
-- Keep Phase 16C through Phase 16G and Phase 17 planned and inactive.
-- Require a separate activation prompt before Phase 16C begins.
+- Keep Phase 16D through Phase 16G and Phase 17 planned and inactive.
+- Require a separate activation prompt before Phase 16D begins.
 
 ## Phase status controls
 
@@ -81,7 +86,8 @@
 - Phase 16A-2, Roadmap Amendment and Architecture Audit is
   `COMPLETED` / `APPROVED`.
 - Phase 16B is `COMPLETED` / `APPROVED`.
-- Phase 16C through Phase 16G remain `PLANNED` / `INACTIVE`.
+- Phase 16C is `COMPLETED` / `APPROVED`.
+- Phase 16D through Phase 16G remain `PLANNED` / `INACTIVE`.
 - Phase 17 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -98,6 +104,56 @@
   `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
 - Pass F — Document Cascade Deletion and Phase 12 Final Verification is
   `COMPLETED`.
+
+## Phase 16C approval closeout
+
+- Phase 16C is `COMPLETED` / `APPROVED`.
+- Canonical current or explicitly loaded historical saved Resume versions
+  supply one in-place ATS Classic print-only surface.
+- Dirty drafts disable printing and retain Save New Version and Discard as
+  the required remediation.
+- A4 and Letter persist through the existing authenticated owner-scoped
+  Resume design endpoint; no content version, backend route, or shared
+  contract was added.
+- Browser Print / Save as PDF uses native `window.print()`, a bounded
+  sanitized title hint, `afterprint` restoration, and fallback cleanup.
+- Standard/Narrow margins and a page-sized screen preview remain omitted
+  conditional scope.
+- Focused frontend verification passed 43/43 tests across six files.
+- Complete frontend verification passed 608/608 tests across 45 files.
+- Root typecheck and the production build passed. The 571.09 kB JavaScript
+  chunk advisory remains a Phase 16F measurement candidate.
+- The one required complete Full Application Browser Testing run recorded
+  18/21 before test-only locator corrections. The final targeted Resume
+  workflow passed 3/3 across desktop, tablet, and mobile; together these runs
+  provide fresh passing evidence for every configured workflow.
+- Temporary A4 and Letter one-page and two-page PDFs passed page-size,
+  selectable-text, link, completeness, white-background, and grayscale
+  inspection, then were deleted.
+- Controls passed 1440x900, 1024x768, 768x1024, 390x844, 320x720, and
+  faithfully represented 200% checks with zero horizontal overflow.
+- Automated browser cleanup repeatedly reached `users=0`, `owned=0`.
+- Temporary services are stopped, ports 4173 and 8000 are closed, and all
+  generated artifacts are removed.
+- No backend, shared contract, package, lockfile, environment, provider,
+  Atlas, deployment, or legacy-project change occurred.
+- The operator approved current and historical saved-version printing, dirty
+  blocking, A4 and Letter, one-page and multipage output, grayscale
+  readability, safe links, and complete application-chrome exclusion.
+- Responsive controls were approved at 1440x900, 1024x768, 768x1024,
+  390x844, 320x720, and actual 200% browser zoom.
+- Manual browser Print / Save as PDF was approved with synthetic data. The
+  generated synthetic PDF was deleted after review.
+- Accepted approval token:
+  `PHASE_16C_RESUME_EXPORT_VISUAL_APPROVED`.
+- Approval token accepted: yes.
+- No implementation change was required during approval closeout.
+- The complete browser-run evidence remains 18/21 before test-only
+  corrections, with corrected targeted Resume evidence of 3/3. Phase 16G
+  must run a fresh complete integrated Full Application Browser Testing
+  suite.
+- Phase 16D through Phase 16G and Phase 17 remain `PLANNED` / `INACTIVE`.
+- Phase 16D requires a separate activation prompt.
 - Pass F human visual QA was approved with
   `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
 - Phase 12 is completed.

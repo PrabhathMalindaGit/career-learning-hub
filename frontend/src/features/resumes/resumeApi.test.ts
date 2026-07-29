@@ -177,6 +177,84 @@ describe("resumeApi", () => {
     });
   });
 
+  it("patches the complete current design and validates the canonical Resume response", async () => {
+    const { updateResumeDesign } = await loadApi();
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({
+        success: true,
+        data: {
+          resume: {
+            ...resumeFixture(),
+            design: { ...resumeFixture().design, pageSize: "LETTER" },
+          },
+        },
+      }),
+    );
+
+    const result = await updateResumeDesign(resumeId, {
+      ...resumeFixture().design,
+      pageSize: "LETTER",
+    });
+
+    expect(requestAt()[0]).toBe(
+      `https://api.example.test/api/v1/resumes/${resumeId}/design`,
+    );
+    expect(requestAt()[1].method).toBe("PATCH");
+    expect(JSON.parse(String(requestAt()[1].body))).toEqual({
+      templateId: "ats-classic",
+      colorPaletteId: "slate",
+      pageSize: "LETTER",
+      fontFamily: "Inter",
+      showProfilePhoto: false,
+    });
+    expect(result.design.pageSize).toBe("LETTER");
+  });
+
+  it("rejects an invalid design response and preserves a design request ID", async () => {
+    const { updateResumeDesign } = await loadApi();
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        jsonResponse({
+          success: true,
+          data: {
+            resume: {
+              ...resumeFixture(),
+              design: { ...resumeFixture().design, pageSize: "LEGAL" },
+            },
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            success: false,
+            error: {
+              code: "RESUME_NOT_FOUND",
+              message: "Resume not found.",
+              requestId: "design-request-id-0001",
+            },
+          },
+          404,
+        ),
+      );
+
+    await expect(
+      updateResumeDesign(resumeId, {
+        ...resumeFixture().design,
+        pageSize: "A4",
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_RESUME_RESPONSE" });
+    await expect(
+      updateResumeDesign(resumeId, {
+        ...resumeFixture().design,
+        pageSize: "A4",
+      }),
+    ).rejects.toMatchObject({
+      code: "RESUME_NOT_FOUND",
+      requestId: "design-request-id-0001",
+    });
+  });
+
   it("lists and loads immutable versions with bounded queries", async () => {
     const { listResumeVersions, fetchResumeVersion } = await loadApi();
     vi.mocked(fetch)

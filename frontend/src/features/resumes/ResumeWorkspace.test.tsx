@@ -11,6 +11,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiClient";
 import * as resumeApi from "./resumeApi";
+import * as resumePrint from "./resumePrint";
 import * as polling from "./resumePolling";
 import { ResumeWorkspace } from "./ResumeWorkspace";
 import type {
@@ -27,7 +28,16 @@ vi.mock("./resumeApi", () => ({
   listResumeVersions: vi.fn(),
   queueResumeAnalysis: vi.fn(),
   saveResumeVersion: vi.fn(),
+  updateResumeDesign: vi.fn(),
 }));
+
+vi.mock("./resumePrint", async () => {
+  const actual =
+    await vi.importActual<typeof import("./resumePrint")>(
+      "./resumePrint",
+    );
+  return { ...actual, openResumePrint: vi.fn() };
+});
 
 vi.mock("./resumePolling", async () => {
   const actual =
@@ -232,6 +242,116 @@ describe("ResumeWorkspace", () => {
     expect(screen.queryByText("Unsaved changes")).toBeNull();
   });
 
+  it("prints the canonical saved current version and blocks the mutable dirty draft", async () => {
+    vi.mocked(resumePrint.openResumePrint).mockResolvedValue(true);
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    const printButton = screen.getByRole("button", {
+      name: "Open print dialog for saved version 1",
+    });
+
+    expect(screen.getByText("Current saved version 1")).not.toBeNull();
+    expect((printButton as HTMLButtonElement).disabled).toBe(false);
+    await user.click(printButton);
+    expect(resumePrint.openResumePrint).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "synthetic-platform-resume-v1-a4",
+      }),
+    );
+
+    await user.clear(fullName);
+    await user.type(fullName, "Mutable Draft Candidate");
+
+    expect((printButton as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/save new version or discard/i)).not.toBeNull();
+    const printSurface = screen.getByLabelText(
+      "Printable current saved version 1",
+    );
+    expect(printSurface.textContent).toContain("Synthetic Candidate");
+    expect(printSurface.textContent).not.toContain(
+      "Mutable Draft Candidate",
+    );
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Save new version",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Discard draft changes",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
+  });
+
+  it("persists Letter through the design endpoint and reconciles only the canonical response", async () => {
+    let resolveDesign:
+      | ((value: ResumeWorkspaceData["resume"]) => void)
+      | undefined;
+    vi.mocked(resumeApi.updateResumeDesign).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveDesign = resolve;
+        }),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const paperSize = await screen.findByRole("combobox", {
+      name: "Paper size",
+    });
+
+    await user.selectOptions(paperSize, "LETTER");
+
+    expect(resumeApi.updateResumeDesign).toHaveBeenCalledWith(
+      resumeId,
+      expect.objectContaining({ pageSize: "LETTER" }),
+      expect.any(AbortSignal),
+    );
+    expect((paperSize as HTMLSelectElement).disabled).toBe(true);
+    expect((paperSize as HTMLSelectElement).value).toBe("A4");
+
+    resolveDesign?.({
+      ...workspace().resume,
+      design: { ...workspace().resume.design, pageSize: "LETTER" },
+    });
+
+    await waitFor(() =>
+      expect((paperSize as HTMLSelectElement).value).toBe("LETTER"),
+    );
+    expect(screen.getByText("Paper size saved as Letter.")).not.toBeNull();
+  });
+
+  it("preserves A4 and displays a safe request ID when a page-size update fails", async () => {
+    vi.mocked(resumeApi.updateResumeDesign).mockRejectedValue(
+      new ApiError(
+        500,
+        "DESIGN_UPDATE_FAILED",
+        "The design could not be updated.",
+        "page-size-request-0001",
+      ),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const paperSize = await screen.findByRole("combobox", {
+      name: "Paper size",
+    });
+
+    await user.selectOptions(paperSize, "LETTER");
+
+    expect(
+      await screen.findByText("The paper size could not be saved."),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("Request ID: page-size-request-0001"),
+    ).not.toBeNull();
+    expect((paperSize as HTMLSelectElement).value).toBe("A4");
+    expect(screen.queryByText("Paper size saved as Letter.")).toBeNull();
+  });
+
   it("retains a dirty draft and request ID after a save conflict", async () => {
     vi.mocked(resumeApi.fetchResume)
       .mockResolvedValueOnce(workspace())
@@ -335,13 +455,83 @@ describe("ResumeWorkspace", () => {
         name: "Read-only version 1",
       }),
     ).not.toBeNull();
-    expect(screen.getByText("Historical Candidate")).not.toBeNull();
+    expect(screen.getAllByText("Historical Candidate")).toHaveLength(2);
+    expect(screen.getByText("Historical saved version 1")).not.toBeNull();
+    expect(
+      screen.getByLabelText("Printable historical saved version 1")
+        .textContent,
+    ).toContain("Historical Candidate");
     await user.click(
       screen.getByRole("button", { name: "Return to current draft" }),
     );
     expect(
       (screen.getByLabelText("Full name") as HTMLInputElement).value,
     ).toBe("Draft Candidate");
+  });
+
+  it("clears a prior historical print source when another snapshot fails", async () => {
+    const historical = workspace().version;
+    vi.mocked(resumeApi.fetchResumeVersion)
+      .mockResolvedValueOnce({
+        ...historical,
+        content: {
+          ...historical.content,
+          basics: {
+            ...historical.content.basics,
+            fullName: "First Historical Candidate",
+          },
+        },
+      })
+      .mockRejectedValueOnce(
+        new ApiError(
+          404,
+          "RESUME_VERSION_NOT_FOUND",
+          "Resume version not found.",
+          "snapshot-request-0001",
+        ),
+      );
+    vi.mocked(resumeApi.listResumeVersions).mockResolvedValue({
+      versions: [
+        {
+          id: versionId,
+          versionNumber: 1,
+          source: "manual",
+          createdAt: timestamp,
+        },
+        {
+          id: nextVersionId,
+          versionNumber: 2,
+          source: "manual",
+          createdAt: timestamp,
+        },
+      ],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    renderWorkspace();
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "View version 1" }),
+    );
+    expect(
+      await screen.findAllByText("First Historical Candidate"),
+    ).toHaveLength(2);
+
+    await user.click(
+      screen.getByRole("button", { name: "View version 2" }),
+    );
+
+    expect(
+      await screen.findByText("We could not load that resume version."),
+    ).not.toBeNull();
+    expect(
+      screen.queryByLabelText("Printable historical saved version 1"),
+    ).toBeNull();
+    expect(
+      screen.getByLabelText("Printable current saved version 1").textContent,
+    ).toContain("Synthetic Candidate");
+    expect(
+      screen.getByText("Request ID: snapshot-request-0001"),
+    ).not.toBeNull();
   });
 
   it("discards a stale snapshot response when the route resume identity changes", async () => {
@@ -392,6 +582,13 @@ describe("ResumeWorkspace", () => {
     });
     const snapshotSignal = vi.mocked(resumeApi.fetchResumeVersion).mock
       .calls[0]?.[2];
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Open print dialog for saved version 1",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
 
     await router.navigate(`/resumes/${otherResumeId}`);
     expect(

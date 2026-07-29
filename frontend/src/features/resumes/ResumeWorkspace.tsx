@@ -10,6 +10,7 @@ import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { Dialog } from "../../components/Dialog";
 import { AiRecommendations } from "./AiRecommendations";
 import { ResumeEditor } from "./ResumeEditor";
+import { ResumePrintControls } from "./ResumePrintControls";
 import { ResumePreview } from "./ResumePreview";
 import {
   applyResumeSuggestions,
@@ -20,6 +21,7 @@ import {
   listResumeVersions,
   queueResumeAnalysis,
   saveResumeVersion,
+  updateResumeDesign,
 } from "./resumeApi";
 import {
   draftFingerprint,
@@ -28,8 +30,13 @@ import {
   validateResumeDraft,
 } from "./resumeDraft";
 import { pollResumeJob } from "./resumePolling";
+import {
+  createResumePrintTitle,
+  openResumePrint,
+} from "./resumePrint";
 import type {
   ResumeAnalysis,
+  ResumeDesign,
   ResumeDraft,
   ResumeJob,
   Pagination,
@@ -84,12 +91,16 @@ export function ResumeWorkspace() {
   const [historyFailure, setHistoryFailure] = useState<Notice>();
   const [historyReloadSequence, setHistoryReloadSequence] = useState(0);
   const [snapshot, setSnapshot] = useState<ResumeVersion>();
+  const [snapshotLoadingId, setSnapshotLoadingId] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [loadFailure, setLoadFailure] = useState<Notice>();
   const [reloadSequence, setReloadSequence] = useState(0);
   const [notice, setNotice] = useState<Notice>();
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [pageSizeSaving, setPageSizeSaving] = useState(false);
+  const [pageSizeFailure, setPageSizeFailure] = useState<Notice>();
+  const [printPreparing, setPrintPreparing] = useState(false);
   const [analysis, setAnalysis] = useState<ResumeAnalysis>();
   const [analysisStale, setAnalysisStale] = useState(false);
   const [analysisBusy, setAnalysisBusy] = useState(false);
@@ -103,6 +114,9 @@ export function ResumeWorkspace() {
   >(new Set());
   const [applying, setApplying] = useState(false);
   const activeControllers = useRef(new Set<AbortController>());
+  const snapshotControllerRef = useRef<AbortController | undefined>(
+    undefined,
+  );
   const keepEditingButtonRef = useRef<HTMLButtonElement>(null);
 
   const dirty =
@@ -130,10 +144,16 @@ export function ResumeWorkspace() {
   }
 
   useEffect(() => {
+    snapshotControllerRef.current?.abort();
+    snapshotControllerRef.current = undefined;
     setSaving(false);
     setAnalysisBusy(false);
     setApplying(false);
+    setPageSizeSaving(false);
+    setPageSizeFailure(undefined);
+    setPrintPreparing(false);
     setSnapshot(undefined);
+    setSnapshotLoadingId(undefined);
     setAnalysis(undefined);
     setAnalysisJob(undefined);
     setAnalysisJobId(undefined);
@@ -284,8 +304,12 @@ export function ResumeWorkspace() {
 
   async function handleViewVersion(version: ResumeVersionMetadata) {
     if (!resumeId) return;
+    snapshotControllerRef.current?.abort();
     const controller = beginOperation();
+    snapshotControllerRef.current = controller;
     setNotice(undefined);
+    setSnapshot(undefined);
+    setSnapshotLoadingId(version.id);
     try {
       const loaded = await fetchResumeVersion(
         resumeId,
@@ -302,7 +326,75 @@ export function ResumeWorkspace() {
       }
     } finally {
       finishOperation(controller);
+      if (snapshotControllerRef.current === controller) {
+        snapshotControllerRef.current = undefined;
+      }
+      setSnapshotLoadingId((current) =>
+        current === version.id ? undefined : current,
+      );
     }
+  }
+
+  async function handlePageSizeChange(
+    pageSize: ResumeDesign["pageSize"],
+  ) {
+    if (
+      !resumeId ||
+      !workspace ||
+      pageSizeSaving ||
+      pageSize === workspace.resume.design.pageSize
+    ) {
+      return;
+    }
+    const controller = beginOperation();
+    setPageSizeSaving(true);
+    setPageSizeFailure(undefined);
+    setNotice(undefined);
+    try {
+      const resume = await updateResumeDesign(
+        resumeId,
+        { ...workspace.resume.design, pageSize },
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      setWorkspace((current) =>
+        current ? { ...current, resume } : current,
+      );
+      setNotice({
+        tone: "success",
+        message: `Paper size saved as ${
+          resume.design.pageSize === "LETTER" ? "Letter" : "A4"
+        }.`,
+      });
+    } catch (error) {
+      if (!isAbort(error)) {
+        setPageSizeFailure(
+          safeFailure(error, "The paper size could not be saved."),
+        );
+      }
+    } finally {
+      finishOperation(controller);
+      setPageSizeSaving(false);
+    }
+  }
+
+  function handlePrint() {
+    const version = snapshot ?? workspace?.version;
+    if (!workspace || !version || dirty || printPreparing) return;
+    setNotice(undefined);
+    void openResumePrint({
+      title: createResumePrintTitle({
+        resumeTitle: workspace.resume.title,
+        versionNumber: version.versionNumber,
+        pageSize: workspace.resume.design.pageSize,
+      }),
+      onPrintStateChange: setPrintPreparing,
+    }).catch((error: unknown) => {
+      setPrintPreparing(false);
+      setNotice(
+        safeFailure(error, "We could not open the browser print dialog."),
+      );
+    });
   }
 
   async function completeAnalysisPolling(jobIdentifier: string) {
@@ -624,13 +716,40 @@ export function ResumeWorkspace() {
         </div>
       ) : null}
 
+      <ResumePrintControls
+        sourceKind={snapshot ? "historical" : "current"}
+        versionNumber={
+          (snapshot ?? workspace.version).versionNumber
+        }
+        pageSize={workspace.resume.design.pageSize}
+        dirty={dirty}
+        pageSizeSaving={pageSizeSaving}
+        printPreparing={printPreparing}
+        sourceLoading={snapshotLoadingId !== undefined}
+        error={
+          pageSizeFailure
+            ? {
+                message: pageSizeFailure.message,
+                requestId: pageSizeFailure.requestId,
+              }
+            : undefined
+        }
+        onPageSizeChange={(pageSize) =>
+          void handlePageSizeChange(pageSize)
+        }
+        onPrint={handlePrint}
+      />
+
       <div className="resume-workspace-grid">
         <ResumeEditor
           draft={draft}
           disabled={saving || applying}
           onChange={setDraft}
         />
-        <ResumePreview draft={draft} />
+        <ResumePreview
+          draft={draft}
+          pageSize={workspace.resume.design.pageSize}
+        />
 
         <aside
           className="resume-panel resume-analysis-runner"
@@ -783,7 +902,10 @@ export function ResumeWorkspace() {
                 </div>
                 <button
                   type="button"
-                  disabled={version.id === snapshot?.id}
+                  disabled={
+                    version.id === snapshot?.id ||
+                    version.id === snapshotLoadingId
+                  }
                   onClick={() => void handleViewVersion(version)}
                 >
                   View version {version.versionNumber}
@@ -840,9 +962,22 @@ export function ResumeWorkspace() {
             label={`Version ${snapshot.versionNumber} preview`}
             headingId="resume-snapshot-preview-title"
             ariaLabel={`Resume version ${snapshot.versionNumber} preview`}
+            pageSize={workspace.resume.design.pageSize}
           />
         </section>
       ) : null}
+
+      <ResumePreview
+        draft={resumeContentToDraft(
+          (snapshot ?? workspace.version).content,
+        )}
+        label={`Printable ${
+          snapshot ? "historical" : "current"
+        } saved version ${(snapshot ?? workspace.version).versionNumber}`}
+        ariaLabel="Printable saved resume"
+        pageSize={workspace.resume.design.pageSize}
+        printOnly
+      />
 
       {blocker.state === "blocked" ? (
         <Dialog

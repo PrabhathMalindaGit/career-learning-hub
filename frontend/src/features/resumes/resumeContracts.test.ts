@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseAnalysis,
   parseJob,
+  parseResumeEnvelope,
   parseResumeList,
   parseResumeWorkspace,
   parseVersionList,
@@ -182,6 +183,22 @@ describe("resume contract validators", () => {
       parseResumeList({
         resumes: [resumeFixture()],
         pagination: { page: 2, limit: 20, total: 1, pages: 1 },
+      }),
+    ).toThrowError(/invalid resume response/i);
+  });
+
+  it("validates a design-update Resume envelope and rejects unsupported paper sizes", () => {
+    const result = parseResumeEnvelope({ resume: resumeFixture() });
+
+    expect(result.id).toBe(objectId);
+    expect(result.design.pageSize).toBe("A4");
+    expect(result).not.toHaveProperty("userId");
+    expect(() =>
+      parseResumeEnvelope({
+        resume: {
+          ...resumeFixture(),
+          design: { ...resumeFixture().design, pageSize: "LEGAL" },
+        },
       }),
     ).toThrowError(/invalid resume response/i);
   });

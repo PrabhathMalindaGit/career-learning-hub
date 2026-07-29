@@ -1,10 +1,48 @@
-import type { ResumeDraft } from "./types";
+import type { ResumeDesign, ResumeDraft } from "./types";
 
 interface ResumePreviewProps {
   draft: ResumeDraft;
   label?: string;
   headingId?: string;
   ariaLabel?: string;
+  pageSize?: ResumeDesign["pageSize"];
+  printOnly?: boolean;
+}
+
+function safeHref(value: string): string | undefined {
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.protocol === "https:" ||
+      parsed.protocol === "http:" ||
+      parsed.protocol === "mailto:" ||
+      parsed.protocol === "tel:"
+      ? value.trim()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function SafeLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: string;
+}) {
+  const safe = safeHref(href);
+  if (!safe) return <>{children}</>;
+  const external = safe.startsWith("http://") || safe.startsWith("https://");
+  return (
+    <a
+      href={safe}
+      {...(external
+        ? { target: "_blank", rel: "noopener noreferrer" }
+        : {})}
+    >
+      {children}
+    </a>
+  );
 }
 
 function DateSpan({
@@ -27,25 +65,34 @@ export function ResumePreview({
   label = "Live preview",
   headingId = "resume-preview-title",
   ariaLabel = "Resume preview",
+  pageSize = "A4",
+  printOnly = false,
 }: ResumePreviewProps) {
-  const contact = [
-    draft.basics.email,
-    draft.basics.phone,
-    draft.basics.location,
-  ].filter(Boolean);
-
   return (
     <section
-      className="resume-panel resume-preview-panel"
-      aria-labelledby={headingId}
+      className={`resume-panel resume-preview-panel${
+        printOnly ? " resume-print-surface" : ""
+      }`}
+      {...(printOnly
+        ? { "aria-label": label }
+        : { "aria-labelledby": headingId })}
+      data-page-size={pageSize}
     >
-      <header className="resume-panel-header">
-        <div>
-          <p className="resume-kicker">ATS Classic</p>
-          <h2 id={headingId}>{label}</h2>
-        </div>
-        <span className="resume-status">A4</span>
-      </header>
+      {printOnly ? (
+        <style>{`@media print { @page { size: ${
+          pageSize === "LETTER" ? "Letter" : "A4"
+        }; margin: 12mm; } }`}</style>
+      ) : (
+        <header className="resume-panel-header">
+          <div>
+            <p className="resume-kicker">ATS Classic</p>
+            <h2 id={headingId}>{label}</h2>
+          </div>
+          <span className="resume-status">
+            {pageSize === "LETTER" ? "Letter" : "A4"}
+          </span>
+        </header>
+      )}
 
       <article
         className="resume-paper"
@@ -55,12 +102,35 @@ export function ResumePreview({
         <header className="resume-paper-header">
           <h3>{draft.basics.fullName || "Your name"}</h3>
           {draft.basics.headline ? <p>{draft.basics.headline}</p> : null}
-          {contact.length > 0 ? <small>{contact.join(" • ")}</small> : null}
+          {draft.basics.email ||
+          draft.basics.phone ||
+          draft.basics.location ? (
+            <ul className="resume-paper-contact">
+              {draft.basics.email ? (
+                <li>
+                  <SafeLink href={`mailto:${draft.basics.email}`}>
+                    {draft.basics.email}
+                  </SafeLink>
+                </li>
+              ) : null}
+              {draft.basics.phone ? (
+                <li>
+                  <SafeLink href={`tel:${draft.basics.phone}`}>
+                    {draft.basics.phone}
+                  </SafeLink>
+                </li>
+              ) : null}
+              {draft.basics.location ? (
+                <li>{draft.basics.location}</li>
+              ) : null}
+            </ul>
+          ) : null}
           {draft.basics.links.length > 0 ? (
             <ul className="resume-paper-links">
               {draft.basics.links.map((link) => (
                 <li key={link.clientKey}>
-                  {link.label}: {link.url}
+                  <SafeLink href={link.url}>{link.label}</SafeLink>:{" "}
+                  {link.url}
                 </li>
               ))}
             </ul>
@@ -173,7 +243,8 @@ export function ResumePreview({
                   <ul className="resume-paper-links">
                     {project.links.map((link) => (
                       <li key={link.clientKey}>
-                        {link.label}: {link.url}
+                        <SafeLink href={link.url}>{link.label}</SafeLink>:{" "}
+                        {link.url}
                       </li>
                     ))}
                   </ul>
@@ -200,11 +271,18 @@ export function ResumePreview({
                   {[
                     certification.issuer,
                     certification.issuedDate,
-                    certification.credentialUrl,
                   ]
                     .filter(Boolean)
                     .map((value) => ` · ${value}`)
                     .join("")}
+                  {certification.credentialUrl ? (
+                    <>
+                      {" · "}
+                      <SafeLink href={certification.credentialUrl}>
+                        Credential
+                      </SafeLink>
+                    </>
+                  ) : null}
                 </li>
               ))}
             </ul>

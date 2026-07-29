@@ -323,6 +323,10 @@ function parseResume(value: unknown): ResumeRecord {
   };
 }
 
+export function parseResumeEnvelope(value: unknown): ResumeRecord {
+  return parseResume(record(value).resume);
+}
+
 function parsePagination(value: unknown): Pagination {
   const item = record(value);
   const page = integer(item.page, 1);

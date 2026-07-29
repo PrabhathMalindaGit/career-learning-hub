@@ -1694,7 +1694,8 @@
   `COMPLETED` / `APPROVED`.
 - Phase 16B, Responsive Sidebar, AppShell and Breadcrumbs is `COMPLETED` /
   `APPROVED`.
-- Phase 16C through Phase 16G are `PLANNED` / `INACTIVE`.
+- Phase 16C, Resume PDF Export and Print is `COMPLETED` / `APPROVED`.
+- Phase 16D through Phase 16G are `PLANNED` / `INACTIVE`.
 - Phase 17 is `PLANNED` / `INACTIVE`.
 - Accepted approval token:
   `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
@@ -1704,14 +1705,19 @@
   `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`.
 - The operator accepted the Phase 16B visual result with
   `PHASE_16B_SIDEBAR_BREADCRUMBS_VISUAL_APPROVED`.
+- The operator accepted the Phase 16C visual result with
+  `PHASE_16C_RESUME_EXPORT_VISUAL_APPROVED`.
 - The migration behavior was verified with 21/21 passing browser workflows.
 - No production source, browser-test behavior, or visible UI changed.
 - The repository still has no declared or portable repository-local
   Playwright runner. `package.json` remains unchanged, neither
   `test:browser` nor `test:e2e` exists, and adding a portable command requires
   separate approval.
-- Phase 16B implements the accepted shell and breadcrumb architecture without
-  activating Phase 16C.
+- Phase 16B implements the accepted shell and breadcrumb architecture.
+- Phase 16C is separately activated at full HEAD
+  `f63f9f488f7c2288795d69f37cf8effe9c3dce78`
+  (`Build responsive application shell and breadcrumbs`) to implement
+  browser Print / Save as PDF for canonical saved Resume versions.
 
 #### Purpose
 
@@ -1748,7 +1754,7 @@
 - Phase 16B — Responsive Sidebar, AppShell and Breadcrumbs:
   `COMPLETED` / `APPROVED`.
 - Phase 16C — Resume PDF Export and Print:
-  `PLANNED` / `INACTIVE`.
+  `COMPLETED` / `APPROVED`.
 - Phase 16D — Original-versus-Suggested AI Comparison:
   `PLANNED` / `INACTIVE`.
 - Phase 16E — Bounded Resume Templates and Design Controls:
@@ -1786,7 +1792,7 @@ Conditional, time-permitting scope:
   responsive shell, create intents, and breadcrumb decisions.
 - Resume printing, AI comparison, templates, accessibility repairs, and
   performance repairs remain out of Phase 16B scope.
-- Phase 16C through Phase 16G and Phase 17 remain inactive until separately
+- Phase 16D through Phase 16G and Phase 17 remain inactive until separately
   authorized.
 - Post-MVP scope includes command palettes, global shortcuts, a new theme
   system, editable AI suggestions, feedback analytics, major Resume-section
@@ -1840,16 +1846,26 @@ Conditional, time-permitting scope:
   changed during the approval closeout.
 - Commit authorization is exercised only for the five-document Phase 16A-2
   closeout. Push remains prohibited and has not occurred.
-- Every future visible Phase 16C through Phase 16E change requires its
+- Every future visible Phase 16D through Phase 16E change requires its
   specified visual-approval token before commit authorization.
 - Phase 16B was visually approved with
   `PHASE_16B_SIDEBAR_BREADCRUMBS_VISUAL_APPROVED` at 1440×900, 1024×768,
   768×1024, 390×844, 320×720, and actual 200% browser zoom.
-- Phase 16C remains inactive and requires a separate activation prompt.
+- Phase 16C was visually approved with
+  `PHASE_16C_RESUME_EXPORT_VISUAL_APPROVED`. Approval covered current and
+  historical saved versions, dirty-draft blocking, A4 and Letter, one-page
+  and multipage output, grayscale readability, safe links, app-chrome
+  exclusion, all required responsive viewports, actual 200% browser zoom,
+  and manual browser Save as PDF with synthetic-data cleanup.
+- The Phase 16C complete browser run remains recorded as 18/21 before
+  test-only corrections, followed by corrected targeted Resume evidence of
+  3/3. Phase 16G must run a fresh complete integrated Full Application
+  Browser Testing suite.
+- Phase 16D remains inactive and requires separate activation.
 
 #### Expected commit
 
-- `Build responsive application shell and breadcrumbs`
+- `Add saved Resume printing`
 
 ### Execution Phase 17: Final Repository and Release-Candidate Review
 
