@@ -4,7 +4,9 @@
 
 - Baseline: `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
 - Audit pass: Phase 15A — Threat Model, Ownership Map, and Validated Audit
-- Production and test changes: prohibited in this pass
+- Phase 15A production and test changes: prohibited during the audit pass
+- Most recently closed repair passes: Phase 15B-3 and Phase 15B-4
+- Remaining open confirmed finding: P15-001 only
 - Confirmed Critical: 0
 - Confirmed High: 0
 - Confirmed Medium: 3
@@ -22,7 +24,7 @@
 
 - Severity: Medium
 - Confidence: High
-- Status: Validated; repair requires separate authorization
+- Status: OPEN / UNCHANGED
 - Affected paths and lines:
   - `backend/src/modules/assets/asset.service.ts:37-69`
   - `backend/src/modules/assets/asset.service.ts:71-124`
@@ -303,8 +305,7 @@
 
 - Severity: Medium
 - Confidence: High
-- Status: Validated configuration-dependent finding; repair requires separate
-  authorization
+- Status: REPAIRED / CLOSED
 - Affected paths and lines:
   - `frontend/src/api/apiClient.ts:6-9`
   - `backend/src/config/env.ts:103-105`
@@ -374,14 +375,47 @@
   - signed URL construction uses the approved origin.
 - Residual risk: edge rewrites and reverse proxies still require deployment
   smoke tests proving the externally visible origin.
-- Separate authorization required: Yes.
+- Implementation baseline:
+  `91baf956baa99bd46e57e4e2da3a82380224a196`.
+- Production changes:
+  - `backend/src/config/env.ts`
+  - `frontend/src/api/apiClient.ts`
+- Test changes:
+  - `backend/src/tests/security/cors.security.test.ts`
+  - `backend/src/tests/integration/learningDocumentSource.integration.test.ts`
+  - `frontend/src/api/apiClient.test.ts`
+- Implemented control:
+  - production requires explicit backend client/public origins and an
+    explicit frontend API URL;
+  - non-HTTPS, malformed, credential-bearing, query/fragment-bearing,
+    localhost, `.localhost`, IPv4/IPv6 loopback, and IPv4-mapped IPv6
+    loopback forms are rejected;
+  - accepted origins are normalized; and
+  - local defaults remain limited to development/test behavior.
+- RED evidence: backend origin tests failed 15/23 and frontend API tests
+  failed 10/48 before the repair.
+- GREEN evidence: backend CORS/environment/rate limit 31/31, frontend API
+  50/50, Learning source 11/11, security 35/35, integration 53/53, backend
+  unit 19/19,
+  complete frontend 584/584, all required typechecks, and production build.
+- Negative startup evidence: production-mode frontend initialization without
+  `VITE_API_URL` fails with an error naming only that variable and does not
+  reveal a value.
+- Residual risk: deployment-edge and reverse-proxy behavior still requires
+  environment-specific smoke verification.
+- Accepted security-review token:
+  `PHASE_15B34_SECURITY_REPAIR_APPROVED`.
+- Accepted visual-review token:
+  `PHASE_15B34_AUTH_UI_VISUAL_APPROVED`.
+- Closeout status: repaired and closed.
 
 ### P15-005 — Registration reveals whether an email already has an account
 
 - Severity: Low
 - Confidence: High
-- Status: Validated privacy gap; repair or explicit acceptance requires
-  separate authorization
+- Status:
+  MITIGATED / CLOSED WITH DOCUMENTED RESIDUAL ENUMERATION SIDE CHANNEL
+  ACCEPTED FOR THE CONTROLLED ACADEMIC MVP
 - Affected paths and lines:
   - `backend/src/modules/auth/auth.routes.ts:22-27`
   - `backend/src/modules/auth/auth.service.ts:78-89`
@@ -434,7 +468,43 @@
   - rate limiting remains in place.
 - Residual risk: email delivery or account-recovery UX can independently
   reintroduce account enumeration and must follow the same policy.
-- Separate authorization required: Yes.
+- Implementation baseline:
+  `91baf956baa99bd46e57e4e2da3a82380224a196`.
+- Production changes:
+  - `backend/src/modules/auth/auth.service.ts`
+  - `frontend/src/features/auth/RegisterPage.tsx`
+- Test changes:
+  - `backend/src/tests/integration/auth.integration.test.ts`
+  - `frontend/src/routing/router.test.tsx`
+- Implemented mitigation:
+  - removed the explicit existence pre-check and
+    `EMAIL_ALREADY_REGISTERED`;
+  - retained the unique email index as the authoritative race-safe control;
+  - mapped duplicate-key failures to neutral HTTP 400
+    `REGISTRATION_FAILED`;
+  - issued no token, cookie, or session for a duplicate attempt;
+  - preserved the existing password hash, profile, and sessions;
+  - preserved generic login errors, validation, rate limits, and request IDs;
+    and
+  - focused the neutral frontend error alert for keyboard users.
+- RED evidence: both new registration contracts failed in the initial 2/13
+  focused authentication result because the old response remained HTTP 409.
+- GREEN evidence: focused authentication 13/13, focused frontend auth/API
+  111/111, security 35/35, integration 53/53, backend unit 19/19, complete
+  frontend 584/584, all required typechecks, and production build.
+- Browser evidence: valid, duplicate, invalid, loading/disabled, focus,
+  login-navigation, containment, overflow, and console checks passed at 1440,
+  1024, 768, 390, and 320 px.
+- Residual observable side channel: an unused-address HTTP 201 authenticated
+  success remains distinguishable from an existing-address HTTP 400 neutral
+  failure. Complete elimination would require an approved
+  ownership-verification or pending-registration architecture.
+- Accepted security-review token:
+  `PHASE_15B34_SECURITY_REPAIR_APPROVED`.
+- Accepted visual-review token:
+  `PHASE_15B34_AUTH_UI_VISUAL_APPROVED`.
+- Closeout status: bounded mitigation accepted and closed for the controlled
+  academic MVP.
 
 ## Informational observations
 
@@ -617,7 +687,7 @@ governance remain deployment/operator responsibilities.
   - `backend/src/config/env.ts`
 - Likely test files:
   - `frontend/src/api/apiClient.test.ts`
-  - new `backend/src/tests/unit/env.test.ts`
+  - `backend/src/tests/security/cors.security.test.ts`
   - `backend/src/tests/integration/learningDocumentSource.integration.test.ts`
     for signed local URL origin behavior.
 - Runtime: production-mode configuration tests plus a local HTTPS/same-origin

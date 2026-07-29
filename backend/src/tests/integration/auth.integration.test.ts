@@ -17,6 +17,11 @@ const INVALID_SESSION_ERROR = {
   code: "INVALID_SESSION",
   message: "The session is invalid or expired.",
 };
+const REGISTRATION_FAILURE_ERROR = {
+  code: "REGISTRATION_FAILED",
+  message:
+    "Registration could not be completed. Check the details or sign in if you already have an account.",
+};
 
 function readRefreshCookie(response: {
   headers: Record<string, unknown>;
@@ -156,6 +161,119 @@ describe("authentication integration", () => {
     expect(refreshed.body.data.accessToken).toEqual(
       expect.any(String),
     );
+  });
+
+  it("returns a neutral duplicate-registration failure without changing the account", async () => {
+    const first = await request(app)
+      .post("/api/v1/auth/register")
+      .set("Origin", TEST_ORIGIN)
+      .send({
+        email: "duplicate-registration@example.com",
+        password: TEST_PASSWORD,
+        displayName: "Original User",
+      })
+      .expect(201);
+
+    const originalUser = await UserModel.findOne({
+      email: "duplicate-registration@example.com",
+    })
+      .select("+passwordHash")
+      .lean();
+    const originalSessionCount = await AuthSessionModel.countDocuments({
+      userId: originalUser?._id,
+    });
+
+    const duplicate = await request(app)
+      .post("/api/v1/auth/register")
+      .set("Origin", TEST_ORIGIN)
+      .send({
+        email: "duplicate-registration@example.com",
+        password: "DifferentPassword2",
+        displayName: "Replacement User",
+      })
+      .expect(400);
+
+    expect(duplicate.body.error).toMatchObject(
+      REGISTRATION_FAILURE_ERROR,
+    );
+    expect(duplicate.body.error.requestId).toEqual(expect.any(String));
+    expect(duplicate.body.data).toBeUndefined();
+    expect(duplicate.headers["set-cookie"]).toBeUndefined();
+    expect(JSON.stringify(duplicate.body).toLowerCase()).not.toContain(
+      "email_already_registered",
+    );
+    expect(JSON.stringify(duplicate.body).toLowerCase()).not.toContain(
+      "already exists",
+    );
+    expect(JSON.stringify(duplicate.body).toLowerCase()).not.toContain(
+      "already registered",
+    );
+    expect(first.headers["set-cookie"]).toBeDefined();
+
+    const preservedUser = await UserModel.findOne({
+      email: "duplicate-registration@example.com",
+    })
+      .select("+passwordHash")
+      .lean();
+    expect(preservedUser?._id.toString()).toBe(
+      originalUser?._id.toString(),
+    );
+    expect(preservedUser?.passwordHash).toBe(originalUser?.passwordHash);
+    expect(preservedUser?.profile.displayName).toBe("Original User");
+    expect(
+      await AuthSessionModel.countDocuments({
+        userId: preservedUser?._id,
+      }),
+    ).toBe(originalSessionCount);
+  });
+
+  it("allows exactly one concurrent registration for a new email", async () => {
+    const attempts = await Promise.all([
+      request(app)
+        .post("/api/v1/auth/register")
+        .set("Origin", TEST_ORIGIN)
+        .send({
+          email: "concurrent-registration@example.com",
+          password: TEST_PASSWORD,
+          displayName: "Concurrent User",
+        }),
+      request(app)
+        .post("/api/v1/auth/register")
+        .set("Origin", TEST_ORIGIN)
+        .send({
+          email: "concurrent-registration@example.com",
+          password: "DifferentPassword2",
+          displayName: "Concurrent User",
+        }),
+    ]);
+
+    const winner = attempts.find((response) => response.status === 201);
+    const loser = attempts.find((response) => response.status === 400);
+
+    expect(attempts.map((response) => response.status).sort()).toEqual([
+      201,
+      400,
+    ]);
+    expect(winner?.body.data.accessToken).toEqual(expect.any(String));
+    expect(winner?.headers["set-cookie"]).toBeDefined();
+    expect(loser?.body.error).toMatchObject(
+      REGISTRATION_FAILURE_ERROR,
+    );
+    expect(loser?.body.error.requestId).toEqual(expect.any(String));
+    expect(loser?.body.data).toBeUndefined();
+    expect(loser?.headers["set-cookie"]).toBeUndefined();
+    expect(
+      await UserModel.countDocuments({
+        email: "concurrent-registration@example.com",
+      }),
+    ).toBe(1);
+
+    const user = await UserModel.findOne({
+      email: "concurrent-registration@example.com",
+    }).lean();
+    expect(
+      await AuthSessionModel.countDocuments({ userId: user?._id }),
+    ).toBe(1);
   });
 
   it("rejects invalid credentials without exposing password details", async () => {

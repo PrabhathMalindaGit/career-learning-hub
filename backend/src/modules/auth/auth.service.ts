@@ -85,26 +85,42 @@ function invalidSessionError(): AppError {
   );
 }
 
+function isDuplicateKeyError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11_000
+  );
+}
+
+function registrationFailedError(): AppError {
+  return new AppError(
+    400,
+    "REGISTRATION_FAILED",
+    "Registration could not be completed. Check the details or sign in if you already have an account.",
+  );
+}
+
 export async function registerUser(
   input: RegisterInput,
   request: Request,
 ) {
-  const existing = await UserModel.exists({ email: input.email });
-  if (existing) {
-    throw new AppError(
-      409,
-      "EMAIL_ALREADY_REGISTERED",
-      "An account with that email already exists.",
-    );
+  let user: UserDocument;
+  try {
+    user = await UserModel.create({
+      email: input.email,
+      passwordHash: input.password,
+      profile: {
+        displayName: input.displayName,
+      },
+    });
+  } catch (error) {
+    if (isDuplicateKeyError(error)) {
+      throw registrationFailedError();
+    }
+    throw error;
   }
-
-  const user = await UserModel.create({
-    email: input.email,
-    passwordHash: input.password,
-    profile: {
-      displayName: input.displayName,
-    },
-  });
 
   const tokens = await createSession(user, request);
   return { user, ...tokens };

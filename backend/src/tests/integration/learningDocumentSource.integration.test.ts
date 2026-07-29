@@ -152,6 +152,9 @@ describe("Learning Document private source contract", () => {
         },
       },
     });
+    expect(new URL(response.body.data.source.url).origin).toBe(
+      new URL(env.API_PUBLIC_ORIGIN).origin,
+    );
   });
 
   it("rejects unauthenticated source requests through existing authentication", async () => {

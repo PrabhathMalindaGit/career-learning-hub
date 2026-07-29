@@ -28,6 +28,20 @@ async function loadClient(
   return import("./apiClient");
 }
 
+async function loadClientForEnvironment(input: {
+  apiUrl?: string;
+  production: boolean;
+}): Promise<ApiClientModule> {
+  vi.resetModules();
+  vi.unstubAllEnvs();
+  vi.stubEnv("PROD", input.production);
+  vi.stubEnv("DEV", !input.production);
+  if (input.apiUrl !== undefined) {
+    vi.stubEnv("VITE_API_URL", input.apiUrl);
+  }
+  return import("./apiClient");
+}
+
 describe("apiClient", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
@@ -37,6 +51,61 @@ describe("apiClient", () => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it("rejects a missing production API base URL without exposing a value", async () => {
+    await expect(
+      loadClientForEnvironment({ production: true }),
+    ).rejects.toThrow("VITE_API_URL");
+  });
+
+  it.each([
+    "http://api.example.test/api/v1",
+    "https://localhost:8000/api/v1",
+    "https://api.localhost:8000/api/v1",
+    "https://127.0.0.1:8000/api/v1",
+    "https://127.8.9.10:8000/api/v1",
+    "https://[::1]:8000/api/v1",
+    "https://[::ffff:127.0.0.1]:8000/api/v1",
+    "not-a-url",
+    "https://user:password@api.example.test/api/v1",
+    "https://api.example.test/api/v1?unsafe=true",
+    "https://api.example.test/api/v1#unsafe",
+  ])("rejects unsafe production VITE_API_URL %s", async (apiUrl) => {
+    await expect(
+      loadClientForEnvironment({ apiUrl, production: true }),
+    ).rejects.toThrow("VITE_API_URL");
+  });
+
+  it("accepts and normalizes an explicit HTTPS production API base URL", async () => {
+    const { apiRequest } = await loadClientForEnvironment({
+      apiUrl: "https://api.example.test/api/v1///",
+      production: true,
+    });
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ success: true, data: { ok: true } }),
+    );
+
+    await apiRequest("/health");
+
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe(
+      "https://api.example.test/api/v1/health",
+    );
+  });
+
+  it("preserves the localhost API fallback outside production", async () => {
+    const { apiRequest } = await loadClientForEnvironment({
+      production: false,
+    });
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ success: true, data: { ok: true } }),
+    );
+
+    await apiRequest("/health");
+
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe(
+      "http://localhost:8000/api/v1/health",
+    );
   });
 
   it("applies the configured base URL and includes credentials", async () => {

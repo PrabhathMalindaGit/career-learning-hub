@@ -3,10 +3,70 @@ import type {
   ApiResponse,
 } from "@career-learning-hub/shared-types";
 
-const FALLBACK_API_BASE_URL = "http://localhost:8000/api/v1";
-const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ?? FALLBACK_API_BASE_URL
-).replace(/\/+$/, "");
+const DEVELOPMENT_API_BASE_URL = "http://localhost:8000/api/v1";
+
+function isLocalOrLoopbackHostname(hostname: string): boolean {
+  const normalized = hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .replace(/\.$/, "");
+
+  return (
+    normalized === "localhost" ||
+    normalized.endsWith(".localhost") ||
+    normalized === "::1" ||
+    /^::ffff:7f[0-9a-f]{2}:/.test(normalized) ||
+    /^127(?:\.\d{1,3}){3}$/.test(normalized)
+  );
+}
+
+function configurationError(): Error {
+  return new Error(
+    "VITE_API_URL must be an explicit non-local HTTPS URL in production.",
+  );
+}
+
+export function resolveApiBaseUrl(
+  configuredValue: string | undefined,
+  production: boolean,
+): string {
+  const value = configuredValue?.trim();
+  if (!value && production) {
+    throw configurationError();
+  }
+
+  const candidate = value || DEVELOPMENT_API_BASE_URL;
+  let url: URL;
+  try {
+    url = new URL(candidate);
+  } catch {
+    throw configurationError();
+  }
+
+  if (
+    !["http:", "https:"].includes(url.protocol) ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    (
+      production &&
+      (
+        url.protocol !== "https:" ||
+        isLocalOrLoopbackHostname(url.hostname)
+      )
+    )
+  ) {
+    throw configurationError();
+  }
+
+  return url.toString().replace(/\/+$/, "");
+}
+
+const API_BASE_URL = resolveApiBaseUrl(
+  import.meta.env?.VITE_API_URL,
+  import.meta.env?.PROD ?? false,
+);
 
 const REFRESH_EXCLUDED_PATHS = new Set([
   "/auth/login",

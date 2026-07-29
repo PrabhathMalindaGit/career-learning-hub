@@ -1384,23 +1384,26 @@
 #### Status
 
 - Status: ACTIVE
-- Most recently completed Phase 15 pass:
-  Phase 15B-2 — Session Revocation and Atomic Refresh Rotation
-  (`COMPLETED` / `APPROVED`)
+- Most recently approved Phase 15 passes:
+  Phase 15B-3 — Fail-Closed Production API-Origin Configuration
+  (`COMPLETED` / `APPROVED`) and Phase 15B-4 — Registration
+  Account-Enumeration Response
+  (`COMPLETED` / `APPROVED AS BOUNDED MITIGATION`).
 - Active Phase 15 repair pass: none.
-- Other Phase 15B repair batches remain `PLANNED` / `INACTIVE`.
+- Phase 15B-1 remains `PLANNED` / `INACTIVE`.
 - Activation prompt: `CLH-PHASE-15A-ACTIVATE-AND-AUDIT-01`
 - Activation baseline: branch `phase-12-unified-frontend`, full HEAD
   `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
   (`Add end-to-end application coverage`).
 - Current workflow state:
-  `PHASE 15 ACTIVE; PHASE 15B-2 COMPLETED AND APPROVED`.
+  `PHASE 15 ACTIVE; PHASE 15B-3 COMPLETED AND APPROVED; PHASE 15B-4 COMPLETED AND APPROVED AS BOUNDED MITIGATION`.
 - Phase 14 remains `COMPLETED`.
 - Phase 15A is `COMPLETED`; its review decision is
   `APPROVED WITH ACCEPTED LIMITATIONS`.
 - Phase 15B-1 is `PLANNED` / `INACTIVE`.
 - Phase 15B-2 is `COMPLETED` / `APPROVED`.
-- Phase 15B-3 and Phase 15B-4 are `PLANNED` / `INACTIVE`.
+- Phase 15B-3 is `COMPLETED` / `APPROVED`.
+- Phase 15B-4 is `COMPLETED` / `APPROVED AS BOUNDED MITIGATION`.
 - Phase 16 remains `PLANNED` / `INACTIVE`.
 - Accepted audit-review token:
   `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
@@ -1500,6 +1503,61 @@
   - the closeout commit had not yet been created when this documentation was
     edited; and
   - push is prohibited for this closeout and was not performed.
+- Phase 15B-3 and Phase 15B-4 implementation and validation:
+  - baseline:
+    `91baf956baa99bd46e57e4e2da3a82380224a196`
+    (`Complete Phase 15B-2 authentication repair`);
+  - P15-004 now fails closed in production: backend public/client origins and
+    frontend `VITE_API_URL` require explicit non-local HTTPS URLs, reject
+    malformed/credential-bearing/query/fragment/local/loopback forms, and
+    normalize accepted origins;
+  - local development/test defaults remain available, while private signed
+    asset URLs consume the validated backend origin;
+  - P15-005 no longer performs an email-existence pre-check or returns
+    `EMAIL_ALREADY_REGISTERED`; the unique index is authoritative and both
+    ordinary duplicates and duplicate-key races receive neutral HTTP 400
+    `REGISTRATION_FAILED`;
+  - existing accounts, password hashes, profiles, and sessions remain
+    unchanged, and duplicate attempts receive no tokens or cookies;
+  - the frontend renders only neutral copy, preserves request IDs, and focuses
+    the failure alert;
+  - the remaining unused-address success versus existing-address failure
+    signal means P15-005 is mitigated rather than fully eliminated;
+  - focused GREEN: backend CORS/environment/rate limit 31/31,
+    authentication 13/13, Learning
+    source 11/11, frontend API 50/50, and registration routing 48/48;
+  - broad GREEN: security 4 files/35 tests, integration 6/53, backend unit
+    5/19, focused frontend 3/111, and complete frontend 41/584;
+  - backend production/test, frontend, and root typechecks passed;
+  - an explicit-HTTPS production build passed; production-mode frontend
+    initialization tests reject a missing URL without printing a configured
+    value;
+  - in-app browser QA passed at 1440, 1024, 768, 390, and 320 px, including
+    valid, duplicate, invalid, loading, focus, navigation, and containment
+    states;
+  - residual P15-004 risk is deployment-edge/reverse-proxy drift not
+    represented in this repository;
+  - no provider, Atlas, package, lockfile, environment, schema, migration,
+    deployment, or legacy-project change occurred;
+  - no persistent QA service, database, user, session, screenshot, trace,
+    build output, coverage, or log remains;
+  - the closeout commit had not yet been created when this documentation was
+    edited, and push is prohibited and was not performed;
+  - accepted security and visual review tokens:
+    `PHASE_15B34_SECURITY_REPAIR_APPROVED` and
+    `PHASE_15B34_AUTH_UI_VISUAL_APPROVED`;
+  - Phase 15B-3 is `COMPLETED` / `APPROVED`;
+  - Phase 15B-4 is `COMPLETED` /
+    `APPROVED AS BOUNDED MITIGATION`;
+  - P15-004 is `REPAIRED / CLOSED`;
+  - P15-005 is
+    `MITIGATED / CLOSED WITH DOCUMENTED RESIDUAL ENUMERATION SIDE CHANNEL ACCEPTED FOR THE CONTROLLED ACADEMIC MVP`;
+  - an unused-address HTTP 201 authenticated success remains distinguishable
+    from an existing-address HTTP 400 neutral failure. Complete elimination
+    would require an approved ownership-verification or pending-registration
+    architecture; and
+  - P15-001 is `OPEN / UNCHANGED` and is the only remaining open confirmed
+    finding.
 
 #### Purpose
 

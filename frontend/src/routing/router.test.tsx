@@ -664,6 +664,61 @@ describe("authentication forms and shell interaction", () => {
     expect(authApi.register).not.toHaveBeenCalled();
   });
 
+  it("renders the neutral registration failure without account disclosure", async () => {
+    vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
+    vi.mocked(authApi.register).mockRejectedValue(
+      new ApiError(
+        400,
+        "REGISTRATION_FAILED",
+        "Registration could not be completed. Check the details or sign in if you already have an account.",
+        "registration-request-id-0001",
+      ),
+    );
+    renderRoute("/register");
+    await screen.findByRole("heading", {
+      name: "Create your account",
+    });
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByRole("textbox", { name: "Display name" }),
+      "Registration User",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Email address" }),
+      "existing@example.test",
+    );
+    await user.type(
+      screen.getByLabelText("Password"),
+      "SyntheticPassword1",
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Create account" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Registration could not be completed. Check the details or sign in if you already have an account.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("Request ID: registration-request-id-0001"),
+    ).not.toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole("alert"));
+    expect(document.body.textContent).not.toContain(
+      "EMAIL_ALREADY_REGISTERED",
+    );
+    expect(document.body.textContent).not.toContain(
+      "An account with that email already exists.",
+    );
+    expect(document.body.textContent).not.toContain(
+      "Email already registered.",
+    );
+    expect(document.body.textContent).not.toContain(
+      "SyntheticPassword1",
+    );
+  });
+
   it("disables duplicate login submissions while a request is busy", async () => {
     vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
     vi.mocked(authApi.login).mockReturnValue(

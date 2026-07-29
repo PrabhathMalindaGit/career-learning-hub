@@ -57,6 +57,7 @@ export function RegisterPage() {
   const emailId = useId();
   const passwordId = useId();
   const errorSummaryRef = useRef<HTMLDivElement>(null);
+  const apiErrorRef = useRef<HTMLDivElement>(null);
   const displayNameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -84,6 +85,12 @@ export function RegisterPage() {
       passwordRef.current?.focus();
     }
   }, [errors]);
+
+  useEffect(() => {
+    if (apiError) {
+      apiErrorRef.current?.focus();
+    }
+  }, [apiError]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -271,7 +278,12 @@ export function RegisterPage() {
           </div>
 
           {apiError ? (
-            <div className="form-error" role="alert">
+            <div
+              className="form-error"
+              role="alert"
+              tabIndex={-1}
+              ref={apiErrorRef}
+            >
               <p>{apiError.message}</p>
               {apiError.requestId ? (
                 <p className="request-id">

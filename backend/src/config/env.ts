@@ -22,6 +22,21 @@ const booleanFromEnv = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+function isLocalOrLoopbackHostname(hostname: string): boolean {
+  const normalized = hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .replace(/\.$/, "");
+
+  return (
+    normalized === "localhost" ||
+    normalized.endsWith(".localhost") ||
+    normalized === "::1" ||
+    /^::ffff:7f[0-9a-f]{2}:/.test(normalized) ||
+    /^127(?:\.\d{1,3}){3}$/.test(normalized)
+  );
+}
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -268,30 +283,67 @@ const envSchema = z
           throw new Error("Origin must contain only scheme, host, and port.");
         }
 
-        const localHost =
-          url.hostname === "localhost" ||
-          url.hostname === "127.0.0.1" ||
-          url.hostname === "::1";
-
         if (
           value.NODE_ENV === "production" &&
-          url.protocol !== "https:" &&
-          !localHost
+          (
+            url.protocol !== "https:" ||
+            isLocalOrLoopbackHostname(url.hostname)
+          )
         ) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["CLIENT_ORIGINS"],
             message:
-              "Production frontend origins must use HTTPS.",
+              "Production frontend origins must use non-local HTTPS origins.",
           });
         }
       } catch {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["CLIENT_ORIGINS"],
-          message: `Invalid frontend origin: ${origin}`,
+          message: "CLIENT_ORIGINS contains an invalid origin.",
         });
       }
+    }
+
+    try {
+      const publicApiUrl = new URL(value.API_PUBLIC_ORIGIN);
+      const isOriginOnly =
+        publicApiUrl.pathname === "/" &&
+        !publicApiUrl.username &&
+        !publicApiUrl.password &&
+        !publicApiUrl.search &&
+        !publicApiUrl.hash;
+
+      if (!isOriginOnly) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["API_PUBLIC_ORIGIN"],
+          message:
+            "API_PUBLIC_ORIGIN must contain only scheme, host, and port.",
+        });
+      }
+
+      if (
+        value.NODE_ENV === "production" &&
+        (
+          publicApiUrl.protocol !== "https:" ||
+          isLocalOrLoopbackHostname(publicApiUrl.hostname)
+        )
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["API_PUBLIC_ORIGIN"],
+          message:
+            "Production API_PUBLIC_ORIGIN must use a non-local HTTPS origin.",
+        });
+      }
+    } catch {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["API_PUBLIC_ORIGIN"],
+        message: "API_PUBLIC_ORIGIN must be a valid origin.",
+      });
     }
 
     const secretValues = [
@@ -383,6 +435,7 @@ const clientOrigins = [
 
 export const env = {
   ...parsed.data,
+  API_PUBLIC_ORIGIN: new URL(parsed.data.API_PUBLIC_ORIGIN).origin,
   clientOrigins,
   isProduction: parsed.data.NODE_ENV === "production",
 };
