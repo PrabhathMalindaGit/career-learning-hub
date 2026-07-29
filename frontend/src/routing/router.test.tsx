@@ -313,6 +313,66 @@ describe("application routing", () => {
     vi.unstubAllGlobals();
   });
 
+  it.each([
+    ["public-only", "/login", "Welcome back"],
+    ["protected", "/dashboard", "Unified dashboard"],
+  ])(
+    "keeps the %s bootstrap in a stable accessible route frame",
+    async (_mode, path, destinationHeading) => {
+      let rejectRefresh: (reason?: unknown) => void = () => undefined;
+      vi.mocked(authApi.refreshSession).mockReturnValue(
+        new Promise<AuthenticationResponse>((_resolve, reject) => {
+          rejectRefresh = reject;
+        }),
+      );
+
+      renderRoute(path);
+
+      try {
+        const main = screen.getByRole("main");
+        expect(main.classList.contains("auth-bootstrap-layout")).toBe(true);
+        expect(
+          within(main).getByRole("status", {
+            name: "Restoring your session",
+          }),
+        ).not.toBeNull();
+        expect(
+          screen.queryByRole("heading", { name: destinationHeading }),
+        ).toBeNull();
+        expect(
+          screen.queryByRole("navigation", {
+            name: "Primary navigation",
+          }),
+        ).toBeNull();
+      } finally {
+        rejectRefresh(noSessionError());
+        await new Promise((resolve) => window.setTimeout(resolve, 0));
+      }
+    },
+  );
+
+  it("does not flash the login form before an authenticated public-only redirect", async () => {
+    let resolveRefresh: (
+      value: AuthenticationResponse,
+    ) => void = () => undefined;
+    vi.mocked(authApi.refreshSession).mockReturnValue(
+      new Promise<AuthenticationResponse>((resolve) => {
+        resolveRefresh = resolve;
+      }),
+    );
+    const router = renderRoute("/login");
+
+    expect(
+      screen.queryByRole("heading", { name: "Welcome back" }),
+    ).toBeNull();
+
+    resolveRefresh(authenticatedSession);
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/dashboard");
+    });
+  });
+
   it("lets anonymous users reach login", async () => {
     vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
 

@@ -1699,8 +1699,15 @@
   `APPROVED`.
 - Phase 16E, Bounded Resume Templates and Design Controls is `COMPLETED` /
   `APPROVED`.
-- Phase 16F and Phase 16G are `PLANNED` / `INACTIVE`.
+- Phase 16F, Accessibility and Performance Review, is
+  `COMPLETED` / `APPROVED` on branch
+  `phase-12-unified-frontend`, full HEAD
+  `9a508b2cf06ec0bedbcab2192dd15ff7180ce042`
+  (`Add bounded resume design controls`).
+- Phase 16G is `PLANNED` / `INACTIVE`.
 - Phase 17 is `PLANNED` / `INACTIVE`.
+- Accepted Phase 16F approval token:
+  `PHASE_16F_ACCESSIBILITY_PERFORMANCE_APPROVED`.
 - Accepted approval token:
   `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
 - Accepted Phase 16A-2 approval token:
@@ -1773,7 +1780,7 @@
   `COMPLETED` / `APPROVED`,
   `CONDITIONAL / TIME PERMITTING`.
 - Phase 16F — Accessibility and Performance Review:
-  `PLANNED` / `INACTIVE`.
+  `COMPLETED` / `APPROVED`.
 - Phase 16G — Integrated Verification and Phase 16 Closeout:
   `PLANNED` / `INACTIVE`.
 - The controlling architecture and exact subphase contracts are in
@@ -1903,7 +1910,167 @@ Conditional, time-permitting scope:
 - The operator completed Phase 16E human visual review and supplied
   `PHASE_16E_RESUME_TEMPLATES_VISUAL_APPROVED`; approval token accepted: yes.
 - No implementation change was required during visual-approval closeout.
-- Phase 16F, Phase 16G, and Phase 17 remain `PLANNED` / `INACTIVE`.
+- Phase 16F is now
+  `COMPLETED` / `APPROVED`; Phase 16G and
+  Phase 17 remain `PLANNED` / `INACTIVE`.
+
+#### Phase 16F original blocked audit record (historical)
+
+This record preserves the state before the separately authorized P16F-001
+repair attempt. The repair verification record below controls current status.
+
+- The fresh production build retained one 580.80 kB minified JavaScript entry
+  (160.39 kB gzip) and 77.13 kB CSS (14.14 kB gzip).
+- Automated accessibility structure and reflow checks passed at 1440×900,
+  1024×768, 768×1024, 390×844, and 320×720 with no confirmed accessibility
+  defect.
+- Three cold production-preview samples confirmed authentication-bootstrap
+  CLS of 0.1500 at 1440×900 and 0.2400 at 390×844, above the Phase 16F 0.1
+  review threshold.
+- The actionable `MODERATE` finding requires authentication loading source
+  and shared layout CSS outside the authorized five-path manifest. Phase 16F
+  therefore stopped before the conditional router lazy-loading experiment.
+- The router and executable browser specifications remain unchanged. The
+  complete frontend suite, root typecheck, production build, and bounded
+  browser audits passed; the complete 21-test browser suite was not run after
+  the mandatory stop condition.
+- The controlling evidence and proposed bounded follow-up manifest are in
+  `docs/planning/PHASE_16F_ACCESSIBILITY_PERFORMANCE_REPORT.md`.
+- Phase 16F is not implemented, ready for human review, completed, or
+  approved. Phase 16G and Phase 17 remain planned and inactive.
+
+#### Phase 16F P16F-001 repair verification record
+
+- The separately authorized seven-path repair reused the final authentication
+  frame for the bootstrap status and added a shared `#root` viewport
+  minimum-size contract. Authentication state and redirect behavior were not
+  changed; router lazy loading was not started.
+- Router RED and browser RED reproduced the defect. Focused router tests then
+  passed 53/53 and targeted authentication browser tests passed 12/12 across
+  desktop, tablet, and mobile with final cleanup `users=0, owned=0`.
+- The authoritative production preview measured CLS 0.0000 in all three
+  1440×900 samples and all three 390×844 samples, with no long task, failed
+  request, external/provider request, application console issue, or page
+  error.
+- Median desktop DCL/load/LCP were 84.5/84.6/168 ms. Median mobile
+  DCL/load/LCP were 81.2/81.3/168 ms. The preserved 20 ms mobile LCP delta
+  against baseline was classified as one-frame local paint granularity because
+  navigation timings improved and request/blocking evidence was unchanged.
+- The complete frontend gate passed 49 files and 645 tests after one
+  transparent no-code-change rerun of a transient untouched Interview timing
+  assertion. Root typecheck and the final production build passed.
+- The required one-time complete configured browser gate finished 24/27:
+  desktop 9/9, tablet 9/9, mobile 6/9, one worker, zero retries, and final
+  cleanup `users=0, owned=0`. The three mobile failures each showed the public
+  login form after an expected authenticated reload or direct navigation; no
+  protected content appeared.
+- That historical complete browser run was not rerun and no test was weakened
+  within its repair prompt. A separately authorized recovery classified the
+  failure as `B — TEST ORDER OR SHARED RATE-BUDGET CONTAMINATION`. The refresh
+  limiter allows 60 requests per backend process, while the pre-repair suite
+  used 27 per project. Desktop and tablet consumed 54; mobile registration
+  consumed through request 60, and its later bootstrap, reload, and hard
+  navigations received 429 while login-only workflows continued to pass.
+- The recovery kept cookie, session rotation, fail-closed routing, ownership,
+  rate limits, retries, and timeouts unchanged. The responsive authentication
+  test retains six viewport and keyboard checks with one authenticated hard
+  navigation. The ownership test retains all seven private routes, privacy
+  assertions, safe unavailable states, and one hard navigation, with Resume
+  last to respect its navigation blocker. Dashboard's authenticated reload is
+  unchanged.
+- After one truthful intermediate console-warning failure and the bounded
+  route-order correction, ownership passed 1/1, the exact historical mobile
+  sequence passed 3/3, and the complete mobile project passed 9/9. The single
+  fresh all-project browser gate then passed 27/27 in 1.8 minutes: desktop
+  9/9, tablet 9/9, and mobile 9/9, with one worker, zero retries, and final
+  cleanup `users=0, owned=0`. It wasn't rerun.
+- P16F-001 is `REPAIRED / VERIFIED`. Phase 16F is
+  `COMPLETED` / `APPROVED`.
+- P16F-002 is `ROUTE LAZY LOADING REJECTED / DEFERRED WITH EVIDENCE`.
+  Phase 16G and Phase 17 remain planned and inactive. The Phase 16F approval
+  token is accepted.
+
+#### Phase 16F implementation-review handoff
+
+- P16F-001 is `REPAIRED / VERIFIED`. Authentication-bootstrap CLS changed
+  from three desktop samples at 0.1500 and three mobile samples at 0.2400 to
+  0.0000 in all six post-repair samples.
+- The mobile authenticated-session recovery diagnosed shared refresh-budget
+  contamination and changed only browser-test execution efficiency and route
+  order. Authentication, cookies, session rotation, ownership, rate limits,
+  one worker, and zero retries were preserved. The recovered complete browser
+  result is 27/27: desktop 9/9, tablet 9/9, mobile 9/9, 1.8 minutes, cleanup
+  `users=0, owned=0`.
+- P16F-002 architecture inspection confirmed React Router 7.18.1,
+  `createBrowserRouter(appRoutes)`, 14 eager page imports, compatible named
+  exports, and credible Dashboard, Resume, Interview, Learning, and Settings
+  groups. `frontend/src/routing/router.tsx` remains unchanged.
+- The final build transformed 102 modules in 814 ms. It produced
+  `index-DSpHq40W.css` at 77,149 bytes (77.15 kB / 14.14 kB gzip) and
+  `index-h0fX09fK.js` at 580,963 bytes (580.96 kB / 160.39 kB gzip), with no
+  dynamic chunks and the greater-than-500-kB Vite advisory retained.
+- Three bounded authenticated measurement-harness attempts stopped at origin
+  allowlisting, response CORS origin mismatch, and fresh-context session
+  restoration. The last attempt completed login but safely redirected the
+  fresh `/dashboard` context to `/login`; no protected data appeared.
+- The attempts produced no complete comparable authenticated public,
+  protected, Resume, and Learning dataset. The three-attempt rule stopped
+  further changes. No product, authentication, or router defect was
+  established, and implementing without a trustworthy baseline would be
+  speculative.
+- P16F-002 is
+  `ROUTE LAZY LOADING REJECTED / DEFERRED WITH EVIDENCE`. The eager route
+  architecture and large-entry advisory remain accepted limitations for the
+  controlled academic MVP. A future phase may reconsider lazy loading with an
+  approved reusable production-preview authentication measurement harness.
+- Focused router verification passed 53/53; browser-spec syntax checks passed;
+  the complete frontend suite passed 49/49 files and 645/645 tests; frontend,
+  backend, and shared-types typechecks passed; and the final build passed.
+- No complete browser rerun was performed because no product or router change
+  followed the recovered 27/27 state. Phase 16G remains inactive and owns the
+  next mandatory fresh complete integrated browser run.
+- No dependency, package, lockfile, backend, shared-contract, provider, Atlas,
+  deployment, environment, or legacy-project change occurred. P15-001 and its
+  accepted operating restrictions remain unchanged.
+- Phase 16F is `COMPLETED` / `APPROVED`. Phase 16G and Phase 17 remain
+  `PLANNED` / `INACTIVE`; the token
+  `PHASE_16F_ACCESSIBILITY_PERFORMANCE_APPROVED` is accepted.
+
+#### Phase 16F approval closeout
+
+- The operator completed the required human review and supplied
+  `PHASE_16F_ACCESSIBILITY_PERFORMANCE_APPROVED`; the token is accepted.
+- Human review covered authentication and layout stability, keyboard and
+  focus behavior, the five required viewports, actual 200% browser zoom,
+  reflow, contrast and non-color meaning, reduced motion, route and
+  performance experience, Resume design/print, stored AI comparison, and
+  trust and privacy controls.
+- The temporary review environment used the existing isolated browser-harness
+  services, one deterministic `@example.test` account, and provider-free
+  stored data for Dashboard activity, a long Resume with current and
+  historical versions, stored AI suggestions, Interview, Learning document,
+  conversation, flashcards, Quiz, and a completed Quiz attempt.
+- The readiness gate opened login, Dashboard, Resume, Interview, Learning,
+  and Settings. The five protected workspaces recorded zero horizontal
+  overflow at both 1440x900 and 390x844, with zero application console errors,
+  page errors, external requests, or provider requests. The stored AI
+  comparison was visible.
+- The unchanged frontend trust boundary rejected two malformed temporary seed
+  fields. Removing a null current-role end date and replacing a string-shaped
+  analysis strength with the required object shape corrected only the
+  isolated synthetic database. No product or test defect was established.
+- No repository `.env`, provider, Atlas, cloud storage, deployment,
+  production data, real Resume, personal data, or legacy project was used.
+  No dependency, package, lockfile, backend, shared-contract, environment,
+  source, test, or configuration file changed during review preparation or
+  approval closeout.
+- After approval, the headed browser and all temporary services stopped. The
+  temporary synthetic account, database, asset storage, and runtime state were
+  removed; ports 4173, 4174, and 8000 are closed.
+- Phase 16F is `COMPLETED` / `APPROVED`. Phase 16 remains active. Phase 16G
+  and Phase 17 remain `PLANNED` / `INACTIVE`. Phase 16G still requires its own
+  fresh complete integrated Full Application Browser Testing run.
+- Nothing is staged, committed, or pushed.
 
 #### Expected commit
 

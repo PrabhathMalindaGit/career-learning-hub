@@ -10,17 +10,21 @@ test("@smoke denies User B across all User A owned-resource routes", async ({
   await phase14.login(page, userB);
 
   const routes = [
-    `/resumes/${resources.resumeId}`,
     `/interviews/${resources.interviewSessionId}`,
     `/learning/documents/${resources.documentId}`,
     `/learning/documents/${resources.documentId}/conversations/${resources.conversationId}`,
     `/learning/documents/${resources.documentId}/flashcards/${resources.flashcardSetId}`,
     `/learning/documents/${resources.documentId}/quizzes/${resources.quizId}`,
     `/learning/documents/${resources.documentId}/quizzes/${resources.quizId}/attempts/${resources.quizAttemptId}`,
+    `/resumes/${resources.resumeId}`,
   ];
 
-  for (const route of routes) {
-    await page.goto(route);
+  for (const [index, route] of routes.entries()) {
+    if (index === 0) {
+      await page.goto(route);
+    } else {
+      await phase14.openRoute(page, route);
+    }
     await expect(
       page.getByRole("heading", {
         name: /unavailable|not found|could not be opened/i,

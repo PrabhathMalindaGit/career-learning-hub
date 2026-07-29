@@ -43,10 +43,21 @@ export function intendedLocationFromState(state: unknown): string {
 
 export function RouteLoadingState() {
   return (
-    <main className="route-state route-state--full" aria-busy="true">
-      <p className="eyebrow">Career &amp; Learning Hub</p>
-      <h1>Restoring your session</h1>
-      <p>Please wait while your secure session is checked.</p>
+    <main
+      className="auth-layout auth-bootstrap-layout"
+      aria-busy="true"
+    >
+      <section
+        className="auth-card"
+        role="status"
+        aria-labelledby="auth-bootstrap-heading"
+      >
+        <p className="eyebrow">Career &amp; Learning Hub</p>
+        <h1 id="auth-bootstrap-heading">Restoring your session</h1>
+        <p className="auth-intro">
+          Please wait while your secure session is checked.
+        </p>
+      </section>
     </main>
   );
 }
