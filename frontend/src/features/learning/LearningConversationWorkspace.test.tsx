@@ -156,6 +156,11 @@ describe("Learning conversation workspace", () => {
     expect(
       await screen.findByRole("heading", { name: "Ask the document" }),
     ).not.toBeNull();
+    const breadcrumbs = screen.getByRole("navigation", {
+      name: "Breadcrumb",
+    });
+    expect(breadcrumbs.textContent).toContain("Synthetic systems notes");
+    expect(breadcrumbs.textContent).not.toContain(conversationId);
     expect(screen.getByText("No messages yet.")).not.toBeNull();
     await waitFor(() => {
       expect(learningApi.listLearningMessages).toHaveBeenCalledWith(

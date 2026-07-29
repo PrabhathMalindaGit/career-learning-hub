@@ -5,7 +5,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { Pager } from "../../components/Pager";
 import { StateSurface } from "../../components/StateSurface";
@@ -96,6 +96,7 @@ type ProcessingCheck =
 
 export function LearningDashboard() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const accountId = user?.id ?? "";
   const [documents, setDocuments] = useState<LearningDocument[]>([]);
   const [pagination, setPagination] = useState<LearningPagination>();
@@ -220,6 +221,17 @@ export function LearningDashboard() {
       setFile(undefined);
     };
   }, [accountId]);
+
+  useEffect(() => {
+    if (searchParams.get("action") !== "upload") return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("action");
+    setSearchParams(next, { replace: true });
+    setUploadOpen(true);
+    setUploadFieldErrors({});
+    setUploadError(undefined);
+    window.setTimeout(() => titleInputRef.current?.focus(), 100);
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const errorFields = Object.keys(

@@ -7,6 +7,7 @@ import {
 } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 import {
   addManualQuestion,
   fetchInterviewAttempt,
@@ -1308,15 +1309,27 @@ export function InterviewSessionWorkspace() {
 
   if (loading) {
     return (
-      <p className="interview-state" role="status">
+      <section className="interview-state" role="status">
+        <Breadcrumbs
+          items={[
+            { label: "Interviews", to: "/interviews" },
+            { label: "Loading session" },
+          ]}
+        />
         Loading interview session…
-      </p>
+      </section>
     );
   }
 
   if (workspaceError && !session) {
     return (
       <section className="interview-state interview-state--error">
+        <Breadcrumbs
+          items={[
+            { label: "Interviews", to: "/interviews" },
+            { label: "Session unavailable" },
+          ]}
+        />
         <h1>Interview session unavailable</h1>
         <SafeErrorMessage error={workspaceError} />
         <button
@@ -1349,6 +1362,12 @@ export function InterviewSessionWorkspace() {
       className="interview-workspace"
       aria-labelledby="interview-workspace-title"
     >
+      <Breadcrumbs
+        items={[
+          { label: "Interviews", to: "/interviews" },
+          { label: session.title },
+        ]}
+      />
       <Link
         className="workspace-back-link interview-back-link"
         to="/interviews"

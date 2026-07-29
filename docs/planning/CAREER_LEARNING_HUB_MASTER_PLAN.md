@@ -1692,7 +1692,9 @@
   `COMPLETED` / `APPROVED`.
 - Phase 16A-2, Roadmap Amendment and Architecture Audit is
   `COMPLETED` / `APPROVED`.
-- Phase 16B through Phase 16G are `PLANNED` / `INACTIVE`.
+- Phase 16B, Responsive Sidebar, AppShell and Breadcrumbs is `COMPLETED` /
+  `APPROVED`.
+- Phase 16C through Phase 16G are `PLANNED` / `INACTIVE`.
 - Phase 17 is `PLANNED` / `INACTIVE`.
 - Accepted approval token:
   `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
@@ -1700,14 +1702,16 @@
   `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`.
 - The operator accepted the Phase 16A-2 architecture with
   `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`.
+- The operator accepted the Phase 16B visual result with
+  `PHASE_16B_SIDEBAR_BREADCRUMBS_VISUAL_APPROVED`.
 - The migration behavior was verified with 21/21 passing browser workflows.
 - No production source, browser-test behavior, or visible UI changed.
 - The repository still has no declared or portable repository-local
   Playwright runner. `package.json` remains unchanged, neither
   `test:browser` nor `test:e2e` exists, and adding a portable command requires
   separate approval.
-- Phase 16A-2 is documentation and read-only architecture inspection only.
-  It does not activate or implement Phase 16B.
+- Phase 16B implements the accepted shell and breadcrumb architecture without
+  activating Phase 16C.
 
 #### Purpose
 
@@ -1742,7 +1746,7 @@
 - Phase 16A-2 — Roadmap Amendment and Architecture Audit:
   `COMPLETED` / `APPROVED`.
 - Phase 16B — Responsive Sidebar, AppShell and Breadcrumbs:
-  `PLANNED` / `INACTIVE`.
+  `COMPLETED` / `APPROVED`.
 - Phase 16C — Resume PDF Export and Print:
   `PLANNED` / `INACTIVE`.
 - Phase 16D — Original-versus-Suggested AI Comparison:
@@ -1778,9 +1782,11 @@ Conditional, time-permitting scope:
 
 #### Out of scope
 
-- Phase 16A-2 does not implement the sidebar, breadcrumbs, Resume printing,
-  AI comparison, templates, accessibility repairs, or performance repairs.
-- Phase 16B through Phase 16G and Phase 17 remain inactive until separately
+- Phase 16A-2 was architecture-only; Phase 16B implements only its approved
+  responsive shell, create intents, and breadcrumb decisions.
+- Resume printing, AI comparison, templates, accessibility repairs, and
+  performance repairs remain out of Phase 16B scope.
+- Phase 16C through Phase 16G and Phase 17 remain inactive until separately
   authorized.
 - Post-MVP scope includes command palettes, global shortcuts, a new theme
   system, editable AI suggestions, feedback analytics, major Resume-section
@@ -1800,6 +1806,7 @@ Conditional, time-permitting scope:
   organization.
 - Phase 16 Academic MVP implementation plan.
 - Phase 16A-2 architecture audit report.
+- Phase 16B responsive shell and breadcrumb implementation report.
 - Revised active governance and an accepted architecture decision.
 - Later subphase implementation, verification, and review evidence only
   after each subphase is separately activated.
@@ -1833,14 +1840,16 @@ Conditional, time-permitting scope:
   changed during the approval closeout.
 - Commit authorization is exercised only for the five-document Phase 16A-2
   closeout. Push remains prohibited and has not occurred.
-- Every future visible Phase 16B through Phase 16E change requires its
+- Every future visible Phase 16C through Phase 16E change requires its
   specified visual-approval token before commit authorization.
-- Phase 16B remains `PLANNED` / `INACTIVE` and requires a separate activation
-  prompt.
+- Phase 16B was visually approved with
+  `PHASE_16B_SIDEBAR_BREADCRUMBS_VISUAL_APPROVED` at 1440×900, 1024×768,
+  768×1024, 390×844, 320×720, and actual 200% browser zoom.
+- Phase 16C remains inactive and requires a separate activation prompt.
 
 #### Expected commit
 
-- `Define Phase 16 academic MVP architecture`
+- `Build responsive application shell and breadcrumbs`
 
 ### Execution Phase 17: Final Repository and Release-Candidate Review
 

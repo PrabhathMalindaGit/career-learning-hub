@@ -24,6 +24,11 @@ test("@smoke creates and practices in an Interview session", async ({
   );
   await page.getByRole("button", { name: "Create session" }).click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  const breadcrumbs = page.getByRole("navigation", {
+    name: "Breadcrumb",
+  });
+  await expect(breadcrumbs).toContainText(title);
+  await expect(breadcrumbs).not.toContainText(/507f[0-9a-f]+/i);
 
   const ordinaryControls = [
     page.getByLabel("Question count"),

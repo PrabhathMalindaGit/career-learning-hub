@@ -5,8 +5,8 @@
   Accessibility and Performance Review
 - Status: ACTIVE
 - Active subphase: none
-- Most recently completed subphase: Phase 16A-2, Roadmap Amendment and
-  Architecture Audit
+- Most recently completed subphase: Phase 16B, Responsive Sidebar, AppShell
+  and Breadcrumbs
 - Subphase status: COMPLETED / APPROVED
 - Audit baseline branch: `phase-12-unified-frontend`
 - Audit baseline full HEAD: `f3b5ecb0e1f267348b6dcb933784f37a085ef8e5`
@@ -15,7 +15,7 @@
   (`COMPLETED` /
   `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`)
 - Current workflow state:
-  `PHASE 16 ACTIVE; PHASE 16A-1 COMPLETED AND APPROVED; PHASE 16A-2 COMPLETED AND APPROVED; PHASE 16B THROUGH PHASE 16G PLANNED AND INACTIVE`
+  `PHASE 16 ACTIVE; PHASE 16A-1, PHASE 16A-2, AND PHASE 16B COMPLETED AND APPROVED; PHASE 16C THROUGH PHASE 16G PLANNED AND INACTIVE`
 - Primary browser-suite name: Full Application Browser Testing
 - Executable browser-suite location: `tests/browser/`
 - Primary command: `npm run test:browser` only when a portable,
@@ -28,7 +28,9 @@
 - Accepted Phase 16A-2 approval token:
   `PHASE_16A2_ROADMAP_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 16A-2 approval token accepted: yes
-- No later Phase 16 implementation subphase is active.
+- Accepted Phase 16B visual approval token:
+  `PHASE_16B_SIDEBAR_BREADCRUMBS_VISUAL_APPROVED`
+- Phase 16B visual approval token accepted: yes
 - Controlling skills: `using-superpowers`, `karpathy-guidelines`,
   `define-goal`, `brainstorming`, `frontend-skill`, `frontend-design`,
   `playwright`, `lighthouse-verification`, `technical-writing`,
@@ -38,14 +40,13 @@
 
 ## Objective
 
-- Preserve the approved Phase 16A-2 architecture and its exact future write,
-  test, browser-QA, cleanup, approval, and stop contracts for Phase 16B
-  through Phase 16G.
+- Preserve the approved responsive AppShell, shared create actions, mobile
+  navigation drawer, and contextual deep-route breadcrumbs.
 - Preserve the accepted Phase 15 limitations, including P15-001 operating
   restrictions, and all ownership, private-file, Quiz-secrecy, immutable
   Resume-version, and AI provenance safeguards.
-- Keep Phase 16B through Phase 16G and Phase 17 planned and inactive.
-- Require a separate Phase 16B activation prompt before implementation.
+- Keep Phase 16C through Phase 16G and Phase 17 planned and inactive.
+- Require a separate activation prompt before Phase 16C begins.
 
 ## Phase status controls
 
@@ -79,7 +80,8 @@
   `COMPLETED` / `APPROVED`.
 - Phase 16A-2, Roadmap Amendment and Architecture Audit is
   `COMPLETED` / `APPROVED`.
-- Phase 16B through Phase 16G remain `PLANNED` / `INACTIVE`.
+- Phase 16B is `COMPLETED` / `APPROVED`.
+- Phase 16C through Phase 16G remain `PLANNED` / `INACTIVE`.
 - Phase 17 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -181,6 +183,69 @@
   closeout.
 - Phase 16B remains inactive and requires a separate activation prompt.
 - Push remains prohibited and has not occurred.
+
+## Phase 16B implementation and approval closeout
+
+- Activated by operator-approved prompt
+  `CLH-PHASE-16B-RESPONSIVE-SHELL-BREADCRUMBS-01`.
+- Baseline: branch `phase-12-unified-frontend`, full HEAD
+  `39dd6d57fc94807efd4f56382844294e0f855091`
+  (`Define Phase 16 academic MVP architecture`).
+- The existing `AppShell` now uses one shared navigation source in an
+  expanded 256 px desktop sidebar and the existing accessible `Dialog`
+  foundation for the mobile drawer. The protected shell, route tree,
+  authentication boundary, account identity, and logout behavior remain
+  single and unchanged.
+- The optional collapsed rail was not added. No shell state is persisted.
+  Inline SVG navigation icons are decorative, and interactive targets retain
+  the existing 44 px minimum.
+- The shared Create disclosure links to `/resumes?action=create`,
+  `/interviews?action=create`, and `/learning?action=upload`. Each owning page
+  consumes only its recognized intent, removes that parameter with replace
+  navigation, opens or focuses the existing form, ignores unknown values, and
+  performs no automatic API write.
+- A reusable semantic breadcrumb component renders `nav` with
+  `aria-label="Breadcrumb"`, an ordered list, prior-route links, and one
+  `aria-current="page"` label. Resume, Interview, document, conversation,
+  flashcard, Quiz, and attempt workspaces provide canonical labels already
+  loaded by their route. Loading and failure states use generic labels; raw
+  database IDs are never visible breadcrumb text. Existing back links remain.
+- Targeted RED/GREEN verification passed. The complete frontend suite passed
+  591/591 tests in 42 files. Root typecheck passed for web, API, and shared
+  types. The production build passed with the existing non-blocking Vite
+  large-chunk advisory; no performance repair was attempted.
+- Final Full Application Browser Testing passed 21/21 after bounded
+  selector-precision and interaction-focus repairs: desktop 7/7, tablet 7/7,
+  and mobile 7/7, with one worker and zero retries. Authentication, ownership
+  isolation, private PDF access, Quiz answer secrecy, console/page-error
+  checks, and horizontal-overflow checks remained enabled.
+- Standalone browser QA passed at 1440×900, 1024×768, 768×1024, 390×844,
+  320×720, and an effective 512×384 CSS viewport representing 200% zoom.
+  Desktop sidebar, responsive drawer, focus return, Escape dismissal,
+  wrapping, and horizontal-overflow checks passed. Visual evidence was
+  attached to the review response before temporary screenshots were removed.
+- The operator separately inspected and approved 1440×900, 1024×768,
+  768×1024, 390×844, 320×720, and actual 200% browser zoom. The approval
+  covered the sidebar, drawer, Create actions, breadcrumbs, focus behavior,
+  account block, logout, long-content handling, and horizontal reflow.
+- The browser harness reported `users=0, owned=0` after both the complete
+  suite and visual QA. Ports 4173 and 8000 are closed. Runtime data, private
+  storage, Playwright reports, test results, screenshots, traces, temporary
+  scripts, and generated frontend build output were removed.
+- No provider or Atlas call occurred. No environment file was read or
+  modified. No backend, shared contract, API, database model, migration,
+  package, lockfile, dependency, deployment, or legacy project changed.
+- Phase 15 remains `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
+- Phase 16 remains `ACTIVE`.
+- Phase 16A-1 and Phase 16A-2 remain `COMPLETED` / `APPROVED`.
+- Phase 16B is `COMPLETED` / `APPROVED`.
+- Phase 16C through Phase 16G and Phase 17 remain `PLANNED` / `INACTIVE`.
+- Accepted visual approval token:
+  `PHASE_16B_SIDEBAR_BREADCRUMBS_VISUAL_APPROVED`.
+- The operator supplied and accepted the token. No additional implementation
+  change was required. Phase 16C is not activated and requires a separate
+  activation prompt. Push remains prohibited and has not occurred.
 
 ## Phase 16A-1 activation record
 

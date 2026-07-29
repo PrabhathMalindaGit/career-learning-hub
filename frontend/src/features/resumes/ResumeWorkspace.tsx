@@ -6,6 +6,7 @@ import {
 } from "react";
 import { useBlocker, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { Dialog } from "../../components/Dialog";
 import { AiRecommendations } from "./AiRecommendations";
 import { ResumeEditor } from "./ResumeEditor";
@@ -503,6 +504,12 @@ export function ResumeWorkspace() {
   if (loading) {
     return (
       <section className="resume-route-state" role="status">
+        <Breadcrumbs
+          items={[
+            { label: "Resumes", to: "/resumes" },
+            { label: "Loading resume" },
+          ]}
+        />
         Loading Resume Studio…
       </section>
     );
@@ -511,6 +518,12 @@ export function ResumeWorkspace() {
   if (loadFailure || !workspace || !draft) {
     return (
       <section className="resume-route-state" role="alert">
+        <Breadcrumbs
+          items={[
+            { label: "Resumes", to: "/resumes" },
+            { label: "Resume unavailable" },
+          ]}
+        />
         <h1>Resume unavailable</h1>
         <p>{loadFailure?.message ?? "We could not load this resume."}</p>
         {loadFailure?.requestId ? (
@@ -528,6 +541,12 @@ export function ResumeWorkspace() {
 
   return (
     <section className="resume-workspace" aria-label="Resume Studio workspace">
+      <Breadcrumbs
+        items={[
+          { label: "Resumes", to: "/resumes" },
+          { label: workspace.resume.title },
+        ]}
+      />
       <header className="resume-workspace-heading">
         <div>
           <p className="eyebrow">Resume Studio</p>

@@ -124,6 +124,11 @@ describe("Learning quiz workspace", () => {
         name: "Architecture boundaries",
       }),
     ).not.toBeNull();
+    const breadcrumbs = screen.getByRole("navigation", {
+      name: "Breadcrumb",
+    });
+    expect(breadcrumbs.textContent).toContain("Architecture boundaries");
+    expect(breadcrumbs.textContent).not.toContain(quizId);
     expect(screen.getByText("Which boundary is canonical?")).not.toBeNull();
     expect(screen.getByText("No completed attempts yet.")).not.toBeNull();
     expect(screen.queryByText(/correct answer/i)).toBeNull();

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useAuth } from "../auth/AuthProvider";
 import {
   fetchLearningDocument,
@@ -180,6 +181,12 @@ export function LearningQuizAttemptWorkspace() {
   if (loadState.status === "loading") {
     return (
       <section className="workspace-section learning-workspace">
+        <Breadcrumbs
+          items={[
+            { label: "Learning", to: "/learning" },
+            { label: "Loading attempt" },
+          ]}
+        />
         <div className="learning-state" role="status">
           Loading attempt review…
         </div>
@@ -196,6 +203,12 @@ export function LearningQuizAttemptWorkspace() {
           : "Attempt review unavailable";
     return (
       <section className="workspace-section learning-workspace">
+        <Breadcrumbs
+          items={[
+            { label: "Learning", to: "/learning" },
+            { label: title },
+          ]}
+        />
         <p className="eyebrow">Completed quiz attempt</p>
         <h1>{title}</h1>
         <p className="section-intro">{loadState.error.message}</p>
@@ -220,6 +233,20 @@ export function LearningQuizAttemptWorkspace() {
 
   return (
     <section className="workspace-section learning-workspace learning-quiz-review">
+      <Breadcrumbs
+        items={[
+          { label: "Learning", to: "/learning" },
+          {
+            label: document.title,
+            to: `/learning/documents/${documentId}`,
+          },
+          {
+            label: quiz.title,
+            to: `/learning/documents/${documentId}/quizzes/${quizId}`,
+          },
+          { label: "Attempt" },
+        ]}
+      />
       <Link
         className="learning-back-link"
         to={`/learning/documents/${documentId}/quizzes/${quizId}`}

@@ -7,6 +7,7 @@ import {
 } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useAuth } from "../auth/AuthProvider";
 import {
   fetchLearningDocument,
@@ -554,6 +555,12 @@ export function LearningDocumentWorkspace() {
   if (loadState.status === "loading") {
     return (
       <section className="workspace-section learning-workspace">
+        <Breadcrumbs
+          items={[
+            { label: "Learning", to: "/learning" },
+            { label: "Loading document" },
+          ]}
+        />
         <div className="learning-state" role="status">
           Loading document workspace…
         </div>
@@ -570,6 +577,12 @@ export function LearningDocumentWorkspace() {
           : "Document unavailable";
     return (
       <section className="workspace-section learning-workspace">
+        <Breadcrumbs
+          items={[
+            { label: "Learning", to: "/learning" },
+            { label: title },
+          ]}
+        />
         <p className="eyebrow">Learning workspace</p>
         <h1>{title}</h1>
         <p className="section-intro">{loadState.error.message}</p>
@@ -588,6 +601,12 @@ export function LearningDocumentWorkspace() {
 
   return (
     <section className="workspace-section learning-workspace">
+      <Breadcrumbs
+        items={[
+          { label: "Learning", to: "/learning" },
+          { label: document.title },
+        ]}
+      />
       <Link
         className="workspace-back-link learning-back-link"
         to="/learning"

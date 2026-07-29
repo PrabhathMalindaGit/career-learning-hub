@@ -6,6 +6,7 @@ import {
 } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useAuth } from "../auth/AuthProvider";
 import {
   fetchLearningDocument,
@@ -374,6 +375,12 @@ export function LearningQuizWorkspace() {
   if (loadState.status === "loading") {
     return (
       <section className="workspace-section learning-workspace">
+        <Breadcrumbs
+          items={[
+            { label: "Learning", to: "/learning" },
+            { label: "Loading quiz" },
+          ]}
+        />
         <div className="learning-state" role="status">
           Loading quiz workspace…
         </div>
@@ -390,6 +397,12 @@ export function LearningQuizWorkspace() {
           : "Quiz unavailable";
     return (
       <section className="workspace-section learning-workspace">
+        <Breadcrumbs
+          items={[
+            { label: "Learning", to: "/learning" },
+            { label: title },
+          ]}
+        />
         <p className="eyebrow">Quiz workspace</p>
         <h1>{title}</h1>
         <p className="section-intro">{loadState.error.message}</p>
@@ -414,6 +427,16 @@ export function LearningQuizWorkspace() {
 
   return (
     <section className="workspace-section learning-workspace learning-quiz-workspace">
+      <Breadcrumbs
+        items={[
+          { label: "Learning", to: "/learning" },
+          {
+            label: document.title,
+            to: `/learning/documents/${documentId}`,
+          },
+          { label: quiz.title },
+        ]}
+      />
       <Link
         className="learning-back-link"
         to={`/learning/documents/${documentId}`}

@@ -128,6 +128,11 @@ describe("Learning quiz attempt workspace", () => {
         name: "Architecture boundaries",
       }),
     ).not.toBeNull();
+    const breadcrumbs = screen.getByRole("navigation", {
+      name: "Breadcrumb",
+    });
+    expect(breadcrumbs.textContent).toContain("Attempt");
+    expect(breadcrumbs.textContent).not.toContain(attemptId);
     expect(screen.getByText("1 of 2 correct")).not.toBeNull();
     expect(screen.getByText("50%")).not.toBeNull();
     expect(screen.getByText("Correct")).not.toBeNull();

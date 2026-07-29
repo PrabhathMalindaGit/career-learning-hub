@@ -31,6 +31,11 @@ test("@smoke covers private PDF, chat, Flashcards, and Quiz secrecy", async ({
   await phase14.navigate(page, "Learning");
   await page.getByRole("link", { name: "Open workspace" }).click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  const breadcrumbs = page.getByRole("navigation", {
+    name: "Breadcrumb",
+  });
+  await expect(breadcrumbs).toContainText(title);
+  await expect(breadcrumbs).not.toContainText(records.documentId);
   await page.getByRole("tab", { name: "Original PDF" }).click();
   await expect(page.getByTitle(`Original PDF: ${title}`)).toHaveAttribute(
     "src",

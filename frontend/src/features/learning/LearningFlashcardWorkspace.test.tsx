@@ -134,7 +134,14 @@ describe("Learning flashcard workspace", () => {
     expect(
       await screen.findByRole("heading", { name: "Architecture review" }),
     ).not.toBeNull();
-    expect(screen.getByText("Synthetic architecture notes")).not.toBeNull();
+    const breadcrumbs = screen.getByRole("navigation", {
+      name: "Breadcrumb",
+    });
+    expect(breadcrumbs.textContent).toContain("Architecture review");
+    expect(breadcrumbs.textContent).not.toContain(setId);
+    expect(
+      screen.getAllByText("Synthetic architecture notes").length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText("What is the canonical question?"),
     ).not.toBeNull();

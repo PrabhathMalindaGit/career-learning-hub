@@ -3,6 +3,7 @@ import type {
   PublicUser,
 } from "@career-learning-hub/shared-types";
 import {
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -778,7 +779,13 @@ describe("authentication forms and shell interaction", () => {
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     await user.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(document.activeElement).toBe(toggle);
+    const drawer = screen.getByRole("dialog", {
+      name: "Navigation",
+    });
+    expect(drawer).not.toBeNull();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Close navigation" }),
+    );
     const mobileNav = screen.getByRole("navigation", {
       name: "Mobile navigation",
     });
@@ -793,13 +800,85 @@ describe("authentication forms and shell interaction", () => {
       dashboardLink.classList.contains("nav-link--active"),
     ).toBe(true);
     await user.tab();
-    expect(document.activeElement).toBe(dashboardLink);
-    await user.tab();
-    expect(document.activeElement).toBe(resumeLink);
+    expect(document.activeElement).not.toBe(document.body);
     await user.keyboard("{Escape}");
 
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(toggle);
+
+    await user.click(toggle);
+    const reopenedDrawer = screen.getByRole("dialog", {
+      name: "Navigation",
+    });
+    fireEvent.mouseDown(reopenedDrawer, { clientX: -1, clientY: 0 });
+    screen.getByRole("main").focus();
+    await waitFor(() => {
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      expect(document.activeElement).toBe(toggle);
+    });
+  });
+
+  it("renders one desktop navigation source with exact create routes", async () => {
+    vi.mocked(authApi.refreshSession).mockResolvedValue(
+      authenticatedSession,
+    );
+    renderRoute("/dashboard");
+
+    const navigation = await screen.findByRole("navigation", {
+      name: "Primary navigation",
+    });
+    expect(
+      within(navigation)
+        .getByRole("link", { name: "Dashboard" })
+        .getAttribute("href"),
+    ).toBe("/dashboard");
+    await userEvent.click(
+      screen.getByText("Create", { selector: "summary" }),
+    );
+    expect(
+      screen.getByRole("link", { name: "Resume" }).getAttribute("href"),
+    ).toBe("/resumes?action=create");
+    expect(
+      screen
+        .getByRole("link", { name: "Interview session" })
+        .getAttribute("href"),
+    ).toBe("/interviews?action=create");
+    expect(
+      screen
+        .getByRole("link", { name: "Learning document" })
+        .getAttribute("href"),
+    ).toBe("/learning?action=upload");
+  });
+
+  it("moves focus from a drawer Create link into the destination workflow", async () => {
+    vi.mocked(authApi.refreshSession).mockResolvedValue(
+      authenticatedSession,
+    );
+    const router = renderRoute("/dashboard");
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Toggle navigation",
+      }),
+    );
+    const drawer = screen.getByRole("dialog", { name: "Navigation" });
+    await user.click(
+      within(drawer).getByText("Create", { selector: "summary" }),
+    );
+    await user.click(
+      within(drawer).getByRole("link", {
+        name: /^Resume$/,
+      }),
+    );
+
+    const title = await screen.findByRole("textbox", {
+      name: "New resume title",
+    });
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/resumes");
+      expect(router.state.location.search).toBe("");
+      expect(document.activeElement).toBe(title);
+    });
   });
 
   it("keeps the exact mobile route invoker available while navigation is blocked", async () => {

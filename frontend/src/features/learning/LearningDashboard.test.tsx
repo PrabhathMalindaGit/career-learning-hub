@@ -6,7 +6,11 @@ import {
   waitFor,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  RouterProvider,
+} from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiClient";
 import * as learningApi from "./learningApi";
@@ -86,12 +90,15 @@ async function openUploadForm() {
   );
 }
 
-function renderLibrary() {
-  return render(
-    <MemoryRouter>
-      <LearningDashboard />
-    </MemoryRouter>,
+function renderLibrary(initialEntry = "/learning") {
+  const router = createMemoryRouter(
+    [{ path: "/learning", element: <LearningDashboard /> }],
+    { initialEntries: [initialEntry] },
   );
+  return {
+    ...render(<RouterProvider router={router} />),
+    router,
+  };
 }
 
 beforeEach(() => {
@@ -262,6 +269,17 @@ describe("Learning document library", () => {
 });
 
 describe("Learning PDF upload", () => {
+  it("consumes the upload intent, opens the form, and focuses its title", async () => {
+    const { router } = renderLibrary("/learning?action=upload");
+
+    const title = await screen.findByRole("textbox", {
+      name: "Document title",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(title));
+    expect(router.state.location.search).toBe("");
+    expect(learningApi.uploadLearningDocument).not.toHaveBeenCalled();
+  });
+
   it("requires a title before submission", async () => {
     renderLibrary();
     await openUploadForm();

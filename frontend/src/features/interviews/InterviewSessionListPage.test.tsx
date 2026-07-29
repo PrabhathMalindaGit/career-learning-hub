@@ -33,7 +33,7 @@ function sessionSummary() {
   };
 }
 
-function renderPage() {
+function renderPage(initialEntry = "/interviews") {
   const router = createMemoryRouter(
     [
       {
@@ -45,7 +45,7 @@ function renderPage() {
         element: <h1>Opened interview session</h1>,
       },
     ],
-    { initialEntries: ["/interviews"] },
+    { initialEntries: [initialEntry] },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -58,6 +58,17 @@ describe("InterviewSessionListPage", () => {
       sessions: [],
       pagination: { page: 1, limit: 20, total: 0, pages: 0 },
     });
+  });
+
+  it("consumes the recognized create intent and focuses the title", async () => {
+    const router = renderPage("/interviews?action=create");
+
+    const title = await screen.findByRole("textbox", {
+      name: "Session title",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(title));
+    expect(router.state.location.search).toBe("");
+    expect(interviewApi.createInterviewSession).not.toHaveBeenCalled();
   });
 
   it("preserves the page heading, supporting copy, and create action", () => {

@@ -178,6 +178,11 @@ describe("ResumeWorkspace", () => {
         name: "Synthetic Platform Resume",
       }),
     ).not.toBeNull();
+    const breadcrumbs = screen.getByRole("navigation", {
+      name: "Breadcrumb",
+    });
+    expect(breadcrumbs.textContent).toContain("Synthetic Platform Resume");
+    expect(breadcrumbs.textContent).not.toContain(resumeId);
     expect(
       (screen.getByLabelText("Full name") as HTMLInputElement).value,
     ).toBe("Synthetic Candidate");

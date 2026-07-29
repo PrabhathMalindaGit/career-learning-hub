@@ -207,6 +207,13 @@ describe("Learning document workspace", () => {
         name: "Synthetic distributed systems notes",
       }),
     ).not.toBeNull();
+    const breadcrumbs = screen.getByRole("navigation", {
+      name: "Breadcrumb",
+    });
+    expect(breadcrumbs.textContent).toContain(
+      "Synthetic distributed systems notes",
+    );
+    expect(breadcrumbs.textContent).not.toContain(firstDocumentId);
     expect(learningApi.fetchLearningDocument).toHaveBeenCalledWith(
       firstDocumentId,
       expect.any(AbortSignal),

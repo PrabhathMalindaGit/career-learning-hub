@@ -210,6 +210,13 @@ describe("InterviewSessionWorkspace", () => {
         name: "Platform interview preparation",
       }),
     ).not.toBeNull();
+    const breadcrumbs = screen.getByRole("navigation", {
+      name: "Breadcrumb",
+    });
+    expect(breadcrumbs.textContent).toContain(
+      "Platform interview preparation",
+    );
+    expect(breadcrumbs.textContent).not.toContain(sessionId);
     expect(screen.getByText("Backend Engineer · Mid-level")).not.toBeNull();
     expect(
       await screen.findByRole("button", {

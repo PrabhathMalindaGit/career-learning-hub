@@ -25,6 +25,11 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     .getByRole("button", { name: "Create blank resume" })
     .click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  const breadcrumbs = page.getByRole("navigation", {
+    name: "Breadcrumb",
+  });
+  await expect(breadcrumbs).toContainText(title);
+  await expect(breadcrumbs).not.toContainText(/507f[0-9a-f]+/i);
 
   await page.getByLabel("Full name").fill("Phase Fourteen Candidate");
   await expect(page.getByText("Unsaved changes")).toBeVisible();

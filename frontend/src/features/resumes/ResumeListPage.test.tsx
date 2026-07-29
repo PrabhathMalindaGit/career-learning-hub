@@ -81,7 +81,7 @@ function workspace() {
   };
 }
 
-function renderPage() {
+function renderPage(initialEntry = "/resumes") {
   const router = createMemoryRouter(
     [
       { path: "/resumes", element: <ResumeListPage /> },
@@ -90,7 +90,7 @@ function renderPage() {
         element: <h1>Opened resume</h1>,
       },
     ],
-    { initialEntries: ["/resumes"] },
+    { initialEntries: [initialEntry] },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -103,6 +103,27 @@ describe("ResumeListPage", () => {
       resumes: [],
       pagination: { page: 1, limit: 20, total: 0, pages: 0 },
     });
+  });
+
+  it("consumes the recognized create intent and focuses the title", async () => {
+    const router = renderPage("/resumes?action=create");
+
+    const title = await screen.findByRole("textbox", {
+      name: "New resume title",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(title));
+    expect(router.state.location.search).toBe("");
+    expect(resumeApi.createResume).not.toHaveBeenCalled();
+  });
+
+  it("ignores unknown intents without changing the URL", async () => {
+    const router = renderPage("/resumes?action=unknown");
+
+    await screen.findByRole("heading", { name: "Resume Studio" });
+    expect(router.state.location.search).toBe("?action=unknown");
+    expect(document.activeElement).not.toBe(
+      screen.getByRole("textbox", { name: "New resume title" }),
+    );
   });
 
   it("preserves the page heading, supporting copy, and list actions", () => {

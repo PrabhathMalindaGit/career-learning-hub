@@ -4,7 +4,11 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { PageHeader } from "../../components/PageHeader";
 import { Pager } from "../../components/Pager";
@@ -125,6 +129,7 @@ const filters: { label: string; value: SessionFilter }[] = [
 
 export function InterviewSessionListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<SessionFilter>("all");
   const [page, setPage] = useState(1);
   const [sessions, setSessions] = useState<InterviewSessionSummary[]>([]);
@@ -146,6 +151,17 @@ export function InterviewSessionListPage() {
   const listSequence = useRef(0);
   const createController = useRef<AbortController | null>(null);
   const errorSummary = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("action") !== "create") return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("action");
+    setSearchParams(next, { replace: true });
+    window.setTimeout(
+      () => document.getElementById("interview-title")?.focus(),
+      100,
+    );
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const sequence = ++listSequence.current;

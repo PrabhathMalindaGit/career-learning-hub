@@ -5,7 +5,11 @@ import {
   useRef,
   useState,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { PageHeader } from "../../components/PageHeader";
 import { Pager } from "../../components/Pager";
@@ -56,6 +60,7 @@ function validTitle(value: string): boolean {
 
 export function ResumeListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const createTitleId = useId();
   const importTitleId = useId();
   const importFileId = useId();
@@ -85,6 +90,14 @@ export function ResumeListPage() {
   const importTitleRef = useRef<HTMLInputElement>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
   const importErrorSummaryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchParams.get("action") !== "create") return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("action");
+    setSearchParams(next, { replace: true });
+    window.setTimeout(() => createTitleRef.current?.focus(), 100);
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const sequence = ++listSequence.current;

@@ -7,6 +7,7 @@ import {
 } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useAuth } from "../auth/AuthProvider";
 import {
   fetchLearningChatJob,
@@ -540,6 +541,12 @@ export function LearningConversationWorkspace() {
   if (loadState.status === "loading") {
     return (
       <section className="workspace-section learning-workspace">
+        <Breadcrumbs
+          items={[
+            { label: "Learning", to: "/learning" },
+            { label: "Loading conversation" },
+          ]}
+        />
         <div className="learning-state" role="status">
           Loading grounded conversation…
         </div>
@@ -556,6 +563,12 @@ export function LearningConversationWorkspace() {
           : "Conversation unavailable";
     return (
       <section className="workspace-section learning-workspace">
+        <Breadcrumbs
+          items={[
+            { label: "Learning", to: "/learning" },
+            { label: title },
+          ]}
+        />
         <p className="eyebrow">Grounded document chat</p>
         <h1>{title}</h1>
         <p className="section-intro">{loadState.error.message}</p>
@@ -570,6 +583,16 @@ export function LearningConversationWorkspace() {
   if (loadState.document.status !== "ready") {
     return (
       <section className="workspace-section learning-workspace">
+        <Breadcrumbs
+          items={[
+            { label: "Learning", to: "/learning" },
+            {
+              label: loadState.document.title,
+              to: `/learning/documents/${documentId}`,
+            },
+            { label: "Conversation" },
+          ]}
+        />
         <Link
           className="learning-back-link"
           to={`/learning/documents/${documentId}`}
@@ -589,6 +612,16 @@ export function LearningConversationWorkspace() {
 
   return (
     <section className="workspace-section learning-workspace learning-chat-workspace">
+      <Breadcrumbs
+        items={[
+          { label: "Learning", to: "/learning" },
+          {
+            label: loadState.document.title,
+            to: `/learning/documents/${documentId}`,
+          },
+          { label: "Conversation" },
+        ]}
+      />
       <Link
         className="learning-back-link"
         to={`/learning/documents/${documentId}`}
