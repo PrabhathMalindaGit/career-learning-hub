@@ -2117,7 +2117,136 @@ repair attempt. The repair verification record below controls current status.
 
 #### Status
 
-- Status: PLANNED
+- Status: ACTIVE / BLOCKED — SECURITY SCAN CAPABILITY PENDING
+
+#### Activation record
+
+- Activated on `phase-12-unified-frontend` at full HEAD
+  `79e4cfb62524d0cccf919819a78b4dc68ec2df8b`
+  (`Complete Phase 16 academic MVP verification`).
+- Local `main` is
+  `92066731b57abc27a392fb35cf009100568d39dd`
+  (`Complete backend foundation through Phase 9`), is the exact merge base,
+  and is an ancestor of the activation HEAD. The cumulative branch is 46
+  commits ahead, zero commits behind, and contains zero merge commits.
+- Phase 17 is verification-only. Product, executable-test, package, lockfile,
+  configuration, environment, backend-contract, and shared-contract changes
+  are prohibited.
+- The historical dead-code-removal allowance is suspended for this initial
+  review. Dead or temporary material may be classified only; any required
+  source or test removal must be authorized by a separate repair prompt.
+- The maximum authorized write manifest is the master plan, current-phase
+  record, Phase 17 release-candidate report, Full Application Browser Testing
+  guide, and README only if the verified implementation makes it materially
+  incorrect.
+- The requested skills are available except for
+  `codex-security:security-scan`, which is not installed or callable. No skill
+  was installed or downloaded.
+- The future approval token is
+  `PHASE_17_RELEASE_CANDIDATE_REVIEW_APPROVED`; approval accepted: no.
+- Phase 16 remains `COMPLETED` / `APPROVED`. Phase 18 remains `PLANNED` /
+  `INACTIVE`. No staging, commit, merge, push, pull, fetch, or deployment is
+  authorized by this review.
+
+#### Verification result
+
+- Baseline, main ancestry, the linear 46-commit history, and the complete
+  216-path cumulative diff passed review. The branch is zero commits behind
+  main, has zero merge commits, and `git diff --check main...HEAD` passed.
+- Static syntax and manifest integrity passed; `npm ls --depth=0` reported a
+  valid top-level tree. Root and backend-test typechecks passed.
+- Complete frontend tests passed 49/49 files and 645/645 tests. Backend unit
+  passed 5/5 files and 19/19 tests; integration passed 7/7 files and 54/54
+  tests; security passed 4/4 files and 35/35 tests. The backend commands used
+  the one authorized unchanged-command retry after a zero-test sandbox
+  listener denial.
+- Existing backend V8 coverage passed 16/16 files and 108/108 tests with
+  62.84% statements, 67.56% branches, 78.94% functions, and 62.84% lines. No
+  threshold is configured.
+- Phase 17 is `ACTIVE` / `BLOCKED`: the frontend workspace has no declared
+  coverage command and no compatible installed coverage provider for Vitest
+  `4.1.10`. Backend's installed `@vitest/coverage-v8` `3.2.7` does not satisfy
+  the frontend peer requirement. The mandatory frontend coverage gate cannot
+  run without a separately authorized package/script change.
+- The review stopped at the mandatory coverage gate. Production build,
+  standard Codex security scan, README reconciliation, dead/temporary-code
+  review, final documentation reconciliation, and the one complete browser
+  gate were not run. The requested `codex-security:security-scan` skill is
+  also unavailable.
+- Generated coverage and TypeScript cache output were removed. The isolated
+  test MongoDB listener stopped after backend verification; no browser,
+  frontend, or backend application service was started, and ports 4173, 4174,
+  and 8000 remain closed. No source, executable-test, package, lockfile,
+  configuration, environment, stage, commit, merge, push, deployment,
+  provider, Atlas, real-data, or legacy change occurred.
+- The future token `PHASE_17_RELEASE_CANDIDATE_REVIEW_APPROVED` remains
+  unaccepted. Phase 18 remains `PLANNED` / `INACTIVE`.
+
+#### P17-001 frontend coverage tooling repair
+
+- Root cause: frontend Vitest resolved to `4.1.10`, but the frontend declared
+  no coverage script or provider. Backend's installed
+  `@vitest/coverage-v8` `3.2.7` was invalid for the frontend peer boundary.
+- The bounded repair adds exact frontend devDependency
+  `@vitest/coverage-v8` `4.1.10`, the exact
+  `test:coverage: vitest run --coverage` script, and a V8 policy under
+  `frontend/vitest.config.ts`.
+- The policy includes all `src/**/*.{ts,tsx}` implementation files and
+  excludes only test files, `src/test/**`, and TypeScript declarations. It
+  emits text, JSON-summary, and HTML reports to workspace-relative
+  `frontend/coverage`.
+- No numerical threshold is configured. The repair records the first honest
+  baseline and defers threshold selection to a separate reviewed policy
+  decision; it does not tune a threshold after observing results.
+- Dependency integrity passed with frontend Vitest and provider both at
+  `4.1.10`. The lockfile adds only the provider and its required resolution;
+  no existing dependency version changed.
+- Frontend typecheck passed. The ordinary frontend suite and the single
+  coverage run each passed 49/49 files and 645/645 tests. Coverage measured
+  84.02% statements, 77.66% branches, 76.72% functions, and 86.78% lines.
+- Root typecheck passed across frontend, backend, and shared types. The
+  production build passed with 102 modules, 0.54 kB HTML, 77.15 kB CSS, one
+  580.96 kB JavaScript entry, no dynamic chunk, and the accepted Vite
+  greater-than-500-kB advisory.
+- Generated coverage, build output, and TypeScript caches were removed.
+  Ports 4173, 4174, and 8000 remained closed, and no browser or application
+  service was started.
+- P17-001 is `REPAIRED / VERIFIED / APPROVED`. The operator supplied and
+  approved `PHASE_17_FRONTEND_COVERAGE_TOOLING_APPROVED` after independent
+  human review. P17-002 remains
+  `SECURITY CAPABILITY UNAVAILABLE — NEW CODEX SESSION WITH CODEX SECURITY REQUIRED`;
+  no scan or substitute scanner ran.
+- Phase 17 remains `ACTIVE / BLOCKED — SECURITY SCAN CAPABILITY PENDING`.
+  The original Phase 17 build, security scan, README, dead-code, and complete
+  browser continuation remains pending. Phase 18 remains `PLANNED` /
+  `INACTIVE`; merge and push remain prohibited and unperformed.
+
+#### P17-001 repair approval closeout
+
+- Fresh closeout verification kept frontend Vitest and the V8 provider at
+  exact version `4.1.10`; both package-tree checks passed without a missing,
+  invalid, or extraneous package.
+- The ordinary frontend suite passed 49/49 files and 645/645 tests in 12.72
+  seconds. The coverage suite passed the same 49 files and 645 tests in 16.87
+  seconds and reproduced 84.02% statements, 77.66% branches, 76.72%
+  functions, and 86.78% lines. No numerical threshold is configured.
+- Root typecheck passed across frontend, backend, and shared types. The
+  production build passed with 102 frontend modules, 0.54 kB HTML, 77.15 kB
+  CSS, one 580.96 kB JavaScript entry, no dynamic chunk, and the accepted
+  greater-than-500-kB Vite advisory.
+- Generated coverage, build output, and TypeScript caches were removed, and
+  ports 4173, 4174, and 8000 remained closed. No product or executable-test
+  file changed.
+- No provider, Atlas, deployment, production or real personal data,
+  environment file, or legacy project was accessed. No merge or push
+  occurred.
+- P17-001 is `REPAIRED / VERIFIED / APPROVED`. P17-002 remains an unresolved
+  capability blocker. Phase 17 remains
+  `ACTIVE / BLOCKED — SECURITY SCAN CAPABILITY PENDING`; Phase 18 remains
+  `PLANNED` / `INACTIVE`.
+- The authorized closeout subject is `Add frontend coverage tooling`. The
+  next action is a new Codex session with Codex Security enabled. The final
+  Phase 17 approval token remains unaccepted.
 
 #### Purpose
 
