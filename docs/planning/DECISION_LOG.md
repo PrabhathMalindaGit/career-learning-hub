@@ -187,3 +187,41 @@
 - Revisit conditions:
   - A verified requirement cannot be met by the approved architecture.
   - The user approves the documented impact and records a replacement or supplemental decision.
+
+## DEC-011: Name and locate full application browser testing
+
+- Decision ID: `DEC-011`
+- Date: 2026-07-29
+- Status: ACCEPTED
+- Decision:
+  - Use Full Application Browser Testing as the primary human-facing name.
+  - Keep executable Playwright browser workflow tests under `tests/browser/`.
+  - Keep browser-testing plans, instructions, coverage descriptions, and
+    reports under `docs/testing/` or the applicable planning directory.
+  - Add `npm run test:browser` and retain `npm run test:e2e` only when a
+    portable repository-local Playwright dependency or runner exists.
+- Rationale:
+  - The executable suite belongs with repository tests, not documentation.
+  - The new name states the suite's purpose without erasing valid historical
+    uses of end-to-end or E2E terminology.
+  - A package script must not depend on an undeclared package, a download, or
+    a user-specific runtime path.
+- Consequences:
+  - Live operational references use `tests/browser/`.
+  - Historical Phase 14 and Phase 15 evidence keeps its original commands,
+    paths, and terminology.
+  - The current repository has no declared or repository-local Playwright
+    runner, so Phase 16A-1 leaves `package.json` unchanged and documents the
+    existing authorized bundled-runtime command.
+  - The operator approved the migration with
+    `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED` after 21/21 browser workflows
+    passed from `tests/browser/`.
+  - No production source, browser-test behavior, or visible UI changed, so no
+    manual visual QA was required.
+  - The closeout commit had not yet been created while this decision entry was
+    updated. Push remains prohibited and has not occurred.
+- Revisit conditions:
+  - A separately approved dependency or portable-runner change makes
+    repository-local Playwright execution available.
+  - The temporary `test:e2e` compatibility alias reaches an approved removal
+    point after it has been introduced.

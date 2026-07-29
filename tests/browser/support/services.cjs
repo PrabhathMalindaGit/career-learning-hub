@@ -8,7 +8,7 @@ const {
 const path = require("node:path");
 const { MongoMemoryReplSet } = require("mongodb-memory-server");
 
-const repoRoot = path.resolve(__dirname, "../..");
+const repoRoot = path.resolve(__dirname, "../../..");
 const runtimeRoot = "/private/tmp/career-learning-hub-phase14/runtime";
 const runtimeFile = path.join(runtimeRoot, "runtime.json");
 const storageRoot = path.join(runtimeRoot, "storage");

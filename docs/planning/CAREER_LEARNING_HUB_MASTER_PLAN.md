@@ -1678,58 +1678,103 @@
 
 - `Harden application security after frontend integration`
 
-### Execution Phase 16: Accessibility and Performance Review
+### Execution Phase 16: Academic MVP Feature Completion, Responsive Application Shell, Accessibility and Performance Review
 
 #### Status
 
-- Status: PLANNED
+- Status: ACTIVE
+- Activation baseline: branch `phase-12-unified-frontend`, full HEAD
+  `e5ee18ab3f55217fd24f4dfea04de1e2d15feddd`
+  (`Complete Phase 15 security and privacy review`).
+- Phase 15 is `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
+- Phase 16A-1, Browser Test Naming and Folder Migration is
+  `COMPLETED` / `APPROVED`.
+- Phase 16B through Phase 16G are `PLANNED` / `INACTIVE`.
+- Phase 17 is `PLANNED` / `INACTIVE`.
+- Accepted approval token:
+  `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
+- The migration behavior was verified with 21/21 passing browser workflows.
+- No production source, browser-test behavior, or visible UI changed.
+- The repository still has no declared or portable repository-local
+  Playwright runner. `package.json` remains unchanged, neither
+  `test:browser` nor `test:e2e` exists, and adding a portable command requires
+  separate approval.
 
 #### Purpose
 
-- Run Lighthouse and browser checks.
-- Review accessibility, bundle size, loading, rerenders, list bounds, keyboard support, focus order, contrast, and labels.
-- Apply only measured optimizations.
+- Complete the approved academic MVP through bounded subphases.
+- Keep the responsive application shell, feature-completion work,
+  accessibility review, and performance review separately reviewable.
+- Begin by giving the executable Playwright suite a stable location and a
+  clear human-facing name.
 
 #### Required skills
 
 - `karpathy-guidelines`
-- `lighthouse-verification`
-- `build-web-apps:react-best-practices`
-- `build-web-apps:frontend-testing-debugging`
-- `vercel-react-best-practices`
+- `using-superpowers`
+- `define-goal`
+- `systematic-debugging`
 - `playwright`
+- `technical-writing`
+- `verification-before-completion`
+- `finishing-a-development-branch`
 
 #### In scope
 
-- Measured accessibility and performance analysis.
-- Surgical fixes supported by evidence.
+- Phase 16A-1: relocate executable Playwright browser workflow tests from
+  `e2e/` to `tests/browser/`.
+- Phase 16A-1: adopt Full Application Browser Testing as the primary
+  human-facing name.
+- Phase 16A-1: update only live operational references and active
+  documentation, preserve the historical record, and run full application
+  verification from the new location.
+- Later Phase 16 subphases require separate activation prompts.
 
 #### Out of scope
 
-- Unmeasured optimization.
-- Feature work or redesign.
-- Lowering accessibility or performance thresholds to pass.
+- Phase 16A-1 does not implement the sidebar, breadcrumbs, Resume PDF export,
+  AI comparison, or templates.
+- Phase 16A-1 does not begin accessibility or performance repairs.
+- No browser-test assertion, selector, route, security control, ownership
+  check, private-PDF check, Quiz-secrecy check, or application behavior may
+  be weakened or changed for the relocation.
+- Phase 16B through Phase 16G and Phase 17 remain inactive.
 
 #### Deliverables
 
-- Recorded baseline and final measurements.
-- Approved accessibility and performance fixes.
+- Executable browser workflow suite under `tests/browser/`.
+- Full Application Browser Testing guide under `docs/testing/`.
+- Phase 16A-1 migration report.
+- Active governance that records the new path, runner decision, preserved
+  history, and review gate.
 
 #### Verification
 
-- Run Lighthouse and relevant browser checks.
-- Record bundle, loading, rerender, list-bound, keyboard, focus, contrast, and label evidence.
-- Run targeted type checks, tests, and build.
-- Complete human visual QA before commit.
+- Prove all tracked browser-test files moved one-for-one and the old
+  executable directory no longer exists.
+- Verify configuration, projects, viewports, workers, retries, setup,
+  teardown, synthetic fixture paths, and cleanup paths.
+- Run the root typecheck.
+- Run the complete browser workflow suite once from
+  `tests/browser/playwright.config.cjs`.
+- Require zero final synthetic users and owned records, closed local service
+  ports, and no retained screenshots, videos, traces, results, or reports.
 
 #### Human approval gate
 
-- Provide measurements, a local URL, and a visual inspection checklist.
-- Stop before commit until the user provides the phase-specific visual approval token and commit authorization.
+- No manual visual QA is required because Phase 16A-1 changes no visible UI.
+- The operator approved the migration with
+  `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
+- The closeout commit had not yet been created while this documentation was
+  edited.
+- Push remains prohibited and has not occurred.
+- Phase 16B and every other later Phase 16 implementation subphase remain
+  inactive.
 
 #### Expected commit
 
-- `Improve performance and accessibility`
+- `Organize full application browser tests`
 
 ### Execution Phase 17: Final Repository and Branch Review
 

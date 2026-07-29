@@ -1,40 +1,48 @@
 # Current Execution Phase
 
-- Phase: 15
-- Name: Security and Privacy Review
-- Status: COMPLETED / APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL
+- Phase: 16
+- Name: Academic MVP Feature Completion, Responsive Application Shell,
+  Accessibility and Performance Review
+- Status: ACTIVE
+- Active subphase: Phase 16A-1, Browser Test Naming and Folder Migration
+- Subphase status: COMPLETED / APPROVED
 - Baseline branch: `phase-12-unified-frontend`
-- Baseline full HEAD: `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
-- Baseline subject: `Add end-to-end application coverage`
+- Baseline full HEAD: `e5ee18ab3f55217fd24f4dfea04de1e2d15feddd`
+- Baseline subject: `Complete Phase 15 security and privacy review`
 - Most recently completed major phase: Phase 15, Security and Privacy Review
   (`COMPLETED` /
   `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`)
-- Final approved Phase 15 dispositions:
-  Phase 15B-1 (`COMPLETED` /
-  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`), Phase 15B-2 and
-  Phase 15B-3 (`COMPLETED` / `APPROVED`), and Phase 15B-4 (`COMPLETED` /
-  `APPROVED AS BOUNDED MITIGATION`).
-- Active Phase 15 repair pass: none.
-- Phase 15B-1 is `COMPLETED` /
-  `APPROVED AS FORMAL CONTROLLED-ACADEMIC-MVP DEFERRAL`.
-- Next planned major phase: Phase 16, Accessibility and Performance Review
-  (`PLANNED` / `INACTIVE`)
 - Current workflow state:
-  `PHASE 15 COMPLETED AND APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`
-- Controlling closeout skills: `using-superpowers`, `karpathy-guidelines`,
-  `define-goal`, `security-best-practices`, `technical-writing`,
+  `PHASE 16 ACTIVE; PHASE 16A-1 COMPLETED AND APPROVED`
+- Primary browser-suite name: Full Application Browser Testing
+- Executable browser-suite location: `tests/browser/`
+- Primary command: `npm run test:browser` only when a portable,
+  repository-local Playwright runner is approved and available.
+- Current runner decision: no portable repository-local Playwright runner is
+  declared, so the package scripts remain unchanged and the existing
+  authorized bundled runtime is used directly.
+- Accepted approval token:
+  `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`
+- No later Phase 16 implementation subphase is active.
+- Controlling skills: `using-superpowers`, `karpathy-guidelines`,
+  `define-goal`, `systematic-debugging`, `playwright`, `technical-writing`,
   `verification-before-completion`, and `finishing-a-development-branch`
 
 ## Objective
 
-- Preserve the completed Phase 15A audit and approved Phase 15B-2 repair.
-- Preserve the approved P15-004 fail-closed origin repair and bounded P15-005
-  explicit-disclosure mitigation without activating another repair batch or
-  Phase 16.
-- Preserve the approved formal P15-001 deferral, its
-  controlled-academic-MVP restrictions, and the completed final regression
-  evidence.
-- Preserve Phase 14 as completed and Phase 16 as planned and inactive.
+- Relocate the complete executable Playwright suite from `e2e/` to
+  `tests/browser/` without changing its behavior, coverage, assertions, or
+  test matrix.
+- Adopt Full Application Browser Testing as the primary human-facing name for
+  the active browser workflow suite.
+- Update only live operational references and active documentation that would
+  otherwise become incorrect.
+- Preserve Phase 14 and Phase 15 historical evidence as originally executed.
+- Preserve the completed browser workflow verification and cleaned temporary
+  state without rerunning browser or service workflows during closeout.
+- Record the accepted approval and create exactly one closeout commit without
+  pushing it.
+- Keep Phase 16B through Phase 16G and Phase 17 planned and inactive.
 
 ## Phase status controls
 
@@ -63,7 +71,11 @@
   `COMPLETED` / `APPROVED`.
 - Phase 15B-4 — Registration Account-Enumeration Response is
   `COMPLETED` / `APPROVED AS BOUNDED MITIGATION`.
-- Phase 16 remains `PLANNED` / `INACTIVE` and is not activated.
+- Phase 16 is `ACTIVE`.
+- Phase 16A-1, Browser Test Naming and Folder Migration is
+  `COMPLETED` / `APPROVED`.
+- Phase 16B through Phase 16G remain `PLANNED` / `INACTIVE`.
+- Phase 17 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.
@@ -82,6 +94,104 @@
 - Pass F human visual QA was approved with
   `PHASE_12F_DELETION_VISUAL_QA_APPROVED`.
 - Phase 12 is completed.
+
+## Phase 16A-1 activation record
+
+- Activated by operator-approved prompt
+  `CLH-PHASE-16A1-BROWSER-TEST-NAMING-AND-FOLDER-MIGRATION-01`.
+- Activation baseline: branch `phase-12-unified-frontend`, full HEAD
+  `e5ee18ab3f55217fd24f4dfea04de1e2d15feddd`
+  (`Complete Phase 15 security and privacy review`).
+- Phase 15 remains `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
+- Phase 16 and Phase 16A-1 are `ACTIVE`.
+- Phase 16B through Phase 16G remain `PLANNED` / `INACTIVE`.
+- Phase 17 remains `PLANNED` / `INACTIVE`.
+- This subphase changes browser-test organization, terminology, active
+  instructions, and only the path calculations required by the relocation.
+- The executable suite moves from `e2e/` to `tests/browser/`. The active
+  human-facing name is Full Application Browser Testing.
+- These Playwright browser workflow tests provide end-to-end coverage of the
+  application's principal user journeys.
+- Existing project names, viewports, one-worker execution, zero-retry policy,
+  service lifecycle, synthetic fixtures, ownership checks, private-PDF
+  checks, Quiz-secrecy checks, and artifact cleanup remain unchanged.
+- No portable repository-local Playwright dependency or runner exists.
+  `package.json` therefore remains unchanged, and neither `test:browser` nor
+  the temporary `test:e2e` compatibility alias is added in this subphase.
+- Historical Phase 14 and Phase 15 commands, paths, counts, and terminology
+  remain as recorded.
+- Sidebar, breadcrumb, Resume PDF export, AI comparison, template,
+  accessibility-repair, and performance-repair work remain out of scope.
+- Manual or in-app visual QA is not required because this subphase changes no
+  visible application UI.
+- Approval token required at activation:
+  `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
+- At activation, the token had not been supplied. The later approval closeout
+  records its acceptance. Phase 16B was not activated.
+
+## Phase 16A-1 review handoff
+
+- All 12 tracked executable suite files moved one-for-one from `e2e/` to
+  `tests/browser/`; the old directory no longer exists.
+- Ten moved payloads are byte-identical. The only executable content changes
+  are the Playwright web-server working-directory depth and service-harness
+  repository-root depth required by the new folder.
+- `package.json`, `package-lock.json`, and `.gitignore` remain unchanged.
+  The repository has no declared or repository-local Playwright runner, so
+  `test:browser` and the `test:e2e` compatibility alias were not added.
+- The configuration loaded from `tests/browser/playwright.config.cjs` and
+  listed 21 tests in six files: desktop 7, tablet 7, and mobile 7.
+- Root `npm run typecheck` passed for the web, API, and shared-types
+  workspaces.
+- The complete browser workflow suite passed 21/21 in 39.5 seconds:
+  desktop 7/7, tablet 7/7, and mobile 7/7.
+- Authentication, registration, protected routing, reload persistence,
+  logout, Dashboard, Resume, Interview, Learning, User A/User B ownership
+  isolation, private PDF access, Quiz answer secrecy, browser-console checks,
+  and horizontal-overflow checks passed through unchanged specifications.
+- The first sandboxed service launch stopped before test execution with
+  `listen EPERM 0.0.0.0`. The unchanged command then ran with local-port
+  permission; no code repair was required.
+- Global setup and teardown reported `users=0, owned=0`. Ports 8000 and 4173
+  are closed. The dedicated temporary runtime, storage, Playwright report,
+  test results, and repository-local typecheck cache were removed.
+- No provider or Atlas call occurred. No environment file was read or
+  modified. No production source, API contract, database model, migration,
+  dependency, lockfile, selector, assertion, or test behavior changed.
+- Phase 16 remains `ACTIVE`.
+- Phase 16A-1 was `IMPLEMENTED` / `READY FOR HUMAN REVIEW`.
+- Phase 16B through Phase 16G and Phase 17 remain `PLANNED` / `INACTIVE`.
+- Required review token:
+  `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
+- At the review handoff, the token was unaccepted and nothing was staged,
+  committed, or pushed.
+
+## Phase 16A-1 approval closeout
+
+- The operator approved the reviewed migration with
+  `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
+- Phase 15 remains `COMPLETED` /
+  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`.
+- Phase 16 remains `ACTIVE`.
+- Phase 16A-1 is `COMPLETED` / `APPROVED`.
+- Full Application Browser Testing remains the primary human-facing name.
+- The executable suite remains under `tests/browser/`; plans, instructions,
+  and coverage documentation remain under `docs/testing/`.
+- Historical Phase 14 and Phase 15 E2E wording, commands, paths, and evidence
+  remain preserved.
+- The verified browser result remains 21/21: desktop 7/7, tablet 7/7, and
+  mobile 7/7.
+- `package.json` remains unchanged. Neither `test:browser` nor `test:e2e`
+  exists because the repository has no declared or portable repository-local
+  Playwright runner. Adding one requires separate approval.
+- No production source, browser-test behavior, or visible UI changed. Manual
+  visual QA was not required.
+- The closeout commit had not yet been created while this documentation was
+  edited.
+- Push remains prohibited and has not occurred.
+- Phase 16B through Phase 16G and Phase 17 remain `PLANNED` / `INACTIVE`.
+- No later Phase 16 implementation subphase is active.
 
 ## Phase 15A activation record
 

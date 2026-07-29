@@ -30,7 +30,7 @@ module.exports = defineConfig({
       __dirname,
       "support/services.cjs",
     )}"`,
-    cwd: path.resolve(__dirname, ".."),
+    cwd: path.resolve(__dirname, "../.."),
     url: "http://127.0.0.1:4173/login",
     reuseExistingServer: false,
     timeout: 120_000,
