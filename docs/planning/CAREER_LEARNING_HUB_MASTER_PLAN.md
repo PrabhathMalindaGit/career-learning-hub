@@ -1697,7 +1697,9 @@
 - Phase 16C, Resume PDF Export and Print is `COMPLETED` / `APPROVED`.
 - Phase 16D, Original-versus-Suggested AI Comparison is `COMPLETED` /
   `APPROVED`.
-- Phase 16E through Phase 16G are `PLANNED` / `INACTIVE`.
+- Phase 16E, Bounded Resume Templates and Design Controls is `COMPLETED` /
+  `APPROVED`.
+- Phase 16F and Phase 16G are `PLANNED` / `INACTIVE`.
 - Phase 17 is `PLANNED` / `INACTIVE`.
 - Accepted approval token:
   `PHASE_16A1_BROWSER_TEST_MIGRATION_APPROVED`.
@@ -1711,6 +1713,8 @@
   `PHASE_16C_RESUME_EXPORT_VISUAL_APPROVED`.
 - The operator accepted the Phase 16D visual result with
   `PHASE_16D_AI_COMPARISON_VISUAL_APPROVED`.
+- The operator accepted the Phase 16E visual result with
+  `PHASE_16E_RESUME_TEMPLATES_VISUAL_APPROVED`.
 - The migration behavior was verified with 21/21 passing browser workflows.
 - No production source, browser-test behavior, or visible UI changed.
 - The repository still has no declared or portable repository-local
@@ -1766,7 +1770,8 @@
 - Phase 16D — Original-versus-Suggested AI Comparison:
   `COMPLETED` / `APPROVED`.
 - Phase 16E — Bounded Resume Templates and Design Controls:
-  `PLANNED` / `INACTIVE`, `CONDITIONAL / TIME PERMITTING`.
+  `COMPLETED` / `APPROVED`,
+  `CONDITIONAL / TIME PERMITTING`.
 - Phase 16F — Accessibility and Performance Review:
   `PLANNED` / `INACTIVE`.
 - Phase 16G — Integrated Verification and Phase 16 Closeout:
@@ -1800,7 +1805,8 @@ Conditional, time-permitting scope:
   responsive shell, create intents, and breadcrumb decisions.
 - Resume printing, AI comparison, templates, accessibility repairs, and
   performance repairs remain out of Phase 16B scope.
-- Phase 16E through Phase 16G and Phase 17 remain inactive until separately
+- Phase 16E was separately authorized after this Phase 16B scope statement.
+  Phase 16F, Phase 16G, and Phase 17 remain inactive until separately
   authorized.
 - Post-MVP scope includes command palettes, global shortcuts, a new theme
   system, editable AI suggestions, feedback analytics, major Resume-section
@@ -1882,7 +1888,22 @@ Conditional, time-permitting scope:
   approval closeout.
 - The Phase 16F build advisory remains a measurement candidate. Phase 16G
   still requires its own fresh complete integrated Full Application Browser
-  Testing run. Phase 16E remains inactive and requires separate activation.
+  Testing run. Phase 16E was subsequently activated by its separate bounded
+  implementation prompt and is now `COMPLETED` / `APPROVED`.
+- Phase 16E browser-gate recovery retained the historical complete result of
+  18/21 and the repaired targeted evidence without combining them into a
+  false green result.
+- The separately authorized fresh complete Full Application Browser Testing
+  run passed 21/21 in 1.5 minutes: desktop 7/7, tablet 7/7, mobile 7/7, one
+  worker, zero retries, and final cleanup `users=0, owned=0`.
+- Authentication, ownership isolation, private PDF, Quiz secrecy,
+  sidebar/drawer, breadcrumbs, Resume print/export, AI comparison, bounded
+  templates/design controls, console checks, page-error checks, and
+  horizontal-overflow checks passed.
+- The operator completed Phase 16E human visual review and supplied
+  `PHASE_16E_RESUME_TEMPLATES_VISUAL_APPROVED`; approval token accepted: yes.
+- No implementation change was required during visual-approval closeout.
+- Phase 16F, Phase 16G, and Phase 17 remain `PLANNED` / `INACTIVE`.
 
 #### Expected commit
 

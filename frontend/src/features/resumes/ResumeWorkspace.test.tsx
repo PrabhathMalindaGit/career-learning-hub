@@ -16,6 +16,7 @@ import * as polling from "./resumePolling";
 import { ResumeWorkspace } from "./ResumeWorkspace";
 import type {
   ResumeAnalysis,
+  ResumeDesign,
   ResumeWorkspaceData,
 } from "./types";
 
@@ -60,6 +61,7 @@ function workspace(
   activeVersionId = versionId,
   fullName = "Synthetic Candidate",
   ownerResumeId = resumeId,
+  designOverride: Partial<ResumeDesign> = {},
 ): ResumeWorkspaceData {
   return {
     resume: {
@@ -74,6 +76,7 @@ function workspace(
         pageSize: "A4",
         fontFamily: "unknown-persisted-font",
         showProfilePhoto: false,
+        ...designOverride,
       },
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -202,6 +205,10 @@ describe("ResumeWorkspace", () => {
         .getAttribute("data-template"),
     ).toBe("ats-classic");
     expect(screen.queryByText("unknown-persisted-template")).toBeNull();
+    expect(
+      screen.getByText(/saved design choices are no longer available/i),
+    ).not.toBeNull();
+    expect(resumeApi.updateResumeDesign).not.toHaveBeenCalled();
   });
 
   it("edits with stable identity, previews live, and adopts the canonical save response", async () => {
@@ -352,6 +359,171 @@ describe("ResumeWorkspace", () => {
     expect(screen.queryByText("Paper size saved as Letter.")).toBeNull();
   });
 
+  it("previews and explicitly saves approved design values without changing content or version identity", async () => {
+    vi.mocked(resumeApi.fetchResume).mockResolvedValue(
+      workspace(versionId, "Synthetic Candidate", resumeId, {
+        templateId: "ats-classic",
+        colorPaletteId: "slate",
+        fontFamily: "Inter",
+      }),
+    );
+    vi.mocked(resumeApi.updateResumeDesign).mockResolvedValue({
+      ...workspace().resume,
+      design: {
+        templateId: "modern-professional",
+        colorPaletteId: "navy",
+        pageSize: "A4",
+        fontFamily: "Georgia",
+        showProfilePhoto: false,
+      },
+    });
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Template" }),
+      "modern-professional",
+    );
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Font" }),
+      "Georgia",
+    );
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Palette" }),
+      "navy",
+    );
+
+    const draftPreview = screen.getByLabelText("Resume preview");
+    expect(
+      draftPreview.classList.contains(
+        "resume-template-modern-professional",
+      ),
+    ).toBe(true);
+    expect(draftPreview.classList.contains("resume-font-georgia")).toBe(true);
+    expect(draftPreview.classList.contains("resume-palette-navy")).toBe(true);
+    expect((fullName as HTMLInputElement).value).toBe("Synthetic Candidate");
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Save design" }));
+
+    await waitFor(() => {
+      expect(resumeApi.updateResumeDesign).toHaveBeenCalledWith(
+        resumeId,
+        {
+          templateId: "modern-professional",
+          colorPaletteId: "navy",
+          pageSize: "A4",
+          fontFamily: "Georgia",
+          showProfilePhoto: false,
+        },
+        expect.any(AbortSignal),
+      );
+    });
+    expect(await screen.findByText("Resume design saved.")).not.toBeNull();
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+    expect(screen.getByText("Version 1 saved")).not.toBeNull();
+    expect((fullName as HTMLInputElement).value).toBe("Synthetic Candidate");
+    expect(
+      screen.getByLabelText("Printable saved resume")
+        .classList.contains("resume-template-modern-professional"),
+    ).toBe(true);
+  });
+
+  it("preserves canonical design and request ID after a failed explicit save", async () => {
+    vi.mocked(resumeApi.fetchResume).mockResolvedValue(
+      workspace(versionId, "Synthetic Candidate", resumeId, {
+        templateId: "ats-classic",
+        colorPaletteId: "slate",
+        fontFamily: "Inter",
+      }),
+    );
+    vi.mocked(resumeApi.updateResumeDesign).mockRejectedValue(
+      new ApiError(
+        500,
+        "DESIGN_UPDATE_FAILED",
+        "The design could not be updated.",
+        "design-request-0002",
+      ),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByLabelText("Full name");
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Template" }),
+      "compact-technical",
+    );
+    await user.click(screen.getByRole("button", { name: "Save design" }));
+
+    expect(
+      await screen.findByText("The resume design could not be saved."),
+    ).not.toBeNull();
+    expect(screen.getByText("Request ID: design-request-0002")).not.toBeNull();
+    expect(
+      screen.getByLabelText("Printable saved resume")
+        .getAttribute("data-template"),
+    ).toBe("ats-classic");
+    expect(screen.queryByText("Resume design saved.")).toBeNull();
+  });
+
+  it("serializes design and paper-size mutations so neither can overwrite the other", async () => {
+    vi.mocked(resumeApi.fetchResume).mockResolvedValue(
+      workspace(versionId, "Synthetic Candidate", resumeId, {
+        templateId: "ats-classic",
+        colorPaletteId: "slate",
+        fontFamily: "Inter",
+      }),
+    );
+    let resolveDesign:
+      | ((value: ResumeWorkspaceData["resume"]) => void)
+      | undefined;
+    vi.mocked(resumeApi.updateResumeDesign).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveDesign = resolve;
+        }),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByLabelText("Full name");
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Palette" }),
+      "forest",
+    );
+    await user.click(screen.getByRole("button", { name: "Save design" }));
+
+    expect(
+      (screen.getByRole("combobox", {
+        name: "Paper size",
+      }) as HTMLSelectElement).disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("combobox", {
+        name: "Template",
+      }) as HTMLSelectElement).disabled,
+    ).toBe(true);
+    expect(resumeApi.updateResumeDesign).toHaveBeenCalledTimes(1);
+
+    resolveDesign?.({
+      ...workspace().resume,
+      design: {
+        templateId: "ats-classic",
+        colorPaletteId: "forest",
+        pageSize: "A4",
+        fontFamily: "Inter",
+        showProfilePhoto: false,
+      },
+    });
+    await waitFor(() => {
+      expect(
+        (screen.getByRole("combobox", {
+          name: "Paper size",
+        }) as HTMLSelectElement).disabled,
+      ).toBe(false);
+    });
+  });
+
   it("retains a dirty draft and request ID after a save conflict", async () => {
     vi.mocked(resumeApi.fetchResume)
       .mockResolvedValueOnce(workspace())
@@ -461,6 +633,9 @@ describe("ResumeWorkspace", () => {
       screen.getByLabelText("Printable historical saved version 1")
         .textContent,
     ).toContain("Historical Candidate");
+    expect(
+      screen.getByText(/historical saved content uses this current design/i),
+    ).not.toBeNull();
     await user.click(
       screen.getByRole("button", { name: "Return to current draft" }),
     );

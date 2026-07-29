@@ -1,4 +1,10 @@
 import type { ResumeDesign, ResumeDraft } from "./types";
+import {
+  DEFAULT_RESUME_FONT,
+  DEFAULT_RESUME_PALETTE,
+  DEFAULT_RESUME_TEMPLATE,
+  resolveResumePresentation,
+} from "./resumeTemplateRegistry";
 
 interface ResumePreviewProps {
   draft: ResumeDraft;
@@ -6,6 +12,7 @@ interface ResumePreviewProps {
   headingId?: string;
   ariaLabel?: string;
   pageSize?: ResumeDesign["pageSize"];
+  design?: ResumeDesign;
   printOnly?: boolean;
 }
 
@@ -65,9 +72,19 @@ export function ResumePreview({
   label = "Live preview",
   headingId = "resume-preview-title",
   ariaLabel = "Resume preview",
-  pageSize = "A4",
+  pageSize,
+  design,
   printOnly = false,
 }: ResumePreviewProps) {
+  const resolved = resolveResumePresentation(
+    design ?? {
+      templateId: DEFAULT_RESUME_TEMPLATE.id,
+      fontFamily: DEFAULT_RESUME_FONT.value,
+      colorPaletteId: DEFAULT_RESUME_PALETTE.id,
+    },
+  );
+  const effectivePageSize = pageSize ?? design?.pageSize ?? "A4";
+
   return (
     <section
       className={`resume-panel resume-preview-panel${
@@ -76,27 +93,29 @@ export function ResumePreview({
       {...(printOnly
         ? { "aria-label": label }
         : { "aria-labelledby": headingId })}
-      data-page-size={pageSize}
+      data-page-size={effectivePageSize}
     >
       {printOnly ? (
         <style>{`@media print { @page { size: ${
-          pageSize === "LETTER" ? "Letter" : "A4"
+          effectivePageSize === "LETTER" ? "Letter" : "A4"
         }; margin: 12mm; } }`}</style>
       ) : (
         <header className="resume-panel-header">
           <div>
-            <p className="resume-kicker">ATS Classic</p>
+            <p className="resume-kicker">{resolved.template.option.label}</p>
             <h2 id={headingId}>{label}</h2>
           </div>
           <span className="resume-status">
-            {pageSize === "LETTER" ? "Letter" : "A4"}
+            {effectivePageSize === "LETTER" ? "Letter" : "A4"}
           </span>
         </header>
       )}
 
       <article
-        className="resume-paper"
-        data-template="ats-classic"
+        className={`resume-paper ${resolved.template.option.className} ${resolved.font.option.className} ${resolved.palette.option.className}`}
+        data-template={resolved.template.option.id}
+        data-font={resolved.font.option.value}
+        data-palette={resolved.palette.option.id}
         aria-label={ariaLabel}
       >
         <header className="resume-paper-header">

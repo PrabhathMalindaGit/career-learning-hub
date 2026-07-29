@@ -6,6 +6,7 @@ import {
   it,
   vi,
 } from "vitest";
+import type { ResumeDesign } from "./types";
 
 type ResumeApiModule = typeof import("./resumeApi");
 
@@ -14,6 +15,13 @@ const versionId = "507f1f77bcf86cd799439012";
 const analysisId = "507f1f77bcf86cd799439013";
 const jobId = "507f1f77bcf86cd799439014";
 const timestamp = "2026-07-24T10:00:00.000Z";
+const defaultDesign: ResumeDesign = {
+  templateId: "ats-classic",
+  colorPaletteId: "slate",
+  pageSize: "A4",
+  fontFamily: "Inter",
+  showProfilePhoto: false,
+};
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -42,13 +50,7 @@ function resumeFixture() {
     status: "draft",
     currentVersionId: versionId,
     latestVersionNumber: 1,
-    design: {
-      templateId: "ats-classic",
-      colorPaletteId: "slate",
-      pageSize: "A4",
-      fontFamily: "Inter",
-      showProfilePhoto: false,
-    },
+    design: defaultDesign,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -208,6 +210,36 @@ describe("resumeApi", () => {
       showProfilePhoto: false,
     });
     expect(result.design.pageSize).toBe("LETTER");
+    expect(String(requestAt()[1].body)).not.toContain("userId");
+    expect(String(requestAt()[1].body)).not.toContain("content");
+    expect(String(requestAt()[1].body)).not.toContain("currentVersionId");
+  });
+
+  it("patches the exact approved template, font, and palette identifiers", async () => {
+    const { updateResumeDesign } = await loadApi();
+    const approvedDesign = {
+      templateId: "compact-technical",
+      colorPaletteId: "forest",
+      pageSize: "LETTER" as const,
+      fontFamily: "Georgia",
+      showProfilePhoto: false,
+    };
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({
+        success: true,
+        data: {
+          resume: {
+            ...resumeFixture(),
+            design: approvedDesign,
+          },
+        },
+      }),
+    );
+
+    const result = await updateResumeDesign(resumeId, approvedDesign);
+
+    expect(JSON.parse(String(requestAt()[1].body))).toEqual(approvedDesign);
+    expect(result.design).toEqual(approvedDesign);
   });
 
   it("rejects an invalid design response and preserves a design request ID", async () => {
@@ -471,6 +503,7 @@ describe("resumeApi", () => {
       fetchResume,
       fetchResumeVersion,
       saveResumeVersion,
+      updateResumeDesign,
     } = await loadApi();
     const otherResumeId = "507f1f77bcf86cd799439099";
     const otherVersionId = "507f1f77bcf86cd799439098";
@@ -512,6 +545,12 @@ describe("resumeApi", () => {
             appliedCount: 1,
           },
         }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          success: true,
+          data: { resume: otherResume },
+        }),
       );
 
     await expect(fetchResume(resumeId)).rejects.toMatchObject({
@@ -537,6 +576,11 @@ describe("resumeApi", () => {
           "123e4567-e89b-42d3-a456-426614174000",
         ],
       }),
+    ).rejects.toMatchObject({
+      code: "INVALID_RESUME_RESPONSE",
+    });
+    await expect(
+      updateResumeDesign(resumeId, resumeFixture().design),
     ).rejects.toMatchObject({
       code: "INVALID_RESUME_RESPONSE",
     });

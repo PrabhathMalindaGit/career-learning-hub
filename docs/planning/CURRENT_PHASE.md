@@ -5,8 +5,8 @@
   Accessibility and Performance Review
 - Status: ACTIVE
 - Active subphase: none
-- Most recently completed subphase: Phase 16D,
-  Original-versus-Suggested AI Comparison
+- Most recently completed subphase: Phase 16E,
+  Bounded Resume Templates and Design Controls
 - Subphase status: COMPLETED / APPROVED
 - Audit baseline branch: `phase-12-unified-frontend`
 - Audit baseline full HEAD: `f3b5ecb0e1f267348b6dcb933784f37a085ef8e5`
@@ -15,7 +15,7 @@
   (`COMPLETED` /
   `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`)
 - Current workflow state:
-  `PHASE 16 ACTIVE; PHASE 16A-1, PHASE 16A-2, PHASE 16B, PHASE 16C, AND PHASE 16D COMPLETED AND APPROVED; PHASE 16E THROUGH PHASE 16G PLANNED AND INACTIVE`
+  `PHASE 16 ACTIVE; PHASE 16A-1, PHASE 16A-2, PHASE 16B, PHASE 16C, PHASE 16D, AND PHASE 16E COMPLETED AND APPROVED; PHASE 16F, PHASE 16G, AND PHASE 17 PLANNED AND INACTIVE`
 - Primary browser-suite name: Full Application Browser Testing
 - Executable browser-suite location: `tests/browser/`
 - Primary command: `npm run test:browser` only when a portable,
@@ -37,6 +37,9 @@
 - Accepted Phase 16D visual approval token:
   `PHASE_16D_AI_COMPARISON_VISUAL_APPROVED`
 - Phase 16D visual approval token accepted: yes
+- Accepted Phase 16E visual approval token:
+  `PHASE_16E_RESUME_TEMPLATES_VISUAL_APPROVED`
+- Phase 16E visual approval token accepted: yes
 - Controlling skills: `using-superpowers`, `karpathy-guidelines`,
   `define-goal`, `brainstorming`, `frontend-skill`, `frontend-design`,
   `playwright`, `lighthouse-verification`, `technical-writing`,
@@ -57,8 +60,9 @@
 - Preserve the accepted Phase 15 limitations, including P15-001 operating
   restrictions, and all ownership, private-file, Quiz-secrecy, immutable
   Resume-version, and AI provenance safeguards.
-- Keep Phase 16E through Phase 16G and Phase 17 planned and inactive.
-- Require a separate activation prompt before Phase 16E begins.
+- Implement only the approved bounded Phase 16E template, system-font, and
+  palette catalogue through the existing Resume design endpoint.
+- Keep Phase 16F, Phase 16G, and Phase 17 planned and inactive.
 
 ## Phase status controls
 
@@ -95,7 +99,11 @@
 - Phase 16B is `COMPLETED` / `APPROVED`.
 - Phase 16C is `COMPLETED` / `APPROVED`.
 - Phase 16D is `COMPLETED` / `APPROVED`.
-- Phase 16E through Phase 16G remain `PLANNED` / `INACTIVE`.
+- Phase 16E is `COMPLETED` / `APPROVED`.
+- Accepted visual approval token:
+  `PHASE_16E_RESUME_TEMPLATES_VISUAL_APPROVED`.
+- Phase 16E approval token accepted: yes.
+- Phase 16F and Phase 16G remain `PLANNED` / `INACTIVE`.
 - Phase 17 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -222,8 +230,25 @@
 - No backend, shared-contract, dependency, or deployment expansion occurred.
 - The closeout commit had not yet been created while this documentation was
   being edited. Push remains prohibited and has not occurred.
-- Phase 16D is `COMPLETED` / `APPROVED`. Phase 16E remains `PLANNED` /
-  `INACTIVE` and requires a separate activation prompt.
+- Phase 16D is `COMPLETED` / `APPROVED`. Phase 16E was subsequently activated
+  by its separate bounded implementation prompt and is now `COMPLETED` /
+  `APPROVED`.
+- Phase 16E browser-gate recovery preserved the prior complete result of
+  18/21 and the post-repair targeted evidence: desktop Resume 1/1,
+  tablet/mobile Resume 2/2, and mobile ownership 1/1.
+- A separate, newly authorized fresh complete Full Application Browser
+  Testing run passed 21/21 in 1.5 minutes: desktop 7/7, tablet 7/7, mobile 7/7,
+  one worker, and zero retries.
+- Authentication, ownership isolation, private PDF, Quiz secrecy,
+  sidebar/drawer, breadcrumbs, Resume print/export, AI comparison, and bounded
+  Resume template/design coverage passed. No console, page-error, or
+  horizontal-overflow assertion failed.
+- Recovery teardown reached `users=0, owned=0`.
+- The operator completed the Phase 16E human visual review and supplied:
+  `PHASE_16E_RESUME_TEMPLATES_VISUAL_APPROVED`.
+- Phase 16E approval token accepted: yes.
+- No implementation change was required during visual-approval closeout.
+- Phase 16F, Phase 16G, and Phase 17 remain `PLANNED` / `INACTIVE`.
 
 ## Phase 16A-2 activation and review handoff
 

@@ -9,6 +9,10 @@ import { ApiError } from "../../api/apiClient";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { Dialog } from "../../components/Dialog";
 import { AiRecommendations } from "./AiRecommendations";
+import {
+  ResumeDesignControls,
+  type ResumeDesignStatus,
+} from "./ResumeDesignControls";
 import { ResumeEditor } from "./ResumeEditor";
 import { ResumePrintControls } from "./ResumePrintControls";
 import { ResumePreview } from "./ResumePreview";
@@ -34,6 +38,7 @@ import {
   createResumePrintTitle,
   openResumePrint,
 } from "./resumePrint";
+import type { ResumePresentationSelection } from "./resumeTemplateRegistry";
 import type {
   ResumeAnalysis,
   ResumeDesign,
@@ -98,7 +103,10 @@ export function ResumeWorkspace() {
   const [notice, setNotice] = useState<Notice>();
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const [pageSizeSaving, setPageSizeSaving] = useState(false);
+  const [designMutationSaving, setDesignMutationSaving] = useState(false);
+  const [designStatus, setDesignStatus] =
+    useState<ResumeDesignStatus>();
+  const [previewDesign, setPreviewDesign] = useState<ResumeDesign>();
   const [pageSizeFailure, setPageSizeFailure] = useState<Notice>();
   const [printPreparing, setPrintPreparing] = useState(false);
   const [analysis, setAnalysis] = useState<ResumeAnalysis>();
@@ -117,6 +125,7 @@ export function ResumeWorkspace() {
   const snapshotControllerRef = useRef<AbortController | undefined>(
     undefined,
   );
+  const designMutationRef = useRef(false);
   const keepEditingButtonRef = useRef<HTMLButtonElement>(null);
 
   const dirty =
@@ -141,6 +150,7 @@ export function ResumeWorkspace() {
     setBaselineFingerprint(draftFingerprint(nextDraft));
     setSnapshot(undefined);
     setValidationErrors([]);
+    setPreviewDesign(next.resume.design);
   }
 
   useEffect(() => {
@@ -149,7 +159,10 @@ export function ResumeWorkspace() {
     setSaving(false);
     setAnalysisBusy(false);
     setApplying(false);
-    setPageSizeSaving(false);
+    designMutationRef.current = false;
+    setDesignMutationSaving(false);
+    setDesignStatus(undefined);
+    setPreviewDesign(undefined);
     setPageSizeFailure(undefined);
     setPrintPreparing(false);
     setSnapshot(undefined);
@@ -341,13 +354,15 @@ export function ResumeWorkspace() {
     if (
       !resumeId ||
       !workspace ||
-      pageSizeSaving ||
+      designMutationRef.current ||
       pageSize === workspace.resume.design.pageSize
     ) {
       return;
     }
+    designMutationRef.current = true;
     const controller = beginOperation();
-    setPageSizeSaving(true);
+    setDesignMutationSaving(true);
+    setDesignStatus(undefined);
     setPageSizeFailure(undefined);
     setNotice(undefined);
     try {
@@ -360,6 +375,11 @@ export function ResumeWorkspace() {
       setWorkspace((current) =>
         current ? { ...current, resume } : current,
       );
+      setPreviewDesign((current) => ({
+        ...(current ?? resume.design),
+        pageSize: resume.design.pageSize,
+        showProfilePhoto: false,
+      }));
       setNotice({
         tone: "success",
         message: `Paper size saved as ${
@@ -374,7 +394,56 @@ export function ResumeWorkspace() {
       }
     } finally {
       finishOperation(controller);
-      setPageSizeSaving(false);
+      designMutationRef.current = false;
+      setDesignMutationSaving(false);
+    }
+  }
+
+  async function handleDesignSave(
+    selection: ResumePresentationSelection,
+  ) {
+    if (!resumeId || !workspace || designMutationRef.current) return;
+
+    designMutationRef.current = true;
+    const controller = beginOperation();
+    setDesignMutationSaving(true);
+    setDesignStatus(undefined);
+    setPageSizeFailure(undefined);
+    try {
+      const resume = await updateResumeDesign(
+        resumeId,
+        {
+          ...workspace.resume.design,
+          ...selection,
+          showProfilePhoto: false,
+        },
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      setWorkspace((current) =>
+        current ? { ...current, resume } : current,
+      );
+      setPreviewDesign(resume.design);
+      setDesignStatus({
+        tone: "success",
+        message: "Resume design saved.",
+      });
+    } catch (error) {
+      if (!isAbort(error)) {
+        const failure = safeFailure(
+          error,
+          "The resume design could not be saved.",
+        );
+        setDesignStatus({
+          tone: "error",
+          message: failure.message,
+          requestId: failure.requestId,
+        });
+      }
+    } finally {
+      finishOperation(controller);
+      designMutationRef.current = false;
+      setDesignMutationSaving(false);
     }
   }
 
@@ -716,6 +785,21 @@ export function ResumeWorkspace() {
         </div>
       ) : null}
 
+      <ResumeDesignControls
+        design={workspace.resume.design}
+        saving={designMutationSaving}
+        status={designStatus}
+        onPreviewChange={(selection) => {
+          setDesignStatus(undefined);
+          setPreviewDesign({
+            ...workspace.resume.design,
+            ...selection,
+            showProfilePhoto: false,
+          });
+        }}
+        onSave={(selection) => void handleDesignSave(selection)}
+      />
+
       <ResumePrintControls
         sourceKind={snapshot ? "historical" : "current"}
         versionNumber={
@@ -723,7 +807,7 @@ export function ResumeWorkspace() {
         }
         pageSize={workspace.resume.design.pageSize}
         dirty={dirty}
-        pageSizeSaving={pageSizeSaving}
+        pageSizeSaving={designMutationSaving}
         printPreparing={printPreparing}
         sourceLoading={snapshotLoadingId !== undefined}
         error={
@@ -749,6 +833,7 @@ export function ResumeWorkspace() {
         <ResumePreview
           draft={draft}
           pageSize={workspace.resume.design.pageSize}
+          design={previewDesign ?? workspace.resume.design}
         />
 
         <aside
@@ -963,6 +1048,7 @@ export function ResumeWorkspace() {
             headingId="resume-snapshot-preview-title"
             ariaLabel={`Resume version ${snapshot.versionNumber} preview`}
             pageSize={workspace.resume.design.pageSize}
+            design={workspace.resume.design}
           />
         </section>
       ) : null}
@@ -976,6 +1062,7 @@ export function ResumeWorkspace() {
         } saved version ${(snapshot ?? workspace.version).versionNumber}`}
         ariaLabel="Printable saved resume"
         pageSize={workspace.resume.design.pageSize}
+        design={workspace.resume.design}
         printOnly
       />
 

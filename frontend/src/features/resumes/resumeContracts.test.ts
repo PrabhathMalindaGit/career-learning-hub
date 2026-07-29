@@ -203,6 +203,41 @@ describe("resume contract validators", () => {
     ).toThrowError(/invalid resume response/i);
   });
 
+  it.each([
+    ["ats-classic", "slate", "Inter"],
+    ["modern-professional", "forest", "Arial"],
+    ["compact-technical", "navy", "Georgia"],
+  ])(
+    "accepts approved design values %s, %s, and %s without narrowing unknown persistence",
+    (templateId, colorPaletteId, fontFamily) => {
+      const approved = parseResumeEnvelope({
+        resume: {
+          ...resumeFixture(),
+          design: {
+            ...resumeFixture().design,
+            templateId,
+            colorPaletteId,
+            fontFamily,
+          },
+        },
+      });
+      const unknown = parseResumeEnvelope({ resume: resumeFixture() });
+
+      expect(approved.design).toEqual({
+        templateId,
+        colorPaletteId,
+        pageSize: "A4",
+        fontFamily,
+        showProfilePhoto: false,
+      });
+      expect(unknown.design.templateId).toBe(
+        "unknown-persisted-template",
+      );
+      expect(unknown.design.colorPaletteId).toBe("private-palette");
+      expect(unknown.design.fontFamily).toBe("private-font");
+    },
+  );
+
   it("validates immutable version metadata without exposing asset IDs", () => {
     const result = parseVersionList({
       versions: [

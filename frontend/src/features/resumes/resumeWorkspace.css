@@ -427,6 +427,112 @@
   display: none;
 }
 
+.resume-design-panel {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 12px 34px rgba(20, 45, 31, 0.06);
+}
+
+.resume-design-fieldset {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.resume-design-fieldset legend {
+  margin-bottom: 5px;
+  padding: 0;
+  color: #1d2b22;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.resume-design-summary,
+.resume-design-history-note,
+.resume-design-dirty-note,
+.resume-design-status,
+.resume-design-fallback-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.resume-design-fallback-note,
+.resume-design-status {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f2f7f4;
+}
+
+.resume-design-fallback-note {
+  color: #705b24;
+  background: #fff8df;
+}
+
+.resume-design-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.resume-design-grid label {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  color: #3c4a42;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.resume-design-grid select {
+  width: 100%;
+  min-height: var(--minimum-interactive-target);
+  padding: 9px 36px 9px 12px;
+  border: 1px solid #c8d5cd;
+  border-radius: 10px;
+  color: #18211b;
+  background: #fbfdfc;
+}
+
+.resume-design-grid select:focus-visible {
+  outline: 3px solid rgba(18, 107, 58, 0.25);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+.resume-design-dirty-note {
+  color: #795b15;
+  font-weight: 750;
+}
+
+.resume-design-status--success {
+  color: #296544;
+  background: #ecf7f0;
+}
+
+.resume-design-status--error {
+  color: var(--error);
+  background: #fff0ef;
+}
+
+.resume-design-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.resume-design-actions button {
+  min-height: var(--minimum-interactive-target);
+}
+
 .resume-print-controls {
   display: grid;
   gap: 16px;
@@ -459,37 +565,89 @@
 }
 
 .resume-paper {
+  --resume-background: #ffffff;
+  --resume-body: #1f2933;
+  --resume-secondary: #4b5563;
+  --resume-heading: #263647;
+  --resume-link: #1d4ed8;
+  --resume-rule: #64748b;
+  --resume-focus: #0b63ce;
   width: 100%;
   min-width: 0;
   min-height: 620px;
   aspect-ratio: 210 / 297;
   padding: clamp(24px, 5vw, 48px);
-  overflow: hidden;
-  border: 1px solid #ced7d1;
-  color: #1f2823;
-  background: #fff;
+  overflow: visible;
+  border: 1px solid var(--resume-rule);
+  color: var(--resume-body);
+  background: var(--resume-background);
   box-shadow: 0 16px 40px rgba(20, 35, 27, 0.1);
   overflow-wrap: anywhere;
 }
 
+.resume-font-inter {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.resume-font-arial {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.resume-font-georgia {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.resume-palette-slate {
+  --resume-background: #ffffff;
+  --resume-body: #1f2933;
+  --resume-secondary: #4b5563;
+  --resume-heading: #263647;
+  --resume-link: #1d4ed8;
+  --resume-rule: #64748b;
+  --resume-focus: #0b63ce;
+}
+
+.resume-palette-forest {
+  --resume-background: #ffffff;
+  --resume-body: #1f2d25;
+  --resume-secondary: #42594b;
+  --resume-heading: #1f5a3a;
+  --resume-link: #1b5e3b;
+  --resume-rule: #527a60;
+  --resume-focus: #126b3a;
+}
+
+.resume-palette-navy {
+  --resume-background: #ffffff;
+  --resume-body: #1f2937;
+  --resume-secondary: #475569;
+  --resume-heading: #173b63;
+  --resume-link: #174ea6;
+  --resume-rule: #526d88;
+  --resume-focus: #0b63ce;
+}
+
 .resume-paper-header {
   padding-bottom: 16px;
-  border-bottom: 2px solid #27342d;
+  border-bottom: 2px solid var(--resume-rule);
 }
 
 .resume-paper-header h3 {
   margin: 0;
+  color: var(--resume-heading);
   font-size: clamp(1.5rem, 3vw, 2rem);
 }
 
 .resume-paper-header p {
   margin: 5px 0;
-  color: #334239;
+  color: var(--resume-body);
   font-weight: 700;
 }
 
 .resume-paper h4 {
   margin: 22px 0 8px;
+  color: var(--resume-heading);
   font-size: 0.76rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -500,8 +658,8 @@
 .resume-paper small,
 .resume-paper span,
 .resume-paper dd {
-  color: #526057;
-  font-size: clamp(0.72rem, 1.2vw, 0.88rem);
+  color: var(--resume-secondary);
+  font-size: clamp(0.78rem, 1.2vw, 0.88rem);
   line-height: 1.52;
 }
 
@@ -530,9 +688,53 @@
 }
 
 .resume-paper a {
-  color: inherit;
+  color: var(--resume-link);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.resume-paper a:focus-visible {
+  outline: 3px solid var(--resume-focus);
+  outline-offset: 3px;
+}
+
+.resume-template-modern-professional .resume-paper-header {
+  padding-bottom: 18px;
+  border-bottom-width: 3px;
+}
+
+.resume-template-modern-professional h4 {
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--resume-rule);
+  letter-spacing: 0.09em;
+}
+
+.resume-template-compact-technical {
+  padding: clamp(22px, 4vw, 38px);
+}
+
+.resume-template-compact-technical .resume-paper-header {
+  padding-bottom: 12px;
+}
+
+.resume-template-compact-technical h4 {
+  margin-top: 17px;
+  margin-bottom: 6px;
+  letter-spacing: 0.08em;
+}
+
+.resume-template-compact-technical .resume-preview-entry {
+  gap: 2px;
+  margin-top: 9px;
+}
+
+.resume-template-compact-technical p,
+.resume-template-compact-technical li,
+.resume-template-compact-technical small,
+.resume-template-compact-technical span,
+.resume-template-compact-technical dd {
+  font-size: clamp(0.78rem, 1.1vw, 0.84rem);
+  line-height: 1.42;
 }
 
 .resume-preview-entry {
@@ -917,6 +1119,10 @@
     grid-template-columns: 1fr;
   }
 
+  .resume-design-grid {
+    grid-template-columns: 1fr;
+  }
+
   .resume-field-wide {
     grid-column: auto;
   }
@@ -945,6 +1151,7 @@
   .resume-collection,
   .resume-action-form,
   .resume-panel,
+  .resume-design-panel,
   .resume-version-history,
   .resume-snapshot {
     padding: 17px;
@@ -954,6 +1161,7 @@
   .resume-workspace-actions,
   .resume-button-row,
   .resume-dialog-actions,
+  .resume-design-actions,
   .resume-print-control-row {
     align-items: stretch;
     flex-direction: column;
@@ -962,6 +1170,7 @@
   .resume-workspace-actions > *,
   .resume-button-row > *,
   .resume-dialog-actions > *,
+  .resume-design-actions > *,
   .resume-print-control-row > * {
     width: 100%;
   }
