@@ -1385,20 +1385,22 @@
 
 - Status: ACTIVE
 - Most recently completed Phase 15 pass:
-  Phase 15A — Threat Model, Ownership Map, and Validated Audit
-- Active Phase 15 repair pass: none
-- Next possible pass: Phase 15B — Validated Security Repair Batches
+  Phase 15B-2 — Session Revocation and Atomic Refresh Rotation
+  (`COMPLETED` / `APPROVED`)
+- Active Phase 15 repair pass: none.
+- Other Phase 15B repair batches remain `PLANNED` / `INACTIVE`.
 - Activation prompt: `CLH-PHASE-15A-ACTIVATE-AND-AUDIT-01`
 - Activation baseline: branch `phase-12-unified-frontend`, full HEAD
   `da3deb50cdfd2f9130ca0e3ce4fbea1cc08d8a51`
   (`Add end-to-end application coverage`).
 - Current workflow state:
-  `PHASE 15 ACTIVE — PHASE 15A COMPLETED WITH ACCEPTED LIMITATIONS`.
+  `PHASE 15 ACTIVE; PHASE 15B-2 COMPLETED AND APPROVED`.
 - Phase 14 remains `COMPLETED`.
 - Phase 15A is `COMPLETED`; its review decision is
   `APPROVED WITH ACCEPTED LIMITATIONS`.
-- Phase 15B is `PLANNED` / `INACTIVE` and requires a separate
-  operator-approved prompt.
+- Phase 15B-1 is `PLANNED` / `INACTIVE`.
+- Phase 15B-2 is `COMPLETED` / `APPROVED`.
+- Phase 15B-3 and Phase 15B-4 are `PLANNED` / `INACTIVE`.
 - Phase 16 remains `PLANNED` / `INACTIVE`.
 - Accepted audit-review token:
   `PHASE_15A_SECURITY_PRIVACY_AUDIT_APPROVED`.
@@ -1452,8 +1454,52 @@
   - historical audit blockers remain 2, while final human-approval blockers
     are 0 because the limitations were explicitly accepted;
   - confirmed findings `P15-001` through `P15-005` remain open;
-  - all four Phase 15B repair batches remain proposed and inactive; and
+  - at Phase 15A closeout, all four Phase 15B repair batches remained proposed
+    and inactive; and
   - no repair is authorized by this closeout.
+- Phase 15B-2 implementation and validation:
+  - Phase 15A closeout baseline:
+    `d9cec00abd5d1e7c5944eb2bf5ab2666a0ae9d47`;
+  - existing implementation commit:
+    `e00e7df2b28dbaec220f3801d1cf0fa6a26e2615`;
+  - commit subject:
+    `Harden session validation and atomic refresh-token rotation`;
+  - exact committed paths:
+    `backend/src/middleware/authenticate.ts`,
+    `backend/src/modules/auth/auth.service.ts`, and
+    `backend/src/tests/integration/auth.integration.test.ts`;
+  - P15-002 repair: access tokens now require an active AuthSession matching
+    both signed user and session IDs, with password-change cutoff behavior
+    preserved;
+  - P15-003 repair: refresh rotation atomically compares the session ID, user
+    ID, supplied refresh-token hash, revocation state, and expiry before
+    replacing the canonical hash;
+  - concurrent same-token loss inside five seconds returns a generic failure
+    without revoking the winner; later stale replay conditionally revokes the
+    current canonical session;
+  - the initial integration run passed 5/6 files and 41/51 tests, with only
+    ten Learning source tests failing because their fixture omitted the
+    AuthSession referenced by its access token;
+  - the Learning fixture now creates a matching active AuthSession and stores
+    only a hashed synthetic refresh token;
+  - focused authentication passed 1/1 file and 11/11 tests;
+  - security passed 4/4 files and 7/7 tests;
+  - focused Learning source passed 1/1 file and 11/11 tests;
+  - resumed integration passed 6/6 files and 51/51 tests;
+  - backend unit passed 5/5 files and 19/19 tests;
+  - backend typecheck, root typecheck, and production build passed;
+  - residual risks are one session lookup per authenticated request, MongoDB
+    availability coupling, an in-flight authorization race at the moment of
+    revocation, and the deliberate five-second concurrency-loss versus
+    stale-replay tradeoff;
+  - no frontend, provider, Atlas, dependency, deployment, environment,
+    schema, migration, or public response-contract change occurred;
+  - human approval was accepted with token
+    `PHASE_15B2_AUTH_SESSION_REPAIR_APPROVED`;
+  - Phase 15B-2 is `COMPLETED` / `APPROVED`;
+  - the closeout commit had not yet been created when this documentation was
+    edited; and
+  - push is prohibited for this closeout and was not performed.
 
 #### Purpose
 

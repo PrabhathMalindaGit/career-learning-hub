@@ -6,9 +6,17 @@ import { app } from "../../app.js";
 import { env } from "../../config/env.js";
 import { AssetModel } from "../../modules/assets/asset.model.js";
 import { createAsset } from "../../modules/assets/asset.service.js";
-import { signAccessToken } from "../../modules/auth/token.service.js";
+import { AuthSessionModel } from "../../modules/auth/authSession.model.js";
+import {
+  signAccessToken,
+  signRefreshToken,
+} from "../../modules/auth/token.service.js";
 import { LearningDocumentModel } from "../../modules/learning/learningDocument.model.js";
 import { UserModel } from "../../modules/users/user.model.js";
+import {
+  createSessionFamilyId,
+  hashToken,
+} from "../../shared/crypto.js";
 
 const syntheticPdf = Buffer.from(
   "%PDF-1.4\n% Synthetic Phase 12A private PDF\n%%EOF\n",
@@ -23,6 +31,7 @@ async function createTestUser(input: {
   email: string;
   displayName: string;
 }): Promise<TestUser> {
+  const sessionId = new Types.ObjectId();
   const user = await UserModel.create({
     email: input.email,
     passwordHash: "SyntheticPassword1",
@@ -33,10 +42,27 @@ async function createTestUser(input: {
     accountStatus: "active",
   });
 
+  const now = new Date();
+  await AuthSessionModel.create({
+    _id: sessionId,
+    userId: user._id,
+    familyId: createSessionFamilyId(),
+    refreshTokenHash: hashToken(
+      signRefreshToken(
+        user._id.toString(),
+        sessionId.toString(),
+      ),
+    ),
+    lastUsedAt: now,
+    expiresAt: new Date(
+      now.getTime() + 24 * 60 * 60 * 1_000,
+    ),
+  });
+
   return {
     accessToken: signAccessToken(
       user._id.toString(),
-      new Types.ObjectId().toString(),
+      sessionId.toString(),
     ),
     userId: user._id.toString(),
   };

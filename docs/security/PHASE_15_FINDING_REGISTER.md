@@ -94,8 +94,7 @@
 
 - Severity: Low
 - Confidence: High
-- Status: Validated; repair or explicit acceptance requires separate
-  authorization
+- Status: REPAIRED / CLOSED
 - Affected paths and lines:
   - `backend/src/middleware/authenticate.ts:19-55`
   - `backend/src/modules/auth/auth.service.ts:210-233`
@@ -161,13 +160,41 @@
   - foreign or fabricated `sid` values return a generic authentication error.
 - Residual risk: per-request session lookup adds database availability and
   latency cost; a cached or versioned alternative adds consistency tradeoffs.
-- Separate authorization required: Yes.
+- Phase 15B-2 implementation evidence:
+  - implementation commit:
+    `e00e7df2b28dbaec220f3801d1cf0fa6a26e2615`;
+  - original behavior: access-token validation checked the signed JWT, active
+    user, and password-change cutoff but did not check the referenced session;
+  - committed production path:
+    `backend/src/middleware/authenticate.ts`;
+  - committed authentication test path:
+    `backend/src/tests/integration/auth.integration.test.ts`;
+  - the middleware now requires valid signed user and session IDs plus an
+    unrevoked, unexpired AuthSession owned by the signed user;
+  - focused authentication passed 1/1 file and 11/11 tests;
+  - security passed 4/4 files and 7/7 tests;
+  - the initial integration run exposed only the Learning fixture blocker:
+    5/6 files and 41/51 tests passed, while ten authenticated Learning source
+    tests received HTTP 401;
+  - the fixture now creates the matching active AuthSession in
+    `backend/src/tests/integration/learningDocumentSource.integration.test.ts`;
+  - focused Learning source passed 1/1 file and 11/11 tests;
+  - resumed integration passed 6/6 files and 51/51 tests;
+  - backend unit passed 5/5 files and 19/19 tests;
+  - backend typecheck, root typecheck, and production build passed;
+  - no new commit was created by the validation prompt; and
+  - residual risk remains the per-request database lookup and its availability
+    and latency cost, plus an in-flight authorization race at the moment of
+    revocation.
+- Human approval accepted:
+  `PHASE_15B2_AUTH_SESSION_REPAIR_APPROVED`.
+- Closeout status: repaired and closed.
 
 ### P15-003 — Concurrent refresh rotation weakens replay protection
 
 - Severity: Medium
 - Confidence: High
-- Status: Validated; repair requires separate authorization
+- Status: REPAIRED / CLOSED
 - Affected paths and lines:
   - `backend/src/modules/auth/auth.service.ts:131-207`
   - `backend/src/modules/auth/authSession.model.ts:24-64`
@@ -238,7 +265,39 @@
   - frontend single-instance deduplication remains unchanged.
 - Residual risk: any grace window trades a bounded replay window against
   multi-context availability and must be documented.
-- Separate authorization required: Yes.
+- Phase 15B-2 implementation evidence:
+  - implementation commit:
+    `e00e7df2b28dbaec220f3801d1cf0fa6a26e2615`;
+  - original behavior: refresh rotation used a read, compare, mutate, and save
+    sequence that allowed two concurrent requests to pass the old hash check;
+  - committed production path:
+    `backend/src/modules/auth/auth.service.ts`;
+  - committed authentication test path:
+    `backend/src/tests/integration/auth.integration.test.ts`;
+  - rotation now uses one atomic conditional update keyed by session ID, user
+    ID, supplied refresh-token hash, revocation state, and expiry;
+  - exactly one simultaneous request can replace the canonical hash, and the
+    loser receives no access token or refresh cookie;
+  - same-token loss inside the five-second grace returns a generic failure
+    without revoking the winner;
+  - later stale replay conditionally revokes the still-current canonical
+    session and leaves no raw refresh token in storage;
+  - focused authentication passed 1/1 file and 11/11 tests;
+  - security passed 4/4 files and 7/7 tests;
+  - the initial integration run exposed only the Learning fixture blocker:
+    5/6 files and 41/51 tests passed;
+  - the repaired fixture stores only a hash of a generated synthetic refresh
+    token;
+  - focused Learning source passed 1/1 file and 11/11 tests;
+  - resumed integration passed 6/6 files and 51/51 tests;
+  - backend unit passed 5/5 files and 19/19 tests;
+  - backend typecheck, root typecheck, and production build passed;
+  - no new commit was created by the validation prompt; and
+  - residual risk remains the deliberate five-second replay versus
+    multi-context availability tradeoff.
+- Human approval accepted:
+  `PHASE_15B2_AUTH_SESSION_REPAIR_APPROVED`.
+- Closeout status: repaired and closed.
 
 ### P15-004 — Production API origins silently fall back to HTTP localhost
 
@@ -526,6 +585,7 @@ governance remain deployment/operator responsibilities.
 ### Batch 15B-2 — Session revocation and atomic refresh rotation
 
 - Findings: `P15-002`, `P15-003`
+- Status: `COMPLETED` / `APPROVED`
 - Production scope: authentication middleware, a narrow session lookup or
   revocation-version helper, and atomic refresh rotation semantics.
 - Likely production files:

@@ -9,14 +9,14 @@
 - Most recently completed major phase: Phase 14, End-to-End Browser Testing
   (`COMPLETED`)
 - Most recently completed Phase 15 pass:
-  Phase 15A, Threat Model, Ownership Map, and Validated Audit
-- Active Phase 15 repair pass: None
-- Next possible pass: Phase 15B, Validated Security Repair Batches
-  (`PLANNED` / `INACTIVE`)
+  Phase 15B-2, Session Revocation and Atomic Refresh Rotation
+  (`COMPLETED` / `APPROVED`)
+- Active Phase 15 repair pass: none.
+- Other Phase 15B repair batches remain `PLANNED` / `INACTIVE`.
 - Next planned major phase: Phase 16, Accessibility and Performance Review
   (`PLANNED` / `INACTIVE`)
 - Current workflow state:
-  `PHASE 15 ACTIVE — PHASE 15A COMPLETED WITH ACCEPTED LIMITATIONS`
+  `PHASE 15 ACTIVE; PHASE 15B-2 COMPLETED AND APPROVED`
 - Controlling skills: `using-superpowers`, `karpathy-guidelines`,
   `define-goal`, `security-best-practices`, `privacy`,
   `security-ownership-map`, `security-threat-model`,
@@ -51,8 +51,13 @@
 - Phase 15A — Threat Model, Ownership Map, and Validated Audit is `COMPLETED`
   with decision `APPROVED WITH ACCEPTED LIMITATIONS`.
 - Phase 15A production and test code remained read-only.
-- Phase 15B — Validated Security Repair Batches is `PLANNED` / `INACTIVE`,
-  requires a separate operator-approved prompt, and authorizes no repair.
+- Phase 15B-1 — Atomic Asset Quota Enforcement is `PLANNED` / `INACTIVE`.
+- Phase 15B-2 — Session Revocation and Atomic Refresh Rotation is
+  `COMPLETED` / `APPROVED`.
+- Phase 15B-3 — Fail-Closed Production API-Origin Configuration is
+  `PLANNED` / `INACTIVE`.
+- Phase 15B-4 — Registration Account-Enumeration Response is
+  `PLANNED` / `INACTIVE`.
 - Phase 16 remains `PLANNED` / `INACTIVE` and is not activated.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -183,11 +188,65 @@
 - Phase 15 remains `ACTIVE`.
 - Phase 15A is `COMPLETED` with decision
   `APPROVED WITH ACCEPTED LIMITATIONS`.
-- Phase 15B remains `PLANNED` / `INACTIVE`.
+- At the Phase 15A closeout, Phase 15B remained `PLANNED` / `INACTIVE`.
 - Phase 16 remains `PLANNED` / `INACTIVE`.
 - Confirmed findings `P15-001`, `P15-002`, `P15-003`, `P15-004`, and
   `P15-005` remain open.
 - The four proposed repair batches remain inactive. No repair is authorized.
+
+## Phase 15B-2 implementation validation
+
+- Phase 15A closeout baseline:
+  `d9cec00abd5d1e7c5944eb2bf5ab2666a0ae9d47`
+  (`Complete Phase 15A security and privacy audit`).
+- Existing implementation commit:
+  `e00e7df2b28dbaec220f3801d1cf0fa6a26e2615`
+  (`Harden session validation and atomic refresh-token rotation`).
+- Commit validation passed:
+  - the parent is the Phase 15A closeout baseline;
+  - the commit contains only `backend/src/middleware/authenticate.ts`,
+    `backend/src/modules/auth/auth.service.ts`, and
+    `backend/src/tests/integration/auth.integration.test.ts`;
+  - access-token authentication requires an active matching AuthSession;
+  - refresh rotation uses an atomic conditional update; and
+  - the five-second concurrency grace rejects a same-token loser without
+    revoking the winner, while later stale replay revokes the canonical
+    session conditionally.
+- The complete integration suite initially passed 5/6 files and 41/51 tests.
+  Ten authenticated Learning source tests returned HTTP 401 because their
+  synthetic access tokens referenced session IDs with no AuthSession.
+- The fixture was repaired only in
+  `backend/src/tests/integration/learningDocumentSource.integration.test.ts`
+  by creating a matching active session with a hashed synthetic refresh
+  token.
+- Fresh verification:
+  - focused authentication: 1/1 file and 11/11 tests passed;
+  - security: 4/4 files and 7/7 tests passed;
+  - focused Learning source: 1/1 file and 11/11 tests passed;
+  - resumed integration: 6/6 files and 51/51 tests passed;
+  - backend unit: 5/5 files and 19/19 tests passed;
+  - backend typecheck, root typecheck, and production build passed.
+- No frontend source, public API response contract, dependency, environment,
+  schema, migration, provider, Atlas, deployment, or legacy-project change
+  occurred.
+- Phase 14 remains `COMPLETED`.
+- Phase 15 remains `ACTIVE`.
+- Phase 15A remains `COMPLETED` with decision
+  `APPROVED WITH ACCEPTED LIMITATIONS`.
+- Phase 15B-1, Phase 15B-3, Phase 15B-4, and Phase 16 remain
+  `PLANNED` / `INACTIVE`.
+- Phase 15B-2 is `COMPLETED` / `APPROVED`.
+- Accepted human-review token:
+  `PHASE_15B2_AUTH_SESSION_REPAIR_APPROVED`.
+- The implementation commit remains
+  `e00e7df2b28dbaec220f3801d1cf0fa6a26e2615`.
+- The closeout commit had not yet been created when this documentation was
+  edited.
+- Push is prohibited for this closeout and was not performed.
+- Residual risks remain the per-request session lookup latency and MongoDB
+  availability coupling, the in-flight authorization race at the moment of
+  revocation, and the deliberate five-second concurrency-loss versus
+  stale-replay tradeoff.
 
 ## Phase 14 verification record
 
