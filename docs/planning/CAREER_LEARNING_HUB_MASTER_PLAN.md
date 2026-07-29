@@ -1682,7 +1682,7 @@
 
 #### Status
 
-- Status: ACTIVE
+- Status: COMPLETED / APPROVED
 - Activation baseline: branch `phase-12-unified-frontend`, full HEAD
   `e5ee18ab3f55217fd24f4dfea04de1e2d15feddd`
   (`Complete Phase 15 security and privacy review`).
@@ -1704,8 +1704,45 @@
   `phase-12-unified-frontend`, full HEAD
   `9a508b2cf06ec0bedbcab2192dd15ff7180ce042`
   (`Add bounded resume design controls`).
-- Phase 16G is `PLANNED` / `INACTIVE`.
+- Phase 16G, Integrated Verification and Phase 16 Closeout, is `COMPLETED` /
+  `APPROVED` on branch `phase-12-unified-frontend`, starting full HEAD
+  `c0325c42816c19c006c790a4e153e3caee88d5bc`
+  (`Complete accessibility and performance review`).
 - Phase 17 is `PLANNED` / `INACTIVE`.
+- Phase 16G fresh verification passed root and backend-test typechecks,
+  frontend 49/49 files and 645/645 tests, backend unit 5/5 files and 19/19
+  tests, backend integration 7/7 files and 54/54 tests, backend security 4/4
+  files and 35/35 tests, and the production build.
+- Targeted browser confidence passed 5/5. The single fresh integrated browser
+  gate passed 27/27 in 1.9 minutes: desktop 9/9, tablet 9/9, mobile 9/9, one
+  worker, zero retries, with final `users=0, owned=0` and automated artifact,
+  service, and port cleanup complete.
+- P16F-001 remains repaired/verified with fresh CLS 0.0000 across desktop,
+  tablet, and mobile. P16F-002 remains rejected/deferred with evidence; eager
+  routing, no dynamic chunks, and the accepted greater-than-500-kB entry
+  advisory remain. P15-001 restrictions remain binding.
+- Security/privacy reconciliation passed for authentication, origin,
+  registration, ownership, private PDF, Quiz secrecy, Resume immutability, AI
+  provenance, request IDs, and log redaction. No provider, Atlas, deployment,
+  production data, or legacy project was used.
+- The operator completed and approved the full Phase 16G authentication,
+  shell/navigation, breadcrumb, Resume print, AI comparison, Resume design,
+  Interview/Learning, keyboard/accessibility, responsive, actual 200% zoom,
+  contrast, reduced-motion, performance-experience, and trust/privacy review.
+  The accepted token is `PHASE_16G_FINAL_VERIFICATION_APPROVED`; approval
+  accepted: yes.
+- The headed review tab and local services stopped. The synthetic operator and
+  shadow-owner identities, 53 owned records, and one AuthSession were removed,
+  with final `users=0, owned=0, sessions=0`. Private storage, runtime data,
+  and Phase 16G outside-repository temporary scripts were removed. Ports
+  4173, 4174, and 8000 are closed.
+- Phase 16 is `COMPLETED` / `APPROVED`. Phase 17 remains `PLANNED` /
+  `INACTIVE` and requires separate activation. Merge remains prohibited until
+  Phase 17 approval; no push was performed.
+- P15-001 restrictions, eager routing, the greater-than-500-kB advisory, and
+  every other accepted limitation remain binding. No provider, Atlas,
+  deployment, production data, real personal data, or legacy project was
+  used, and no production or executable-test path changed in Phase 16G.
 - Accepted Phase 16F approval token:
   `PHASE_16F_ACCESSIBILITY_PERFORMANCE_APPROVED`.
 - Accepted approval token:
@@ -1782,7 +1819,7 @@
 - Phase 16F — Accessibility and Performance Review:
   `COMPLETED` / `APPROVED`.
 - Phase 16G — Integrated Verification and Phase 16 Closeout:
-  `PLANNED` / `INACTIVE`.
+  `COMPLETED` / `APPROVED`.
 - The controlling architecture and exact subphase contracts are in
   `docs/planning/PHASE_16_ACADEMIC_MVP_IMPLEMENTATION_PLAN.md`.
 

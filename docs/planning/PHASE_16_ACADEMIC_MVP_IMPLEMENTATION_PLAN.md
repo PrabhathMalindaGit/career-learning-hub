@@ -715,6 +715,81 @@ manifest stops the pass and requires a new bounded manifest before editing.
 
 ## Phase 16G — Integrated Verification and Phase 16 Closeout
 
+### Activation record
+
+- Status: `COMPLETED` / `APPROVED`.
+- Activation branch: `phase-12-unified-frontend`.
+- Activation full HEAD:
+  `c0325c42816c19c006c790a4e153e3caee88d5bc`.
+- Activation subject: `Complete accessibility and performance review`.
+- Phase 16 base:
+  `e5ee18ab3f55217fd24f4dfea04de1e2d15feddd`
+  (`Complete Phase 15 security and privacy review`).
+- Architecture: verification-only, with no product, executable-test,
+  configuration, package, lockfile, environment, backend-contract, or
+  shared-contract repair authority.
+- Exact write manifest: the master plan, current-phase file, this plan, the
+  integrated verification report, and the Full Application Browser Testing
+  guide.
+- The single fresh complete browser run must retain every configured test,
+  desktop/tablet/mobile projects, one worker, zero retries, and existing
+  setup/teardown cleanup.
+- P15-001 restrictions remain binding. Phase 17 remains planned and inactive.
+- Accepted approval token: `PHASE_16G_FINAL_VERIFICATION_APPROVED`; approval
+  accepted: yes.
+
+### Automated verification result
+
+- Static integrity and all eleven browser `.cjs` syntax checks passed.
+- Root typecheck passed frontend, backend, and shared types; backend test
+  typecheck passed.
+- Complete frontend verification passed 49/49 files and 645/645 tests.
+- Backend unit passed 5/5 files and 19/19 tests; integration passed 7/7 files
+  and 54/54 tests; security passed 4/4 files and 35/35 tests. Each command
+  required one unchanged-command infrastructure retry after its initial local
+  listener was denied before collection; no collected test was retried.
+- The production build passed. The frontend emitted 0.54-kB HTML, 77.15-kB
+  CSS, and one 580.96-kB JavaScript entry with no dynamic chunks; the existing
+  Vite greater-than-500-kB advisory remains accepted.
+- Targeted browser confidence passed 5/5. The only fresh complete browser
+  gate passed 27/27 in 1.9 minutes: desktop 9/9, tablet 9/9, mobile 9/9, one
+  worker, zero retries, final `users=0, owned=0`.
+- P16F-001 remains `REPAIRED / VERIFIED` with CLS 0.0000 in all three browser
+  projects. P16F-002 remains
+  `ROUTE LAZY LOADING REJECTED / DEFERRED WITH EVIDENCE`. P15-001 remains an
+  accepted technically unresolved limitation with all operating restrictions
+  binding.
+- Security/privacy reconciliation passed. Automated services stopped, ports
+  4173/4174/8000 closed, and generated build/browser/runtime artifacts were
+  removed before preparing the separate human-review runtime.
+- Phase 16 and Phase 16G are `COMPLETED` / `APPROVED`; Phase 17 remains
+  `PLANNED` / `INACTIVE` and requires separate activation. Accepted token:
+  `PHASE_16G_FINAL_VERIFICATION_APPROVED`.
+
+### Approval closeout
+
+- The operator completed and approved the full Phase 16G human matrix,
+  including 1440×900, 1024×768, 768×1024, 390×844, 320×720, actual 200%
+  browser zoom, keyboard/focus behavior, reduced motion, contrast, Resume
+  print, AI comparison, Resume templates/design, Interview/Learning,
+  performance experience, ownership, trust, and privacy.
+- The complete browser gate remains 27/27: desktop 9/9, tablet 9/9, mobile
+  9/9, one worker, zero retries. Security/privacy reconciliation passed.
+- The review tab, frontend, backend, and isolated MongoDB stopped. Cleanup
+  removed both synthetic identities, 53 owned records, one AuthSession,
+  private storage, runtime data, and the outside-repository Phase 16G scripts;
+  final evidence is `users=0, owned=0, sessions=0`, with ports 4173, 4174,
+  and 8000 closed.
+- No source, executable-test, shared-contract, dependency, package, lockfile,
+  or environment path changed. No provider, Atlas, deployment, production
+  data, real personal data, or legacy project was used.
+- P15-001 restrictions remain binding. P16F-001 remains
+  `REPAIRED / VERIFIED`; P16F-002 remains
+  `ROUTE LAZY LOADING REJECTED / DEFERRED WITH EVIDENCE`.
+- Final closeout commit subject:
+  `Complete Phase 16 academic MVP verification`.
+- Phase 17 remains inactive and requires a separate activation prompt.
+
 ### Contract
 
 1. **Purpose:** Verify the integrated academic MVP, preserve accepted

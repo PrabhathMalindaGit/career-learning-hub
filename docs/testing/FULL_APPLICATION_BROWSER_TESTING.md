@@ -18,9 +18,9 @@ access, Quiz answer secrecy, browser console errors, and horizontal overflow.
 
 | Project | Viewport | Current tests |
 | --- | --- | ---: |
-| `desktop` | 1440 × 900 | 7 |
-| `tablet` | 768 × 1024 | 7 |
-| `mobile` | 390 × 844 | 7 |
+| `desktop` | 1440 × 900 | 9 |
+| `tablet` | 768 × 1024 | 9 |
+| `mobile` | 390 × 844 | 9 |
 
 The suite uses one worker, zero retries, a 45-second test timeout, and a
 10-second assertion timeout. These values are deliberate. One worker keeps
@@ -105,6 +105,73 @@ decision.
 
 To inspect the discovered tests without starting the local services, append
 `--list`.
+
+## Phase 16G fresh integrated result — 2026-07-29
+
+This is the fresh Phase 16G result from starting commit
+`c0325c42816c19c006c790a4e153e3caee88d5bc` (`Complete accessibility and
+performance review`). It is separate from the preserved Phase 14, Phase 15,
+Phase 16A-1, Phase 16C, Phase 16D, Phase 16E, and Phase 16F historical
+evidence.
+
+The direct bundled runner was invoked in this form, with the discovered
+workspace-runtime paths substituted only at execution time:
+
+```bash
+NODE_PATH="<bundled-node-modules>" \
+  "<bundled-node>" \
+  "<bundled-node-modules>/playwright/cli.js" \
+  test --config=tests/browser/playwright.config.cjs
+```
+
+- Runner: Playwright 1.61.1 with Google Chrome 150.0.7871.187.
+- Projects: desktop 1440×900, tablet 768×1024, mobile 390×844.
+- Result: 27/27 passed in 1.9 minutes: desktop 9/9, tablet 9/9, mobile
+  9/9; one worker and zero retries.
+- Principal coverage: authentication bootstrap and routing, Dashboard,
+  Interview, Learning, User A/User B ownership, private PDF access, Quiz
+  answer secrecy, sidebar/drawer, Create actions, breadcrumbs, saved Resume
+  print, AI comparison, and Resume templates/design.
+- Authentication-bootstrap CLS was 0.0000 in all three projects. The existing
+  console/page-error and horizontal-overflow assertions collected no failure.
+- Setup and teardown each reported `users=0, owned=0`. Automated services
+  stopped, ports 4173/4174/8000 closed, and the isolated runtime, storage,
+  report, test-result, screenshot, trace, video, and log artifacts were
+  removed.
+- The run used synthetic `@example.test` data only. It did not call a
+  provider, connect to Atlas or cloud storage, deploy, use production data,
+  or access a legacy project.
+
+No historical result is presented as fresh Phase 16G evidence, no package
+script was added, and the suite name remains Full Application Browser
+Testing.
+
+## Phase 16G human approval and cleanup closeout
+
+- The operator completed and approved authentication; desktop sidebar and
+  mobile drawer behavior; Create actions; breadcrumbs; Resume print; AI
+  comparison; Resume templates/design; Interview and Learning; keyboard and
+  focus; contrast; reduced motion; performance experience; ownership; trust;
+  and privacy.
+- The reviewed matrix was 1440×900, 1024×768, 768×1024, 390×844, 320×720,
+  and actual 200% browser zoom. Print review covered A4/Letter, current and
+  historical saved versions, multipage content, selectable text, hidden
+  application chrome, clipping, and grayscale hierarchy.
+- The accepted token is `PHASE_16G_FINAL_VERIFICATION_APPROVED`; approval
+  accepted: yes.
+- No provider request, Atlas/cloud-storage connection, deployment, production
+  data, real personal data, or legacy access occurred.
+- The headed review tab, frontend, backend, and isolated MongoDB stopped.
+  Cleanup removed both synthetic identities, 53 owned records, one
+  AuthSession, private storage, runtime data, and the outside-repository Phase
+  16G scripts. Final evidence is `users=0, owned=0, sessions=0`; ports 4173,
+  4174, and 8000 are closed.
+- Phase 16 and Phase 16G are `COMPLETED` / `APPROVED`. Phase 17 remains
+  `PLANNED` / `INACTIVE` and requires separate activation.
+
+No package script, browser specification, configuration, setup, teardown,
+fixture, product source, or executable-test behavior changed during Phase 16G
+closeout.
 
 ## Troubleshooting boundaries
 

@@ -3,19 +3,19 @@
 - Phase: 16
 - Name: Academic MVP Feature Completion, Responsive Application Shell,
   Accessibility and Performance Review
-- Status: ACTIVE
+- Status: COMPLETED / APPROVED
 - Active subphase: none
-- Most recently completed subphase: Phase 16F,
-  Accessibility and Performance Review
+- Most recently completed subphase: Phase 16G,
+  Integrated Verification and Phase 16 Closeout
 - Subphase status: COMPLETED / APPROVED
 - Audit baseline branch: `phase-12-unified-frontend`
-- Audit baseline full HEAD: `9a508b2cf06ec0bedbcab2192dd15ff7180ce042`
-- Audit baseline subject: `Add bounded resume design controls`
-- Most recently completed major phase: Phase 15, Security and Privacy Review
-  (`COMPLETED` /
-  `APPROVED WITH ACCEPTED LIMITATIONS AND FORMAL DEFERRAL`)
+- Audit baseline full HEAD: `c0325c42816c19c006c790a4e153e3caee88d5bc`
+- Audit baseline subject: `Complete accessibility and performance review`
+- Most recently completed major phase: Phase 16, Academic MVP Feature
+  Completion, Responsive Application Shell, Accessibility and Performance
+  Review (`COMPLETED` / `APPROVED`)
 - Current workflow state:
-  `PHASE 16 ACTIVE; PHASE 16A-1, PHASE 16A-2, PHASE 16B, PHASE 16C, PHASE 16D, PHASE 16E, AND PHASE 16F COMPLETED AND APPROVED; PHASE 16G AND PHASE 17 PLANNED AND INACTIVE`
+  `PHASE 16 AND PHASE 16A-1 THROUGH PHASE 16G COMPLETED AND APPROVED; PHASE 17 PLANNED AND INACTIVE`
 - Primary browser-suite name: Full Application Browser Testing
 - Executable browser-suite location: `tests/browser/`
 - Primary command: `npm run test:browser` only when a portable,
@@ -43,6 +43,9 @@
 - Accepted Phase 16F accessibility and performance approval token:
   `PHASE_16F_ACCESSIBILITY_PERFORMANCE_APPROVED`
 - Phase 16F approval token accepted: yes
+- Accepted Phase 16G final-verification approval token:
+  `PHASE_16G_FINAL_VERIFICATION_APPROVED`
+- Phase 16G approval token accepted: yes
 - Controlling skills: `using-superpowers`, `karpathy-guidelines`,
   `define-goal`, `brainstorming`, `frontend-skill`, `frontend-design`,
   `systematic-debugging`, `test-driven-development`, `playwright`,
@@ -65,9 +68,10 @@
 - Preserve the accepted Phase 15 limitations, including P15-001 operating
   restrictions, and all ownership, private-file, Quiz-secrecy, immutable
   Resume-version, and AI provenance safeguards.
-- Audit accessibility and performance with reproducible browser and build
-  baselines before any bounded repair.
-- Keep Phase 16G and Phase 17 planned and inactive.
+- Verify the complete Phase 16 diff, automated gates, browser matrix,
+  security/privacy boundaries, accessibility/performance evidence, and
+  cleanup without changing product or executable-test behavior.
+- Keep Phase 17 planned and inactive until a separate activation prompt.
 
 ## Phase status controls
 
@@ -96,7 +100,7 @@
   `COMPLETED` / `APPROVED`.
 - Phase 15B-4 — Registration Account-Enumeration Response is
   `COMPLETED` / `APPROVED AS BOUNDED MITIGATION`.
-- Phase 16 is `ACTIVE`.
+- Phase 16 is `COMPLETED` / `APPROVED`.
 - Phase 16A-1, Browser Test Naming and Folder Migration is
   `COMPLETED` / `APPROVED`.
 - Phase 16A-2, Roadmap Amendment and Architecture Audit is
@@ -110,7 +114,7 @@
 - Phase 16E approval token accepted: yes.
 - Phase 16F is
   `COMPLETED` / `APPROVED`.
-- Phase 16G remains `PLANNED` / `INACTIVE`.
+- Phase 16G is `COMPLETED` / `APPROVED`.
 - Phase 17 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
@@ -127,6 +131,98 @@
   `PHASE_12E_QUIZZES_VISUAL_QA_APPROVED`.
 - Pass F — Document Cascade Deletion and Phase 12 Final Verification is
   `COMPLETED`.
+
+## Phase 16G activation
+
+- Phase 16G was activated on branch `phase-12-unified-frontend`, full HEAD
+  `c0325c42816c19c006c790a4e153e3caee88d5bc`
+  (`Complete accessibility and performance review`).
+- The Phase 16 base is
+  `e5ee18ab3f55217fd24f4dfea04de1e2d15feddd`
+  (`Complete Phase 15 security and privacy review`), which is an ancestor of
+  the activation HEAD.
+- Phase 16G is verification-only. Product, executable-test, configuration,
+  package, lockfile, environment, backend-contract, and shared-contract
+  repairs are not authorized.
+- The exact write manifest is the master plan, this file, the Phase 16
+  implementation plan, the Phase 16 integrated verification report, and the
+  Full Application Browser Testing guide.
+- The fresh complete browser gate must retain all configured specifications,
+  desktop/tablet/mobile projects, one worker, zero retries, existing global
+  setup and teardown, and final `users=0, owned=0` cleanup.
+- P15-001 controlled academic-MVP restrictions remain binding. P16F-001
+  remains repaired/verified, and P16F-002 remains rejected/deferred with
+  evidence.
+- The operator supplied
+  `PHASE_16G_FINAL_VERIFICATION_APPROVED`; approval accepted: yes.
+- Phase 16 is `COMPLETED` / `APPROVED`. Phase 17 remains `PLANNED` /
+  `INACTIVE`.
+
+## Phase 16G automated verification result
+
+- Fresh static integrity and browser-spec syntax checks passed.
+- Fresh root typecheck passed for frontend, backend, and shared types; the
+  backend test typecheck also passed.
+- Fresh complete frontend verification passed 49/49 files and 645/645 tests.
+- Fresh backend verification passed unit 5/5 files and 19/19 tests,
+  integration 7/7 files and 54/54 tests, and security 4/4 files and 35/35
+  tests. Each backend command required one unchanged-command infrastructure
+  retry after the environment denied its initial local listener before test
+  collection; no collected test was retried.
+- The fresh production build passed. The final frontend artifacts were
+  0.54-kB HTML, 77.15-kB CSS, and one 580.96-kB JavaScript entry; no dynamic
+  chunk was emitted and the accepted greater-than-500-kB Vite advisory
+  remains.
+- Targeted browser confidence passed 5/5: four representative desktop
+  workflows and one mobile responsive/keyboard workflow, one worker, zero
+  retries, and clean teardown after each run.
+- The single fresh complete Full Application Browser Testing gate passed
+  27/27 in 1.9 minutes: desktop 9/9, tablet 9/9, mobile 9/9, one worker, zero
+  retries, and final `users=0, owned=0`.
+- Authentication-bootstrap CLS remained 0.0000 across desktop, tablet, and
+  mobile. P16F-001 remains `REPAIRED / VERIFIED`; P16F-002 remains
+  `ROUTE LAZY LOADING REJECTED / DEFERRED WITH EVIDENCE`.
+- Authentication, origin, registration, ownership, private PDF, Quiz
+  secrecy, Resume-version immutability, AI provenance, request-ID, and log-
+  redaction boundaries passed reconciliation. P15-001 remains technically
+  unresolved with its accepted controlled-academic-MVP restrictions binding.
+- Automated services stopped, ports 4173/4174/8000 closed, fixture teardown
+  reported `users=0, owned=0`, and build/browser/runtime artifacts were
+  removed before the separate human-review runtime.
+- Phase 16G is `COMPLETED` / `APPROVED`. The operator supplied
+  `PHASE_16G_FINAL_VERIFICATION_APPROVED` after completing the full A–L human
+  review checklist; approval accepted: yes.
+- Phase 16 is `COMPLETED` / `APPROVED`. Phase 17 remains `PLANNED` /
+  `INACTIVE`.
+
+## Phase 16G approval closeout
+
+- The operator approved authentication; sidebar, drawer, and Create actions;
+  breadcrumbs; Resume print; AI comparison; Resume templates and design;
+  Interview and Learning; keyboard and accessibility; the responsive matrix;
+  actual 200% browser zoom; contrast; reduced motion; performance experience;
+  trust and privacy; and the accepted controlled academic-MVP limitations.
+- The accepted token is `PHASE_16G_FINAL_VERIFICATION_APPROVED`.
+- The approved automated evidence remains: root and backend-test typechecks;
+  frontend 49/49 files and 645/645 tests; backend unit 5/5 files and 19/19
+  tests; integration 7/7 files and 54/54 tests; security 4/4 files and 35/35
+  tests; production build; targeted browser confidence 5/5; and the single
+  complete browser gate 27/27 in 1.9 minutes.
+- The complete browser result remains desktop 9/9, tablet 9/9, and mobile
+  9/9, with one worker, zero retries, and automated teardown
+  `users=0, owned=0`.
+- The headed review tab, frontend, backend, and isolated MongoDB stopped.
+  The two synthetic identities, 53 owned records, and one AuthSession were
+  removed, with verified final `users=0, owned=0, sessions=0`. Private
+  storage, runtime data, and Phase 16G outside-repository temporary scripts
+  were removed. Ports 4173, 4174, and 8000 are closed.
+- No provider, Atlas, deployment, production or real personal data, or legacy
+  project was used. No product, executable-test, shared-contract, dependency,
+  package, lockfile, or environment path changed during Phase 16G.
+- P15-001 remains technically unresolved with its controlled academic-MVP
+  restrictions binding. P16F-001 remains `REPAIRED / VERIFIED`. P16F-002
+  remains `ROUTE LAZY LOADING REJECTED / DEFERRED WITH EVIDENCE`.
+- No merge or push occurred. Phase 17 requires a separate activation prompt.
 
 ## Phase 16F approval closeout
 
