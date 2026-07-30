@@ -1,21 +1,28 @@
 # Current Execution Phase
 
-- Phase: 17
-- Name: Final Repository and Release-Candidate Review
+- Phase: 18
+- Name: Staging Deployment
 - Status:
-  COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER
-- Active subphase: none; Phase 18 remains planned and inactive
-- Most recently completed subphase: Phase 17,
-  Final Repository and Release-Candidate Review
+  ACTIVE — PHASE 18A COMPLETED / APPROVED; PHASE 18B PLANNED / INACTIVE —
+  READY FOR SEPARATE ACTIVATION
+- Active subphase: none; Phase 18B remains inactive
+- Most recently completed subphase:
+  Phase 18A — Staging Architecture and Deployment Readiness Audit
 - Subphase status: COMPLETED / APPROVED
-- Audit baseline branch: `phase-12-unified-frontend`
-- Audit baseline full HEAD: `79e4cfb62524d0cccf919819a78b4dc68ec2df8b`
-- Audit baseline subject: `Complete Phase 16 academic MVP verification`
+- Audit baseline branch: `main`
+- Audit baseline full HEAD: `13c5c96fb4944715e0253b6ce43d68de878556e3`
+- Audit baseline subject: `Complete final repository and release-candidate review`
+- Phase 18 activation branch: `phase-18-staging-deployment`
+- Phase 18 activation full HEAD:
+  `13c5c96fb4944715e0253b6ce43d68de878556e3`
 - Most recently completed major phase: Phase 17, Final Repository and
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 16 AND PHASE 16A-1 THROUGH PHASE 16G COMPLETED AND APPROVED; P17-001 REPAIRED, VERIFIED, AND APPROVED; P17-002 FORMALLY WAIVED / DEFERRED BY OPERATOR — NOT RUN / NO PASS CLAIMED; PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; PHASE 18 PLANNED AND INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; OD-18A-001 THROUGH OD-18A-012 RESOLVED / OPERATOR APPROVED; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+- Accepted Phase 18A approval token:
+  `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
+- Phase 18A approval token accepted: `YES`
 - Primary browser-suite name: Full Application Browser Testing
 - Executable browser-suite location: `tests/browser/`
 - Primary command: `npm run test:browser` only when a portable,
@@ -59,6 +66,84 @@
   `executing-plans`. All were available. The required
   `codex-security:security-scan` capability remains unavailable; no skill or
   scanner was installed or downloaded.
+
+## Phase 18A activation and audit result
+
+- Prompt ID:
+  `CLH-PHASE-18A-ACTIVATE-AND-AUDIT-STAGING-ARCHITECTURE-01`.
+- Closeout prompt ID:
+  `CLH-PHASE-18A-OPERATOR-DECISIONS-AND-CLOSEOUT-01`.
+- Phase 18 was activated on local branch `phase-18-staging-deployment` from
+  verified `main` at
+  `13c5c96fb4944715e0253b6ce43d68de878556e3`
+  (`Complete final repository and release-candidate review`).
+- Local and remote `main` were synchronized at that exact commit with zero
+  commits in either direction. The starting worktree was clean, with nothing
+  staged or untracked and no active Git operation.
+- Phase 18A is documentation-only. It inspected the current deployment
+  surface and current official provider documentation, then produced
+  `docs/deployment/PHASE_18A_STAGING_ARCHITECTURE_AUDIT.md`.
+- The audit records runtime commands, health/readiness behavior, MongoDB
+  transaction and index requirements, private storage, the embedded job
+  worker, exact credentialed CORS, the same-site secure-cookie constraint,
+  trust-proxy behavior, redacted logging, the secret-safe environment
+  manifest, provider comparisons, recommended/fallback topologies, rollback,
+  seven subphases, and twelve operator decisions.
+- Deployment-critical blockers are documented: the imported private-storage
+  adapter directory is ignored and absent from `HEAD`; unrelated provider
+  default domains do not preserve the current `SameSite=Lax` refresh-cookie
+  contract; and P15-001 requires restricted staging access before
+  registration/uploads are reachable.
+- Operator-approved initial topology: Vercel Hobby, Render Free, MongoDB Atlas
+  Free, private AWS S3 in the Singapore regional strategy, provider logs,
+  native Vercel/Render GitHub integrations with branch restrictions/manual
+  promotion, sibling HTTPS staging hostnames, and Cloudflare Access or
+  equivalent deny-by-default protection for the operator account only.
+- Render Free sleeping, cold starts, delayed initial requests, and delayed
+  background jobs are accepted. Synthetic keep-awake traffic is prohibited.
+  Upgrade to an always-on paid service only with separate approval and before
+  a reliability-critical demonstration.
+- Atlas Free storage, capacity, backup, and operational limitations are
+  accepted. Atlas Flex requires separate approval.
+- The operator domain `prabhathmalinda.com.lk` is registered through LK Domain
+  Registry and is `RESERVED — REGISTRY ACTIVATION PENDING`. Planned hostnames
+  are `staging.prabhathmalinda.com.lk` and
+  `api-staging.prabhathmalinda.com.lk`. DNS and live staging configuration
+  must wait for activation.
+- The initial monthly hard ceiling is USD 10. Billing alerts are required
+  before usage-based resource creation.
+- Synthetic users, owned records, and PDFs are deleted immediately after
+  testing. Completed jobs, logs, browser artifacts, monitoring events, and
+  required backups have a maximum seven-day retention. Live AI-provider data
+  is disabled initially.
+- No deployment occurred. No provider account, cloud resource, database,
+  bucket, domain, DNS record, monitoring project, CI/CD workflow, or secret
+  was created.
+- No secret or actual environment file was read or written. Only tracked
+  environment examples and variable names were inspected.
+- No product source, executable test, package, lockfile, configuration,
+  deployment, CI/CD, or environment file changed. No test, coverage, build,
+  browser test, Lighthouse run, migration, application server, provider CLI,
+  or provisioning command ran.
+- Phase 17 remains
+  `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`. The security scan
+  remains `NOT RUN — NO PASS CLAIMED`.
+- P15-001 remains `TECHNICALLY UNRESOLVED`; all controlled academic-MVP
+  restrictions remain binding and staging is synthetic-data-only.
+- OD-18A-001 through OD-18A-012 are
+  `RESOLVED / OPERATOR APPROVED`.
+- Phase 18A is `COMPLETED / APPROVED`.
+- Phase 18B is
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- Approval token:
+  `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`; accepted: `YES`.
+- The next technical development task is a separately authorized repair of
+  the ignored `backend/src/modules/assets/storage/` source.
+- This closeout authorizes one local documentation-only commit containing the
+  three Phase 18A documentation files. It authorizes no push, merge, resource,
+  purchase, DNS change, secret, workflow, deployment, Phase 18B activation, or
+  Phase 19 activation.
 
 ## Phase 17 security-enabled continuation start
 
@@ -183,23 +268,14 @@
 
 ## Objective
 
-- Present every stored Resume suggestion as an accessible Original,
-  Suggested rewrite, Reason, verification warning, and explicit selection
-  comparison without changing its provenance or apply contract.
-- Preserve the approved browser Print / Save as PDF behavior for canonical
-  saved Resume versions, with dirty-draft blocking and A4/Letter design
-  persistence.
-- Preserve the approved responsive AppShell, shared create actions, mobile
-  navigation drawer, and contextual deep-route breadcrumbs.
-- Preserve the accepted Phase 15 limitations, including P15-001 operating
-  restrictions, and all ownership, private-file, Quiz-secrecy, immutable
-  Resume-version, and AI provenance safeguards.
-- Verify the complete Phase 16 diff, automated gates, browser matrix,
-  security/privacy boundaries, accessibility/performance evidence, and
-  cleanup without changing product or executable-test behavior.
-- Complete the final repository and release-candidate verification without
-  changing product or executable-test behavior.
-- Keep Phase 18 planned and inactive until a separate activation prompt.
+- Preserve the completed and approved Phase 18A staging architecture,
+  deployment-readiness audit, and twelve operator-approved decisions.
+- Prepare the next separately authorized repair of the ignored storage-adapter
+  source without activating Phase 18B.
+- Preserve the Phase 17 security-scan waiver boundary, the technically
+  unresolved P15-001 restrictions, all existing security/privacy controls,
+  and a synthetic-data-only staging policy.
+- Keep Phase 18B and Phase 19 planned and inactive until separate approval.
 
 ## Phase status controls
 
@@ -245,7 +321,11 @@
 - Phase 16G is `COMPLETED` / `APPROVED`.
 - Phase 17 is
   `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`.
-- Phase 18 remains `PLANNED` / `INACTIVE`.
+- Phase 18 is `ACTIVE`.
+- Phase 18A is `COMPLETED / APPROVED`.
+- Phase 18B is
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.

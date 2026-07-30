@@ -2401,7 +2401,19 @@ repair attempt. The repair verification record below controls current status.
 
 #### Status
 
-- Status: PLANNED
+- Status:
+  `ACTIVE — PHASE 18A COMPLETED / APPROVED; PHASE 18B PLANNED / INACTIVE —
+  READY FOR SEPARATE ACTIVATION`
+- Active subphase: none; Phase 18B remains inactive
+- Most recently completed subphase:
+  `Phase 18A — Staging Architecture and Deployment Readiness Audit`
+- Phase 18 activation branch: `phase-18-staging-deployment`
+- Phase 18 activation HEAD:
+  `13c5c96fb4944715e0253b6ce43d68de878556e3`
+- Activation subject: `Complete final repository and release-candidate review`
+- Phase 18A approval token:
+  `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
+- Token accepted: `YES`
 
 #### Purpose
 
@@ -2410,40 +2422,111 @@ repair attempt. The repair verification record below controls current status.
 - Verify liveness and readiness.
 - Run browser tests against staging.
 
-#### Required skills
+#### Phase 18A scope and result
 
-- `karpathy-guidelines`
-- Selected deployment skill.
-- `vercel:env-vars` or equivalent environment-management skill.
-- Selected CI/CD skill.
-- `sentry`
+- Closeout prompt:
+  `CLH-PHASE-18A-OPERATOR-DECISIONS-AND-CLOSEOUT-01`.
+- Phase 18 was activated from synchronized local and remote `main` at the
+  exact HEAD above. The starting worktree was clean, nothing was staged or
+  untracked, and no Git operation was active.
+- Phase 18A inspected the repository deployment surface and current official
+  provider documentation. It produced
+  `docs/deployment/PHASE_18A_STAGING_ARCHITECTURE_AUDIT.md`.
+- The audit defines the current application architecture, commands,
+  build/output layout, liveness/readiness behavior, MongoDB transaction and
+  index prerequisites, private-storage and upload contract, embedded worker,
+  single-instance boundary, secure-cookie/HTTPS/same-site-domain constraint,
+  exact credentialed CORS, proxy validation, redacted logging, secret-safe
+  variable manifest, browser-test adaptation requirement, rollback, and
+  cleanup.
+- It compares Vercel and Netlify; Render and Railway; MongoDB Atlas Free and
+  Flex; AWS S3, Cloudflare R2, local persistent disk, and Cloudinary; provider
+  logs and Sentry; and native GitHub integrations versus GitHub Actions.
+- OD-18A-001 through OD-18A-012 are
+  `RESOLVED / OPERATOR APPROVED`.
+- The approved initial topology is Vercel Hobby, Render Free, MongoDB Atlas
+  Free, private AWS S3 in the Singapore regional strategy, provider logs only,
+  native Vercel/Render GitHub integrations with branch restrictions/manual
+  promotion, sibling custom HTTPS subdomains, and Cloudflare Access or
+  equivalent deny-by-default access for the operator account only.
+- Render Free sleeping, cold starts, delayed first requests, and delayed jobs
+  are accepted. Synthetic keep-awake traffic is prohibited. An always-on paid
+  Render upgrade requires separate approval and is required before a
+  reliability-critical demonstration.
+- Atlas Free storage, capacity, backup, and operational limits are accepted.
+  Atlas Flex requires separate approval.
+- The operator domain is `prabhathmalinda.com.lk`, registered through LK
+  Domain Registry. Its status is
+  `RESERVED — REGISTRY ACTIVATION PENDING`. Planned hosts are
+  `staging.prabhathmalinda.com.lk` and
+  `api-staging.prabhathmalinda.com.lk`. DNS and live staging configuration
+  must wait for registry activation.
+- The initial staging budget has a USD 10 monthly hard ceiling. Billing alerts
+  must precede usage-based resource creation.
+- Synthetic users, owned records, and PDFs are deleted immediately after
+  testing. Completed jobs, provider logs, browser screenshots/traces,
+  monitoring events, and required backups have a maximum seven-day retention.
+  Live AI-provider data is disabled initially.
+- The audit found a deployment-readiness blocker: the backend imports the
+  private-storage adapter directory, but the directory is ignored by the
+  broad `.gitignore` `storage/` rule and absent from `HEAD`. A clean provider
+  checkout cannot build until a separately approved, test-verified repository
+  repair is completed.
+- The current host-only `Secure`, `SameSite=Lax` refresh-cookie contract
+  requires same-site sibling frontend/API domains. Unrelated provider default
+  domains are not an acceptable final staging topology without a separately
+  approved code or proxy change.
+- P15-001 remains `TECHNICALLY UNRESOLVED`. Its controlled academic-MVP
+  restrictions require synthetic data, limited supervised accounts/uploads,
+  and restricted access rather than unrestricted public registration.
+- The Phase 17 security scan remains `NOT RUN — NO PASS CLAIMED`. The formal
+  waiver does not establish unrestricted production security.
+- Phase 18A is `COMPLETED / APPROVED`.
+- The approval token
+  `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED` is accepted.
+- The next technical development task is a separately authorized repair of
+  the ignored `backend/src/modules/assets/storage/` source.
 
-#### In scope
+#### Phase 18A change and execution boundary
 
-- Approved staging infrastructure and configuration.
-- Secret injection through approved environment controls.
-- Health and staging browser verification.
+- No deployment occurred.
+- No cloud resource, provider account, database, bucket, domain, DNS record,
+  monitoring project, CI/CD workflow, or secret was created.
+- No secret or actual environment file was read or written.
+- No product source, test, package, lockfile, configuration, environment,
+  deployment, Docker, or GitHub Actions file changed.
+- No install, audit, test, coverage, build, browser, Lighthouse, migration,
+  server, provider CLI, or provisioning command ran.
+- The closeout stages and commits exactly the three authorized Phase 18A
+  documentation paths. Nothing is pushed, merged, rebased, or deployed.
 
-#### Out of scope
+#### Planned subphases
 
-- Production deployment.
-- Committing secrets or environment values.
-- Production data migration.
+1. Phase 18A — Staging Architecture and Deployment Readiness Audit:
+   `COMPLETED / APPROVED`.
+2. Phase 18B — Provider Selection, Account Readiness and Secret Manifest
+   Approval:
+   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+3. Phase 18C — MongoDB Staging and Private Storage Provisioning:
+   `PLANNED / INACTIVE`.
+4. Phase 18D — Backend Staging Deployment and Health Verification:
+   `PLANNED / INACTIVE`.
+5. Phase 18E — Frontend Staging Deployment, HTTPS and Exact CORS
+   Verification: `PLANNED / INACTIVE`.
+6. Phase 18F — Monitoring, CI/CD and Rollback Readiness:
+   `PLANNED / INACTIVE`.
+7. Phase 18G — Staging Browser Verification and Phase 18 Closeout:
+   `PLANNED / INACTIVE`.
 
-#### Deliverables
+#### Current authority boundary
 
-- Working staging deployment.
-- Documented staging configuration and verification evidence without secrets.
-
-#### Verification
-
-- Verify HTTPS, exact CORS origins, proxy settings, liveness, and readiness.
-- Run approved browser workflows against staging.
-- Confirm secrets are absent from Git and logs.
-
-#### Human approval gate
-
-- Human review of staging health, browser results, monitoring, configuration, and rollback readiness is required.
+- Phase 18B is not active and requires a separate explicit activation prompt.
+- The accepted Phase 18A decisions authorize no purchase, account, resource,
+  credential, domain activation, DNS change, repository repair, workflow,
+  push, or deployment.
+- This closeout authorizes one local documentation-only commit containing the
+  three Phase 18A documentation paths.
+- Phase 19 remains `PLANNED / INACTIVE`.
 
 ### Execution Phase 19: Legacy Data Migration Preparation
 
