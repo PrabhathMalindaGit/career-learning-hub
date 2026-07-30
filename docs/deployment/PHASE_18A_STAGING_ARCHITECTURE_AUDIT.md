@@ -49,12 +49,14 @@ deployment, CI/CD, or infrastructure file changed. No deployment or
 cloud-resource creation occurred, and no secret was read, generated, or
 written.
 
-Deployment is not yet authorized. It is also not technically ready until these
-blocking items are resolved in later approved subphases:
+Deployment is not yet authorized. B18A-001 is completed and approved. The
+remaining blocking items require later approved work:
 
-1. The imported `backend/src/modules/assets/storage/` implementation is ignored
-   by the broad `storage/` rule in `.gitignore` and is absent from `HEAD`.
-   A clean provider checkout therefore cannot compile the backend.
+1. B18A-001 repaired the broad `storage/` rule with exact exceptions for four
+   existing adapter files. Their checksums and behavior are unchanged;
+   typechecks, storage tests, backend regression, and the production build
+   passed. The repair is `COMPLETED / APPROVED`; approval token
+   `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED` is accepted.
 2. The refresh cookie is `SameSite=Lax`; unrelated provider default domains are
    cross-site and cannot preserve the current browser refresh contract. Sibling
    custom subdomains, or a separately approved authentication/proxy change, are
@@ -633,9 +635,10 @@ for sibling custom domains.
 
 These are estimates, not Phase 18A authorization:
 
-1. **Mandatory readiness repair:** narrow the `.gitignore` rule and track the
-   storage abstraction/adapter implementation already imported by the backend;
-   verify typecheck, tests, build, and private-file security.
+1. **B18A-001 closeout commit:** the `.gitignore` rule is
+   narrowed through exact exceptions, the four adapters are Git-visible with
+   matching checksums, and verification passed. Operator approval is accepted;
+   this closeout authorizes the reviewed local commit.
 2. Add exactly one approved frontend SPA routing/deployment configuration for
    the chosen host.
 3. Optionally add one backend provider configuration only if dashboard settings
@@ -844,7 +847,7 @@ All twelve decisions are `RESOLVED / OPERATOR APPROVED`.
 
 | ID | Risk/blocker | Disposition |
 |---|---|---|
-| B18A-001 | Storage adapters are ignored and absent from `HEAD`; clean backend build is impossible | hard blocker before backend deployment; separately approved repository repair |
+| B18A-001 | Storage adapters were ignored and remain absent from `HEAD` until this approved closeout commit is created | `COMPLETED / APPROVED`; exact Git visibility, unchanged checksums, focused test, typechecks, backend regressions, and build approved; token accepted |
 | B18A-002 | Default frontend/backend provider domains break current same-site refresh-cookie contract | sibling domains approved; deployment blocked until registry activation, DNS/TLS configuration, and verification |
 | B18A-003 | Current registration plus public hosts conflicts with P15-001 | deny-by-default access approved; deployment blocked until it is configured and verified across both hosts |
 | B18A-004 | Twelve provider/cost/access/retention decisions | resolved and operator approved; Phase 18B still requires separate activation |
@@ -891,6 +894,8 @@ data compatibility and recovery point first.
 - [x] Confirm P15-001 restrictions are correctly carried forward.
 - [x] Review B18A-001 and authorize no deployment before the storage files are
       correctly tracked and verified.
+- [x] Approve the implemented B18A-001 repair with
+      `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED`.
 - [x] Resolve and approve each OD-18A-001 through OD-18A-012.
 - [x] Record the reserved operator domain and registry-activation dependency.
 - [x] Require both hosts to be deny-by-default without breaking CORS,
@@ -919,13 +924,21 @@ only and no application server was started.
 OD-18A-001 through OD-18A-012 are resolved and operator approved. The approval
 token `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED` is accepted.
 
-The next technical development task is a separately authorized repair of the
-ignored `backend/src/modules/assets/storage/` source so clean provider
-checkouts can compile the backend. `.gitignore`, product source, tests, and
-configuration were not changed by this closeout.
+B18A-001 is `COMPLETED / APPROVED`. The four
+existing adapter files are Git-visible through exact `.gitignore` exceptions,
+their before/after hashes match, focused storage coverage was added, and all
+required typechecks, tests, and the production build passed. No adapter source
+behavior changed. The approval token
+`PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED` is accepted. The exact
+local closeout commit remains pending until created by the approval-closeout
+prompt.
 
 Phase 18B remains
 `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`. It still requires a
 separate explicit prompt. This closeout does not authorize a push, provider
 account, resource, purchase, domain activation, DNS change, secret, workflow,
 deployment, Phase 18B execution, or Phase 19 activation.
+
+The next planned activity is a separately authorized current-versus-legacy
+UI, feature, and branding audit before deployment. No legacy-project access
+is authorized by this closeout.

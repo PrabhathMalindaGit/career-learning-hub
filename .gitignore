@@ -35,6 +35,12 @@ temp/
 
 # Private local-development assets
 storage/
+!backend/src/modules/assets/storage/
+backend/src/modules/assets/storage/*
+!backend/src/modules/assets/storage/storage.types.ts
+!backend/src/modules/assets/storage/local.storage.ts
+!backend/src/modules/assets/storage/s3.storage.ts
+!backend/src/modules/assets/storage/storage.factory.ts
 
 
 # Local migration exports and reports

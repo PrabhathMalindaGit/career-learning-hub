@@ -2402,8 +2402,14 @@ repair attempt. The repair verification record below controls current status.
 #### Status
 
 - Status:
-  `ACTIVE — PHASE 18A COMPLETED / APPROVED; PHASE 18B PLANNED / INACTIVE —
-  READY FOR SEPARATE ACTIVATION`
+  `ACTIVE — STORAGE-ADAPTER TRACKING REPAIR COMPLETED / APPROVED; PHASE 18B
+  PLANNED / INACTIVE`
+- Most recently completed repair:
+  `B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair`
+- Repair status: `COMPLETED / APPROVED`
+- Accepted repair token:
+  `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED`
+- Repair token accepted: `YES`
 - Active subphase: none; Phase 18B remains inactive
 - Most recently completed subphase:
   `Phase 18A — Staging Architecture and Deployment Readiness Audit`
@@ -2484,8 +2490,56 @@ repair attempt. The repair verification record below controls current status.
 - Phase 18A is `COMPLETED / APPROVED`.
 - The approval token
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED` is accepted.
-- The next technical development task is a separately authorized repair of
-  the ignored `backend/src/modules/assets/storage/` source.
+- The separately authorized repair of the ignored
+  `backend/src/modules/assets/storage/` source is completed and approved.
+
+#### B18A-001 storage-adapter tracking repair
+
+- Prompt:
+  `CLH-PHASE-18-STORAGE-ADAPTER-TRACKING-REPAIR-01`.
+- Approval-closeout prompt:
+  `CLH-PHASE-18-STORAGE-ADAPTER-REPAIR-APPROVAL-COMMIT-01`.
+- Status: `COMPLETED / APPROVED`.
+- The original `storage/` rule remains in place for private runtime data.
+  Exact rules now permit Git to traverse
+  `backend/src/modules/assets/storage/`, re-ignore all of its contents, and
+  re-include only `storage.types.ts`, `local.storage.ts`, `s3.storage.ts`, and
+  `storage.factory.ts`.
+- All four existing files are regular TypeScript source. Complete content and
+  credential-pattern review found no secret, personal data, runtime object,
+  binary, archive, log, database, or generated output.
+- Before/after SHA-256 checksums match. No adapter source behavior, filename,
+  import, or export changed.
+- Direct storage coverage was added under
+  `backend/src/tests/unit/storageAdapters.test.ts` for local factory caching,
+  upload rejection, local storage limits and health, direct owned-asset
+  deletion, failed-readiness behavior, and the S3 command/presigning contract
+  through a mocked SDK send boundary and local signing. AWS was not contacted.
+- Typechecks passed. Targeted storage tests passed 39/39 across three files.
+  Full backend regression passed 25 unit, 54 integration, and 35 security
+  tests. The production build passed and emitted only the accepted Vite
+  warnings.
+- Generated output and TypeScript caches were removed. No persistent process
+  or listener remains.
+- No provider, Atlas, AWS, AI, DNS, deployment, cloud-resource, legacy,
+  environment-file, or secret access occurred.
+- The reviewed pre-closeout snapshot had nothing staged or committed. The
+  approval-closeout prompt authorizes one local commit containing exactly the
+  ten reviewed repair paths. Its hash remains pending until creation; no push
+  is authorized.
+- Phase 18A remains `COMPLETED / APPROVED`; Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`; Phase 19 remains
+  `PLANNED / INACTIVE`.
+- Phase 17's formal scan waiver and `NOT RUN — NO PASS CLAIMED` status remain
+  unchanged. P15-001 restrictions and synthetic-only staging remain binding.
+- Domain status remains `RESERVED — REGISTRY ACTIVATION PENDING`.
+- Evidence:
+  `docs/deployment/PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR.md`.
+- Approval token:
+  `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED`; accepted: `YES`.
+- The next planned activity is a separately authorized current-versus-legacy
+  UI, feature, and branding audit before deployment. This closeout grants no
+  legacy-project access.
 
 #### Phase 18A change and execution boundary
 
@@ -2522,8 +2576,13 @@ repair attempt. The repair verification record below controls current status.
 
 - Phase 18B is not active and requires a separate explicit activation prompt.
 - The accepted Phase 18A decisions authorize no purchase, account, resource,
-  credential, domain activation, DNS change, repository repair, workflow,
+  credential, domain activation, DNS change, workflow,
   push, or deployment.
+- B18A-001 repair authority is limited to the exact ignore rule, four existing
+  adapter files, focused storage test, three governance records, and repair
+  report. This approval-closeout prompt authorizes staging those exact ten
+  paths and creating one local commit. It authorizes no push or Phase 18B
+  activation.
 - This closeout authorizes one local documentation-only commit containing the
   three Phase 18A documentation paths.
 - Phase 19 remains `PLANNED / INACTIVE`.

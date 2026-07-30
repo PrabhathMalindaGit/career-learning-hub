@@ -3,9 +3,16 @@
 - Phase: 18
 - Name: Staging Deployment
 - Status:
-  ACTIVE — PHASE 18A COMPLETED / APPROVED; PHASE 18B PLANNED / INACTIVE —
-  READY FOR SEPARATE ACTIVATION
-- Active subphase: none; Phase 18B remains inactive
+  ACTIVE — STORAGE-ADAPTER TRACKING REPAIR COMPLETED / APPROVED; PHASE 18B
+  PLANNED / INACTIVE
+- Most recently completed repair:
+  B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
+- Repair status: COMPLETED / APPROVED
+- Accepted repair approval token:
+  `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED`
+- Repair token accepted: `YES`
+- Active subphase: none; Phase 18B remains inactive and ready for separate
+  activation
 - Most recently completed subphase:
   Phase 18A — Staging Architecture and Deployment Readiness Audit
 - Subphase status: COMPLETED / APPROVED
@@ -19,7 +26,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; OD-18A-001 THROUGH OD-18A-012 RESOLVED / OPERATOR APPROVED; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -144,6 +151,66 @@
   three Phase 18A documentation files. It authorizes no push, merge, resource,
   purchase, DNS change, secret, workflow, deployment, Phase 18B activation, or
   Phase 19 activation.
+
+## Phase 18 storage-adapter tracking repair
+
+- Prompt ID:
+  `CLH-PHASE-18-STORAGE-ADAPTER-TRACKING-REPAIR-01`.
+- Approval-closeout prompt ID:
+  `CLH-PHASE-18-STORAGE-ADAPTER-REPAIR-APPROVAL-COMMIT-01`.
+- Repair B18A-001 is
+  `COMPLETED / APPROVED`.
+- The original unanchored `.gitignore` rule `storage/` protected runtime
+  private storage but also ignored
+  `backend/src/modules/assets/storage/`.
+- The repair retains `storage/`, re-includes the exact adapter directory,
+  ignores its contents again, and re-includes only these four existing files:
+  `storage.types.ts`, `local.storage.ts`, `s3.storage.ts`, and
+  `storage.factory.ts`.
+- Exactly four regular TypeScript source files became visible to Git. No
+  unexpected ignored path became visible, and runtime storage, environment,
+  build, coverage, migration, log, and temporary-file exclusions remain
+  active.
+- Before/after SHA-256 checksums match for all four files. Their source content,
+  names, imports, exports, and behavior did not change.
+- A focused storage-adapter unit test was added because direct factory and S3
+  command-contract coverage was absent. It uses synthetic data, temporary
+  local storage, and an SDK send mock; it does not contact AWS.
+- `npm run typecheck` and backend test-source typechecking passed.
+- Targeted adapter tests passed 6/6. Existing private-source and cascade
+  deletion tests passed 33/33.
+- Complete backend regression passed: unit 25/25, integration 54/54, security
+  35/35. The existing spoofed-forwarded-header diagnostic remained in the
+  passing security test.
+- The production build passed for the configured workspaces. Storage imports
+  resolved with no missing-module error. Shared types have no separate build
+  script and passed their repository typecheck.
+- Generated build output and TypeScript caches were removed. No persistent
+  service remains and ports 4173, 4174, and 8000 are closed.
+- No actual environment file or secret was read. No AWS, Atlas, provider, DNS,
+  deployment, cloud-resource, AI-provider, or legacy-project action occurred.
+- The reviewed pre-closeout snapshot had nothing staged or committed. This
+  approval-closeout prompt authorizes one local commit containing exactly the
+  ten reviewed repair paths. Its exact hash remains pending until that commit
+  is created; no push is authorized.
+- Phase 18A remains `COMPLETED / APPROVED`.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- Phase 17 remains
+  `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`; the scan remains
+  `NOT RUN — NO PASS CLAIMED`.
+- P15-001 remains `TECHNICALLY UNRESOLVED`; the controlled academic-MVP
+  restrictions and synthetic-data-only staging policy remain binding.
+- Domain status remains `RESERVED — REGISTRY ACTIVATION PENDING`; pending
+  activation does not block this repository repair.
+- Evidence:
+  `docs/deployment/PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR.md`.
+- Approval token:
+  `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED`; accepted: `YES`.
+- The next planned activity is a separately authorized current-versus-legacy
+  UI, feature, and branding audit before deployment. No legacy-project access
+  is authorized by this closeout.
 
 ## Phase 17 security-enabled continuation start
 
