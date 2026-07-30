@@ -396,6 +396,31 @@ describe("application routing", () => {
   });
 
   it.each([
+    ["/login", "Welcome back"],
+    ["/register", "Create your account"],
+  ])(
+    "renders the approved accessible brand link on %s",
+    async (path, heading) => {
+      vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
+
+      renderRoute(path);
+
+      await screen.findByRole("heading", { name: heading });
+      const brandLink = screen.getByRole("link", {
+        name: "Career Learning Hub",
+      });
+      const mark = brandLink.querySelector("img");
+
+      expect(brandLink.getAttribute("href")).toBe("/");
+      expect(mark?.getAttribute("src")).toBe(
+        "/brand/career-learning-hub-mark.svg",
+      );
+      expect(mark?.getAttribute("alt")).toBe("");
+      expect(screen.queryByText("CL")).toBeNull();
+    },
+  );
+
+  it.each([
     "/dashboard",
     "/resumes",
     "/resumes/resume-test-id",
@@ -543,6 +568,19 @@ describe("application routing", () => {
     expect(
       screen.getByText("Router Test User"),
     ).not.toBeNull();
+    const brandLinks = screen.getAllByRole("link", {
+      name: "Career Learning Hub",
+    });
+    expect(brandLinks).toHaveLength(2);
+    for (const brandLink of brandLinks) {
+      const mark = brandLink.querySelector("img");
+      expect(brandLink.getAttribute("href")).toBe("/dashboard");
+      expect(mark?.getAttribute("src")).toBe(
+        "/brand/career-learning-hub-mark.svg",
+      );
+      expect(mark?.getAttribute("alt")).toBe("");
+    }
+    expect(screen.queryByText("CL")).toBeNull();
   });
 
   it("keeps historical example dashboards off deferred routes", async () => {

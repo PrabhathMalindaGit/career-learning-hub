@@ -168,11 +168,17 @@ h2 {
   display: inline-flex;
   min-height: var(--minimum-interactive-target);
   align-items: center;
+  gap: 12px;
   margin-bottom: 38px;
   color: #18211b;
-  font-size: 0.94rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1.2;
   text-decoration: none;
+}
+
+.product-link .brand-lockup__mark {
+  width: 50px;
 }
 
 .auth-intro,
@@ -424,17 +430,15 @@ h2 {
   text-decoration: none;
 }
 
-.app-brand__mark {
-  display: grid;
-  width: 36px;
-  height: 36px;
+.brand-lockup__mark {
+  display: block;
+  width: 42px;
+  height: auto;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: 10px;
-  color: #ffffff;
-  background: var(--accent);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+}
+
+.brand-lockup__name {
+  min-width: 0;
 }
 
 .primary-navigation {

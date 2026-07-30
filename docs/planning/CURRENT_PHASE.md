@@ -3,8 +3,15 @@
 - Phase: 18
 - Name: Staging Deployment
 - Status:
-  ACTIVE — STORAGE-ADAPTER TRACKING REPAIR COMPLETED / APPROVED; PHASE 18B
+  ACTIVE — UI-B1 BRAND FOUNDATION COMPLETED / HUMAN-APPROVED; PHASE 18B
   PLANNED / INACTIVE
+- Most recently completed UI task:
+  UI-B1 — Logo and Brand Foundation
+- UI-B1 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-B1 visual approval token:
+  `UI_B1_BRAND_INTEGRATION_VISUAL_APPROVED`
+- UI-B1 visual approval token accepted: `YES`
+- Next planned UI task: UI-B2
 - Most recently completed repair:
   B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
 - Repair status: COMPLETED / APPROVED
@@ -26,7 +33,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 PLANNED; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -212,6 +219,38 @@
   UI, feature, and branding audit before deployment. No legacy-project access
   is authorized by this closeout.
 
+## Phase 18 UI-B1 logo and brand foundation
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-B1-LOGO-BRAND-INTEGRATION-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-B1-CLOSEOUT-COMMIT-01`.
+- UI-B1 is `COMPLETED / HUMAN-APPROVED`.
+- The approved Career Learning Hub identity is the
+  **Open Book + Rising Pathway** symbol with the wordmark
+  **Career Learning Hub**.
+- Production-ready primary, compact, monochrome, reversed, favicon, and
+  application-icon assets were added using controlled solid vector geometry
+  and the approved palette. Existing desktop, mobile, and authentication
+  branding and document metadata now use the approved identity.
+- Focused brand and routing verification passed 65/65 tests. The complete
+  frontend suite passed 657/657 tests. Frontend typecheck and the frontend
+  production build passed.
+- Human visual review approved desktop, tablet, mobile, actual 200% browser
+  zoom, login and registration surfaces, responsive navigation branding,
+  keyboard focus, and browser-tab favicon rendering.
+- Accepted visual approval token:
+  `UI_B1_BRAND_INTEGRATION_VISUAL_APPROVED`; accepted: `YES`.
+- No deployment, DNS, cloud resource, provider, secret, legacy-project, or
+  Phase 18B action occurred.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- The next planned UI task is UI-B2 and requires separate authorization.
+- This closeout authorizes one bounded local commit containing only the
+  approved UI-B1 implementation and this minimum tracking update. It
+  authorizes no push, merge, deployment, DNS, cloud-resource, secret, or
+  Phase 18B action.
+
 ## Phase 17 security-enabled continuation start
 
 - Continuation branch: `phase-12-unified-frontend`.
@@ -337,8 +376,10 @@
 
 - Preserve the completed and approved Phase 18A staging architecture,
   deployment-readiness audit, and twelve operator-approved decisions.
-- Prepare the next separately authorized repair of the ignored storage-adapter
-  source without activating Phase 18B.
+- Preserve the completed and approved B18A-001 storage-adapter repair and the
+  human-approved UI-B1 logo and brand foundation.
+- Prepare UI-B2 as the next separately authorized UI task without activating
+  Phase 18B.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
   unresolved P15-001 restrictions, all existing security/privacy controls,
   and a synthetic-data-only staging policy.
@@ -390,6 +431,8 @@
   `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`.
 - Phase 18 is `ACTIVE`.
 - Phase 18A is `COMPLETED / APPROVED`.
+- UI-B1 — Logo and Brand Foundation is `COMPLETED / HUMAN-APPROVED`.
+- UI-B2 is `PLANNED` and requires separate authorization.
 - Phase 18B is
   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
 - Phase 19 remains `PLANNED` / `INACTIVE`.

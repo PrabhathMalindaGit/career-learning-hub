@@ -52,7 +52,7 @@ export function RouteLoadingState() {
         role="status"
         aria-labelledby="auth-bootstrap-heading"
       >
-        <p className="eyebrow">Career &amp; Learning Hub</p>
+        <p className="eyebrow">Career Learning Hub</p>
         <h1 id="auth-bootstrap-heading">Restoring your session</h1>
         <p className="auth-intro">
           Please wait while your secure session is checked.

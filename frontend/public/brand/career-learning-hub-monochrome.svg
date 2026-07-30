@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 120" role="img" aria-labelledby="title description">
+  <title id="title">Career Learning Hub monochrome logo</title>
+  <desc id="description">A single-colour open book and rising pathway beside the Career Learning Hub wordmark.</desc>
+  <defs>
+    <mask id="pathway-cutout">
+      <rect width="120" height="96" fill="white"/>
+      <path fill="black" d="M26 68C36 44 55 27 88 16C62 31 46 49 42 72Z"/>
+      <path fill="black" d="M62 84C50 69 49 56 55 44C64 30 79 21 99 16C80 28 68 41 65 54C62 66 66 76 73 80Z"/>
+    </mask>
+  </defs>
+  <g transform="translate(4 12)" fill="#18211b" mask="url(#pathway-cutout)">
+    <path d="M4 12C24 10 43 15 58 24V82L60 88C43 73 26 68 4 70Z"/>
+    <path d="M62 24C77 15 96 10 116 12V70C94 68 77 72 60 88Z"/>
+  </g>
+  <text x="145" y="54" fill="#18211b" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="750" letter-spacing="-1.2">Career</text>
+  <text x="145" y="99" fill="#18211b" font-family="Inter, Arial, sans-serif" font-size="39" font-weight="750" letter-spacing="-1.1">Learning Hub</text>
+</svg>

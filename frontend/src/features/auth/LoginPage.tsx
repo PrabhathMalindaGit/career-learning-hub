@@ -14,6 +14,7 @@ import { ApiError } from "../../api/apiClient";
 import {
   intendedLocationFromState,
 } from "./AuthRoute";
+import { BrandLockup } from "../../components/BrandLockup";
 import { useAuth } from "./AuthProvider";
 
 type LoginErrors = {
@@ -106,7 +107,7 @@ export function LoginPage() {
     <main className="auth-layout">
       <section className="auth-card" aria-labelledby="login-heading">
         <Link className="product-link" to="/">
-          Career &amp; Learning Hub
+          <BrandLockup />
         </Link>
         <p className="eyebrow">Secure workspace</p>
         <h1 id="login-heading">Welcome back</h1>

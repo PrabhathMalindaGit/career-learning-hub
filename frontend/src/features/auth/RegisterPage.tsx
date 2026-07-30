@@ -11,6 +11,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { BrandLockup } from "../../components/BrandLockup";
 import {
   intendedLocationFromState,
 } from "./AuthRoute";
@@ -136,7 +137,7 @@ export function RegisterPage() {
     <main className="auth-layout">
       <section className="auth-card" aria-labelledby="register-heading">
         <Link className="product-link" to="/">
-          Career &amp; Learning Hub
+          <BrandLockup />
         </Link>
         <p className="eyebrow">Create your workspace</p>
         <h1 id="register-heading">Create your account</h1>
