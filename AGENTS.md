@@ -54,7 +54,15 @@ Run these from the repository root unless a script explicitly requires another d
 - Production build: `npm run build`.
 - Test coverage: `npm run test:coverage`.
 
-The root test scripts target the backend; the frontend manifest has no test script. Record exact command results. Never claim an unrun command passed.
+The root test and coverage scripts target the backend. Frontend unit tests are
+available through `npm run test --workspace @career-learning-hub/web`, and
+frontend coverage is available through
+`npm run test:coverage --workspace @career-learning-hub/web`. The portable
+`npm run test:browser` and `npm run test:e2e` scripts remain undeclared; Full
+Application Browser Testing currently uses the authorized bundled Playwright
+runtime directly. Adding a portable browser runner dependency or package
+script requires separate approval. Record exact command results. Never claim
+an unrun command passed.
 
 ## 5. General implementation rules
 

@@ -2,7 +2,40 @@
 
 ## Result
 
-`ACTIVE / BLOCKED — SECURITY SCAN CAPABILITY PENDING`
+`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`
+
+## Security-enabled continuation start
+
+- Continuation branch: `phase-12-unified-frontend`.
+- Continuation full HEAD:
+  `d95e0644572b6d605b3fa6b26f3cd13a717a4bc8`
+  (`Add frontend coverage tooling`).
+- Before cancellation, a preflight helper reported the capability entry as
+  `ready`. That result was only a capability check; it is not scan evidence
+  and does not alter the `NOT RUN — NO PASS CLAIMED` disposition.
+- The historical three-worker-slot capacity warning did not produce or
+  validate security evidence.
+- The preflight helper used the available Python 3.12 fallback because the
+  system Python lacks `tomllib` and `tomli`.
+- No dependency was installed. No source or executable-test repair is
+  authorized.
+- Accepted Phase 17 security-scan waiver token:
+  `PHASE_17_CODEX_SECURITY_SCAN_WAIVER_APPROVED`.
+- Waiver token accepted: yes.
+- P17-002:
+  `FORMALLY WAIVED / DEFERRED BY OPERATOR DUE TO CODEX USAGE COST`.
+- Security scan result: `NOT RUN — NO PASS CLAIMED`.
+- Cancelled scan `4bcc60eb-d741-4101-9cdb-e3748197e6fe` is
+  `TERMINAL / CANCELLED / NOT REUSABLE` with receipts `0/352`. The candidate
+  ledger, `findings.json`, `coverage.json`, final report, SARIF, and every
+  other canonical result are absent.
+- The cancelled scan was not resumed, restarted, reused, or replaced by
+  another scanner. It is not evidence.
+- Existing Phase 15 security evidence remains controlling for the academic
+  MVP. P15-001 and all controlled academic-MVP restrictions remain binding.
+- No merge or push is authorized. Phase 18 remains `PLANNED` / `INACTIVE`.
+- Pre-approval execution result:
+  `IMPLEMENTED / READY FOR HUMAN REVIEW WITH FORMAL SECURITY-SCAN WAIVER`.
 
 ## Scope and authority
 
@@ -13,11 +46,12 @@
 - Activation subject: `Complete Phase 16 academic MVP verification`.
 - Review date: 2026-07-29 (Asia/Colombo).
 - Review mode: verification-only and documentation-only.
-- Required future approval token:
+- Accepted final approval token:
   `PHASE_17_RELEASE_CANDIDATE_REVIEW_APPROVED`.
-- Approval accepted: no.
+- Approval accepted: yes.
 - Phase 16: `COMPLETED` / `APPROVED`.
-- Phase 17: `ACTIVE` / `BLOCKED`.
+- Phase 17:
+  `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`.
 - Phase 18: `PLANNED` / `INACTIVE`.
 
 No product, executable-test, package, lockfile, configuration, environment,
@@ -31,8 +65,9 @@ The original blocked review write manifest was limited to:
 2. `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md`;
 3. `docs/planning/PHASE_17_RELEASE_CANDIDATE_REVIEW_REPORT.md`.
 
-The browser guide and README remain unchanged because the ordered review
-stopped before their reconciliation gates.
+The browser guide and README remained unchanged during the original blocked
+attempt because that ordered review stopped before their reconciliation
+gates.
 
 ## Skill availability
 
@@ -45,7 +80,7 @@ and were read before the corresponding work. The requested
 available skill catalog, installed skill files, callable tools, and local
 Codex CLI. No skill was installed or downloaded.
 
-## Baseline
+## Historical initial baseline
 
 - Repository:
   `/Users/prabhathmalinda/Documents/Projects/Career Learning Hub`.
@@ -63,7 +98,7 @@ Codex CLI. No skill was installed or downloaded.
   residue: absent.
 - Outside-repository Phase 14 browser-artifact root: absent.
 
-## Branch relationship and cumulative history
+## Historical initial branch relationship and cumulative history
 
 - Local `main` full HEAD:
   `92066731b57abc27a392fb35cf009100568d39dd`.
@@ -153,7 +188,7 @@ and in-memory token literals are bounded test fixtures or user-facing form
 validation text. Repository email domains are limited to `example.com`,
 `example.test`, `test.example`, `api.example.test`, and `app.example.test`.
 
-## Verification ledger
+## Historical initial verification ledger
 
 | Gate | Result | Evidence |
 | --- | --- | --- |
@@ -204,7 +239,7 @@ Coverage command inventory and result:
   `@vitest/coverage-v8` `3.2.7` and reported that hoisted provider invalid for
   frontend Vitest `4.1.10`.
 
-## Blocking finding P17-001
+## Historical blocking finding P17-001
 
 - ID: P17-001.
 - Gate: mandatory frontend coverage.
@@ -230,7 +265,7 @@ were not attempted. The missing `codex-security:security-scan` skill remains a
 second mandatory capability gap that must also be resolved before a future
 Phase 17 run can complete.
 
-## Accepted limitations and controls
+## Historical initial accepted limitations and controls
 
 - P15-001 remains technically unresolved, and all controlled academic-MVP
   provider, data, operating, and deployment restrictions remain binding.
@@ -245,7 +280,7 @@ Phase 17 run can complete.
   historical counts with fresh security-scan counts.
 - Phase 18 requires separate activation and remains inactive.
 
-## Human review gate
+## Historical initial human review gate
 
 Human approval has not been requested or accepted because the mandatory
 verification gates did not complete. The token
@@ -256,9 +291,10 @@ was started. Generated backend coverage output and the frontend TypeScript
 build cache were removed; ports 4173, 4174, and 8000 are closed. This report
 does not authorize staging, commit, merge, push, or Phase 18 activation.
 
-PHASE_17_RELEASE_CANDIDATE_REVIEW_BLOCKED
+Historical initial-attempt terminal marker:
+`PHASE_17_RELEASE_CANDIDATE_REVIEW_BLOCKED`
 
-## P17-001 frontend coverage tooling repair
+## Historical P17-001 frontend coverage tooling repair
 
 ### Repair control
 
@@ -403,3 +439,252 @@ PHASE_17_RELEASE_CANDIDATE_REVIEW_BLOCKED
   unaccepted.
 
 PHASE_17_FRONTEND_COVERAGE_TOOLING_READY_FOR_REVIEW
+
+## Formal waiver and final-verification continuation
+
+### Control and recovered state
+
+1. Repository:
+   `/Users/prabhathmalinda/Documents/Projects/Career Learning Hub`.
+2. Branch: `phase-12-unified-frontend`.
+3. Starting HEAD:
+   `d95e0644572b6d605b3fa6b26f3cd13a717a4bc8`.
+4. Final HEAD:
+   `d95e0644572b6d605b3fa6b26f3cd13a717a4bc8`.
+5. HEAD subject: `Add frontend coverage tooling`.
+6. Starting worktree: exactly the three expected modified tracked planning
+   documents, with nothing staged or untracked and no active Git operation.
+7. Prompt ID: `CLH-PHASE-17-WAIVER-AND-FINAL-VERIFICATION-01`.
+8. Operator waiver token:
+   `PHASE_17_CODEX_SECURITY_SCAN_WAIVER_APPROVED`.
+9. Waiver token accepted: yes.
+
+### Cancelled scan and risk acceptance
+
+10. Cancelled scan ID:
+    `4bcc60eb-d741-4101-9cdb-e3748197e6fe`.
+11. Cancelled scan disposition:
+    `TERMINAL / CANCELLED / NOT REUSABLE`.
+12. Receipts: `0/352`.
+13. Security scan result: `NOT RUN — NO PASS CLAIMED`.
+14. Security pass claimed: no.
+15. Candidate ledger: absent.
+16. `findings.json`: absent.
+17. `coverage.json`: absent.
+18. Final security report: absent.
+19. SARIF: absent.
+20. The cancelled scan was not resumed, restarted, reused, or replaced by a
+    substitute scanner.
+21. P17-002:
+    `FORMALLY WAIVED / DEFERRED BY OPERATOR DUE TO CODEX USAGE COST —
+    NOT RUN / NO PASS CLAIMED`.
+22. Existing Phase 15 security review, threat model, ownership map, validated
+    findings, authentication repairs, backend security tests, private-file
+    controls, Quiz-secrecy controls, and browser ownership checks remain the
+    controlling security evidence for the academic MVP.
+23. Explicit limitations: no canonical Codex Security result, no SARIF, no
+    public-scale security assurance, no unrestricted production-readiness
+    claim, no real-provider security verification, and no Atlas or
+    production-database verification. P15-001 remains technically unresolved
+    and controlled academic-MVP restrictions remain binding.
+
+### Branch, package, static, and type evidence
+
+24. Local `main`:
+    `92066731b57abc27a392fb35cf009100568d39dd`.
+25. Merge base:
+    `92066731b57abc27a392fb35cf009100568d39dd`.
+26. Main ancestry: passed.
+27. `main..HEAD`: 47 commits.
+28. `HEAD..main`: 0 commits.
+29. Future merge source: `phase-12-unified-frontend`.
+30. Future merge target: `main`.
+31. Runtime: Node `v26.5.0`; npm `11.17.0`.
+32. Static integrity: all 11 repository `.cjs` files passed `node --check`.
+33. Top-level package tree: passed with no missing, invalid, or extraneous
+    package.
+34. Frontend package tree: Vitest `4.1.10` and
+    `@vitest/coverage-v8` `4.1.10`, deduplicated and valid.
+35. Root typecheck: passed for frontend, backend, and shared types.
+36. Backend test typecheck: passed.
+
+### Frontend tests and coverage
+
+37. Ordinary command:
+    `npm run test --workspace @career-learning-hub/web`.
+38. Ordinary result: 49/49 files and 645/645 tests passed in 24.87 seconds;
+    zero failed, zero skipped, and no warning.
+39. Coverage command:
+    `npm run test:coverage --workspace @career-learning-hub/web`.
+40. Coverage provider: V8 `4.1.10`.
+41. Coverage result: 49/49 files and 645/645 tests passed in 26.76 seconds;
+    zero failed, zero skipped, and no compatibility warning.
+42. Statements: 84.02% (4,440/5,284).
+43. Branches: 77.66% (3,342/4,303).
+44. Functions: 76.72% (1,002/1,306).
+45. Lines: 86.78% (4,280/4,932).
+46. Numerical threshold: none.
+47. Include/exclusions remained unchanged from the approved P17-001 policy.
+
+### Backend tests and coverage
+
+48. Unit: 5/5 files and 19/19 tests passed in 2.46 seconds.
+49. Integration: 7/7 files and 54/54 tests passed in 9.38 seconds.
+50. Security: 4/4 files and 35/35 tests passed in 3.47 seconds. The expected
+    spoofed `X-Forwarded-For` validation warning remained while its assertion
+    passed.
+51. Coverage: 16/16 files and 108/108 tests passed in 13.95 seconds using V8.
+52. Statements: 62.84%.
+53. Branches: 67.56%.
+54. Functions: 78.94%.
+55. Lines: 62.84%.
+56. Numerical threshold: none.
+
+### Production build
+
+57. Command:
+    `VITE_API_URL=https://api.example.test/api/v1 npm run build`.
+58. Frontend build: passed; Vite transformed 102 modules in 742 ms.
+59. Backend build: passed.
+60. HTML: 0.54 kB (0.34 kB gzip).
+61. CSS: 77.15 kB (14.14 kB gzip).
+62. JavaScript: one 580.96 kB entry (160.39 kB gzip).
+63. Dynamic chunks: none.
+64. Warnings: existing React Router module-directive warnings and the
+    accepted greater-than-500-kB Vite advisory.
+
+### README and dead/temporary review
+
+65. README result: `CORRECTED WITHIN AUTHORIZED SCOPE`. It materially
+    understated the current application, stopped at Phase 9, and linked to
+    nonexistent root-level files. The corrected README describes the
+    verified architecture, features, commands, academic-MVP/provider
+    boundary, browser workflow, and current documentation.
+66. README/local documentation links: passed with zero missing local links.
+67. Dead/temporary review: no verified dead or temporary executable item.
+68. Browser lifecycle and CLS logs: `NOT DEAD — REQUIRED`.
+69. Asset `temporary` state and upload handling: `NOT DEAD — REQUIRED`.
+70. User-facing and AI verification placeholders:
+    `NOT DEAD — REQUIRED`.
+71. Migration CLI output: `NOT DEAD — REQUIRED`.
+72. Earlier planning and blocked-attempt records:
+    `DOCUMENTATION-ONLY HISTORICAL RECORD`.
+73. Generated output and browser artifacts: removed; not committed.
+74. No secret, personal data, unexpected binary, abandoned feature flag,
+    duplicate runtime entry point, or unreachable executable blocker was
+    identified.
+75. `AGENTS.md` FRONTEND TEST COMMAND DOCUMENTATION:
+    `CORRECTED / VERIFIED` under prompt
+    `CLH-PHASE-17-AGENTS-DOCUMENTATION-CORRECTION-01`. The correction is
+    documentation-only. The ordinary frontend test and coverage commands
+    were verified from `frontend/package.json`; the portable browser package
+    scripts remain undeclared and the authorized bundled Playwright runtime
+    remains the current browser runner. No product, executable-test, package,
+    lockfile, or configuration path changed, and no automated gate was rerun
+    because executable behavior was unchanged.
+
+### One fresh complete browser gate
+
+76. Runner: Playwright `1.61.1`.
+77. Browser: Google Chrome `150.0.7871.187`.
+78. Result: 27/27 passed in 52.7 seconds; zero failed and zero skipped.
+79. Desktop: 9/9 passed at 1440×900.
+80. Tablet: 9/9 passed at 768×1024.
+81. Mobile: 9/9 passed at 390×844.
+82. Workers: one.
+83. Retries: zero.
+84. Authentication, Dashboard, Resume, Interview, Learning, ownership,
+    private PDF, Quiz secrecy, sidebar/drawer, Create actions, breadcrumbs,
+    Resume print, AI comparison, templates/design, console health, page-error
+    health, and horizontal-overflow controls passed.
+85. Authentication-bootstrap CLS: `0.0000` in desktop, tablet, and mobile.
+86. Initial fixture counts: `users=0, owned=0`.
+87. Teardown fixture counts: `users=0, owned=0`.
+88. The gate used synthetic `@example.test` identities and the tracked
+    synthetic PDF only. It did not use a provider, Atlas, cloud storage,
+    deployment, production or real personal data, or a legacy project.
+
+### Cleanup, status, and handoff
+
+89. Services: stopped.
+90. Ports 4173, 4174, and 8000: closed.
+91. Repository coverage, build, TypeScript-cache, test-result, and
+    Playwright-report output: absent.
+92. Temporary browser runtime, storage, reports, screenshots, traces, videos,
+    HAR files, scripts, and logs: absent.
+93. P17-001: `REPAIRED / VERIFIED / APPROVED`.
+94. P17-002:
+    `FORMALLY WAIVED / DEFERRED BY OPERATOR — NOT RUN / NO PASS CLAIMED`.
+95. Phase 16: `COMPLETED / APPROVED`.
+96. Phase 17:
+    `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`.
+97. Phase 18: `PLANNED / INACTIVE`.
+98. Final documentation paths: this report,
+    `docs/planning/CURRENT_PHASE.md`,
+    `docs/planning/CAREER_LEARNING_HUB_MASTER_PLAN.md`,
+    `docs/testing/FULL_APPLICATION_BROWSER_TESTING.md`, and `README.md`.
+99. Source, executable tests, packages, lockfile, configuration, environment,
+    and tracked fixtures: unchanged.
+100. Staged state: nothing staged.
+101. Commit state: HEAD unchanged; no commit.
+102. Merge state: no merge.
+103. Push state: no push.
+104. Deployment/provider/Atlas/real-data/legacy state: not used.
+105. Accepted final approval token:
+     `PHASE_17_RELEASE_CANDIDATE_REVIEW_APPROVED`.
+106. Final approval token accepted: yes.
+107. Any blocker: none within the authorized non-waived Phase 17 gates or the
+     bounded `AGENTS.md` documentation correction.
+108. Required next action: preserve Phase 18 as planned/inactive until a
+     separate activation prompt; any staging, commit, merge, or push requires
+     separate authorization.
+
+### AGENTS.md documentation correction closeout
+
+- Prompt ID: `CLH-PHASE-17-AGENTS-DOCUMENTATION-CORRECTION-01`.
+- Starting worktree: exactly five modified tracked documentation paths,
+  nothing staged or untracked, no active Git operation, no generated residue,
+  and HEAD unchanged.
+- Corrected command documentation:
+  `npm run test --workspace @career-learning-hub/web` and
+  `npm run test:coverage --workspace @career-learning-hub/web`.
+- Browser-runner limitation: unchanged. Neither `test:browser` nor
+  `test:e2e` is declared; the authorized bundled Playwright runtime remains
+  the current execution path, and a portable dependency or package script
+  requires separate approval.
+- The correction changed documentation only. No product source, executable
+  test, package, lockfile, configuration, environment, or generated path
+  changed.
+- No test, coverage, build, browser, Lighthouse, security scan, or substitute
+  scanner was run because executable behavior was unchanged and this prompt
+  prohibited those commands.
+- The formal security-scan waiver remains `NOT RUN — NO PASS CLAIMED`.
+  P15-001 restrictions remain binding.
+- Phase 17 is
+  `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`.
+  Phase 18 remains `PLANNED / INACTIVE`.
+- Nothing was staged, committed, merged, or pushed. The final approval token
+  is `PHASE_17_RELEASE_CANDIDATE_REVIEW_APPROVED`; accepted: yes.
+
+PHASE_17_WAIVER_FINAL_VERIFICATION_READY_FOR_REVIEW
+
+PHASE_17_AGENTS_CORRECTION_READY_FOR_REVIEW
+
+## Final human-review approval
+
+- On 2026-07-30, the operator supplied exactly
+  `PHASE_17_RELEASE_CANDIDATE_REVIEW_APPROVED`.
+- Final Phase 17 approval token accepted: yes.
+- Phase 17 is
+  `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`.
+- The waiver remains bounded: the Codex Security scan was
+  `NOT RUN — NO PASS CLAIMED`; P15-001 and all controlled academic-MVP
+  restrictions remain binding.
+- No security-scan pass, public-scale security assurance, unrestricted
+  production-readiness, real-provider, Atlas, deployment, or real-data claim
+  is introduced by this approval.
+- Phase 18 remains `PLANNED / INACTIVE` and was not activated.
+- This approval closeout changes documentation only. No automated gate was
+  rerun, and nothing was staged, committed, merged, pushed, or deployed.
+
+PHASE_17_RELEASE_CANDIDATE_REVIEW_APPROVED

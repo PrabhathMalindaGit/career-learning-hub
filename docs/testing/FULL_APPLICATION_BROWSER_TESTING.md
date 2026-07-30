@@ -173,6 +173,33 @@ No package script, browser specification, configuration, setup, teardown,
 fixture, product source, or executable-test behavior changed during Phase 16G
 closeout.
 
+## Phase 17 release-candidate result — 2026-07-30
+
+The Phase 17 release-candidate gate ran exactly once from
+`d95e0644572b6d605b3fa6b26f3cd13a717a4bc8`
+(`Add frontend coverage tooling`) with the documented bundled Playwright
+`1.61.1` runtime and Google Chrome `150.0.7871.187`.
+
+- Result: 27/27 passed in 52.7 seconds: desktop 9/9, tablet 9/9, and mobile
+  9/9; zero failed, zero skipped, one worker, and zero retries.
+- Authentication-bootstrap CLS was `0.0000` for desktop, tablet, and mobile.
+- Coverage included authentication and responsive routing, Dashboard,
+  Interview, private Learning PDF/chat/Flashcard/Quiz workflows, ownership
+  isolation, Quiz answer secrecy, sidebar/drawer, Create actions,
+  breadcrumbs, and Resume creation, versioning, validation, printing, AI
+  comparison, templates, and design controls.
+- The existing browser assertions for console health, page errors, and
+  horizontal overflow passed.
+- Setup and teardown each reported `users=0, owned=0`.
+- The run used synthetic `@example.test` identities and the tracked synthetic
+  PDF only. It did not call an AI provider, connect to Atlas or cloud storage,
+  deploy, use production or real personal data, or access a legacy project.
+- No browser test, configuration, fixture, product source, package script, or
+  dependency changed during the Phase 17 gate.
+- Generated browser runtime, storage, report, test-result, screenshot, trace,
+  video, HAR, and log output was removed. Ports 4173, 4174, and 8000 are
+  closed.
+
 ## Troubleshooting boundaries
 
 - Read the complete error and identify the failing layer before changing
