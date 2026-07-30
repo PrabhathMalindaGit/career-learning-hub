@@ -1,10 +1,12 @@
 const { randomUUID } = require("node:crypto");
-const { readFile } = require("node:fs/promises");
+const { mkdir, readFile } = require("node:fs/promises");
 const mongoose = require("mongoose");
 const { expect, test } = require("../support/fixtures.cjs");
 
 const runtimeFile =
   "/private/tmp/career-learning-hub-phase14/runtime/runtime.json";
+const captureRoot =
+  "/private/tmp/career-learning-hub-ui-lr1-captures";
 
 function pdfPageCount(buffer) {
   return (buffer.toString("latin1").match(/\/Type\s*\/Page\b/g) ?? [])
@@ -195,6 +197,77 @@ async function setStoredResumeDesign(user, title, design) {
   }
 }
 
+async function seedResumeListCards(user) {
+  const { mongoUri } = JSON.parse(await readFile(runtimeFile, "utf8"));
+  const db = await mongoose.createConnection(mongoUri).asPromise();
+  try {
+    const userId = new mongoose.Types.ObjectId(user.id);
+    const now = new Date();
+    const records = [
+      {
+        title:
+          "Synthetic Principal Platform Engineering Resume for International Product Teams",
+        status: "active",
+        design: {
+          templateId: "modern-professional",
+          colorPaletteId: "forest",
+          pageSize: "A4",
+          fontFamily: "Arial",
+          showProfilePhoto: false,
+        },
+      },
+      {
+        title: "Synthetic Compact Technical Portfolio",
+        status: "archived",
+        design: {
+          templateId: "compact-technical",
+          colorPaletteId: "navy",
+          pageSize: "LETTER",
+          fontFamily: "Georgia",
+          showProfilePhoto: false,
+        },
+      },
+    ];
+
+    for (const record of records) {
+      const resumeId = new mongoose.Types.ObjectId();
+      const versionId = new mongoose.Types.ObjectId();
+      await db.collection("resumes").insertOne({
+        _id: resumeId,
+        userId,
+        title: record.title,
+        status: record.status,
+        currentVersionId: versionId,
+        latestVersionNumber: 1,
+        design: record.design,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await db.collection("resumeversions").insertOne({
+        _id: versionId,
+        userId,
+        resumeId,
+        versionNumber: 1,
+        source: "manual",
+        content: {
+          basics: { fullName: "", links: [] },
+          experience: [],
+          education: [],
+          skills: [],
+          projects: [],
+          certifications: [],
+          languages: [],
+          interests: [],
+        },
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  } finally {
+    await db.close();
+  }
+}
+
 test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   page,
   phase14,
@@ -218,10 +291,67 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     }
   });
   const user = await phase14.createUser("resume");
+  if (testInfo.project.name === "desktop") {
+    await mkdir(captureRoot, { recursive: true });
+  }
   await phase14.login(page, user);
   await phase14.navigate(page, "Resumes");
 
-  await expect(page.getByText(/No resumes yet/)).toBeVisible();
+  await expect(
+    page.getByText(
+      "No resumes yet. Create a blank resume or import a private PDF.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  if (testInfo.project.name === "desktop") {
+    await page.screenshot({
+      path: `${captureRoot}/legacy-port-resume-list-empty.png`,
+      fullPage: true,
+    });
+  }
+  const pdfDropzone = page.getByRole("group", {
+    name: "Private PDF dropzone",
+  });
+  const pdfPicker = page.getByRole("button", {
+    name: "Choose a private PDF",
+  });
+  await expect(pdfDropzone).toContainText("PDF only · maximum 15 MB");
+  await pdfPicker.focus();
+  await expect(pdfPicker).toBeFocused();
+  const [fileChooser] = await Promise.all([
+    page.waitForEvent("filechooser"),
+    page.keyboard.press("Enter"),
+  ]);
+  await fileChooser.setFiles("tests/browser/fixtures/synthetic-learning.pdf");
+  await expect(pdfDropzone).toContainText("synthetic-learning.pdf");
+  if (testInfo.project.name === "desktop") {
+    await page.screenshot({
+      path: `${captureRoot}/legacy-port-pdf-dropzone.png`,
+      fullPage: true,
+    });
+  }
+  await pdfDropzone
+    .getByRole("button", { name: "Clear selection" })
+    .click();
+  await pdfDropzone.evaluate((element) => {
+    const transfer = new DataTransfer();
+    transfer.items.add(
+      new File(["%PDF-synthetic"], "drag-state.pdf", {
+        type: "application/pdf",
+      }),
+    );
+    element.dispatchEvent(
+      new DragEvent("dragenter", {
+        bubbles: true,
+        dataTransfer: transfer,
+      }),
+    );
+  });
+  await expect(pdfDropzone).toHaveAttribute("data-drag-active", "true");
+  await pdfDropzone.evaluate((element) => {
+    element.dispatchEvent(new DragEvent("dragleave", { bubbles: true }));
+  });
+  await expect(pdfDropzone).toHaveAttribute("data-drag-active", "false");
   await page
     .getByRole("button", { name: "Create blank resume" })
     .click();
@@ -428,16 +558,18 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     const choice = templateChoice(templateId);
     if (!(await choice.isChecked())) await choice.check();
   }
-  const fontControl = designControls.getByRole("combobox", {
-    name: "Font",
-  });
-  const paletteControl = designControls.getByRole("combobox", {
-    name: "Palette",
-  });
+  const fontChoice = (fontFamily) =>
+    designControls.locator(
+      `input[name="resume-font"][value="${fontFamily}"]`,
+    );
+  const paletteChoice = (colorPaletteId) =>
+    designControls.locator(
+      `input[name="resume-palette"][value="${colorPaletteId}"]`,
+    );
   async function saveDesignSelection(templateId, fontFamily, colorPaletteId) {
     await selectTemplate(templateId);
-    await fontControl.selectOption(fontFamily);
-    await paletteControl.selectOption(colorPaletteId);
+    await fontChoice(fontFamily).check();
+    await paletteChoice(colorPaletteId).check();
     const saveButton = designControls.getByRole("button", {
       name: "Save design",
     });
@@ -466,14 +598,14 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     ]);
   }
   await expect(templateChoice("ats-classic")).toBeChecked();
-  await expect(designControls.getByRole("radio")).toHaveCount(3);
-  await expect(fontControl).toHaveValue("Inter");
-  await expect(paletteControl).toHaveValue("slate");
+  await expect(designControls.getByRole("radio")).toHaveCount(9);
+  await expect(fontChoice("Inter")).toBeChecked();
+  await expect(paletteChoice("slate")).toBeChecked();
   const canonicalFactsBeforeDesign = await readStoredResumeFacts(user, title);
 
   await selectTemplate("modern-professional");
-  await fontControl.selectOption("Arial");
-  await paletteControl.selectOption("forest");
+  await fontChoice("Arial").check();
+  await paletteChoice("forest").check();
   const livePreview = page.getByLabel("Resume preview");
   await expect(livePreview).toHaveAttribute(
     "data-template",
@@ -482,6 +614,11 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   await expect(livePreview).toHaveClass(/resume-font-arial/);
   await expect(livePreview).toHaveClass(/resume-palette-forest/);
   await expect(page.getByText("Unsaved changes", { exact: true })).toHaveCount(0);
+  if (testInfo.project.name === "desktop") {
+    await designControls.screenshot({
+      path: `${captureRoot}/legacy-port-template-gallery.png`,
+    });
+  }
 
   await page.route(
     "**/api/v1/resumes/*/design",
@@ -515,8 +652,8 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   ).toHaveAttribute("data-template", "ats-classic");
 
   await selectTemplate("compact-technical");
-  await fontControl.selectOption("Georgia");
-  await paletteControl.selectOption("navy");
+  await fontChoice("Georgia").check();
+  await paletteChoice("navy").check();
   const designRequestPromise = page.waitForRequest(
     (request) =>
       request.url().endsWith("/design") &&
@@ -544,8 +681,8 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     await page.reload();
     await expect(page.getByRole("heading", { name: title })).toBeVisible();
     await expect(templateChoice("compact-technical")).toBeChecked();
-    await expect(fontControl).toHaveValue("Georgia");
-    await expect(paletteControl).toHaveValue("navy");
+    await expect(fontChoice("Georgia")).toBeChecked();
+    await expect(paletteChoice("navy")).toBeChecked();
     await expect(paperSize).toHaveValue("A4");
     await expect(page.getByLabel("Full name")).toHaveValue(
       "Phase Fourteen Candidate",
@@ -600,8 +737,8 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
       designControls.locator('input[name="resume-template"]:checked'),
     ).toHaveCount(0);
     await selectTemplate("ats-classic");
-    await fontControl.selectOption("Inter");
-    await paletteControl.selectOption("slate");
+    await fontChoice("Inter").check();
+    await paletteChoice("slate").check();
     await designControls.getByRole("button", { name: "Save design" }).click();
     await expect(
       designControls.getByText("Resume design saved."),
@@ -999,14 +1136,19 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
       await page.setViewportSize(viewport);
       await expect(designControls).toBeVisible();
       await expect(templateChoice("ats-classic")).toBeVisible();
-      await expect(fontControl).toBeVisible();
-      await expect(paletteControl).toBeVisible();
+      await expect(fontChoice("Inter")).toBeVisible();
+      await expect(paletteChoice("slate")).toBeVisible();
       await expect(page.getByLabel("Resume preview")).toBeVisible();
       await expect(printControls).toBeVisible();
       await expect(
         page.getByRole("navigation", { name: "Breadcrumb" }),
       ).toBeVisible();
       await expect(recommendations).toBeVisible();
+      if (viewport.width === 390) {
+        await designControls.screenshot({
+          path: `${captureRoot}/legacy-port-design-mobile.png`,
+        });
+      }
       await phase14.expectPageHealth(page);
     }
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -1026,4 +1168,64 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     page.getByRole("heading", { name: "Unified dashboard" }),
   ).toBeVisible();
   await phase14.expectPageHealth(page);
+
+  await seedResumeListCards(user);
+  await phase14.navigate(page, "Resumes");
+  const resumeCards = page.locator(".resume-record-card");
+  await expect(resumeCards).toHaveCount(3);
+  await expect(
+    page.getByText(
+      "Synthetic Principal Platform Engineering Resume for International Product Teams",
+    ),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-resume-card-preview="ats-classic"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('[data-resume-card-preview="modern-professional"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('[data-resume-card-preview="compact-technical"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole("region", { name: "Your resumes" }),
+  ).not.toContainText(
+    /ATS score|recruiter|application views|job outcomes|analysis count/i,
+  );
+  await phase14.expectPageHealth(page);
+
+  if (testInfo.project.name === "desktop") {
+    const listViewports = [
+      { width: 1920, height: 1080 },
+      { width: 1440, height: 900 },
+      { width: 1024, height: 768 },
+      { width: 768, height: 1024 },
+      { width: 390, height: 844 },
+      { width: 320, height: 720 },
+    ];
+    for (const viewport of listViewports) {
+      await page.setViewportSize(viewport);
+      await expect(resumeCards).toHaveCount(3);
+      await expect(pdfDropzone).toBeVisible();
+      await phase14.expectPageHealth(page);
+      if (viewport.width === 1920) {
+        await page.waitForTimeout(350);
+        await page.screenshot({
+          path: `${captureRoot}/legacy-port-resume-list-desktop.png`,
+          fullPage: true,
+        });
+      }
+    }
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect
+      .poll(() =>
+        resumeCards
+          .first()
+          .evaluate((element) => getComputedStyle(element).animationName),
+      )
+      .toBe("none");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.setViewportSize({ width: 1440, height: 900 });
+  }
 });

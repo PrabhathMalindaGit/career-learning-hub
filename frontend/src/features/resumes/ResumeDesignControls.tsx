@@ -13,6 +13,7 @@ import {
   RESUME_TEMPLATES,
   type ResumePresentationSelection,
 } from "./resumeTemplateRegistry";
+import { ResumeMiniDocument } from "./ResumeMiniDocument";
 
 interface ResumeDesignStatus {
   readonly tone: "success" | "error";
@@ -152,17 +153,12 @@ export function ResumeDesignControls({
                       }}
                     />
                     <span className="resume-template-card-content">
-                      <span
-                        className="resume-template-card-preview"
-                        data-template-preview={option.id}
-                        aria-hidden="true"
-                      >
-                        <span className="resume-template-card-preview-heading" />
-                        <span className="resume-template-card-preview-rule" />
-                        <span />
-                        <span />
-                        <span />
-                      </span>
+                      <ResumeMiniDocument
+                        templateId={option.id}
+                        colorPaletteId={draft.colorPaletteId}
+                        fontFamily={draft.fontFamily}
+                        context="template"
+                      />
                       <span className="resume-template-card-heading">
                         <strong>{option.label}</strong>
                         {selected ? (
@@ -181,58 +177,111 @@ export function ResumeDesignControls({
             </div>
           </fieldset>
 
-          <label>
-            <span>Font</span>
-            <select
-              value={draft.fontFamily}
-              disabled={saving}
-              onChange={(event) => {
-                const fontFamily = event.currentTarget.value;
-                if (fontFamily === "" || isResumeFontFamily(fontFamily)) {
-                  updateDraft({ ...draft, fontFamily });
-                }
-              }}
-            >
-              {canonical.fontFamily === "" ? (
-                <option value="" disabled>
-                  Saved choice unavailable
-                </option>
-              ) : null}
-              {RESUME_FONTS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <fieldset className="resume-design-choice-group">
+            <legend>Font</legend>
+            <div className="resume-font-card-grid">
+              {RESUME_FONTS.map((option) => {
+                const selected = draft.fontFamily === option.value;
+                return (
+                  <label
+                    className={`resume-choice-card resume-font-card${
+                      selected ? " resume-choice-card--selected" : ""
+                    }`}
+                    key={option.value}
+                  >
+                    <input
+                      type="radio"
+                      name="resume-font"
+                      value={option.value}
+                      checked={selected}
+                      disabled={saving}
+                      onChange={(event) => {
+                        const fontFamily = event.currentTarget.value;
+                        if (isResumeFontFamily(fontFamily)) {
+                          updateDraft({ ...draft, fontFamily });
+                        }
+                      }}
+                    />
+                    <span className="resume-choice-card-content">
+                      <span
+                        className="resume-font-card-preview"
+                        data-font-preview={option.value}
+                        style={{ fontFamily: option.stack }}
+                        aria-hidden="true"
+                      >
+                        Shape the work. Show the impact.
+                      </span>
+                      <span className="resume-choice-card-heading">
+                        <strong>{option.value}</strong>
+                        {selected ? (
+                          <span className="resume-template-card-selected">
+                            Selected
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="resume-choice-card-description">
+                        {option.label}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
 
-          <label>
-            <span>Palette</span>
-            <select
-              value={draft.colorPaletteId}
-              disabled={saving}
-              onChange={(event) => {
-                const colorPaletteId = event.currentTarget.value;
-                if (
-                  colorPaletteId === "" ||
-                  isResumePaletteId(colorPaletteId)
-                ) {
-                  updateDraft({ ...draft, colorPaletteId });
-                }
-              }}
-            >
-              {canonical.colorPaletteId === "" ? (
-                <option value="" disabled>
-                  Saved choice unavailable
-                </option>
-              ) : null}
-              {RESUME_PALETTES.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <fieldset className="resume-design-choice-group">
+            <legend>Palette</legend>
+            <div className="resume-palette-card-grid">
+              {RESUME_PALETTES.map((option) => {
+                const selected = draft.colorPaletteId === option.id;
+                return (
+                  <label
+                    className={`resume-choice-card resume-palette-card${
+                      selected ? " resume-choice-card--selected" : ""
+                    }`}
+                    key={option.id}
+                  >
+                    <input
+                      type="radio"
+                      name="resume-palette"
+                      value={option.id}
+                      checked={selected}
+                      disabled={saving}
+                      onChange={(event) => {
+                        const colorPaletteId = event.currentTarget.value;
+                        if (isResumePaletteId(colorPaletteId)) {
+                          updateDraft({ ...draft, colorPaletteId });
+                        }
+                      }}
+                    />
+                    <span className="resume-choice-card-content">
+                      <span
+                        className={`resume-palette-card-preview ${option.className}`}
+                        data-palette-preview={option.id}
+                        aria-hidden="true"
+                      >
+                        <span className="resume-palette-card-heading">Aa</span>
+                        <span className="resume-palette-card-body" />
+                        <span className="resume-palette-card-body resume-palette-card-body--short" />
+                        <span className="resume-palette-card-accent" />
+                      </span>
+                      <span className="resume-choice-card-heading">
+                        <strong>{option.label}</strong>
+                        {selected ? (
+                          <span className="resume-template-card-selected">
+                            Selected
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="resume-choice-card-description">
+                        Heading, body, and accent roles
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
         </div>
 
         <p className="resume-design-history-note">

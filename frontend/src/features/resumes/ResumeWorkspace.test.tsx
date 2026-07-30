@@ -449,13 +449,11 @@ describe("ResumeWorkspace", () => {
     await user.click(
       screen.getByRole("radio", { name: /Modern Professional/i }),
     );
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Font" }),
-      "Georgia",
+    await user.click(
+      screen.getByRole("radio", { name: /Georgia/i }),
     );
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Palette" }),
-      "navy",
+    await user.click(
+      screen.getByRole("radio", { name: /Navy/i }),
     );
 
     const draftPreview = screen.getByLabelText("Resume preview");
@@ -550,9 +548,8 @@ describe("ResumeWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     await screen.findByLabelText("Full name");
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Palette" }),
-      "forest",
+    await user.click(
+      screen.getByRole("radio", { name: /Forest/i }),
     );
     await user.click(screen.getByRole("button", { name: "Save design" }));
 

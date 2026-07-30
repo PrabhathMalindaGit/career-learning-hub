@@ -164,6 +164,10 @@ describe("ResumeListPage", () => {
 
     renderPage();
     expect(screen.getByRole("status").textContent).toMatch(/loading/i);
+    expect(document.querySelectorAll(".resume-skeleton-card")).toHaveLength(3);
+    expect(document.body.textContent).not.toMatch(
+      /score|recruiter|application views|progress/i,
+    );
 
     resolveList?.({
       resumes: [],
@@ -184,7 +188,22 @@ describe("ResumeListPage", () => {
     const router = renderPage();
 
     await screen.findByText("Synthetic Platform Resume");
+    expect(screen.getByText("ATS Classic")).not.toBeNull();
+    expect(screen.getByText("Slate palette")).not.toBeNull();
+    expect(screen.getByText("Version 1")).not.toBeNull();
+    expect(screen.getByText("Draft")).not.toBeNull();
+    expect(
+      document.querySelector('[data-resume-card-preview="ats-classic"]'),
+    ).not.toBeNull();
     expect(screen.queryByText("Synthetic Candidate")).toBeNull();
+    expect(document.body.textContent).not.toContain(resumeId);
+    expect(document.body.textContent).not.toContain(versionId);
+    expect(document.body.textContent).not.toMatch(
+      /ats score|recruiter|application views|job outcomes|analysis count/i,
+    );
+    expect(document.body.textContent).not.toMatch(
+      /ai resume analyser|resume builder/i,
+    );
     await userEvent.click(
       screen.getByRole("link", { name: /open synthetic platform resume/i }),
     );
@@ -320,6 +339,55 @@ describe("ResumeListPage", () => {
     expect(file.getAttribute("aria-describedby")).toContain(fileError.id);
     expect(document.activeElement).toBe(summary);
     expect(resumeApi.importResumePdf).not.toHaveBeenCalled();
+  });
+
+  it("offers a keyboard-operable private PDF dropzone", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await screen.findByText(
+      "No resumes yet. Create a blank resume or import a private PDF.",
+    );
+    const input = screen.getByLabelText("Private PDF");
+    const openPicker = screen.getByRole("button", {
+      name: "Choose a private PDF",
+    });
+    const click = vi.spyOn(input as HTMLInputElement, "click");
+
+    openPicker.focus();
+    await user.keyboard("{Enter}");
+
+    expect(openPicker).toBe(document.activeElement);
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("group", { name: "Private PDF dropzone" }),
+    ).not.toBeNull();
+    expect(screen.getByText(/PDF only · maximum 15 MB/i)).not.toBeNull();
+    expect(screen.getByText(/processed privately/i)).not.toBeNull();
+  });
+
+  it("shows drag-over feedback and accepts a dropped PDF selection", async () => {
+    renderPage();
+    await screen.findByText(
+      "No resumes yet. Create a blank resume or import a private PDF.",
+    );
+    const dropzone = screen.getByRole("group", {
+      name: "Private PDF dropzone",
+    });
+    const file = new File(["%PDF-synthetic"], "dropped-synthetic.pdf", {
+      type: "application/pdf",
+    });
+
+    fireEvent.dragEnter(dropzone, {
+      dataTransfer: { files: [file], types: ["Files"] },
+    });
+    expect(dropzone.getAttribute("data-drag-active")).toBe("true");
+
+    fireEvent.drop(dropzone, {
+      dataTransfer: { files: [file], types: ["Files"] },
+    });
+    expect(dropzone.getAttribute("data-drag-active")).toBe("false");
+    expect(screen.getByText("dropped-synthetic.pdf")).not.toBeNull();
+    expect(screen.getByText("14 B")).not.toBeNull();
   });
 
   it("navigates only after a validated create response", async () => {
