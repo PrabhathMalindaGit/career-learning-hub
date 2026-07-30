@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ResumeDesignControls } from "./ResumeDesignControls";
 import type { ResumeDesign } from "./types";
 
@@ -28,15 +28,54 @@ function renderControls(
   return { ...result, props };
 }
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("ResumeDesignControls", () => {
-  it("renders native labelled bounded controls with the canonical saved selections", () => {
+  it("renders exactly three registry-backed template cards and the bounded controls", () => {
     renderControls();
 
     expect(screen.getByRole("group", { name: "Resume design" })).not.toBeNull();
+    const templateChoices = screen.getAllByRole("radio");
+    expect(templateChoices).toHaveLength(3);
+    expect(templateChoices.map((choice) => choice.getAttribute("value"))).toEqual([
+      "ats-classic",
+      "modern-professional",
+      "compact-technical",
+    ]);
     expect(
-      (screen.getByRole("combobox", { name: "Template" }) as HTMLSelectElement)
-        .value,
-    ).toBe("ats-classic");
+      (screen.getByRole("radio", {
+        name: /ATS Classic/i,
+      }) as HTMLInputElement).checked,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("radio", {
+        name: /Modern Professional/i,
+      }) as HTMLInputElement).checked,
+    ).toBe(false);
+    expect(
+      (screen.getByRole("radio", {
+        name: /Compact Technical/i,
+      }) as HTMLInputElement).checked,
+    ).toBe(false);
+    expect(
+      screen.getByText(
+        "A familiar single-column structure with clear section hierarchy.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(
+        "A restrained single-column layout with stronger visual dividers.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(
+        "A denser single-column layout for detailed technical experience.",
+      ),
+    ).not.toBeNull();
+    expect(document.querySelectorAll("[data-template-preview]")).toHaveLength(3);
+    expect(screen.getByText("Selected")).not.toBeNull();
     expect(
       (screen.getByRole("combobox", { name: "Font" }) as HTMLSelectElement)
         .value,
@@ -45,8 +84,6 @@ describe("ResumeDesignControls", () => {
       (screen.getByRole("combobox", { name: "Palette" }) as HTMLSelectElement)
         .value,
     ).toBe("slate");
-    expect(screen.getByRole("option", { name: "Modern Professional" })).not.toBeNull();
-    expect(screen.getByRole("option", { name: "Compact Technical" })).not.toBeNull();
     expect(screen.getByRole("option", { name: "Arial / sans-serif" })).not.toBeNull();
     expect(screen.getByRole("option", { name: "Georgia / serif" })).not.toBeNull();
     expect(screen.getByRole("option", { name: "Forest" })).not.toBeNull();
@@ -77,6 +114,9 @@ describe("ResumeDesignControls", () => {
     expect(document.body.textContent).not.toContain("unknown-font");
     expect(onSave).not.toHaveBeenCalled();
     expect(onPreviewChange).not.toHaveBeenCalled();
+    expect(screen.getAllByRole("radio").every((choice) =>
+      !(choice as HTMLInputElement).checked
+    )).toBe(true);
     expect(
       (screen.getByRole("button", {
         name: "Save design",
@@ -99,9 +139,8 @@ describe("ResumeDesignControls", () => {
     });
     const user = userEvent.setup();
 
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Template" }),
-      "modern-professional",
+    await user.click(
+      screen.getByRole("radio", { name: /Modern Professional/i }),
     );
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Font" }),
@@ -132,9 +171,8 @@ describe("ResumeDesignControls", () => {
     const { props } = renderControls({ onPreviewChange });
     const user = userEvent.setup();
 
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Template" }),
-      "compact-technical",
+    await user.click(
+      screen.getByRole("radio", { name: /Compact Technical/i }),
     );
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Font" }),
@@ -148,9 +186,10 @@ describe("ResumeDesignControls", () => {
       colorPaletteId: "slate",
     });
     expect(
-      (screen.getByRole("combobox", { name: "Template" }) as HTMLSelectElement)
-        .value,
-    ).toBe("ats-classic");
+      (screen.getByRole("radio", {
+        name: /ATS Classic/i,
+      }) as HTMLInputElement).checked,
+    ).toBe(true);
     expect(
       (screen.getByRole("button", {
         name: "Save design",
@@ -171,9 +210,12 @@ describe("ResumeDesignControls", () => {
     );
 
     expect(screen.getByText("Saving resume design…")).not.toBeNull();
-    expect(screen.getAllByRole("combobox").every((control) =>
-      (control as HTMLSelectElement).disabled
-    )).toBe(true);
+    expect(
+      [...screen.getAllByRole("radio"), ...screen.getAllByRole("combobox")]
+        .every((control) =>
+          (control as HTMLInputElement | HTMLSelectElement).disabled
+        ),
+    ).toBe(true);
 
     rerender(
       <ResumeDesignControls
@@ -201,5 +243,28 @@ describe("ResumeDesignControls", () => {
       screen.getByText(/historical saved content uses this current design/i),
     ).not.toBeNull();
     expect(screen.getByText(/not saved with each version/i)).not.toBeNull();
+  });
+
+  it("uses native radio keyboard behavior to keep one template selected", async () => {
+    vi.stubGlobal("CSS", { escape: (value: string) => value });
+    const onPreviewChange = vi.fn();
+    renderControls({ onPreviewChange });
+    const user = userEvent.setup();
+    const atsClassic = screen.getByRole("radio", { name: /ATS Classic/i });
+
+    atsClassic.focus();
+    await user.keyboard("{ArrowRight}");
+
+    expect(
+      (screen.getByRole("radio", {
+        name: /Modern Professional/i,
+      }) as HTMLInputElement).checked,
+    ).toBe(true);
+    expect((atsClassic as HTMLInputElement).checked).toBe(false);
+    expect(onPreviewChange).toHaveBeenLastCalledWith({
+      templateId: "modern-professional",
+      fontFamily: "Inter",
+      colorPaletteId: "slate",
+    });
   });
 });

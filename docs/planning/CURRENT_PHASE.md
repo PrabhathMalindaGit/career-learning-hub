@@ -3,15 +3,15 @@
 - Phase: 18
 - Name: Staging Deployment
 - Status:
-  ACTIVE — UI-B2 DASHBOARD AND SETTINGS REFINEMENT COMPLETED /
+  ACTIVE — UI-R1 RESUME NAVIGATION AND TEMPLATE DISCOVERY COMPLETED /
   HUMAN-APPROVED; PHASE 18B PLANNED / INACTIVE
 - Most recently completed UI task:
-  UI-B2 — Dashboard Quick-Start Actions and Settings Visual Refinement
-- UI-B2 status: COMPLETED / HUMAN-APPROVED
-- Accepted UI-B2 visual approval token:
-  `UI_B2_DASHBOARD_SETTINGS_VISUAL_APPROVED`
-- UI-B2 visual approval token accepted: `YES`
-- Next planned UI task: UI-R1
+  UI-R1 — Resume Editor Navigation and Template Discovery
+- UI-R1 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-R1 visual approval token:
+  `PHASE_18A_UI_R1_RESUME_NAVIGATION_TEMPLATES_VISUAL_APPROVED`
+- UI-R1 visual approval token accepted: `YES`
+- Next planned UI task: UI-I1
 - Most recently completed repair:
   B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
 - Repair status: COMPLETED / APPROVED
@@ -33,7 +33,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -293,6 +293,35 @@
   authorizes no push, merge, deployment, DNS, cloud-resource, secret, UI-R1,
   UI-I1, or Phase 18B action.
 
+## Phase 18 UI-R1 Resume navigation and template discovery
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-R1-RESUME-NAVIGATION-TEMPLATES-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-R1-CLOSEOUT-01`.
+- UI-R1 is `COMPLETED / HUMAN-APPROVED`.
+- The Resume editor provides nine accessible direct section links for
+  **Basics**, **Links**, **Experience**, **Education**, **Skills**,
+  **Projects**, **Certifications**, **Languages**, and **Interests**.
+- The three existing Resume templates — **ATS Classic**,
+  **Modern Professional**, and **Compact Technical** — are available as
+  visual radio-card choices using the existing template registry and IDs.
+- The Resume editor and Live preview use the approved stacked workspace
+  layout, with the complete editor before the non-sticky Live preview.
+- Human and automated review passed at native Chrome 200% zoom and at desktop,
+  tablet, and mobile viewport sizes.
+- Accepted visual approval token:
+  `PHASE_18A_UI_R1_RESUME_NAVIGATION_TEMPLATES_VISUAL_APPROVED`; accepted:
+  `YES`.
+- UI-I1 is the next planned UI refinement phase and remains inactive pending
+  separate authorization.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- This closeout authorizes one bounded local commit containing only the
+  approved UI-R1 implementation, tests, and this minimum tracking update. It
+  authorizes no push, merge, deployment, DNS, cloud-resource, secret, UI-I1,
+  or Phase 18B action.
+
 ## Phase 17 security-enabled continuation start
 
 - Continuation branch: `phase-12-unified-frontend`.
@@ -422,7 +451,9 @@
   human-approved UI-B1 logo and brand foundation.
 - Preserve the completed and human-approved UI-B2 Dashboard and Settings
   refinement.
-- Keep UI-R1 planned and inactive until separate authorization without
+- Preserve the completed and human-approved UI-R1 Resume navigation,
+  template discovery, and stacked workspace refinement.
+- Keep UI-I1 planned and inactive until separate authorization without
   activating Phase 18B.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
   unresolved P15-001 restrictions, all existing security/privacy controls,
@@ -478,7 +509,9 @@
 - UI-B1 — Logo and Brand Foundation is `COMPLETED / HUMAN-APPROVED`.
 - UI-B2 — Dashboard Quick-Start Actions and Settings Visual Refinement is
   `COMPLETED / HUMAN-APPROVED`.
-- UI-R1 is `PLANNED / INACTIVE` and requires separate authorization.
+- UI-R1 — Resume Editor Navigation and Template Discovery is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-I1 is `PLANNED / INACTIVE` and requires separate authorization.
 - Phase 18B is
   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
 - Phase 19 remains `PLANNED` / `INACTIVE`.

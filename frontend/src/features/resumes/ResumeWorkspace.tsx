@@ -131,7 +131,12 @@ export function ResumeWorkspace() {
   const dirty =
     draft !== undefined &&
     draftFingerprint(draft) !== baselineFingerprint;
-  const blocker = useBlocker(dirty);
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      dirty &&
+      (currentLocation.pathname !== nextLocation.pathname ||
+        currentLocation.search !== nextLocation.search),
+  );
 
   function beginOperation(): AbortController {
     const controller = new AbortController();

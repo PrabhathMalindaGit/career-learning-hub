@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { createDraftEntity } from "./resumeDraft";
 import type {
   DraftBullet,
@@ -9,6 +11,30 @@ interface ResumeEditorProps {
   draft: ResumeDraft;
   onChange(draft: ResumeDraft): void;
   disabled?: boolean;
+}
+
+const RESUME_EDITOR_SECTIONS = [
+  { id: "resume-section-basics", label: "Basics" },
+  { id: "resume-section-links", label: "Links" },
+  { id: "resume-section-experience", label: "Experience" },
+  { id: "resume-section-education", label: "Education" },
+  { id: "resume-section-skills", label: "Skills" },
+  { id: "resume-section-projects", label: "Projects" },
+  { id: "resume-section-certifications", label: "Certifications" },
+  { id: "resume-section-languages", label: "Languages" },
+  { id: "resume-section-interests", label: "Interests" },
+] as const;
+
+function focusResumeSection(sectionId: string) {
+  window.requestAnimationFrame(() => {
+    const section = document.getElementById(sectionId);
+    if (typeof section?.scrollIntoView === "function") {
+      section.scrollIntoView({ block: "start" });
+    }
+    document
+      .getElementById(`${sectionId}-heading`)
+      ?.focus({ preventScroll: true });
+  });
 }
 
 function splitList(value: string): string[] {
@@ -64,12 +90,14 @@ function MoveButtons({
 }
 
 function SectionHeading({
+  headingId,
   title,
   description,
   addLabel,
   onAdd,
   disabled,
 }: {
+  headingId: string;
   title: string;
   description: string;
   addLabel: string;
@@ -79,7 +107,7 @@ function SectionHeading({
   return (
     <header className="resume-editor-section-heading">
       <div>
-        <h3>{title}</h3>
+        <h3 id={headingId} tabIndex={-1}>{title}</h3>
         <p>{description}</p>
       </div>
       <button type="button" disabled={disabled} onClick={onAdd}>
@@ -125,8 +153,29 @@ export function ResumeEditor({
         <span className="resume-status">Canonical fields</span>
       </header>
 
-      <section className="resume-editor-section">
-        <h3>Basics</h3>
+      <nav className="resume-section-navigation" aria-label="Resume sections">
+        <ul>
+          {RESUME_EDITOR_SECTIONS.map((section) => (
+            <li key={section.id}>
+              <Link
+                to={`#${section.id}`}
+                onClick={() => focusResumeSection(section.id)}
+              >
+                {section.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <section
+        id="resume-section-basics"
+        className="resume-editor-section"
+        aria-labelledby="resume-section-basics-heading"
+      >
+        <h3 id="resume-section-basics-heading" tabIndex={-1}>
+          Basics
+        </h3>
         <div className="resume-form-grid">
           <label>
             Full name
@@ -211,8 +260,13 @@ export function ResumeEditor({
         </div>
       </section>
 
-      <section className="resume-editor-section">
+      <section
+        id="resume-section-links"
+        className="resume-editor-section"
+        aria-labelledby="resume-section-links-heading"
+      >
         <SectionHeading
+          headingId="resume-section-links-heading"
           title="Links"
           description="Add labelled public links that belong on the resume."
           addLabel="Add link"
@@ -272,8 +326,13 @@ export function ResumeEditor({
         )}
       </section>
 
-      <section className="resume-editor-section">
+      <section
+        id="resume-section-experience"
+        className="resume-editor-section"
+        aria-labelledby="resume-section-experience-heading"
+      >
         <SectionHeading
+          headingId="resume-section-experience-heading"
           title="Experience"
           description="Keep each role and its evidence-bearing bullets separate."
           addLabel="Add experience"
@@ -409,8 +468,13 @@ export function ResumeEditor({
         )}
       </section>
 
-      <section className="resume-editor-section">
+      <section
+        id="resume-section-education"
+        className="resume-editor-section"
+        aria-labelledby="resume-section-education-heading"
+      >
         <SectionHeading
+          headingId="resume-section-education-heading"
           title="Education"
           description="Record qualifications and supporting details."
           addLabel="Add education"
@@ -546,8 +610,13 @@ export function ResumeEditor({
         )}
       </section>
 
-      <section className="resume-editor-section">
+      <section
+        id="resume-section-skills"
+        className="resume-editor-section"
+        aria-labelledby="resume-section-skills-heading"
+      >
         <SectionHeading
+          headingId="resume-section-skills-heading"
           title="Skills"
           description="Group related keywords for scanning."
           addLabel="Add skill group"
@@ -611,8 +680,13 @@ export function ResumeEditor({
         )}
       </section>
 
-      <section className="resume-editor-section">
+      <section
+        id="resume-section-projects"
+        className="resume-editor-section"
+        aria-labelledby="resume-section-projects-heading"
+      >
         <SectionHeading
+          headingId="resume-section-projects-heading"
           title="Projects"
           description="Describe selected work, technologies, links, and evidence."
           addLabel="Add project"
@@ -819,8 +893,13 @@ export function ResumeEditor({
         )}
       </section>
 
-      <section className="resume-editor-section">
+      <section
+        id="resume-section-certifications"
+        className="resume-editor-section"
+        aria-labelledby="resume-section-certifications-heading"
+      >
         <SectionHeading
+          headingId="resume-section-certifications-heading"
           title="Certifications"
           description="Record verified credentials and optional public URLs."
           addLabel="Add certification"
@@ -886,8 +965,13 @@ export function ResumeEditor({
         )}
       </section>
 
-      <section className="resume-editor-section">
+      <section
+        id="resume-section-languages"
+        className="resume-editor-section"
+        aria-labelledby="resume-section-languages-heading"
+      >
         <SectionHeading
+          headingId="resume-section-languages-heading"
           title="Languages"
           description="Add languages and optional proficiency wording."
           addLabel="Add language"
@@ -951,8 +1035,13 @@ export function ResumeEditor({
         )}
       </section>
 
-      <section className="resume-editor-section">
+      <section
+        id="resume-section-interests"
+        className="resume-editor-section"
+        aria-labelledby="resume-section-interests-heading"
+      >
         <SectionHeading
+          headingId="resume-section-interests-heading"
           title="Interests"
           description="Use short, factual interests where they add context."
           addLabel="Add interest"

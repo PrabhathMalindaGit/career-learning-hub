@@ -126,30 +126,60 @@ export function ResumeDesignControls({
         ) : null}
 
         <div className="resume-design-grid">
-          <label>
-            <span>Template</span>
-            <select
-              value={draft.templateId}
-              disabled={saving}
-              onChange={(event) => {
-                const templateId = event.currentTarget.value;
-                if (templateId === "" || isResumeTemplateId(templateId)) {
-                  updateDraft({ ...draft, templateId });
-                }
-              }}
-            >
-              {canonical.templateId === "" ? (
-                <option value="" disabled>
-                  Saved choice unavailable
-                </option>
-              ) : null}
-              {RESUME_TEMPLATES.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <fieldset className="resume-template-choices">
+            <legend>Template</legend>
+            <div className="resume-template-card-grid">
+              {RESUME_TEMPLATES.map((option) => {
+                const selected = draft.templateId === option.id;
+                return (
+                  <label
+                    className={`resume-template-card${
+                      selected ? " resume-template-card--selected" : ""
+                    }`}
+                    key={option.id}
+                  >
+                    <input
+                      type="radio"
+                      name="resume-template"
+                      value={option.id}
+                      checked={selected}
+                      disabled={saving}
+                      onChange={(event) => {
+                        const templateId = event.currentTarget.value;
+                        if (isResumeTemplateId(templateId)) {
+                          updateDraft({ ...draft, templateId });
+                        }
+                      }}
+                    />
+                    <span className="resume-template-card-content">
+                      <span
+                        className="resume-template-card-preview"
+                        data-template-preview={option.id}
+                        aria-hidden="true"
+                      >
+                        <span className="resume-template-card-preview-heading" />
+                        <span className="resume-template-card-preview-rule" />
+                        <span />
+                        <span />
+                        <span />
+                      </span>
+                      <span className="resume-template-card-heading">
+                        <strong>{option.label}</strong>
+                        {selected ? (
+                          <span className="resume-template-card-selected">
+                            Selected
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="resume-template-card-description">
+                        {option.description}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
 
           <label>
             <span>Font</span>

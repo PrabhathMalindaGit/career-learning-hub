@@ -244,13 +244,163 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   await expect(breadcrumbs).toContainText(title);
   await expect(breadcrumbs).not.toContainText(/507f[0-9a-f]+/i);
 
+  const workspaceLayout = page.locator(".resume-workspace-grid");
+  const livePreviewPanel = page.getByRole("region", {
+    name: "Live preview",
+  });
+  const aiAssessmentPanel = page.getByRole("complementary", {
+    name: "AI-assisted assessment",
+  });
+  const versionHistoryPanel = page.getByRole("region", {
+    name: "Version history",
+  });
+  const applySuggestionsButton = aiAssessmentPanel.getByRole("button", {
+    name: "Apply selected suggestions",
+  });
+  const workspaceOrder = await workspaceLayout.evaluate((element) => {
+    const children = Array.from(element.children);
+    const aiPanel = children.at(3);
+    const history = document.querySelector(
+      '[aria-labelledby="resume-version-history-title"]',
+    );
+    const applyButton = aiPanel?.querySelector("button");
+    return {
+      labels: children.map((child) =>
+        child.getAttribute("aria-labelledby"),
+      ),
+      historyFollows:
+        aiPanel !== undefined &&
+        history !== null &&
+        Boolean(
+          aiPanel.compareDocumentPosition(history) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+      applyContained:
+        applyButton !== null &&
+        applyButton !== undefined &&
+        aiPanel?.contains(applyButton),
+    };
+  });
+  expect(workspaceOrder.labels).toEqual([
+    "resume-editor-title",
+    "resume-preview-title",
+    "resume-analysis-runner-title",
+    "resume-ai-title",
+  ]);
+  expect(workspaceOrder.historyFollows).toBe(true);
+  expect(workspaceOrder.applyContained).toBe(true);
+  await expect(versionHistoryPanel).toBeVisible();
+  await expect(applySuggestionsButton).toBeVisible();
+  expect(
+    await workspaceLayout.evaluate(
+      (element) =>
+        getComputedStyle(element).gridTemplateColumns.split(" ").length,
+    ),
+  ).toBe(1);
+  await expect
+    .poll(() =>
+      livePreviewPanel.evaluate(
+        (element) => getComputedStyle(element).position,
+      ),
+    )
+    .toBe("static");
+  const livePaperSizing = await livePreviewPanel
+    .locator(".resume-paper")
+    .evaluate((element) => {
+      const paper = element.getBoundingClientRect();
+      const panel = element.parentElement?.getBoundingClientRect();
+      return {
+        width: paper.width,
+        leftGap: panel ? paper.left - panel.left : 0,
+        rightGap: panel ? panel.right - paper.right : 0,
+      };
+    });
+  expect(livePaperSizing.width).toBeLessThanOrEqual(860);
+  expect(
+    Math.abs(livePaperSizing.leftGap - livePaperSizing.rightGap),
+  ).toBeLessThan(2);
+
+  const sectionNavigation = page.getByRole("navigation", {
+    name: "Resume sections",
+  });
+  const resumeSections = [
+    ["Basics", "resume-section-basics"],
+    ["Links", "resume-section-links"],
+    ["Experience", "resume-section-experience"],
+    ["Education", "resume-section-education"],
+    ["Skills", "resume-section-skills"],
+    ["Projects", "resume-section-projects"],
+    ["Certifications", "resume-section-certifications"],
+    ["Languages", "resume-section-languages"],
+    ["Interests", "resume-section-interests"],
+  ];
+  await expect(sectionNavigation.getByRole("link")).toHaveCount(9);
+  await expect
+    .poll(() =>
+      sectionNavigation.evaluate((element) => getComputedStyle(element).position),
+    )
+    .toBe(testInfo.project.name === "desktop" ? "sticky" : "static");
+  for (const [sectionName, sectionId] of resumeSections) {
+    const sectionLink = sectionNavigation.getByRole("link", {
+      name: sectionName,
+      exact: true,
+    });
+    await expect(sectionLink).toHaveAttribute(
+      "href",
+      new RegExp(`#${sectionId}$`),
+    );
+    await sectionLink.focus();
+    await page.keyboard.press("Enter");
+    await expect.poll(() => page.evaluate(() => location.hash)).toBe(
+      `#${sectionId}`,
+    );
+    await expect(
+      page.locator(`#${sectionId}`).getByRole("heading", {
+        name: sectionName,
+        exact: true,
+      }),
+    ).toBeInViewport();
+  }
+  await sectionNavigation
+    .getByRole("link", { name: "Basics", exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
+  await sectionNavigation
+    .getByRole("link", { name: "Certifications", exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
+  if (testInfo.project.name === "desktop") {
+    const sectionTop = await page
+      .locator("#resume-section-certifications")
+      .evaluate((element) => element.getBoundingClientRect().top);
+    const navigationBottom = await sectionNavigation.evaluate(
+      (element) => element.getBoundingClientRect().bottom,
+    );
+    expect(sectionTop).toBeGreaterThanOrEqual(navigationBottom);
+  }
+  await page.goBack();
+  await expect.poll(() => page.evaluate(() => location.hash)).toBe(
+    "#resume-section-basics",
+  );
+
+  const email = page.getByLabel("Email");
+  const saveVersion = page.getByRole("button", {
+    name: "Save new version",
+  });
+  await email.fill("invalid-address");
+  await saveVersion.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("alert")).toContainText(
+    "Email needs a valid address.",
+  );
+  await expect(saveVersion).toBeFocused();
+  await email.fill("");
+
   await page.getByLabel("Full name").fill("Phase Fourteen Candidate");
   await expect(
     page.getByText("Unsaved changes", { exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Save new version" })
-    .click();
+  await saveVersion.click();
   await expect(page.getByText("Version 2 saved", { exact: true })).toBeVisible();
   await expect(page.getByText("Version 1", { exact: true })).toBeVisible();
   const printControls = page.getByRole("region", {
@@ -270,9 +420,14 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   const designControls = page.getByRole("region", {
     name: "Resume design controls",
   });
-  const templateControl = designControls.getByRole("combobox", {
-    name: "Template",
-  });
+  const templateChoice = (templateId) =>
+    designControls.locator(
+      `input[name="resume-template"][value="${templateId}"]`,
+    );
+  async function selectTemplate(templateId) {
+    const choice = templateChoice(templateId);
+    if (!(await choice.isChecked())) await choice.check();
+  }
   const fontControl = designControls.getByRole("combobox", {
     name: "Font",
   });
@@ -280,7 +435,7 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     name: "Palette",
   });
   async function saveDesignSelection(templateId, fontFamily, colorPaletteId) {
-    await templateControl.selectOption(templateId);
+    await selectTemplate(templateId);
     await fontControl.selectOption(fontFamily);
     await paletteControl.selectOption(colorPaletteId);
     const saveButton = designControls.getByRole("button", {
@@ -310,12 +465,13 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
       paperSize.selectOption(pageSize),
     ]);
   }
-  await expect(templateControl).toHaveValue("ats-classic");
+  await expect(templateChoice("ats-classic")).toBeChecked();
+  await expect(designControls.getByRole("radio")).toHaveCount(3);
   await expect(fontControl).toHaveValue("Inter");
   await expect(paletteControl).toHaveValue("slate");
   const canonicalFactsBeforeDesign = await readStoredResumeFacts(user, title);
 
-  await templateControl.selectOption("modern-professional");
+  await selectTemplate("modern-professional");
   await fontControl.selectOption("Arial");
   await paletteControl.selectOption("forest");
   const livePreview = page.getByLabel("Resume preview");
@@ -358,7 +514,7 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
       .locator(".resume-paper"),
   ).toHaveAttribute("data-template", "ats-classic");
 
-  await templateControl.selectOption("compact-technical");
+  await selectTemplate("compact-technical");
   await fontControl.selectOption("Georgia");
   await paletteControl.selectOption("navy");
   const designRequestPromise = page.waitForRequest(
@@ -387,7 +543,7 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   if (testInfo.project.name === "desktop") {
     await page.reload();
     await expect(page.getByRole("heading", { name: title })).toBeVisible();
-    await expect(templateControl).toHaveValue("compact-technical");
+    await expect(templateChoice("compact-technical")).toBeChecked();
     await expect(fontControl).toHaveValue("Georgia");
     await expect(paletteControl).toHaveValue("navy");
     await expect(paperSize).toHaveValue("A4");
@@ -436,12 +592,14 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     expect(await livePreview.getAttribute("style")).toBeNull();
     expect(designPatchBodies.length).toBe(patchesBeforeUnknownRemount);
 
-    await templateControl.selectOption("modern-professional");
+    await selectTemplate("modern-professional");
     await designControls
       .getByRole("button", { name: "Reset changes" })
       .click();
-    await expect(templateControl).toHaveValue("");
-    await templateControl.selectOption("ats-classic");
+    await expect(
+      designControls.locator('input[name="resume-template"]:checked'),
+    ).toHaveCount(0);
+    await selectTemplate("ats-classic");
     await fontControl.selectOption("Inter");
     await paletteControl.selectOption("slate");
     await designControls.getByRole("button", { name: "Save design" }).click();
@@ -816,10 +974,11 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   await phase14.expectPageHealth(page);
 
   if (testInfo.project.name === "desktop") {
-    await templateControl.focus();
-    await page.keyboard.press("c");
-    await expect(templateControl).toHaveValue("compact-technical");
-    const focusedOutline = await templateControl.evaluate(
+    await templateChoice("ats-classic").focus();
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowRight");
+    await expect(templateChoice("compact-technical")).toBeChecked();
+    const focusedOutline = await templateChoice("compact-technical").evaluate(
       (element) => getComputedStyle(element).outlineStyle,
     );
     expect(focusedOutline).not.toBe("none");
@@ -827,7 +986,7 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
       .getByRole("button", { name: "Reset changes" })
       .focus();
     await page.keyboard.press("Enter");
-    await expect(templateControl).toHaveValue("ats-classic");
+    await expect(templateChoice("ats-classic")).toBeChecked();
 
     const responsiveViewports = [
       { width: 1024, height: 768 },
@@ -839,7 +998,7 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     for (const viewport of responsiveViewports) {
       await page.setViewportSize(viewport);
       await expect(designControls).toBeVisible();
-      await expect(templateControl).toBeVisible();
+      await expect(templateChoice("ats-classic")).toBeVisible();
       await expect(fontControl).toBeVisible();
       await expect(paletteControl).toBeVisible();
       await expect(page.getByLabel("Resume preview")).toBeVisible();
