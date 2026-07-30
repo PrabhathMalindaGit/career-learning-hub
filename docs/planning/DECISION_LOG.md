@@ -289,3 +289,57 @@
     current Resume design contract.
   - Phase 16F measurements demonstrate that a different bounded performance
     repair is necessary.
+
+## DEC-013: Direct legacy frontend port and adaptation policy
+
+- Decision ID: `DEC-013`
+- Date: 2026-07-30
+- Status: ACCEPTED
+- Decision:
+  - The Resume Builder and AI Resume Analyser legacy frontends are approved
+    component and visual sources for Career Learning Hub.
+  - Relevant presentational code, layouts, CSS, microinteractions, animations,
+    visual hierarchy, and suitable assets may be directly ported or faithfully
+    recreated rather than merely used as inspiration.
+  - Ported frontend work must be adapted to:
+    - the current React and TypeScript architecture;
+    - current APIs and DTOs;
+    - current security and ownership controls;
+    - Career Learning Hub branding;
+    - responsive layouts;
+    - keyboard accessibility;
+    - reduced-motion preferences;
+    - native 200% zoom;
+    - equal or improved functionality.
+  - The following must not be copied:
+    - legacy authentication;
+    - legacy backend or database models;
+    - legacy API clients;
+    - legacy secrets or environment files;
+    - legacy provider configuration;
+    - old branding;
+    - fake testimonials;
+    - fake activity or statistics;
+    - unsupported ATS or employment guarantees;
+    - automatic application of AI changes.
+- Rationale:
+  - Directly reusing approved presentational patterns preserves the strongest
+    legacy visual work while the current architecture and contracts remain
+    authoritative.
+  - Explicit exclusions prevent obsolete branding, unsupported claims, and
+    legacy security or data boundaries from entering Career Learning Hub.
+- Consequences:
+  - UI-LR1 — Legacy Resume Visual Port is the first completed implementation
+    of this decision in commit
+    `011a36e423ad2432d2dc283c457015c644a9335f`.
+  - UI-LR1 was human-approved with
+    `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`.
+  - The implementation commit passed the read-only integrity audit with
+    `ACCEPTABLE_EXTERNAL_IMPLEMENTATION_COMMIT`; no history rewrite was
+    required.
+  - Future legacy UI ports remain separately scoped and require current
+    contract, accessibility, responsive, and human-review verification.
+- Revisit conditions:
+  - A separately accepted decision replaces this legacy frontend reuse policy.
+  - Current architecture, security, accessibility, or accuracy requirements
+    make a specific legacy presentational pattern unsuitable.

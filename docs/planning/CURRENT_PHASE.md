@@ -3,15 +3,22 @@
 - Phase: 18
 - Name: Staging Deployment
 - Status:
-  ACTIVE — UI-R1 RESUME NAVIGATION AND TEMPLATE DISCOVERY COMPLETED /
-  HUMAN-APPROVED; PHASE 18B PLANNED / INACTIVE
+  ACTIVE — UI-LR1 LEGACY RESUME VISUAL PORT COMPLETED / HUMAN-APPROVED;
+  UI-LR2 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE
 - Most recently completed UI task:
-  UI-R1 — Resume Editor Navigation and Template Discovery
-- UI-R1 status: COMPLETED / HUMAN-APPROVED
-- Accepted UI-R1 visual approval token:
-  `PHASE_18A_UI_R1_RESUME_NAVIGATION_TEMPLATES_VISUAL_APPROVED`
-- UI-R1 visual approval token accepted: `YES`
-- Next planned UI task: UI-I1
+  UI-LR1 — Legacy Resume Visual Port
+- UI-LR1 status: COMPLETED / HUMAN-APPROVED
+- UI-LR1 implementation commit:
+  `011a36e423ad2432d2dc283c457015c644a9335f`
+- UI-LR1 implementation commit subject:
+  `Improve application features and user experience`
+- UI-LR1 integrity decision: `ACCEPTABLE_EXTERNAL_IMPLEMENTATION_COMMIT`
+- Accepted UI-LR1 visual approval token:
+  `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`
+- UI-LR1 visual approval token accepted: `YES`
+- Next planned UI task: UI-LR2
+- UI-LR2 status: PLANNED / INACTIVE
+- UI-I1 status: PLANNED / INACTIVE
 - Most recently completed repair:
   B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
 - Repair status: COMPLETED / APPROVED
@@ -33,7 +40,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 PLANNED / INACTIVE; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -322,6 +329,45 @@
   authorizes no push, merge, deployment, DNS, cloud-resource, secret, UI-I1,
   or Phase 18B action.
 
+## Phase 18 UI-LR1 Legacy Resume Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-LR1-LEGACY-RESUME-VISUAL-PORT-01`.
+- Documentation closeout prompt ID:
+  `PHASE-18A-UI-LR1-DOCUMENTATION-CLOSEOUT-01`.
+- UI-LR1 is `COMPLETED / HUMAN-APPROVED`.
+- UI-LR1 implementation commit:
+  `011a36e423ad2432d2dc283c457015c644a9335f`
+  (`Improve application features and user experience`).
+- The implementation commit was externally created and pushed between review
+  turns. A read-only provenance and integrity audit returned
+  `ACCEPTABLE_EXTERNAL_IMPLEMENTATION_COMMIT`.
+- The implementation commit directly descends from
+  `c0e76410799d2e8319c37b52d186d0eac3ba823e`, contains exactly the approved
+  eight UI-LR1 implementation files, and requires no history rewrite.
+- UI-LR1 delivered:
+  - rich Resume summary cards;
+  - registry-derived miniature Resume previews;
+  - premium private-PDF upload and drag-and-drop presentation;
+  - visual template radio cards;
+  - visual font radio cards;
+  - visual palette radio cards;
+  - truthful loading and empty states;
+  - bounded microinteractions and reduced-motion handling;
+  - responsive and native Chrome 200% verification.
+- Current Resume DTOs, APIs, ownership, private storage, template IDs,
+  immutable versions, print behavior, and safety contracts were preserved.
+- No legacy backend, authentication, database model, API client, secret,
+  environment configuration, old branding, fake content, or unsupported
+  claim was imported.
+- Accepted visual approval token:
+  `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`; accepted: `YES`.
+- UI-LR2 — Resume Analysis Visual Port is the next planned UI task and remains
+  inactive pending separate authorization.
+- UI-I1 remains `PLANNED / INACTIVE`.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+
 ## Phase 17 security-enabled continuation start
 
 - Continuation branch: `phase-12-unified-frontend`.
@@ -453,8 +499,10 @@
   refinement.
 - Preserve the completed and human-approved UI-R1 Resume navigation,
   template discovery, and stacked workspace refinement.
-- Keep UI-I1 planned and inactive until separate authorization without
-  activating Phase 18B.
+- Preserve the completed and human-approved UI-LR1 Legacy Resume Visual Port.
+- Keep UI-LR2 as the next planned UI task and inactive until separate
+  authorization.
+- Keep UI-I1 planned and inactive without activating Phase 18B.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
   unresolved P15-001 restrictions, all existing security/privacy controls,
   and a synthetic-data-only staging policy.
@@ -511,6 +559,9 @@
   `COMPLETED / HUMAN-APPROVED`.
 - UI-R1 — Resume Editor Navigation and Template Discovery is
   `COMPLETED / HUMAN-APPROVED`.
+- UI-LR1 — Legacy Resume Visual Port is `COMPLETED / HUMAN-APPROVED`.
+- UI-LR2 — Resume Analysis Visual Port is `PLANNED / INACTIVE` and requires
+  separate authorization.
 - UI-I1 is `PLANNED / INACTIVE` and requires separate authorization.
 - Phase 18B is
   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
