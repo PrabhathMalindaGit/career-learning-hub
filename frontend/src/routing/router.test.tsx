@@ -493,7 +493,7 @@ describe("application routing", () => {
       "/learning/documents/507f1f77bcf86cd799439011/quizzes/507f1f77bcf86cd799439014/attempts/507f1f77bcf86cd799439015",
       "Connected quiz",
     ],
-    ["/settings", "Session settings"],
+    ["/settings", "Settings"],
   ])("matches protected target path %s", async (path, heading) => {
     vi.mocked(authApi.refreshSession).mockResolvedValue(
       authenticatedSession,
@@ -1054,7 +1054,7 @@ describe("authentication forms and shell interaction", () => {
     });
     expect(
       await screen.findByRole("heading", {
-        name: "Session settings",
+        name: "Settings",
       }),
     ).not.toBeNull();
   });

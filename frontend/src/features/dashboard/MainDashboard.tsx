@@ -3,7 +3,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
+import { Link } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { PageHeader } from "../../components/PageHeader";
 import { ActivityFeed } from "./ActivityFeed";
@@ -21,6 +23,27 @@ import { dashboardWindowDays } from "./types";
 import "./dashboard.css";
 
 const ACTIVITY_LIMIT = 10;
+
+const quickStartActions = [
+  {
+    label: "Create Resume",
+    description: "Build a focused resume in Resume Studio.",
+    to: "/resumes?action=create",
+    icon: "resume",
+  },
+  {
+    label: "Start Interview Session",
+    description: "Create a private practice session for a target role.",
+    to: "/interviews?action=create",
+    icon: "interview",
+  },
+  {
+    label: "Upload Learning Document",
+    description: "Upload a private PDF to your learning library.",
+    to: "/learning?action=upload",
+    icon: "learning",
+  },
+] as const;
 
 type DisplayError = {
   message: string;
@@ -89,6 +112,87 @@ function ErrorState({
         {retryLabel}
       </button>
     </div>
+  );
+}
+
+function QuickStartIcon({
+  name,
+}: {
+  name: (typeof quickStartActions)[number]["icon"];
+}) {
+  const paths: Record<
+    (typeof quickStartActions)[number]["icon"],
+    ReactNode
+  > = {
+    resume: (
+      <>
+        <path d="M6 3h9l3 3v15H6z" />
+        <path d="M9 11h6M9 15h6M9 7h3" />
+      </>
+    ),
+    interview: (
+      <>
+        <path d="M4 5h16v11H9l-5 4z" />
+        <path d="M8 9h8M8 12h5" />
+      </>
+    ),
+    learning: (
+      <>
+        <path d="m3 7 9-4 9 4-9 4z" />
+        <path d="M6 9v6c3 3 9 3 12 0V9" />
+      </>
+    ),
+  };
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {paths[name]}
+    </svg>
+  );
+}
+
+function QuickStartActions() {
+  return (
+    <nav
+      className="dashboard-quick-start"
+      aria-labelledby="dashboard-quick-start-title"
+    >
+      <div className="dashboard-quick-start__header">
+        <div>
+          <p className="dashboard-kicker">Start here</p>
+          <h2 id="dashboard-quick-start-title">Quick start</h2>
+        </div>
+        <p>Open an existing creation workflow.</p>
+      </div>
+
+      <div className="dashboard-quick-start__grid">
+        {quickStartActions.map((action) => (
+          <Link
+            className="dashboard-quick-start__link"
+            key={action.to}
+            to={action.to}
+          >
+            <span className="dashboard-quick-start__icon">
+              <QuickStartIcon name={action.icon} />
+            </span>
+            <span className="dashboard-quick-start__copy">
+              <strong>{action.label}</strong>
+              <span>{action.description}</span>
+            </span>
+            <span
+              className="dashboard-quick-start__arrow"
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </Link>
+        ))}
+      </div>
+    </nav>
   );
 }
 
@@ -530,6 +634,7 @@ export function MainDashboard() {
           </div>
         }
       />
+      <QuickStartActions />
       <section aria-label="Progress overview">
         {progressLoading ? (
           <div

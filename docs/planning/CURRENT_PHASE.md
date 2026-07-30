@@ -3,15 +3,15 @@
 - Phase: 18
 - Name: Staging Deployment
 - Status:
-  ACTIVE — UI-B1 BRAND FOUNDATION COMPLETED / HUMAN-APPROVED; PHASE 18B
-  PLANNED / INACTIVE
+  ACTIVE — UI-B2 DASHBOARD AND SETTINGS REFINEMENT COMPLETED /
+  HUMAN-APPROVED; PHASE 18B PLANNED / INACTIVE
 - Most recently completed UI task:
-  UI-B1 — Logo and Brand Foundation
-- UI-B1 status: COMPLETED / HUMAN-APPROVED
-- Accepted UI-B1 visual approval token:
-  `UI_B1_BRAND_INTEGRATION_VISUAL_APPROVED`
-- UI-B1 visual approval token accepted: `YES`
-- Next planned UI task: UI-B2
+  UI-B2 — Dashboard Quick-Start Actions and Settings Visual Refinement
+- UI-B2 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-B2 visual approval token:
+  `UI_B2_DASHBOARD_SETTINGS_VISUAL_APPROVED`
+- UI-B2 visual approval token accepted: `YES`
+- Next planned UI task: UI-R1
 - Most recently completed repair:
   B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
 - Repair status: COMPLETED / APPROVED
@@ -33,7 +33,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 PLANNED; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -251,6 +251,48 @@
   authorizes no push, merge, deployment, DNS, cloud-resource, secret, or
   Phase 18B action.
 
+## Phase 18 UI-B2 dashboard and settings refinement
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-B2-DASHBOARD-SETTINGS-IMPLEMENTATION-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-B2-CLOSEOUT-COMMIT-01`.
+- UI-B2 is `COMPLETED / HUMAN-APPROVED`.
+- The authenticated Dashboard provides exactly three quick-start links using
+  existing workflows: **Create Resume** at `/resumes?action=create`,
+  **Start Interview Session** at `/interviews?action=create`, and
+  **Upload Learning Document** at `/learning?action=upload`.
+- No continue-work link was added because the existing Dashboard contracts do
+  not expose a reliable bounded destination without inventing prioritization.
+- Settings now uses the shared `PageHeader` and separates
+  **Account information** from **Current session**. Existing public account
+  fields and sign-out behavior remain unchanged; no unsupported editable
+  profile, password, appearance, notification, account-deletion, or
+  session-management control was added.
+- Focused Dashboard, Settings, and affected routing tests passed 125/125. The
+  complete frontend suite passed 661/661 tests. Frontend typecheck and the
+  frontend production build passed.
+- Full Application Browser Testing passed 27/27. Human and automated review
+  covered desktop 1440 × 900, tablet 768 × 1024, mobile 390 × 844, and actual
+  200% Chrome zoom. Keyboard traversal and visible focus, console and page
+  errors, horizontal overflow, branding preservation, and mobile navigation
+  passed review.
+- Synthetic QA records and browser artifacts were removed. All locally
+  started services were stopped.
+- No backend or shared contract changed. No deployment, DNS, cloud resource,
+  provider, secret, legacy-project, UI-R1 implementation, UI-I1
+  implementation, or Phase 18B action occurred.
+- Accepted visual approval token:
+  `UI_B2_DASHBOARD_SETTINGS_VISUAL_APPROVED`; accepted: `YES`.
+- UI-R1 is the next planned implementation phase and remains inactive pending
+  separate authorization.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- This closeout authorizes one bounded local commit containing only the
+  approved UI-B2 implementation, tests, and this minimum tracking update. It
+  authorizes no push, merge, deployment, DNS, cloud-resource, secret, UI-R1,
+  UI-I1, or Phase 18B action.
+
 ## Phase 17 security-enabled continuation start
 
 - Continuation branch: `phase-12-unified-frontend`.
@@ -378,8 +420,10 @@
   deployment-readiness audit, and twelve operator-approved decisions.
 - Preserve the completed and approved B18A-001 storage-adapter repair and the
   human-approved UI-B1 logo and brand foundation.
-- Prepare UI-B2 as the next separately authorized UI task without activating
-  Phase 18B.
+- Preserve the completed and human-approved UI-B2 Dashboard and Settings
+  refinement.
+- Keep UI-R1 planned and inactive until separate authorization without
+  activating Phase 18B.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
   unresolved P15-001 restrictions, all existing security/privacy controls,
   and a synthetic-data-only staging policy.
@@ -432,7 +476,9 @@
 - Phase 18 is `ACTIVE`.
 - Phase 18A is `COMPLETED / APPROVED`.
 - UI-B1 — Logo and Brand Foundation is `COMPLETED / HUMAN-APPROVED`.
-- UI-B2 is `PLANNED` and requires separate authorization.
+- UI-B2 — Dashboard Quick-Start Actions and Settings Visual Refinement is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-R1 is `PLANNED / INACTIVE` and requires separate authorization.
 - Phase 18B is
   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
 - Phase 19 remains `PLANNED` / `INACTIVE`.

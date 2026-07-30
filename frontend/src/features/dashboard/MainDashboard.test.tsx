@@ -5,6 +5,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import {
   beforeEach,
   describe,
@@ -264,6 +265,14 @@ function setSuccessfulDefaults() {
   ).mockResolvedValue(activityPage());
 }
 
+function renderDashboard() {
+  return render(
+    <MemoryRouter>
+      <MainDashboard />
+    </MemoryRouter>,
+  );
+}
+
 describe("MainDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -282,14 +291,14 @@ describe("MainDashboard", () => {
       new Promise<DashboardActivityPage>(() => undefined),
     );
 
-    render(<MainDashboard />);
+    renderDashboard();
 
     expect(screen.getByText("Loading progress")).not.toBeNull();
     expect(screen.getByText("Loading activity")).not.toBeNull();
   });
 
   it("renders a clear page heading and returned domain metrics", async () => {
-    render(<MainDashboard />);
+    renderDashboard();
 
     expect(
       screen.getByRole("heading", {
@@ -341,12 +350,45 @@ describe("MainDashboard", () => {
     );
   });
 
+  it("renders exactly the three approved quick-start workflow links", () => {
+    renderDashboard();
+
+    const quickStart = screen.getByRole("navigation", {
+      name: "Quick start",
+    });
+    const links = within(quickStart).getAllByRole("link");
+
+    expect(links).toHaveLength(3);
+    expect(
+      within(quickStart)
+        .getByRole("link", { name: /Create Resume/ })
+        .getAttribute("href"),
+    ).toBe("/resumes?action=create");
+    expect(
+      within(quickStart)
+        .getByRole("link", {
+          name: /Start Interview Session/,
+        })
+        .getAttribute("href"),
+    ).toBe("/interviews?action=create");
+    expect(
+      within(quickStart)
+        .getByRole("link", {
+          name: /Upload Learning Document/,
+        })
+        .getAttribute("href"),
+    ).toBe("/learning?action=upload");
+    expect(
+      within(quickStart).queryByRole("button"),
+    ).toBeNull();
+  });
+
   it("shows factual zero counts and unavailable null scores", async () => {
     vi.mocked(
       dashboardApi.fetchProgressSnapshot,
     ).mockResolvedValue(emptyProgressFixture());
 
-    render(<MainDashboard />);
+    renderDashboard();
 
     expect(
       await screen.findByText("No recorded dashboard data"),
@@ -395,7 +437,7 @@ describe("MainDashboard", () => {
       },
     });
 
-    render(<MainDashboard />);
+    renderDashboard();
 
     expect(
       await screen.findByText("1 analysis across 1 resume"),
@@ -411,7 +453,7 @@ describe("MainDashboard", () => {
   });
 
   it("requests all four approved windows and communicates the active selection", async () => {
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     await waitFor(() => {
@@ -446,7 +488,7 @@ describe("MainDashboard", () => {
     vi.mocked(dashboardApi.fetchProgressSnapshot)
       .mockReturnValueOnce(first.promise)
       .mockReturnValueOnce(second.promise);
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     await waitFor(() => {
@@ -511,7 +553,7 @@ describe("MainDashboard", () => {
         },
       });
 
-      render(<MainDashboard />);
+      renderDashboard();
 
       expect(await screen.findByText(label)).not.toBeNull();
     },
@@ -528,7 +570,7 @@ describe("MainDashboard", () => {
         "activity-request-id-1",
       ),
     );
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     expect(await screen.findByText("84%")).not.toBeNull();
@@ -570,7 +612,7 @@ describe("MainDashboard", () => {
         { privateValidationDetails: "must not render" },
       ),
     );
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     expect(
@@ -606,7 +648,7 @@ describe("MainDashboard", () => {
   });
 
   it("renders safe activity labels in returned order without metadata", async () => {
-    render(<MainDashboard />);
+    renderDashboard();
 
     const feed = await screen.findByRole("region", {
       name: "Recent activity",
@@ -624,7 +666,7 @@ describe("MainDashboard", () => {
       .mockResolvedValueOnce(activityPage(1, 2))
       .mockResolvedValueOnce(activityPage(2, 2))
       .mockResolvedValueOnce(activityPage(1, 2));
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     const previous = await screen.findByRole("button", {
@@ -656,7 +698,7 @@ describe("MainDashboard", () => {
     vi.mocked(dashboardApi.fetchDashboardActivity)
       .mockResolvedValueOnce(activityPage(1, 2))
       .mockReturnValueOnce(nextPage.promise);
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     await screen.findByText("Page 1 of 2");
@@ -686,7 +728,7 @@ describe("MainDashboard", () => {
       .mockResolvedValueOnce(initial)
       .mockReturnValueOnce(secondPage.promise)
       .mockReturnValueOnce(thirdPage.promise);
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     await screen.findByText("Page 1 of 3");

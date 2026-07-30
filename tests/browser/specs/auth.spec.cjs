@@ -1,5 +1,26 @@
 const { expect, test } = require("../support/fixtures.cjs");
 
+async function tabTo(page, target) {
+  await page.evaluate(() => {
+    document.body.tabIndex = -1;
+    document.body.focus();
+    document.body.removeAttribute("tabindex");
+  });
+
+  for (let index = 0; index < 30; index += 1) {
+    await page.keyboard.press("Tab");
+    if (
+      await target.evaluate(
+        (element) => element === document.activeElement,
+      )
+    ) {
+      return;
+    }
+  }
+
+  throw new Error("Keyboard traversal did not reach the target.");
+}
+
 async function installLayoutShiftCollector(page) {
   await page.addInitScript(() => {
     window.__phase16fAuthBootstrapCls = 0;
@@ -74,11 +95,14 @@ test("@smoke validates registration, routing, reload persistence, and sign-out",
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.goto("/settings");
   await expect(
-    page.getByRole("heading", { name: "Session settings" }),
+    page.getByRole("heading", { name: "Settings" }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Sign out of this session" })
-    .click();
+  const signOut = page.getByRole("button", {
+    name: "Sign out of this session",
+  });
+  await tabTo(page, signOut);
+  await expect(signOut).toBeFocused();
+  await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/login$/);
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login$/);
@@ -101,8 +125,11 @@ test("signs in successfully and redirects an intended protected route", async ({
   await expect(page).toHaveURL(/\/settings$/);
   await expect(
     page
-      .getByRole("region", { name: "Session settings" })
+      .getByRole("region", { name: "Account information" })
       .getByText(user.displayName),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Current session" }),
   ).toBeVisible();
   await phase14.expectPageHealth(page);
 });

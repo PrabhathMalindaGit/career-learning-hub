@@ -571,7 +571,7 @@ const test = base.extend({
         if ((targetPage.viewportSize()?.width ?? 1440) < 980) {
           if (label === "Dashboard") {
             await targetPage
-              .getByRole("link", { name: "Career & Learning Hub" })
+              .getByRole("link", { name: "Career Learning Hub" })
               .click();
             return;
           }

@@ -1,5 +1,26 @@
 const { expect, test } = require("../support/fixtures.cjs");
 
+async function tabTo(page, target) {
+  await page.evaluate(() => {
+    document.body.tabIndex = -1;
+    document.body.focus();
+    document.body.removeAttribute("tabindex");
+  });
+
+  for (let index = 0; index < 30; index += 1) {
+    await page.keyboard.press("Tab");
+    if (
+      await target.evaluate(
+        (element) => element === document.activeElement,
+      )
+    ) {
+      return;
+    }
+  }
+
+  throw new Error("Keyboard traversal did not reach the target.");
+}
+
 test("@smoke covers empty and populated Dashboard states with paging", async ({
   page,
   phase14,
@@ -44,6 +65,39 @@ test("@smoke covers empty and populated Dashboard states with paging", async ({
   await expect(
     page.getByRole("heading", { name: "Unified dashboard" }),
   ).toBeVisible();
+
+  const quickStart = page.getByRole("navigation", {
+    name: "Quick start",
+  });
+  const quickStartLinks = quickStart.getByRole("link");
+  await expect(quickStartLinks).toHaveCount(3);
+  await expect(
+    quickStart.getByRole("link", { name: /Create Resume/ }),
+  ).toHaveAttribute("href", "/resumes?action=create");
+  await expect(
+    quickStart.getByRole("link", {
+      name: /Start Interview Session/,
+    }),
+  ).toHaveAttribute("href", "/interviews?action=create");
+  await expect(
+    quickStart.getByRole("link", {
+      name: /Upload Learning Document/,
+    }),
+  ).toHaveAttribute("href", "/learning?action=upload");
+
+  await tabTo(page, quickStartLinks.nth(0));
+  await expect(quickStartLinks.nth(0)).toBeFocused();
+  const focusOutlineWidth = await quickStartLinks
+    .nth(0)
+    .evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).outlineWidth),
+    );
+  expect(focusOutlineWidth).toBeGreaterThan(0);
+  await page.keyboard.press("Tab");
+  await expect(quickStartLinks.nth(1)).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(quickStartLinks.nth(2)).toBeFocused();
+
   await expect(page.getByText("No recorded dashboard data")).toBeVisible();
 
   await phase14.seedDashboard(user);
