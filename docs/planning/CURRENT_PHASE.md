@@ -3,10 +3,17 @@
 - Phase: 18
 - Name: Staging Deployment
 - Status:
-  ACTIVE — UI-D1 UNIFIED DASHBOARD LEGACY VISUAL PORT COMPLETED /
-  HUMAN-APPROVED; UI-A1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE
+  ACTIVE — UI-A1 AUTHENTICATION LEGACY VISUAL PORT COMPLETED /
+  HUMAN-APPROVED; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE
 - Most recently completed UI task:
-  UI-D1 — Unified Dashboard Legacy Visual Port
+  UI-A1 — Authentication Legacy Visual Port
+- UI-A1 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-A1 visual approval token:
+  `PHASE_18A_UI_A1_AUTHENTICATION_LEGACY_VISUAL_PORT_APPROVED`
+- UI-A1 visual approval token accepted: `YES`
+- Accepted UI-A1 asset approval token:
+  `UI_A1_AUTHENTICATION_PATHWAY_ASSET_APPROVED`
+- UI-A1 asset approval token accepted: `YES`
 - UI-D1 status: COMPLETED / HUMAN-APPROVED
 - Accepted UI-D1 visual approval token:
   `PHASE_18A_UI_D1_UNIFIED_DASHBOARD_LEGACY_VISUAL_PORT_APPROVED`
@@ -28,8 +35,7 @@
 - Accepted UI-LR1 visual approval token:
   `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`
 - UI-LR1 visual approval token accepted: `YES`
-- Next planned UI task: UI-A1 — Authentication Legacy Visual Port
-- UI-A1 status: PLANNED / INACTIVE
+- Next planned UI task: UI-I1
 - UI-I1 status: PLANNED / INACTIVE
 - Most recently completed repair:
   B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
@@ -52,7 +58,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 PLANNED / INACTIVE; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -664,6 +670,151 @@
 - No push, merge, or deployment is authorized. This closeout authorizes no
   DNS, cloud-resource, provider, secret, UI-A1, UI-I1, or Phase 18B action.
 
+## Phase 18 UI-A1 Authentication Legacy Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-A1-AUTHENTICATION-LEGACY-VISUAL-PORT-01`.
+- Artwork integration prompt ID:
+  `PHASE-18A-UI-A1-AUTHENTICATION-ARTWORK-INTEGRATION-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-A1-CLOSEOUT-01`.
+- UI-A1 is `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_A1_AUTHENTICATION_LEGACY_VISUAL_PORT_APPROVED`;
+  accepted: `YES`.
+- Accepted asset approval token:
+  `UI_A1_AUTHENTICATION_PATHWAY_ASSET_APPROVED`;
+  accepted: `YES`.
+- UI-A1 delivered:
+  - a premium split-screen authentication composition;
+  - Career Learning Hub Open Book + Rising Pathway branding;
+  - distinct public authentication form and brand panels;
+  - factual unified-platform storytelling;
+  - factual capability cards for **Resume Studio**, **Interview Coach**,
+    **Learning Workspace**, and **One Dashboard**;
+  - refined login and registration form hierarchies;
+  - a stable secure-session bootstrap presentation;
+  - structured validation summaries and field-associated validation errors;
+  - provider-neutral server failures with request-ID presentation;
+  - truthful submitting and disabled states;
+  - responsive desktop, tablet, mobile, and represented-200% layouts;
+  - mobile form-first priority;
+  - visible keyboard focus and reduced-motion handling;
+  - generated authentication pathway artwork with decorative empty-alt
+    semantics;
+  - a transparent 2400 × 800 production PNG presented on desktop and tablet
+    and intentionally hidden at the narrow mobile breakpoint.
+- Preserved authentication contracts:
+  - the existing login, registration, refresh, and logout APIs;
+  - current request payloads and trimming behavior;
+  - in-memory access-token handling and HttpOnly refresh-cookie behavior;
+  - session rotation and authenticated reload restoration;
+  - public-only route redirects, protected-route redirects, and intended
+    internal-route restoration;
+  - current validation contracts and password requirements;
+  - neutral duplicate-registration failure behavior;
+  - current loading, disabled, request-ID, focus-management, and routing
+    behavior;
+  - no token or session storage in `localStorage`, `sessionStorage`, or
+    IndexedDB;
+  - no token or session exposure in URLs or visible content.
+- Approved artwork:
+  - asset:
+    `frontend/public/brand/career-learning-hub-authentication-pathway.png`;
+  - format: `PNG / RGBA TRANSPARENCY`;
+  - dimensions: `2400 × 800`;
+  - aspect ratio: `3:1`;
+  - SHA-256:
+    `25699019ee2a9ce0cdedf023a6a078cfb107ae5b26b32a0ac4306b3bf315c652`;
+  - usage: login, registration, secure-session bootstrap, and the desktop
+    and tablet brand panel;
+  - the artwork is hidden at the existing narrow mobile breakpoint.
+- Legacy mapping summary:
+  - **PORT WITH CONTRACT ADAPTATION**:
+    - AI Resume Analyser split AuthShell composition;
+    - form hierarchy;
+    - input and button framing;
+    - validation and failure framing;
+    - feature-preview card composition;
+    - dark brand-panel treatment.
+  - **FAITHFUL VISUAL RECREATION**:
+    - static factual platform-capability cards;
+    - responsive form-first mobile composition;
+    - stable secure-session bootstrap;
+    - accessible validation reveal;
+    - reduced-motion behavior;
+    - generated open-book and rising-pathway artwork integration.
+  - **DIRECT PORT**:
+    - selected safe visual constants and surface treatments;
+    - 140-degree dark forest panel gradient;
+    - 28 px panel geometry;
+    - inset vignette and layered depth;
+    - restrained pressed-button scale.
+- No legacy component was copied verbatim because the legacy implementations
+  depended on obsolete JavaScript architecture, Tailwind, Framer Motion,
+  Lucide, old branding, insecure authentication behavior, obsolete routes,
+  or incompatible contracts.
+- Rejected for security or accuracy:
+  - localStorage token handling and legacy AuthContext behavior;
+  - obsolete API clients and unsupported photo upload;
+  - old product identity;
+  - continuous logo or marquee animation;
+  - fake scores, files, statistics, employers, and ATS claims;
+  - testimonials, free-plan claims, and no-credit-card claims;
+  - forgot-password, social-login, and remember-me controls;
+  - unsupported privacy or employment claims.
+- Verification evidence:
+  - the test-first RED gate produced two expected failures before
+    implementation;
+  - focused routing and authentication tests passed 57/57;
+  - the complete frontend suite passed 690/690 across 53 files;
+  - frontend typecheck and the production build passed;
+  - the authentication browser workflow passed 22 tests with 2 intentional
+    duplicate-matrix skips;
+  - browser-spec syntax and the artwork capture workflow passed;
+  - desktop was reviewed at 1920 × 1080 and 1440 × 900;
+  - desktop and tablet were reviewed at 1024 × 768;
+  - tablet was reviewed at 768 × 1024;
+  - mobile was reviewed at 390 × 844 and 320 × 720;
+  - represented 200% reflow was reviewed at 720 × 450 CSS pixels;
+  - actual native Chrome-toolbar 200% remains retained for final integrated
+    UI-QA;
+  - login idle, validation, failure, submitting, and success states were
+    verified;
+  - registration idle, validation, neutral failure, submitting, and success
+    states were verified;
+  - authentication bootstrap, protected/public redirects, hard reload,
+    session restoration, and logout were verified;
+  - keyboard order, Shift+Tab, Enter submission, and visible focus were
+    verified;
+  - long validation messages and request IDs wrap safely;
+  - reduced-motion behavior was verified;
+  - CLS was 0.0000 on desktop, tablet, and mobile;
+  - no horizontal overflow, clipped controls, overlapping content, failed
+    artwork request, application page error, or external or legacy request
+    was found;
+  - expected anonymous-refresh 401 diagnostics exposed no private
+    information;
+  - browser storage remained empty;
+  - synthetic cleanup completed with `users=0` and `owned=0`;
+  - ports 4173, 4174, and 8000 were closed;
+  - `git diff --check` and the untracked-file whitespace check passed;
+  - the changed-file secret scan found no high-confidence match.
+- Exclusions:
+  - no backend, shared-contract, authentication-endpoint, cookie,
+    session-model, JWT, or rate-limit change;
+  - no package, dependency, lockfile, environment-file, deployment, or CI/CD
+    change;
+  - no legacy-project write;
+  - no provider, DNS, cloud, or secret action;
+  - no UI-I1 action and no Phase 18B or Phase 19 activation.
+- UI-I1 is the next planned UI task and remains
+  `PLANNED / INACTIVE` pending separate authorization.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- No push, merge, or deployment is authorized.
+
 ## Phase 17 security-enabled continuation start
 
 - Continuation branch: `phase-12-unified-frontend`.
@@ -802,8 +953,8 @@
   Visual Port.
 - Preserve the completed and human-approved UI-D1 Unified Dashboard Legacy
   Visual Port.
-- Keep UI-A1 as the next planned visual task and inactive until separate
-  authorization.
+- Preserve the completed and human-approved UI-A1 Authentication Legacy
+  Visual Port.
 - Keep UI-I1 planned and inactive without activating Phase 18B.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
   unresolved P15-001 restrictions, all existing security/privacy controls,
@@ -868,8 +1019,8 @@
   `COMPLETED / HUMAN-APPROVED`.
 - UI-D1 — Unified Dashboard Legacy Visual Port is
   `COMPLETED / HUMAN-APPROVED`.
-- UI-A1 — Authentication Legacy Visual Port is `PLANNED / INACTIVE` and
-  requires separate authorization.
+- UI-A1 — Authentication Legacy Visual Port is
+  `COMPLETED / HUMAN-APPROVED`.
 - UI-I1 is `PLANNED / INACTIVE` and requires separate authorization.
 - Phase 18B is
   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.

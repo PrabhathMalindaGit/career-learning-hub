@@ -15,6 +15,7 @@ import {
   intendedLocationFromState,
 } from "./AuthRoute";
 import { BrandLockup } from "../../components/BrandLockup";
+import { AuthenticationShell } from "./AuthenticationShell";
 import { useAuth } from "./AuthProvider";
 
 type LoginErrors = {
@@ -104,18 +105,20 @@ export function LoginPage() {
   }
 
   return (
-    <main className="auth-layout">
-      <section className="auth-card" aria-labelledby="login-heading">
-        <Link className="product-link" to="/">
-          <BrandLockup />
-        </Link>
-        <p className="eyebrow">Secure workspace</p>
-        <h1 id="login-heading">Welcome back</h1>
-        <p className="auth-intro">
-          Sign in to continue to your career and learning workspace.
-        </p>
+    <AuthenticationShell
+      labelledBy="login-heading"
+      mode="login"
+    >
+      <Link className="product-link" to="/">
+        <BrandLockup />
+      </Link>
+      <p className="eyebrow">Secure workspace</p>
+      <h1 id="login-heading">Welcome back</h1>
+      <p className="auth-intro">
+        Sign in to continue to your career and learning workspace.
+      </p>
 
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+      <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {Object.keys(errors).length > 1 ? (
             <div
               className="validation-summary"
@@ -217,12 +220,11 @@ export function LoginPage() {
           >
             {busy ? "Signing in…" : "Sign in"}
           </button>
-        </form>
+      </form>
 
-        <p className="auth-switch">
-          New to the hub? <Link to="/register">Create an account</Link>
-        </p>
-      </section>
-    </main>
+      <p className="auth-switch">
+        New to the hub? <Link to="/register">Create an account</Link>
+      </p>
+    </AuthenticationShell>
   );
 }

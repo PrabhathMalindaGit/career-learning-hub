@@ -3,6 +3,8 @@ import {
   Outlet,
   useLocation,
 } from "react-router-dom";
+import { BrandLockup } from "../../components/BrandLockup";
+import { AuthenticationShell } from "./AuthenticationShell";
 import { useAuth } from "./AuthProvider";
 
 export type AuthRouteMode = "protected" | "public-only";
@@ -43,22 +45,29 @@ export function intendedLocationFromState(state: unknown): string {
 
 export function RouteLoadingState() {
   return (
-    <main
-      className="auth-layout auth-bootstrap-layout"
-      aria-busy="true"
+    <AuthenticationShell
+      labelledBy="auth-bootstrap-heading"
+      mode="bootstrap"
     >
-      <section
-        className="auth-card"
+      <div
+        className="authentication-bootstrap"
         role="status"
         aria-labelledby="auth-bootstrap-heading"
+        aria-busy="true"
       >
+        <div className="authentication-bootstrap__lockup">
+          <BrandLockup />
+        </div>
         <p className="eyebrow">Career Learning Hub</p>
         <h1 id="auth-bootstrap-heading">Restoring your session</h1>
         <p className="auth-intro">
           Please wait while your secure session is checked.
         </p>
-      </section>
-    </main>
+        <p className="authentication-bootstrap__status-line">
+          Checking secure session
+        </p>
+      </div>
+    </AuthenticationShell>
   );
 }
 
