@@ -17,6 +17,10 @@ import { ResumeEditor } from "./ResumeEditor";
 import { ResumePrintControls } from "./ResumePrintControls";
 import { ResumePreview } from "./ResumePreview";
 import {
+  ResumeVersionSourceBadge,
+  ResumeVersionTimeline,
+} from "./ResumeVersionTimeline";
+import {
   applyResumeSuggestions,
   fetchJob,
   fetchResume,
@@ -951,103 +955,99 @@ export function ResumeWorkspace() {
         />
       </div>
 
-      <section className="resume-version-history" aria-labelledby="resume-version-history-title">
-        <header>
-          <div>
-            <p className="resume-kicker">Immutable timeline</p>
-            <h2 id="resume-version-history-title">Version history</h2>
-          </div>
-        </header>
-        {historyLoading ? (
-          <p className="resume-state" role="status">
-            Loading version history…
-          </p>
-        ) : historyFailure ? (
-          <div className="resume-state resume-state--error" role="alert">
-            <p>{historyFailure.message}</p>
-            {historyFailure.requestId ? (
-              <small>Request ID: {historyFailure.requestId}</small>
-            ) : null}
-            <button
-              type="button"
-              onClick={() =>
-                setHistoryReloadSequence((current) => current + 1)
-              }
-            >
-              Retry history
-            </button>
-          </div>
-        ) : versions.length === 0 ? (
-          <p>No saved version history is available.</p>
-        ) : (
-          <ol>
-            {versions.map((version) => (
-              <li key={version.id}>
-                <div>
-                  <strong>Version {version.versionNumber}</strong>
-                  <span>
-                    {version.id === workspace.version.id
-                      ? "Current version"
-                      : version.changeSummary ?? "Saved version"}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  disabled={
-                    version.id === snapshot?.id ||
-                    version.id === snapshotLoadingId
-                  }
-                  onClick={() => void handleViewVersion(version)}
-                >
-                  View version {version.versionNumber}
-                </button>
-              </li>
-            ))}
-          </ol>
-        )}
-        {historyPagination && historyPagination.pages > 1 ? (
-          <div className="resume-pagination" aria-label="Version pages">
-            <button
-              type="button"
-              disabled={historyLoading || historyPage <= 1}
-              onClick={() =>
-                setHistoryPage((current) => current - 1)
-              }
-            >
-              Previous versions
-            </button>
-            <span>
-              Version page {historyPage} of {historyPagination.pages}
-            </span>
-            <button
-              type="button"
-              disabled={
-                historyLoading ||
-                historyPage >= historyPagination.pages
-              }
-              onClick={() =>
-                setHistoryPage((current) => current + 1)
-              }
-            >
-              Next versions
-            </button>
-          </div>
-        ) : null}
-      </section>
+      <ResumeVersionTimeline
+        versions={versions}
+        currentVersionId={workspace.version.id}
+        selectedVersionId={snapshot?.id}
+        loadingVersionId={snapshotLoadingId}
+        loading={historyLoading}
+        failure={historyFailure}
+        pagination={historyPagination}
+        page={historyPage}
+        onView={(version) => void handleViewVersion(version)}
+        onRetry={() =>
+          setHistoryReloadSequence((current) => current + 1)
+        }
+        onPreviousPage={() =>
+          setHistoryPage((current) => current - 1)
+        }
+        onNextPage={() =>
+          setHistoryPage((current) => current + 1)
+        }
+      />
 
-      {snapshot ? (
-        <section className="resume-snapshot" aria-labelledby="resume-snapshot-title">
-          <header>
+      {snapshotLoadingId ? (
+        <section
+          className="resume-snapshot resume-snapshot--loading"
+          aria-labelledby="resume-snapshot-loading-title"
+          role="status"
+        >
+          <header className="resume-snapshot-header">
             <div>
+              <p className="resume-kicker">Historical snapshot</p>
+              <h2 id="resume-snapshot-loading-title">
+                Loading selected saved version
+              </h2>
+            </div>
+          </header>
+          <div
+            className="resume-snapshot-preview-skeleton"
+            aria-hidden="true"
+          >
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+        </section>
+      ) : snapshot ? (
+        <section
+          className="resume-snapshot resume-snapshot--visible"
+          aria-labelledby="resume-snapshot-title"
+        >
+          <header className="resume-snapshot-header">
+            <div className="resume-snapshot-heading">
               <p className="resume-kicker">Historical snapshot</p>
               <h2 id="resume-snapshot-title">
                 Read-only version {snapshot.versionNumber}
               </h2>
+              <div className="resume-snapshot-metadata">
+                <ResumeVersionSourceBadge source={snapshot.source} />
+                <span className="resume-snapshot-read-only">
+                  <svg viewBox="0 0 18 18" aria-hidden="true">
+                    <rect x="4" y="8" width="10" height="7" rx="1.5" />
+                    <path d="M6.5 8V6a2.5 2.5 0 0 1 5 0v2" />
+                  </svg>
+                  Read-only
+                </span>
+                <time dateTime={snapshot.createdAt}>
+                  Saved{" "}
+                  {new Intl.DateTimeFormat(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(snapshot.createdAt))}
+                </time>
+              </div>
             </div>
-            <button type="button" onClick={() => setSnapshot(undefined)}>
+            <button
+              type="button"
+              className="resume-snapshot-return"
+              onClick={() => setSnapshot(undefined)}
+            >
+              <svg viewBox="0 0 18 18" aria-hidden="true">
+                <path d="m10.5 4-5 5 5 5M6 9h7" />
+              </svg>
               Return to current draft
             </button>
           </header>
+          <p className="resume-snapshot-design-note">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="10" cy="10" r="8" />
+              <path d="M10 9v5M10 6h.01" />
+            </svg>
+            Design choices are not saved with each version, so this
+            snapshot uses the current resume design.
+          </p>
           <ResumePreview
             draft={resumeContentToDraft(snapshot.content)}
             label={`Version ${snapshot.versionNumber} preview`}

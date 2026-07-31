@@ -9,6 +9,8 @@ const captureRoot =
   "/private/tmp/career-learning-hub-ui-lr1-captures";
 const analysisCaptureRoot =
   "/private/tmp/career-learning-hub-ui-lr2-captures";
+const historyCaptureRoot =
+  "/private/tmp/career-learning-hub-ui-lr3-captures";
 
 function pdfPageCount(buffer) {
   return (buffer.toString("latin1").match(/\/Type\s*\/Page\b/g) ?? [])
@@ -323,6 +325,7 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   const user = await phase14.createUser("resume");
   if (testInfo.project.name === "desktop") {
     await mkdir(captureRoot, { recursive: true });
+    await mkdir(historyCaptureRoot, { recursive: true });
   }
   await phase14.login(page, user);
   await phase14.navigate(page, "Resumes");
@@ -856,6 +859,27 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     .click();
   await expect(page.getByText("Version 3 saved", { exact: true })).toBeVisible();
   await expect(printControls).toContainText("Current saved version 3");
+  const versionHistory = page.getByRole("region", {
+    name: "Version history",
+  });
+  await expect(versionHistory.getByText("Current version")).toBeVisible();
+  await expect(versionHistory.getByText("Manual edit").first()).toBeVisible();
+  await expect(versionHistory).not.toContainText(
+    /score delta|author|recruiter|employer-verified|activity/i,
+  );
+  if (testInfo.project.name === "desktop") {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.waitForTimeout(500);
+    await versionHistory.screenshot({
+      path: `${historyCaptureRoot}/legacy-port-version-timeline-desktop.png`,
+    });
+    await versionHistory
+      .locator(".resume-version-item--current")
+      .screenshot({
+        path: `${historyCaptureRoot}/legacy-port-current-version-state.png`,
+      });
+    await page.setViewportSize({ width: 1440, height: 900 });
+  }
   await expect(
     page
       .getByLabel("Printable current saved version 3")
@@ -892,8 +916,12 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   }
 
   await page
-    .getByRole("button", { name: "View version 2" })
-    .click();
+    .getByRole("button", { name: "View saved version 2" })
+    .focus();
+  await expect(
+    page.getByRole("button", { name: "View saved version 2" }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
   await expect(printControls).toContainText("Historical saved version 2");
   await expect(
     page.getByLabel("Printable historical saved version 2"),
@@ -904,6 +932,17 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   await expect(
     page.getByLabel("Resume version 2 preview"),
   ).toHaveClass(/resume-template-ats-classic/);
+  await expect(page.getByText("Read-only", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(/snapshot uses the current resume design/i),
+  ).toBeVisible();
+  if (testInfo.project.name === "desktop") {
+    await page.getByRole("region", {
+      name: "Read-only version 2",
+    }).screenshot({
+      path: `${historyCaptureRoot}/legacy-port-historical-snapshot.png`,
+    });
+  }
 
   await page.evaluate(() => {
     window.__phase16cPrintCalls = 0;
@@ -1357,14 +1396,202 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
         page.getByRole("navigation", { name: "Breadcrumb" }),
       ).toBeVisible();
       await expect(recommendations).toBeVisible();
+      await expect(versionHistory).toBeVisible();
+      const hasHorizontalOverflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth >
+          document.documentElement.clientWidth,
+      );
+      expect(hasHorizontalOverflow).toBe(false);
       if (viewport.width === 390) {
         await designControls.screenshot({
           path: `${captureRoot}/legacy-port-design-mobile.png`,
         });
+        await versionHistory.screenshot({
+          path: `${historyCaptureRoot}/legacy-port-version-history-mobile.png`,
+          style:
+            ".app-header { position: static !important; } .skip-link { display: none !important; }",
+        });
+      }
+      if (viewport.width === 720) {
+        await versionHistory.screenshot({
+          path: `${historyCaptureRoot}/legacy-port-version-history-native-200-percent.png`,
+          style:
+            ".app-header { position: static !important; } .skip-link { display: none !important; }",
+        });
       }
       await phase14.expectPageHealth(page);
     }
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect
+      .poll(() =>
+        versionHistory
+          .locator(".resume-version-item")
+          .first()
+          .evaluate((element) => getComputedStyle(element).animationName),
+      )
+      .toBe("none");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.setViewportSize({ width: 1440, height: 900 });
+
+    const workspaceUrl = page.url();
+    const historyRequest = /\/api\/v1\/resumes\/[^/]+\/versions\?/;
+    let historyMode = "loading";
+    let releaseHistoryRequest;
+    await page.route(historyRequest, async (route) => {
+      if (historyMode === "normal") {
+        await route.continue();
+        return;
+      }
+      if (historyMode === "loading") {
+        const response = await route.fetch();
+        await new Promise((resolve) => {
+          releaseHistoryRequest = resolve;
+        });
+        await route.fulfill({ response });
+        return;
+      }
+      if (historyMode === "empty") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            data: {
+              versions: [],
+              pagination: {
+                page: 1,
+                limit: 20,
+                total: 0,
+                pages: 0,
+              },
+            },
+          }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 503,
+        headers: {
+          "content-type": "application/json",
+          "x-request-id": "history-request-0001",
+        },
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: "VERSION_HISTORY_UNAVAILABLE",
+            message: "Version history is temporarily unavailable.",
+            requestId: "history-request-0001",
+          },
+        }),
+      });
+    });
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(
+      page.getByRole("status", { name: "Loading version history" }),
+    ).toBeVisible();
+    const loadingHistoryCapture = await versionHistory.screenshot();
+    releaseHistoryRequest();
+    await expect(versionHistory.getByText("Current version")).toBeVisible();
+
+    historyMode = "empty";
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(
+      versionHistory.getByRole("heading", {
+        name: "No saved versions yet",
+      }),
+    ).toBeVisible();
+    const emptyHistoryCapture = await versionHistory.screenshot();
+
+    historyMode = "error";
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(
+      versionHistory.getByRole("heading", {
+        name: "Version history could not be loaded",
+      }),
+    ).toBeVisible();
+    await expect(versionHistory).toContainText(
+      "Request ID: history-request-0001",
+    );
+    const errorHistoryCapture = await versionHistory.screenshot();
+
+    const historyStateCaptures = [
+      ["Loading", loadingHistoryCapture],
+      ["Empty", emptyHistoryCapture],
+      ["Failure", errorHistoryCapture],
+    ];
+    await page.setContent(`
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body {
+              margin: 0;
+              padding: 32px;
+              color: #1d2b22;
+              background: #f4f2eb;
+              font: 16px Inter, system-ui, sans-serif;
+            }
+            main {
+              display: grid;
+              gap: 24px;
+              max-width: 1120px;
+              margin: 0 auto;
+            }
+            h1 { margin: 0; font-size: 28px; }
+            figure {
+              margin: 0;
+              padding: 18px;
+              border: 1px solid #d9ded9;
+              border-radius: 18px;
+              background: #fff;
+            }
+            figcaption {
+              margin-bottom: 12px;
+              color: #245e3c;
+              font-size: 12px;
+              font-weight: 800;
+              letter-spacing: .12em;
+              text-transform: uppercase;
+            }
+            img { display: block; width: 100%; height: auto; }
+          </style>
+        </head>
+        <body>
+          <main>
+            <h1>Version history states</h1>
+            ${historyStateCaptures
+              .map(
+                ([label, capture]) => `
+                  <figure>
+                    <figcaption>${label}</figcaption>
+                    <img
+                      alt="${label} version history state"
+                      src="data:image/png;base64,${capture.toString("base64")}"
+                    />
+                  </figure>
+                `,
+              )
+              .join("")}
+          </main>
+        </body>
+      </html>
+    `);
+    await page.screenshot({
+      path: `${historyCaptureRoot}/legacy-port-version-loading-empty-error.png`,
+      fullPage: true,
+    });
+
+    historyMode = "normal";
+    await page.goto(workspaceUrl);
+    await expect(
+      page.getByRole("heading", { name: title }),
+    ).toBeVisible();
+    await expect(versionHistory.getByText("Current version")).toBeVisible();
+    await page.unroute(historyRequest);
   }
 
   await page.getByLabel("Full name").fill("Unsaved Candidate");

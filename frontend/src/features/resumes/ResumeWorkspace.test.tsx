@@ -679,7 +679,9 @@ describe("ResumeWorkspace", () => {
     await user.clear(fullName);
     await user.type(fullName, "Draft Candidate");
     await user.click(
-      screen.getByRole("button", { name: "View version 1" }),
+      screen.getByRole("button", {
+        name: "View current saved version 1",
+      }),
     );
 
     expect(
@@ -745,14 +747,16 @@ describe("ResumeWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     await user.click(
-      await screen.findByRole("button", { name: "View version 1" }),
+      await screen.findByRole("button", {
+        name: "View current saved version 1",
+      }),
     );
     expect(
       await screen.findAllByText("First Historical Candidate"),
     ).toHaveLength(2);
 
     await user.click(
-      screen.getByRole("button", { name: "View version 2" }),
+      screen.getByRole("button", { name: "View saved version 2" }),
     );
 
     expect(
@@ -810,7 +814,9 @@ describe("ResumeWorkspace", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: "View version 1" }),
+      screen.getByRole("button", {
+        name: "View current saved version 1",
+      }),
     );
     await waitFor(() => {
       expect(resumeApi.fetchResumeVersion).toHaveBeenCalledTimes(1);
