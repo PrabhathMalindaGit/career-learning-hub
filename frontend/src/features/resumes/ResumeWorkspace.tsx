@@ -936,6 +936,7 @@ export function ResumeWorkspace() {
         <AiRecommendations
           analysis={analysis}
           selectedSuggestionIds={selectedIds}
+          loading={analysisBusy}
           stale={analysisStale}
           busy={applying}
           onToggleSuggestion={(suggestionId) => {

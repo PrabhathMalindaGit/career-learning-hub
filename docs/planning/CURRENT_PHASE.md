@@ -3,10 +3,14 @@
 - Phase: 18
 - Name: Staging Deployment
 - Status:
-  ACTIVE — UI-LR1 LEGACY RESUME VISUAL PORT COMPLETED / HUMAN-APPROVED;
-  UI-LR2 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE
+  ACTIVE — UI-LR2 RESUME ANALYSIS VISUAL PORT COMPLETED / HUMAN-APPROVED;
+  UI-LR3 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE
 - Most recently completed UI task:
-  UI-LR1 — Legacy Resume Visual Port
+  UI-LR2 — Resume Analysis Visual Port
+- UI-LR2 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-LR2 visual approval token:
+  `PHASE_18A_UI_LR2_LEGACY_RESUME_ANALYSIS_VISUAL_PORT_APPROVED`
+- UI-LR2 visual approval token accepted: `YES`
 - UI-LR1 status: COMPLETED / HUMAN-APPROVED
 - UI-LR1 implementation commit:
   `011a36e423ad2432d2dc283c457015c644a9335f`
@@ -16,8 +20,8 @@
 - Accepted UI-LR1 visual approval token:
   `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`
 - UI-LR1 visual approval token accepted: `YES`
-- Next planned UI task: UI-LR2
-- UI-LR2 status: PLANNED / INACTIVE
+- Next planned UI task: UI-LR3 — Resume History and Insights Visual Port
+- UI-LR3 status: PLANNED / INACTIVE
 - UI-I1 status: PLANNED / INACTIVE
 - Most recently completed repair:
   B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
@@ -40,7 +44,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 PLANNED / INACTIVE; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 PLANNED / INACTIVE; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -362,11 +366,71 @@
   claim was imported.
 - Accepted visual approval token:
   `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`; accepted: `YES`.
-- UI-LR2 — Resume Analysis Visual Port is the next planned UI task and remains
-  inactive pending separate authorization.
+- UI-LR2 — Resume Analysis Visual Port is
+  `COMPLETED / HUMAN-APPROVED`; its closeout record follows.
 - UI-I1 remains `PLANNED / INACTIVE`.
 - Phase 18B remains
   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+
+## Phase 18 UI-LR2 Resume Analysis Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-LR2-LEGACY-RESUME-ANALYSIS-VISUAL-PORT-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-LR2-CLOSEOUT-01`.
+- UI-LR2 is `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_LR2_LEGACY_RESUME_ANALYSIS_VISUAL_PORT_APPROVED`; accepted:
+  `YES`.
+- UI-LR2 delivered:
+  - a semantic Resume assessment gauge bound only to validated `totalScore`;
+  - four score-category cards for keyword match, clarity, evidence, and
+    formatting;
+  - visually distinct strengths and review-points panels;
+  - textual severity labels that do not rely on colour alone;
+  - truthful missing-keyword review chips;
+  - richer Original-versus-Suggested rewrite comparisons;
+  - preserved semantic `del` and `ins` rendering;
+  - explicit native-checkbox selection and selected-suggestion visual state;
+  - conditional verification-required guidance;
+  - confirmation before applying suggestions;
+  - truthful no-assessment, running, completed, and stale states;
+  - reduced-motion support;
+  - responsive desktop, tablet, mobile, and native Chrome 200% verification.
+- The current `ResumeAnalysis` DTO, validated saved-version identity,
+  immutable Resume versions, explicit suggestion selection, confirmation
+  before application, stale-analysis protection, conflict handling,
+  provider-neutral errors, and Career Learning Hub branding were preserved.
+- No raw internal IDs, fabricated scores, trends, guarantees, employment
+  claims, automatic suggestion application, or unsupported contract behavior
+  was introduced.
+- Verification evidence:
+  - focused Resume analysis tests passed 27/27;
+  - the complete frontend suite passed 674/674;
+  - frontend typecheck and the frontend production build passed;
+  - the Resume browser workflow passed 3/3;
+  - required desktop, tablet, mobile, and native Chrome 200% viewports were
+    reviewed;
+  - no overflow, clipping, overlap, console errors, or page errors were found;
+  - reduced-motion behavior was verified;
+  - synthetic fixture cleanup completed;
+  - ports 4173, 4174, and 8000 were closed;
+  - `git diff --check` and the browser-spec syntax check passed.
+- Legacy mapping summary:
+  - gauge geometry was directly ported from the legacy `AtsGauge`;
+  - strengths, issues, keyword, and rewrite presentation were adapted to
+    current contracts;
+  - score cards, diff, empty states, and loading states were faithfully
+    recreated;
+  - no legacy backend, authentication, API client, secret, branding,
+    unsupported claim, or automatic AI behavior was copied.
+- UI-LR3 — Resume History and Insights Visual Port is the next planned UI task
+  and remains `PLANNED / INACTIVE` pending separate authorization.
+- UI-I1 remains `PLANNED / INACTIVE`.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- No push, merge, or deployment is authorized. This closeout authorizes no
+  DNS, cloud-resource, provider, secret, UI-LR3, UI-I1, or Phase 18B action.
 
 ## Phase 17 security-enabled continuation start
 
@@ -500,7 +564,9 @@
 - Preserve the completed and human-approved UI-R1 Resume navigation,
   template discovery, and stacked workspace refinement.
 - Preserve the completed and human-approved UI-LR1 Legacy Resume Visual Port.
-- Keep UI-LR2 as the next planned UI task and inactive until separate
+- Preserve the completed and human-approved UI-LR2 Resume Analysis Visual
+  Port.
+- Keep UI-LR3 as the next planned UI task and inactive until separate
   authorization.
 - Keep UI-I1 planned and inactive without activating Phase 18B.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
@@ -560,8 +626,10 @@
 - UI-R1 — Resume Editor Navigation and Template Discovery is
   `COMPLETED / HUMAN-APPROVED`.
 - UI-LR1 — Legacy Resume Visual Port is `COMPLETED / HUMAN-APPROVED`.
-- UI-LR2 — Resume Analysis Visual Port is `PLANNED / INACTIVE` and requires
-  separate authorization.
+- UI-LR2 — Resume Analysis Visual Port is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-LR3 — Resume History and Insights Visual Port is `PLANNED / INACTIVE`
+  and requires separate authorization.
 - UI-I1 is `PLANNED / INACTIVE` and requires separate authorization.
 - Phase 18B is
   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.

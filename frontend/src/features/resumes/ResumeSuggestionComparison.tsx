@@ -50,8 +50,36 @@ export function ResumeSuggestionComparison({
   );
 
   return (
-    <article className="resume-suggestion">
-      <h4>Suggestion {position}</h4>
+    <article
+      className={`resume-suggestion${
+        selected ? " resume-suggestion--selected" : ""
+      }`}
+      aria-labelledby={`resume-suggestion-title-${position}`}
+    >
+      <header className="resume-suggestion-heading">
+        <div>
+          <span className="resume-suggestion-number" aria-hidden="true">
+            {String(position).padStart(2, "0")}
+          </span>
+          <div>
+            <p>Suggested change</p>
+            <h4 id={`resume-suggestion-title-${position}`}>
+              Suggestion {position}
+            </h4>
+          </div>
+        </div>
+        <label className="resume-suggestion-selection">
+          <input
+            type="checkbox"
+            aria-label={`Select suggestion ${position}`}
+            checked={selected}
+            disabled={disabled}
+            onChange={onToggle}
+          />
+          <span>Select suggestion {position}</span>
+          <small>{selected ? "Selected" : "Not selected"}</small>
+        </label>
+      </header>
       <div className="resume-suggestion-comparison">
         <section className="resume-suggestion-copy resume-suggestion-copy-original">
           <header>
@@ -73,23 +101,20 @@ export function ResumeSuggestionComparison({
         </section>
       </div>
       <section className="resume-suggestion-reason">
-        <h5>Reason</h5>
-        <p>{suggestion.rationale}</p>
+        <span className="resume-suggestion-reason-mark" aria-hidden="true">
+          i
+        </span>
+        <div>
+          <h5>Reason</h5>
+          <p>{suggestion.rationale}</p>
+        </div>
       </section>
       {suggestion.verificationRequired ? (
         <p className="resume-suggestion-warning">
-          Verify facts and placeholders before accepting.
+          <strong>Verification required</strong>
+          <span>Verify facts and placeholders before accepting.</span>
         </p>
       ) : null}
-      <label className="resume-suggestion-selection">
-        <input
-          type="checkbox"
-          checked={selected}
-          disabled={disabled}
-          onChange={onToggle}
-        />
-        <span>Select suggestion {position}</span>
-      </label>
     </article>
   );
 }

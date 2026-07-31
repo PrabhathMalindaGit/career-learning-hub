@@ -7,6 +7,8 @@ const runtimeFile =
   "/private/tmp/career-learning-hub-phase14/runtime/runtime.json";
 const captureRoot =
   "/private/tmp/career-learning-hub-ui-lr1-captures";
+const analysisCaptureRoot =
+  "/private/tmp/career-learning-hub-ui-lr2-captures";
 
 function pdfPageCount(buffer) {
   return (buffer.toString("latin1").match(/\/Type\s*\/Page\b/g) ?? [])
@@ -110,9 +112,37 @@ async function seedStoredResumeAnalysis(user, title) {
         formatting: 23,
       },
       totalScore: 86,
-      issues: [],
-      strengths: [],
-      missingKeywords: [],
+      issues: [
+        {
+          code: "SYNTHETIC_OUTCOME_REVIEW",
+          severity: "high",
+          message:
+            "Review the first experience bullet for a verifiable outcome.",
+        },
+        {
+          code: "SYNTHETIC_FORMATTING_REVIEW",
+          severity: "medium",
+          message:
+            "Check that the longest bullet remains easy to scan.",
+        },
+      ],
+      strengths: [
+        {
+          title: "Clear role focus",
+          detail:
+            "The saved version consistently supports the synthetic Platform Engineer target.",
+        },
+        {
+          title: "Evidence-aware language",
+          detail:
+            "The content distinguishes recorded outcomes from details that still need verification.",
+        },
+      ],
+      missingKeywords: [
+        "observability",
+        "incident response",
+        "service reliability",
+      ],
       suggestions: [
         {
           id: suggestionId,
@@ -992,6 +1022,17 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   }
   expect(unexpectedExportRequests).toEqual([]);
 
+  const emptyRecommendations = page.getByRole("complementary", {
+    name: "AI-assisted assessment",
+  });
+  await expect(emptyRecommendations.getByText("No assessment yet")).toBeVisible();
+  await expect(
+    emptyRecommendations.locator("[data-assessment-score-arc]"),
+  ).toHaveCount(0);
+  await expect(
+    emptyRecommendations.getByRole("progressbar"),
+  ).toHaveCount(0);
+
   const storedAnalysis = await seedStoredResumeAnalysis(user, title);
   await page.route(
     "**/api/v1/resume-analyses/resumes/*/analyze",
@@ -1023,6 +1064,43 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   const recommendations = page.getByRole("complementary", {
     name: "AI-assisted assessment",
   });
+  await expect(
+    recommendations.getByRole("status", { name: "Assessment running" }),
+  ).toBeVisible();
+  await expect(
+    recommendations.locator("[data-assessment-score-arc]"),
+  ).toHaveCount(0);
+  await expect(recommendations.getByRole("progressbar")).toHaveCount(0);
+  await expect(
+    recommendations.getByRole("img", {
+      name: "Resume assessment score: 86 out of 100",
+    }),
+  ).toBeVisible();
+  await expect(
+    recommendations.locator("[data-assessment-score-arc]"),
+  ).toHaveAttribute("stroke-dasharray", "86 100");
+  for (const [name, score] of [
+    ["Keyword match", "20"],
+    ["Clarity", "21"],
+    ["Evidence", "22"],
+    ["Formatting", "23"],
+  ]) {
+    await expect(
+      recommendations.getByRole("progressbar", { name }),
+    ).toHaveAttribute("aria-valuenow", score);
+  }
+  await expect(recommendations).toContainText("Clear role focus");
+  await expect(recommendations).toContainText(
+    "The saved version consistently supports the synthetic Platform Engineer target.",
+  );
+  await expect(recommendations).toContainText(
+    "Review the first experience bullet for a verifiable outcome.",
+  );
+  await expect(recommendations).toContainText("High severity");
+  await expect(recommendations).toContainText("observability");
+  await expect(recommendations).toContainText("incident response");
+  await expect(recommendations).toContainText("service reliability");
+  await expect(recommendations.locator(".resume-keyword-chip")).toHaveCount(3);
   await expect(recommendations).toContainText("Original");
   await expect(recommendations).toContainText("Suggested rewrite");
   await expect(recommendations).toContainText("Reason");
@@ -1041,7 +1119,9 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     ),
   ).toBeVisible();
   await expect(recommendations.locator("script")).toHaveCount(0);
-  await expect(recommendations.locator("strong")).toHaveCount(0);
+  await expect(
+    recommendations.locator("strong", { hasText: "synthetic" }),
+  ).toHaveCount(0);
   await expect(page.locator("body")).not.toContainText(
     storedAnalysis.analysisId,
   );
@@ -1054,6 +1134,49 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   await expect(page.locator("body")).not.toContainText(
     storedAnalysis.bulletId,
   );
+  await expect(page.locator("body")).not.toContainText(
+    /certified ATS|recruiter approval|employment probability|job-success|AI Resume Analyser|AI Resume Tracker|Resumind/i,
+  );
+
+  if (testInfo.project.name === "desktop") {
+    await mkdir(analysisCaptureRoot, { recursive: true });
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await recommendations.screenshot({
+      path: `${analysisCaptureRoot}/legacy-port-analysis-overview-desktop.png`,
+      animations: "disabled",
+    });
+    await recommendations.locator(".resume-score-breakdown").screenshot({
+      path: `${analysisCaptureRoot}/legacy-port-score-breakdown.png`,
+      animations: "disabled",
+    });
+    await recommendations.locator(".resume-analysis-details").screenshot({
+      path: `${analysisCaptureRoot}/legacy-port-strengths-issues-keywords.png`,
+      animations: "disabled",
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await recommendations.screenshot({
+      path: `${analysisCaptureRoot}/legacy-port-analysis-mobile.png`,
+      animations: "disabled",
+    });
+    await phase14.expectPageHealth(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    for (const locator of [
+      recommendations.locator(".resume-assessment-gauge-value"),
+      recommendations.locator(".resume-score-progress span").first(),
+      recommendations.locator(".resume-suggestion").first(),
+    ]) {
+      await expect
+        .poll(() =>
+          locator.evaluate(
+            (element) => getComputedStyle(element).animationName,
+          ),
+        )
+        .toBe("none");
+    }
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+  }
 
   const firstSuggestion = recommendations.getByRole("checkbox", {
     name: "Select suggestion 1",
@@ -1072,6 +1195,15 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   await page.keyboard.press("Space");
   await expect(firstSuggestion).toBeChecked();
   await expect(unchangedSuggestion).not.toBeChecked();
+  await expect(
+    recommendations.locator(".resume-suggestion").first(),
+  ).toHaveClass(/resume-suggestion--selected/);
+  if (testInfo.project.name === "desktop") {
+    await recommendations.locator(".resume-suggestions-panel").screenshot({
+      path: `${analysisCaptureRoot}/legacy-port-suggestions-desktop.png`,
+      animations: "disabled",
+    });
+  }
 
   const applyButton = recommendations.getByRole("button", {
     name: "Apply selected suggestions",
@@ -1110,7 +1242,86 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   expect(providerRequests).toEqual([]);
   await phase14.expectPageHealth(page);
 
+  await page.route(
+    "**/api/v1/resume-analyses/resumes/*/analyze",
+    async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: "AI_PROVIDER_UNAVAILABLE",
+            message: "Synthetic provider unavailable.",
+            requestId: "ui-lr2-provider-request-0001",
+          },
+        }),
+      });
+    },
+    { times: 1 },
+  );
+  await page
+    .getByRole("button", { name: "Run AI-assisted assessment" })
+    .click();
+  await expect(
+    page.getByText("We could not start an assessment for this resume."),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Request ID: ui-lr2-provider-request-0001"),
+  ).toBeVisible();
+
   if (testInfo.project.name === "desktop") {
+    const transportJobId = new mongoose.Types.ObjectId().toString();
+    await page.route(
+      "**/api/v1/resume-analyses/resumes/*/analyze",
+      async (route) => {
+        await route.fulfill({
+          status: 202,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            data: {
+              job: {
+                id: transportJobId,
+                type: "resume.analyze",
+                status: "queued",
+              },
+            },
+          }),
+        });
+      },
+      { times: 1 },
+    );
+    await page.route(
+      `**/api/v1/jobs/${transportJobId}`,
+      async (route) => {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: false,
+            error: {
+              code: "SYNTHETIC_TRANSPORT_FAILURE",
+              message: "Synthetic polling transport failure.",
+              requestId: "ui-lr2-transport-request-0001",
+            },
+          }),
+        });
+      },
+      { times: 3 },
+    );
+    await page
+      .getByRole("button", { name: "Run AI-assisted assessment" })
+      .click();
+    await expect(
+      page.getByText(
+        "Assessment status checking paused. You can check this job again.",
+      ),
+    ).toBeVisible({ timeout: 12_000 });
+    await expect(
+      page.getByRole("button", { name: "Check status" }),
+    ).toBeVisible();
+
     await templateChoice("ats-classic").focus();
     await page.keyboard.press("ArrowRight");
     await page.keyboard.press("ArrowRight");
@@ -1126,6 +1337,8 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     await expect(templateChoice("ats-classic")).toBeChecked();
 
     const responsiveViewports = [
+      { width: 1920, height: 1080 },
+      { width: 1440, height: 900 },
       { width: 1024, height: 768 },
       { width: 768, height: 1024 },
       { width: 390, height: 844 },

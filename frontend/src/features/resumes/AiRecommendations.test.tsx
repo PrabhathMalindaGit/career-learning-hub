@@ -36,6 +36,163 @@ const analysis: ResumeAnalysis = {
 };
 
 describe("AiRecommendations confirmation", () => {
+  it("binds the assessment gauge only to the validated total score and renders four real categories", () => {
+    const scoreMismatchAnalysis: ResumeAnalysis = {
+      ...analysis,
+      totalScore: 37,
+      scoreBreakdown: {
+        keywordMatch: 20,
+        clarity: 21,
+        evidence: 22,
+        formatting: 23,
+      },
+    };
+    const { container } = render(
+      <AiRecommendations
+        analysis={scoreMismatchAnalysis}
+        selectedSuggestionIds={new Set()}
+        onToggleSuggestion={vi.fn()}
+        onConfirmApply={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("img", {
+        name: "Resume assessment score: 37 out of 100",
+      }),
+    ).not.toBeNull();
+    expect(
+      container
+        .querySelector("[data-assessment-score-arc]")
+        ?.getAttribute("stroke-dasharray"),
+    ).toBe("37 100");
+
+    const expectedCategories = [
+      ["Keyword match", "20"],
+      ["Clarity", "21"],
+      ["Evidence", "22"],
+      ["Formatting", "23"],
+    ] as const;
+    for (const [name, value] of expectedCategories) {
+      const progress = screen.getByRole("progressbar", { name });
+      expect(progress.getAttribute("aria-valuenow")).toBe(value);
+      expect(progress.getAttribute("aria-valuemax")).toBe("25");
+    }
+
+    expect(container.textContent).not.toMatch(
+      /delta|trend|recruiter approval|certified ATS|employment probability|job-success/i,
+    );
+  });
+
+  it("renders validated strengths, issues, and missing terms without exposing internal IDs or legacy branding", () => {
+    const richAnalysis: ResumeAnalysis = {
+      ...analysis,
+      issues: [
+        {
+          code: "MISSING_OUTCOME",
+          severity: "high",
+          message: "Add a verifiable outcome to the first experience bullet.",
+        },
+      ],
+      strengths: [
+        {
+          title: "Clear scope",
+          detail: "The role and area of responsibility are easy to identify.",
+        },
+      ],
+      missingKeywords: ["observability", "incident response"],
+    };
+    const { container } = render(
+      <AiRecommendations
+        analysis={richAnalysis}
+        selectedSuggestionIds={new Set()}
+        onToggleSuggestion={vi.fn()}
+        onConfirmApply={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Clear scope")).not.toBeNull();
+    expect(
+      screen.getByText(
+        "The role and area of responsibility are easy to identify.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(
+        "Add a verifiable outcome to the first experience bullet.",
+      ),
+    ).not.toBeNull();
+    expect(screen.getByText("High severity")).not.toBeNull();
+    expect(screen.getByText("observability")).not.toBeNull();
+    expect(screen.getByText("incident response")).not.toBeNull();
+    expect(
+      container.querySelectorAll(".resume-keyword-chip"),
+    ).toHaveLength(2);
+    expect(container.textContent).toContain(
+      "Review these terms against your actual experience",
+    );
+
+    const text = container.textContent ?? "";
+    for (const id of [
+      richAnalysis.id,
+      richAnalysis.resumeId,
+      richAnalysis.resumeVersionId,
+      richAnalysis.suggestions[0].id,
+      richAnalysis.suggestions[0].bulletId,
+    ]) {
+      expect(text).not.toContain(id);
+    }
+    expect(text).not.toMatch(/AI Resume Analyser|AI Resume Tracker|Resumind/i);
+  });
+
+  it("renders truthful empty and running states without fabricated result data", () => {
+    const { container, rerender } = render(
+      <AiRecommendations
+        selectedSuggestionIds={new Set()}
+        onToggleSuggestion={vi.fn()}
+        onConfirmApply={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("No assessment yet")).not.toBeNull();
+    expect(container.querySelector("[data-assessment-score-arc]")).toBeNull();
+    expect(screen.queryAllByRole("progressbar")).toHaveLength(0);
+    expect(container.textContent).not.toContain("/25");
+
+    rerender(
+      <AiRecommendations
+        analysis={analysis}
+        loading
+        selectedSuggestionIds={new Set()}
+        onToggleSuggestion={vi.fn()}
+        onConfirmApply={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("status", { name: "Assessment running" }),
+    ).not.toBeNull();
+    expect(container.querySelector("[data-assessment-score-arc]")).toBeNull();
+    expect(screen.queryAllByRole("progressbar")).toHaveLength(0);
+    expect(container.textContent).not.toContain("/25");
+  });
+
+  it("renders explicit contract-valid empty groups without fabricating keywords", () => {
+    const { container } = render(
+      <AiRecommendations
+        analysis={analysis}
+        selectedSuggestionIds={new Set()}
+        onToggleSuggestion={vi.fn()}
+        onConfirmApply={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("No strengths were returned.")).not.toBeNull();
+    expect(screen.getByText("No review points were returned.")).not.toBeNull();
+    expect(screen.getByText("No missing terms were returned.")).not.toBeNull();
+    expect(container.querySelectorAll(".resume-keyword-chip")).toHaveLength(0);
+  });
+
   it("requires explicit selection and renders the stored comparison without exposing IDs", async () => {
     const onToggleSuggestion = vi.fn();
     const { container } = render(
