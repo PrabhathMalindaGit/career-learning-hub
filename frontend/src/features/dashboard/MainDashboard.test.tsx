@@ -308,7 +308,7 @@ describe("MainDashboard", () => {
     ).not.toBeNull();
     expect(
       screen.getByText(
-        "Owned progress recorded across resumes, interviews, learning, quizzes, and AI usage in the last 30 days.",
+        "See owned progress across Resume Studio, Interview Coach, Learning Workspace, quizzes, and AI usage for the last 30 days.",
       ),
     ).not.toBeNull();
     expect(
@@ -338,7 +338,7 @@ describe("MainDashboard", () => {
     expect(screen.getByText("840 ms")).not.toBeNull();
 
     const scoreMeters = screen.getAllByRole("meter");
-    expect(scoreMeters).toHaveLength(3);
+    expect(scoreMeters).toHaveLength(4);
     expect(scoreMeters[0]?.getAttribute("aria-valuenow")).toBe(
       "84",
     );
@@ -348,6 +348,136 @@ describe("MainDashboard", () => {
     expect(scoreMeters[0]?.getAttribute("aria-valuemax")).toBe(
       "100",
     );
+  });
+
+  it("presents the real bounded Resume readiness value as the dashboard feature visual", async () => {
+    renderDashboard();
+
+    const readiness = await screen.findByRole("meter", {
+      name: "Resume readiness: 84 out of 100",
+    });
+    expect(readiness.getAttribute("aria-valuenow")).toBe("84");
+    expect(readiness.getAttribute("aria-valuemin")).toBe("0");
+    expect(readiness.getAttribute("aria-valuemax")).toBe("100");
+    expect(
+      screen.getAllByText("Platform engineer").length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Keyword match")).not.toBeNull();
+    expect(screen.getByText("20 / 25")).not.toBeNull();
+  });
+
+  it("renders truthful module empty states without a fabricated Resume score or trend", async () => {
+    vi.mocked(
+      dashboardApi.fetchProgressSnapshot,
+    ).mockResolvedValue(emptyProgressFixture());
+
+    renderDashboard();
+
+    expect(
+      await screen.findByText("No Resume analysis yet"),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("No Interview activity yet"),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("No Learning documents yet"),
+    ).not.toBeNull();
+    expect(screen.getByText("No AI usage yet")).not.toBeNull();
+    expect(
+      screen.queryByRole("meter", {
+        name: /Resume readiness:/,
+      }),
+    ).toBeNull();
+    expect(screen.queryByText(/continue work/i)).toBeNull();
+  });
+
+  it("uses structured skeletons without placeholder names, scores, or dates", () => {
+    vi.mocked(
+      dashboardApi.fetchProgressSnapshot,
+    ).mockReturnValue(
+      new Promise<DashboardProgress>(() => undefined),
+    );
+    vi.mocked(
+      dashboardApi.fetchDashboardActivity,
+    ).mockReturnValue(
+      new Promise<DashboardActivityPage>(() => undefined),
+    );
+
+    const { container } = renderDashboard();
+
+    expect(
+      container.querySelectorAll(".dashboard-skeleton-card").length,
+    ).toBeGreaterThanOrEqual(4);
+    expect(container.textContent).not.toMatch(
+      /(?:\d{1,3}%|sample|demo|platform engineer|updated \d)/i,
+    );
+  });
+
+  it("does not render legacy branding, plans, provider claims, or raw record IDs", async () => {
+    renderDashboard();
+
+    await screen.findAllByText("Platform engineer");
+    const content = document.body.textContent ?? "";
+
+    expect(content).toContain("Career Learning Hub");
+    expect(content).not.toMatch(
+      /AI Resume Analyser|Resume Builder|Pro plan|recruiter approved|certified ATS|provider|continue work/i,
+    );
+    expect(content).not.toMatch(
+      /analysis-1|resume-1|version-1|attempt-1|document-1|activity-1/i,
+    );
+  });
+
+  it("renders long returned labels without substituting or truncating their values", async () => {
+    const fixture = progressFixture();
+    const targetRole =
+      "Platform reliability and distributed systems engineering specialist for a deliberately long synthetic role";
+    const documentTitle =
+      "Distributed systems learning notes with a deliberately long synthetic title for responsive wrapping";
+    const feature =
+      "resume-analysis-with-a-deliberately-long-synthetic-feature-label";
+    vi.mocked(
+      dashboardApi.fetchProgressSnapshot,
+    ).mockResolvedValue({
+      ...fixture,
+      resumeReadiness: {
+        ...fixture.resumeReadiness,
+        latest: fixture.resumeReadiness.latest
+          ? {
+              ...fixture.resumeReadiness.latest,
+              targetRole,
+            }
+          : null,
+        trend: fixture.resumeReadiness.trend.map((point) => ({
+          ...point,
+          targetRole,
+        })),
+      },
+      learning: {
+        ...fixture.learning,
+        recentDocuments: fixture.learning.recentDocuments.map(
+          (document) => ({
+            ...document,
+            title: documentTitle,
+          }),
+        ),
+      },
+      aiUsage: {
+        ...fixture.aiUsage,
+        byFeature: fixture.aiUsage.byFeature.map((entry) => ({
+          ...entry,
+          feature,
+        })),
+      },
+    });
+
+    renderDashboard();
+
+    expect(
+      (await screen.findAllByText(targetRole)).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(documentTitle)).not.toBeNull();
+    expect(screen.getByText(feature)).not.toBeNull();
   });
 
   it("renders exactly the three approved quick-start workflow links", () => {

@@ -3,10 +3,14 @@
 - Phase: 18
 - Name: Staging Deployment
 - Status:
-  ACTIVE — UI-LR3 RESUME HISTORY AND INSIGHTS VISUAL PORT COMPLETED /
-  HUMAN-APPROVED; UI-D1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE
+  ACTIVE — UI-D1 UNIFIED DASHBOARD LEGACY VISUAL PORT COMPLETED /
+  HUMAN-APPROVED; UI-A1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE
 - Most recently completed UI task:
-  UI-LR3 — Resume History and Insights Visual Port
+  UI-D1 — Unified Dashboard Legacy Visual Port
+- UI-D1 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-D1 visual approval token:
+  `PHASE_18A_UI_D1_UNIFIED_DASHBOARD_LEGACY_VISUAL_PORT_APPROVED`
+- UI-D1 visual approval token accepted: `YES`
 - UI-LR3 status: COMPLETED / HUMAN-APPROVED
 - Accepted UI-LR3 visual approval token:
   `PHASE_18A_UI_LR3_LEGACY_RESUME_HISTORY_INSIGHTS_VISUAL_PORT_APPROVED`
@@ -24,8 +28,8 @@
 - Accepted UI-LR1 visual approval token:
   `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`
 - UI-LR1 visual approval token accepted: `YES`
-- Next planned UI task: UI-D1 — Unified Dashboard Legacy Visual Port
-- UI-D1 status: PLANNED / INACTIVE
+- Next planned UI task: UI-A1 — Authentication Legacy Visual Port
+- UI-A1 status: PLANNED / INACTIVE
 - UI-I1 status: PLANNED / INACTIVE
 - Most recently completed repair:
   B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
@@ -48,7 +52,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 PLANNED / INACTIVE; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 PLANNED / INACTIVE; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -529,6 +533,137 @@
 - No push, merge, or deployment is authorized. This closeout authorizes no
   DNS, cloud-resource, provider, secret, UI-D1, UI-I1, or Phase 18B action.
 
+## Phase 18 UI-D1 Unified Dashboard Legacy Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-D1-UNIFIED-DASHBOARD-LEGACY-VISUAL-PORT-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-D1-CLOSEOUT-01`.
+- UI-D1 is `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_D1_UNIFIED_DASHBOARD_LEGACY_VISUAL_PORT_APPROVED`;
+  accepted: `YES`.
+- UI-D1 delivered:
+  - a premium unified Dashboard hero using the Open Book + Rising Pathway
+    branded visual treatment;
+  - selectable 7-day, 30-day, 90-day, and 365-day progress windows;
+  - three visually distinct quick-start workflow cards retaining exactly
+    `/resumes?action=create`, `/interviews?action=create`, and
+    `/learning?action=upload`;
+  - no fabricated Continue-work action;
+  - a prominent Resume-readiness feature card with a semantic readiness ring
+    bound only to the real current score;
+  - latest target-role presentation and the four real Resume score categories:
+    keyword match, clarity, evidence, and formatting;
+  - real Interview-feedback, Quiz-performance, and AI-request metrics;
+  - Resume-analysis and Interview-progress histories using factual semantic
+    progress rows;
+  - a Learning-document status summary, recent Learning-document
+    presentation, and Quiz-performance history;
+  - detailed AI-usage presentation with recorded token totals, input/output
+    token values, real average latency where available, factual partial or
+    complete cost-estimate labelling, and feature-level usage breakdown;
+  - a recent-activity timeline with safe user-facing labels, a safe
+    **Recorded activity** fallback for unknown event types, and server-owned
+    pagination;
+  - structured Dashboard skeletons and truthful module-empty states;
+  - independent progress and activity failure handling, safe request-ID
+    presentation, and independent **Retry progress** and
+    **Retry activity** actions;
+  - long-label wrapping, responsive desktop, tablet, mobile, and
+    represented-200% layouts, visible keyboard focus, and reduced-motion
+    behavior.
+- Preserved contracts:
+  - the existing Dashboard progress and activity APIs and current Dashboard
+    DTOs;
+  - authenticated ownership boundaries;
+  - current progress-window parameters, trend limits, recent-document limit,
+    activity pagination, and ActivityEvent order;
+  - current request cancellation and stale-response protection;
+  - provider-neutral errors;
+  - real current data only, with no raw internal IDs;
+  - no fake metrics, trends, subscriptions, plans, or quotas;
+  - no fabricated Resume, Interview, or Learning progress;
+  - no unsupported ATS, recruiter, or employment claims;
+  - no backend or shared-contract expansion.
+- Current contract support:
+  - Resume readiness visual: `SUPPORTED`;
+  - Interview trend visual: `SUPPORTED`;
+  - Learning document and Quiz visuals: `SUPPORTED`;
+  - general Learning completion percentage:
+    `NOT AVAILABLE / NOT FABRICATED`;
+  - AI usage visual: `SUPPORTED`;
+  - recent activity timeline: `SUPPORTED`;
+  - Continue-work destination: `NOT AVAILABLE / NOT INVENTED`;
+  - Resume title or version destination from Dashboard:
+    `NOT AVAILABLE / NOT INVENTED`;
+  - activity free-text or destination metadata:
+    `NOT AVAILABLE / NOT FABRICATED`.
+- Verification:
+  - the expected test-first run produced four failing requirements before
+    implementation;
+  - focused Dashboard tests passed 34/34;
+  - the complete frontend suite passed 688/688 across 53 files;
+  - frontend typecheck and the production build passed;
+  - the Dashboard browser workflow passed 9/9;
+  - browser-spec and fixture syntax checks passed;
+  - desktop, tablet, and mobile states were reviewed at 1920 × 1080,
+    1440 × 900, 1024 × 768, 768 × 1024, 390 × 844, and 320 × 720;
+  - represented 200% reflow was reviewed; actual native Chrome 200% remains
+    retained for final integrated UI-QA;
+  - complete, partial, empty, loading, failure, retry, pagination, and
+    long-label scenarios were verified;
+  - all three quick-start actions passed keyboard and Enter-key activation;
+  - visible focus and reduced-motion behavior were verified;
+  - no document-level horizontal overflow, clipped controls, overlapping
+    content, application console errors, or page errors were found;
+  - no fabricated metrics, trends, unsupported claims, or visible raw
+    internal IDs were found;
+  - synthetic cleanup completed with final fixture counts
+    `users=0` and `owned=0`;
+  - ports 4173, 4174, and 8000 were closed;
+  - `git diff --check` passed and the changed-file secret scan found no
+    matches.
+- Legacy mapping summary:
+  - port with contract adaptation: legacy Dashboard composition, StatCard
+    patterns, ATS/readiness gauge treatment, ActivityFeed patterns, Card and
+    Badge surfaces, EmptyState patterns, and Skeleton patterns;
+  - faithful visual recreation: score-evolution charts converted to semantic
+    meter rows, Resume summary treatments converted to the current readiness
+    composition, legacy Progress and StepProgress patterns converted to
+    factual progress tracks, document cards converted to current
+    Learning-document data, and varied Dashboard analytical surfaces
+    recreated using current contracts;
+  - direct port: none copied verbatim because the legacy components depended
+    on obsolete JavaScript architecture, Tailwind, Recharts, Framer Motion,
+    Lucide, old branding, obsolete routes, or incompatible contracts;
+  - deferred: VersionStack Dashboard destination, Resume-record summary
+    destination, Continue-work action, activity destinations, and activity
+    free text because the current Dashboard contract does not provide
+    canonical bounded destinations or supporting metadata;
+  - rejected: fake identity and profile data, plan or subscription claims,
+    local-storage logout, legacy authentication, unsupported recommendations,
+    fabricated deltas, unsupported statistics, ATS certification, recruiter
+    and employment claims, old product branding, and obsolete API and routing
+    behavior.
+- Exclusions:
+  - no legacy backend, database models, API clients, authentication logic,
+    secrets, environment files, or provider configuration;
+  - no dependency or lockfile change;
+  - no old logo, old product name, fake testimonials, fake notifications, or
+    fabricated activity.
+- UI-A1 — Authentication Legacy Visual Port is the next planned visual task
+  and remains `PLANNED / INACTIVE` pending separate authorization.
+- UI-A1 is expected to preserve the current secure authentication behavior
+  while porting or faithfully recreating suitable legacy split-layout,
+  feature-preview, and visual-storytelling patterns.
+- UI-I1 remains `PLANNED / INACTIVE`.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- No push, merge, or deployment is authorized. This closeout authorizes no
+  DNS, cloud-resource, provider, secret, UI-A1, UI-I1, or Phase 18B action.
+
 ## Phase 17 security-enabled continuation start
 
 - Continuation branch: `phase-12-unified-frontend`.
@@ -665,7 +800,9 @@
   Port.
 - Preserve the completed and human-approved UI-LR3 Resume History and Insights
   Visual Port.
-- Keep UI-D1 as the next planned UI task and inactive until separate
+- Preserve the completed and human-approved UI-D1 Unified Dashboard Legacy
+  Visual Port.
+- Keep UI-A1 as the next planned visual task and inactive until separate
   authorization.
 - Keep UI-I1 planned and inactive without activating Phase 18B.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
@@ -729,7 +866,9 @@
   `COMPLETED / HUMAN-APPROVED`.
 - UI-LR3 — Resume History and Insights Visual Port is
   `COMPLETED / HUMAN-APPROVED`.
-- UI-D1 — Unified Dashboard Legacy Visual Port is `PLANNED / INACTIVE` and
+- UI-D1 — Unified Dashboard Legacy Visual Port is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-A1 — Authentication Legacy Visual Port is `PLANNED / INACTIVE` and
   requires separate authorization.
 - UI-I1 is `PLANNED / INACTIVE` and requires separate authorization.
 - Phase 18B is

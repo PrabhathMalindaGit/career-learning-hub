@@ -2,6 +2,7 @@ import type {
   DashboardActivityItem,
   DashboardActivityPage,
 } from "./types";
+import type { CSSProperties } from "react";
 import { Pager } from "../../components/Pager";
 import { StateSurface } from "../../components/StateSurface";
 
@@ -45,6 +46,23 @@ function activityLabel(type: string): string {
   return activityLabels[type] ?? "Recorded activity";
 }
 
+function activityModule(type: string): string {
+  if (type.startsWith("resume.")) {
+    return "Resume Studio";
+  }
+  if (type.startsWith("interview.")) {
+    return "Interview Coach";
+  }
+  if (
+    type.startsWith("learning.") ||
+    type.startsWith("quiz.")
+  ) {
+    return "Learning Workspace";
+  }
+
+  return "Career Learning Hub";
+}
+
 export function ActivityFeed({
   events,
   pagination,
@@ -62,7 +80,7 @@ export function ActivityFeed({
     >
       <header className="dashboard-panel-header">
         <div>
-          <p className="dashboard-kicker">Chronological record</p>
+          <p className="dashboard-kicker">Across your workspace</p>
           <h2 id="activity-feed-title">Recent activity</h2>
         </div>
         <span className="dashboard-chip">
@@ -87,21 +105,31 @@ export function ActivityFeed({
           <StateSurface
             mode="static"
             className="dashboard-empty-state"
+            heading={<strong>No recent activity yet</strong>}
             body="No recorded activity is available."
           />
         ) : (
-          events.map((event) => (
+          events.map((event, index) => (
             <article
               className="dashboard-activity-item"
               key={event.id}
+              style={{
+                "--dashboard-row-index": index,
+              } as CSSProperties}
             >
               <span
                 className={`dashboard-activity-origin dashboard-origin-${event.origin}`}
                 aria-hidden="true"
-              />
+              >
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <circle cx="12" cy="12" r="7" />
+                  <path d="M12 8v4l3 2" />
+                </svg>
+              </span>
               <div>
                 <strong>{activityLabel(event.type)}</strong>
                 <p>
+                  {activityModule(event.type)} ·{" "}
                   {new Date(event.occurredAt).toLocaleString()}
                 </p>
               </div>
