@@ -5,7 +5,6 @@ import {
   type FormEvent,
 } from "react";
 import {
-  Link,
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
@@ -17,6 +16,8 @@ import {
   createInterviewSession,
   listInterviewSessions,
 } from "./interviewApi";
+import { InterviewSessionCard } from "./InterviewSessionCard";
+import { InterviewSessionSkeletonList } from "./InterviewSessionSkeleton";
 import type {
   CreateInterviewMode,
   InterviewSessionStatus,
@@ -313,11 +314,7 @@ export function InterviewSessionListPage() {
           </div>
 
           {loading ? (
-            <StateSurface
-              mode="status"
-              className="interview-state"
-              body="Loading interview sessions…"
-            />
+            <InterviewSessionSkeletonList />
           ) : listError ? (
             <StateSurface
               mode="alert"
@@ -340,38 +337,15 @@ export function InterviewSessionListPage() {
               body="No interview sessions match this view. Create a private session to begin."
             />
           ) : (
-            <ul className="interview-session-list">
+            <ul
+              className="interview-session-list"
+              aria-label="Interview sessions"
+            >
               {sessions.map((session) => (
-                <li key={session.id}>
-                  <div className="interview-session-copy">
-                    <div>
-                      <span
-                        className={`interview-lifecycle interview-lifecycle--${session.status}`}
-                      >
-                        {session.status}
-                      </span>
-                      <span>{session.mode.replace("-", " ")}</span>
-                    </div>
-                    <strong>{session.title}</strong>
-                    <p>
-                      {session.targetRole} · {session.experienceLevel}
-                    </p>
-                    <small>
-                      {session.questionCount}{" "}
-                      {session.questionCount === 1
-                        ? "question"
-                        : "questions"}
-                      {" · "}Updated{" "}
-                      {new Date(session.updatedAt).toLocaleDateString()}
-                    </small>
-                  </div>
-                  <Link
-                    to={`/interviews/${session.id}`}
-                    aria-label={`Open ${session.title}`}
-                  >
-                    Open session
-                  </Link>
-                </li>
+                <InterviewSessionCard
+                  key={session.id}
+                  session={session}
+                />
               ))}
             </ul>
           )}

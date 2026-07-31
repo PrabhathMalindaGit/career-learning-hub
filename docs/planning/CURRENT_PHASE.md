@@ -3,10 +3,15 @@
 - Phase: 18
 - Name: Staging Deployment
 - Status:
-  ACTIVE — UI-A1 AUTHENTICATION LEGACY VISUAL PORT COMPLETED /
-  HUMAN-APPROVED; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE
+  ACTIVE — UI-I1 INTERVIEW LIST AND RESPONSE ERGONOMICS LEGACY VISUAL PORT
+  COMPLETED / HUMAN-APPROVED; UI-QA PLANNED / INACTIVE; PHASE 18B PLANNED /
+  INACTIVE
 - Most recently completed UI task:
-  UI-A1 — Authentication Legacy Visual Port
+  UI-I1 — Interview List and Response Ergonomics Legacy Visual Port
+- UI-I1 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-I1 visual approval token:
+  `PHASE_18A_UI_I1_INTERVIEW_LIST_RESPONSE_ERGONOMICS_LEGACY_VISUAL_PORT_APPROVED`
+- UI-I1 visual approval token accepted: `YES`
 - UI-A1 status: COMPLETED / HUMAN-APPROVED
 - Accepted UI-A1 visual approval token:
   `PHASE_18A_UI_A1_AUTHENTICATION_LEGACY_VISUAL_PORT_APPROVED`
@@ -35,8 +40,8 @@
 - Accepted UI-LR1 visual approval token:
   `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`
 - UI-LR1 visual approval token accepted: `YES`
-- Next planned UI task: UI-I1
-- UI-I1 status: PLANNED / INACTIVE
+- Next planned UI task: UI-QA
+- UI-QA status: PLANNED / INACTIVE
 - Most recently completed repair:
   B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
 - Repair status: COMPLETED / APPROVED
@@ -58,7 +63,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; UI-QA PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -815,6 +820,234 @@
 - Phase 19 remains `PLANNED / INACTIVE`.
 - No push, merge, or deployment is authorized.
 
+## Phase 18 UI-I1 Interview List and Response Ergonomics Legacy Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-I1-INTERVIEW-LIST-RESPONSE-ERGONOMICS-LEGACY-VISUAL-PORT-01`.
+- Responsive repair prompt ID:
+  `PHASE-18A-UI-I1-RESPONSIVE-POLISH-REPAIR-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-I1-CLOSEOUT-01`.
+- UI-I1 is `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_I1_INTERVIEW_LIST_RESPONSE_ERGONOMICS_LEGACY_VISUAL_PORT_APPROVED`;
+  accepted: `YES`.
+- UI-I1 delivered:
+  - refined Interview Coach page identity and hierarchy;
+  - richer Interview session-list composition;
+  - role-led Interview session cards;
+  - meaningful session-title support;
+  - experience-level metadata;
+  - readable Interview mode labels;
+  - readable session lifecycle labels;
+  - real question counts;
+  - real last-updated timestamps;
+  - exact current session destinations;
+  - truthful list loading skeletons;
+  - truthful empty, failure, and retry states;
+  - preserved list filters and server-owned pagination;
+  - refined question-reading surfaces;
+  - clear question index and selected-question presentation;
+  - visible pinned-question state and preserved pin behavior;
+  - refined private-notes presentation with explicit save and clear actions;
+  - written-response composer improvements;
+  - preserved immutable-attempt recording and failed-answer draft retention;
+  - refined attempt-history cards with server-owned ordering and pagination;
+  - explicit attempt-status filtering;
+  - refined recorded-answer presentation;
+  - distinct model-answer, explanation, and model-generated feedback
+    presentation;
+  - bounded **Copy model answer** and **Copy explanation** controls;
+  - safe accessible copy success and failure states;
+  - explicit user-triggered explanation and feedback requests;
+  - provider-neutral errors and safe request-ID presentation;
+  - responsive desktop, tablet, mobile, and represented-200% layouts;
+  - visible keyboard focus, logical keyboard order, and reduced-motion
+    behavior;
+  - no custom raster artwork.
+- Preserved Interview contracts:
+  - Interview ownership boundaries;
+  - current session creation contract and current session fields;
+  - server-owned session ordering and pagination;
+  - current list filters, route identity, and create-intent behavior;
+  - existing `/interviews?action=create` behavior;
+  - session loading, question listing, and question pagination;
+  - manual-question creation and explicit AI-question generation;
+  - generation request UUID behavior;
+  - ambiguous-submission retry UUID reuse;
+  - explicit terminal-failure retry UUID replacement;
+  - question pinning and private notes;
+  - immutable attempt recording and failed-answer draft preservation;
+  - attempt history and attempt-status filtering;
+  - explicit feedback and explanation requests;
+  - provider-job polling;
+  - request cancellation and stale-response protection;
+  - route-owned, question-owned, and attempt-owned operation isolation;
+  - provider-neutral error handling and canonical request-ID filtering;
+  - authenticated routing and current lifecycle transitions;
+  - read-mostly completed sessions and read-only archived sessions;
+  - no automatic AI activity.
+- Current contract fields used:
+  - **Session**:
+    `targetRole`, `title`, `experienceLevel`, `mode`, `status`,
+    `questionCount`, `focusTopics`, `skillGaps`, optional `jobDescription`,
+    and `updatedAt`;
+  - **Question**:
+    `category`, `difficulty`, `question`, `isPinned`, `userNotes`, optional
+    `modelAnswer`, optional `explanation`, and optional
+    `explanationKeyPoints`;
+  - **Attempt**:
+    `answerText`, `status`, optional `feedback`, and `createdAt`.
+- Copy behavior:
+  - **Copy model answer**:
+    `IMPLEMENTED WHEN REAL MODEL-ANSWER TEXT EXISTS`;
+  - **Copy explanation**:
+    `IMPLEMENTED WHEN REAL EXPLANATION TEXT EXISTS`;
+  - each copy control is a native button using the native Clipboard API;
+  - only exact visible plain text is copied;
+  - empty or missing text produces no copy control;
+  - controls have accessible names and accessible local status;
+  - results are bounded to `Copied` or safe `Copy failed` wording;
+  - no hidden metadata, IDs, HTML, or provider details are copied;
+  - no global toast provider or copy dependency was introduced.
+- Legacy directory:
+  `/Users/prabhathmalinda/Documents/Projects/Career Learning Hub Legacy References/Interview Prep Ai/frontend/interview-prep-ai/src`.
+- Legacy files inspected:
+  - `pages/Home/Dashboard.jsx`;
+  - `components/Cards/SummaryCard.jsx`;
+  - `components/Cards/QuestionCard.jsx`;
+  - `components/Loader/SkeletonLoader.jsx`;
+  - `pages/InterviewPrep/InterviewPrep.jsx`;
+  - `pages/InterviewPrep/components/AIResponsePreview.jsx`;
+  - `pages/InterviewPrep/components/RoleInfoHeader.jsx`;
+  - `pages/Home/CreateSessionForm.jsx`;
+  - `index.css`.
+- Direct port:
+  - no legacy source or CSS was copied verbatim.
+- Port with contract adaptation:
+  - `SummaryCard` became a role-led Interview session dossier card using real
+    current metadata and exact current routing;
+  - `QuestionCard` informed the stronger question-prompt presentation,
+    visible pin state, notes, and immutable response records;
+  - `AIResponsePreview` informed native bounded copy controls using current
+    real model-answer and explanation text.
+- Faithful visual recreation:
+  - `RoleInfoHeader` informed a restrained role identity treatment without
+    continuous decorative animation;
+  - `SkeletonLoader` informed geometry-only Interview session skeletons with
+    reduced-motion support;
+  - legacy response-card hierarchy was adapted into current attempt-history,
+    recorded-answer, explanation, and feedback surfaces.
+- Rejected for security, accuracy, or contract mismatch:
+  - legacy authentication, token handling, local storage, backend, API
+    clients, and provider configuration;
+  - legacy session orchestration, deletion workflow, and unsupported
+    navigation;
+  - old product identity;
+  - fake session data, candidates, employers, Interview schedules, scores,
+    trends, feedback, and model answers;
+  - automatic AI activity;
+  - unsupported speech, audio, and video;
+  - Tailwind-specific implementation;
+  - Framer Motion and Lucide dependencies;
+  - remote-font assumptions and continuous animation.
+- Responsive repair status:
+  `COMPLETED / HUMAN-APPROVED`.
+- Session context grid repair:
+  - root cause: the fixed four-column desktop grid and two-column responsive
+    grid created a visually implied empty cell when `jobDescription` was
+    absent;
+  - correction: explicit three-entry and four-entry context-grid states;
+  - exactly three real entries render when `jobDescription` is absent;
+  - exactly four real entries render when `jobDescription` is present;
+  - Updated spans the tablet row in the three-entry state;
+  - narrow mobile uses one clean column;
+  - semantic `dl`, `dt`, and `dd` markup is preserved;
+  - no placeholder or fabricated context content was added.
+- Mobile chip-width repair:
+  - root cause: the narrow `.interview-section-heading` layout used
+    `align-items: stretch`, which stretched direct Interview chips across the
+    panel;
+  - direct heading chips now retain intrinsic width with
+    `width: fit-content`, `max-width: 100%`, and
+    `align-self: flex-start`;
+  - question-count, attempt-count, and difficulty chips remain compact;
+  - actual button touch targets are unchanged.
+- Initial UI-I1 verification:
+  - focused Interview tests passed 53/53;
+  - the complete frontend suite passed 696/696 across 53 files;
+  - frontend typecheck and the production build passed;
+  - the Interview browser workflow passed 3/3;
+  - browser-spec syntax passed;
+  - desktop was reviewed at 1920 × 1080 and 1440 × 900;
+  - desktop and tablet were reviewed at 1024 × 768;
+  - tablet was reviewed at 768 × 1024;
+  - mobile was reviewed at 390 × 844 and 320 × 720;
+  - represented-200% reflow was reviewed at 640 × 450 CSS pixels;
+  - native browser-toolbar 200% was unavailable and was not claimed.
+- Post-repair verification:
+  - focused Interview tests passed 55/55;
+  - the complete frontend suite passed 698/698 across 53 files;
+  - frontend typecheck and the production build passed;
+  - the Interview browser workflow passed 3/3;
+  - browser-spec syntax passed;
+  - sessions without `jobDescription` were reviewed on desktop and tablet;
+  - 390 × 844 and 320 × 720 were reviewed;
+  - represented-200% reflow was reviewed at 640 × 450 CSS pixels;
+  - a desktop session with a real `jobDescription` was reviewed;
+  - no visually implied empty Session context cells remained;
+  - real Session context entries used the complete grid;
+  - long job descriptions wrapped safely;
+  - narrow chips remained compact, with no stretched chip bars;
+  - no document-level horizontal overflow, clipped controls, or overlapping
+    content was found;
+  - no application console error, page error, external request, or legacy
+    request was found.
+- Functional and security evidence:
+  - target role, meaningfully different session title, experience level, mode,
+    status, question count, and updated timestamp render from real contract
+    data;
+  - missing optional fields are not fabricated;
+  - session destinations, question order and pagination, attempt order and
+    pagination, filters, create-session behavior, and manual-question behavior
+    are unchanged;
+  - pin, notes, attempt payload, and failed-answer draft behavior are
+    unchanged;
+  - explanation and feedback remain explicit user-triggered requests;
+  - no automatic AI request was introduced;
+  - stale session, question, and attempt operations are ignored;
+  - route changes abort owned mutations;
+  - raw session, question, and attempt IDs are not displayed;
+  - malformed request IDs are not displayed and valid canonical request IDs
+    are displayed;
+  - no fake Interview scores, employers, model answers, fabricated trends, or
+    unsupported claims were introduced;
+  - no legacy authentication, token storage, or private error leakage was
+    introduced;
+  - synthetic cleanup completed with `users=0` and `owned=0`;
+  - ports 4173, 4174, and 8000 were closed;
+  - `git diff --check` and untracked-file whitespace checks passed;
+  - the changed-file secret scan found no match.
+- Verification note:
+  - one complete frontend run encountered one unrelated asynchronous
+    route-transition assertion failure;
+  - the test passed immediately in isolation, and the complete frontend suite
+    passed on the fresh full rerun without a production-code change;
+  - this is not an unresolved failure.
+- Exclusions:
+  - no backend, shared-contract, API, database-model, migration,
+    authentication, session, or token change;
+  - no dependency, package, lockfile, environment-file, deployment, CI/CD,
+    DNS, cloud-resource, provider, or secret change;
+  - no legacy-project write or custom image asset;
+  - no UI-QA action and no Phase 18B or Phase 19 action.
+- UI-QA is the next planned UI task and remains
+  `PLANNED / INACTIVE` pending separate authorization.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- No push, merge, or deployment is authorized.
+
 ## Phase 17 security-enabled continuation start
 
 - Continuation branch: `phase-12-unified-frontend`.
@@ -955,7 +1188,9 @@
   Visual Port.
 - Preserve the completed and human-approved UI-A1 Authentication Legacy
   Visual Port.
-- Keep UI-I1 planned and inactive without activating Phase 18B.
+- Preserve the completed and human-approved UI-I1 Interview List and Response
+  Ergonomics Legacy Visual Port.
+- Keep UI-QA planned and inactive without activating Phase 18B.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
   unresolved P15-001 restrictions, all existing security/privacy controls,
   and a synthetic-data-only staging policy.
@@ -1021,7 +1256,9 @@
   `COMPLETED / HUMAN-APPROVED`.
 - UI-A1 — Authentication Legacy Visual Port is
   `COMPLETED / HUMAN-APPROVED`.
-- UI-I1 is `PLANNED / INACTIVE` and requires separate authorization.
+- UI-I1 — Interview List and Response Ergonomics Legacy Visual Port is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-QA is `PLANNED / INACTIVE` and requires separate authorization.
 - Phase 18B is
   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
 - Phase 19 remains `PLANNED` / `INACTIVE`.

@@ -241,6 +241,66 @@ describe("InterviewSessionWorkspace", () => {
     ).toBe(true);
   });
 
+  it("renders three real context entries without an empty grid item when no job description exists", async () => {
+    vi.mocked(interviewApi.fetchInterviewSession).mockResolvedValue({
+      ...session(),
+      jobDescription: undefined,
+    });
+    renderWorkspace();
+
+    const context = await screen.findByRole("region", {
+      name: "Session context",
+    });
+    const contextGrid = context.querySelector("dl");
+    const entries = Array.from(
+      contextGrid?.querySelectorAll(":scope > div") ?? [],
+    );
+
+    expect(contextGrid?.className).toBe(
+      "interview-context-grid interview-context-grid--three",
+    );
+    expect(entries).toHaveLength(3);
+    expect(
+      entries.map((entry) => entry.querySelector("dt")?.textContent),
+    ).toEqual(["Focus topics", "Skill gaps", "Updated"]);
+    expect(
+      entries.every(
+        (entry) =>
+          entry.querySelector("dt")?.textContent?.trim() &&
+          entry.querySelector("dd")?.textContent?.trim(),
+      ),
+    ).toBe(true);
+    expect(
+      within(context).queryByText("Job description"),
+    ).toBeNull();
+  });
+
+  it("keeps all four real context entries when a job description exists", async () => {
+    renderWorkspace();
+
+    const context = await screen.findByRole("region", {
+      name: "Session context",
+    });
+    const contextGrid = context.querySelector("dl");
+    const entries = Array.from(
+      contextGrid?.querySelectorAll(":scope > div") ?? [],
+    );
+
+    expect(contextGrid?.className).toBe(
+      "interview-context-grid interview-context-grid--four",
+    );
+    expect(entries).toHaveLength(4);
+    expect(
+      entries.map((entry) => entry.querySelector("dt")?.textContent),
+    ).toEqual([
+      "Focus topics",
+      "Skill gaps",
+      "Job description",
+      "Updated",
+    ]);
+    expect(within(context).getByText("Build secure APIs.")).not.toBeNull();
+  });
+
   it("clears route-owned state and ignores late detail from the prior session", async () => {
     const nextSessionId = "507f1f77bcf86cd799439026";
     let resolveOldDetail:
@@ -531,6 +591,101 @@ describe("InterviewSessionWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: /delete attempt/i }),
     ).toBeNull();
+  });
+
+  it("copies only visible model-answer and explanation text with accessible outcomes", async () => {
+    const user = userEvent.setup();
+    const writeText = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockResolvedValue(undefined);
+    renderWorkspace();
+
+    await screen.findByRole("textbox", { name: "Written answer" });
+    await user.click(
+      screen.getByRole("button", { name: "Copy model answer" }),
+    );
+    expect(writeText).toHaveBeenLastCalledWith(
+      "Use durable queues and idempotent consumers.",
+    );
+    expect(
+      screen.getByRole("status", { name: "Model answer copy status" })
+        .textContent,
+    ).toBe("Copied");
+
+    await user.click(
+      screen.getByRole("button", { name: "Copy explanation" }),
+    );
+    expect(writeText).toHaveBeenLastCalledWith(
+      "Discuss delivery guarantees and recovery.",
+    );
+    expect(
+      screen.getByRole("status", { name: "Explanation copy status" })
+        .textContent,
+    ).toBe("Copied");
+    expect(writeText).not.toHaveBeenCalledWith(
+      expect.stringContaining(questionId),
+    );
+  });
+
+  it("shows a safe copy failure and omits controls for missing text", async () => {
+    const user = userEvent.setup();
+    const writeText = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockRejectedValue(new Error("private clipboard detail"));
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockResolvedValue({
+      ...questionDetail(),
+      modelAnswer: undefined,
+    });
+    renderWorkspace();
+
+    await screen.findByRole("textbox", { name: "Written answer" });
+    expect(
+      screen.queryByRole("button", { name: "Copy model answer" }),
+    ).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Copy explanation" }),
+    );
+    expect(
+      screen.getByRole("status", { name: "Explanation copy status" })
+        .textContent,
+    ).toBe("Copy failed");
+    expect(screen.queryByText("private clipboard detail")).toBeNull();
+  });
+
+  it("does not render copy controls when the current detail has no copyable text", async () => {
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockResolvedValue({
+      ...questionDetail(),
+      modelAnswer: undefined,
+      explanation: undefined,
+      explanationKeyPoints: [],
+    });
+    renderWorkspace();
+
+    await screen.findByRole("textbox", { name: "Written answer" });
+    expect(
+      screen.queryByRole("button", { name: "Copy model answer" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Copy explanation" }),
+    ).toBeNull();
+  });
+
+  it("presents pinned state visibly without rendering raw record IDs", async () => {
+    vi.mocked(interviewApi.listInterviewQuestions).mockResolvedValue({
+      questions: [{ ...questionSummary(), isPinned: true }],
+      pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+    });
+    vi.mocked(interviewApi.fetchInterviewQuestion).mockResolvedValue({
+      ...questionDetail(),
+      isPinned: true,
+    });
+    renderWorkspace();
+
+    await screen.findByRole("textbox", { name: "Written answer" });
+    expect(screen.getAllByText("Pinned").length).toBeGreaterThan(0);
+    expect(screen.queryByText(sessionId)).toBeNull();
+    expect(screen.queryByText(questionId)).toBeNull();
+    expect(screen.queryByText(attemptId)).toBeNull();
   });
 
   it("handles an already-available explanation without polling", async () => {

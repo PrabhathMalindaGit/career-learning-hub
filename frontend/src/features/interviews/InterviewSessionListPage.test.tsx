@@ -1,4 +1,9 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   createMemoryRouter,
@@ -8,6 +13,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiClient";
 import * as interviewApi from "./interviewApi";
 import { InterviewSessionListPage } from "./InterviewSessionListPage";
+import type { InterviewSessionSummary } from "./types";
 
 vi.mock("./interviewApi", () => ({
   createInterviewSession: vi.fn(),
@@ -17,7 +23,9 @@ vi.mock("./interviewApi", () => ({
 const sessionId = "507f1f77bcf86cd799439021";
 const timestamp = "2026-07-25T08:00:00.000Z";
 
-function sessionSummary() {
+function sessionSummary(
+  overrides: Partial<InterviewSessionSummary> = {},
+): InterviewSessionSummary {
   return {
     id: sessionId,
     title: "Platform interview preparation",
@@ -30,6 +38,7 @@ function sessionSummary() {
     questionCount: 8,
     createdAt: timestamp,
     updatedAt: timestamp,
+    ...overrides,
   };
 }
 
@@ -126,7 +135,7 @@ describe("InterviewSessionListPage", () => {
     const router = renderPage();
 
     await screen.findByText("Platform interview preparation");
-    expect(screen.getByText(/8 questions/)).not.toBeNull();
+    expect(screen.getByLabelText("8 questions")).not.toBeNull();
     expect(screen.queryByText("private-provider-payload")).toBeNull();
     await userEvent.click(
       screen.getByRole("link", {
@@ -139,6 +148,95 @@ describe("InterviewSessionListPage", () => {
         `/interviews/${sessionId}`,
       );
     });
+  });
+
+  it("renders role-led factual session dossiers in server order without raw IDs", async () => {
+    const longRole =
+      "Principal Platform Reliability Engineer for Distributed Systems";
+    const longTitle =
+      "Architecture, incident response, and stakeholder communication practice";
+    const secondId = "507f1f77bcf86cd799439099";
+    vi.mocked(interviewApi.listInterviewSessions).mockResolvedValue({
+      sessions: [
+        sessionSummary({
+          title: longTitle,
+          targetRole: longRole,
+          experienceLevel: "Staff-level",
+          mode: "mock-interview",
+          status: "completed",
+          questionCount: 128,
+        }),
+        sessionSummary({
+          id: secondId,
+          title: "Frontend systems practice",
+          targetRole: "Frontend Engineer",
+          experienceLevel: "Senior",
+          mode: "study",
+          status: "archived",
+          questionCount: 1,
+        }),
+      ],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+
+    renderPage();
+
+    const list = await screen.findByRole("list", {
+      name: "Interview sessions",
+    });
+    expect(
+      within(list)
+        .getAllByRole("heading", { level: 3 })
+        .map((heading) => heading.textContent),
+    ).toEqual([longRole, "Frontend Engineer"]);
+    expect(screen.getByText(longTitle)).not.toBeNull();
+    expect(screen.getByText("Staff-level")).not.toBeNull();
+    expect(screen.getByText("Mock interview")).not.toBeNull();
+    expect(within(list).getByText("Completed")).not.toBeNull();
+    expect(within(list).getByText("128")).not.toBeNull();
+    expect(within(list).getByText("questions")).not.toBeNull();
+    expect(
+      screen.getAllByText(
+        new Date(timestamp).toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
+      ),
+    ).toHaveLength(2);
+    expect(screen.queryByText(sessionId)).toBeNull();
+    expect(screen.queryByText(secondId)).toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: `Open ${longTitle}` })
+        .getAttribute("href"),
+    ).toBe(`/interviews/${sessionId}`);
+    expect(
+      screen
+        .getByRole("link", {
+          name: "Open Frontend systems practice",
+        })
+        .getAttribute("href"),
+    ).toBe(`/interviews/${secondId}`);
+  });
+
+  it("uses geometry-only session skeletons while loading", () => {
+    vi.mocked(interviewApi.listInterviewSessions).mockReturnValue(
+      new Promise(() => undefined),
+    );
+
+    renderPage();
+
+    const loading = screen.getByRole("status", {
+      name: "Loading interview sessions",
+    });
+    expect(
+      loading.querySelectorAll(".interview-session-skeleton"),
+    ).toHaveLength(3);
+    expect(loading.textContent).toBe("Loading interview sessions…");
+    expect(loading.textContent).not.toMatch(
+      /engineer|active|completed|question|updated/i,
+    );
   });
 
   it("filters the collection by lifecycle status", async () => {
