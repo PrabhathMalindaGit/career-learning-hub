@@ -343,3 +343,52 @@
   - A separately accepted decision replaces this legacy frontend reuse policy.
   - Current architecture, security, accessibility, or accuracy requirements
     make a specific legacy presentational pattern unsuitable.
+
+## DEC-014: Extend direct legacy frontend port and adaptation policy
+
+- Decision ID: `DEC-014`
+- Date: 2026-07-31
+- Status: ACCEPTED
+- Decision:
+  - Interview Prep Ai and AI Learning Assistant are added as approved component
+    and visual sources for Career Learning Hub under the direct legacy frontend
+    port and adaptation policy established by DEC-013.
+  - Relevant presentational code, layouts, CSS, microinteractions, animations,
+    visual hierarchy, and suitable assets may be directly ported, adapted, or
+    faithfully recreated only after a source-to-source audit of the specific
+    legacy application.
+  - Each legacy application requires its own source-to-source audit before its
+    Career Learning Hub coverage can be declared complete.
+  - The current Career Learning Hub React and TypeScript architecture, APIs,
+    DTOs, authentication, ownership controls, private storage, routes,
+    branding, accessibility, responsive behavior, native 200% capability, and
+    real functionality remain authoritative.
+  - All DEC-013 exclusions remain binding. In particular, no legacy
+    authentication, backend or database model, API client, secret or
+    environment file, provider configuration, old branding, fake testimonial,
+    fake activity or statistic, unsupported ATS or employment guarantee, or
+    automatic application of AI changes may be copied.
+  - The extension also excludes unsupported global libraries or routes,
+    fabricated scores or progress, unsafe raw HTML, unsanitized Markdown,
+    arbitrary external links, inaccessible interaction, and contract expansion
+    hidden inside a visual-port phase.
+- Rationale:
+  - Interview Prep Ai and AI Learning Assistant contain useful presentational
+    patterns, but their legacy data, security, accessibility, and application
+    boundaries are not authoritative.
+  - Mandatory source-to-source audits prevent visual reuse from silently
+    introducing unsupported behavior and allow an application to be declared
+    complete when the current implementation is already equal or better.
+- Consequences:
+  - The Phase 18A Interview and Learning Legacy Comparative Audit is the first
+    audit governed by this extension.
+  - Interview Prep Ai requires no additional implementation when the accepted
+    audit verdict is `A. COMPLETE — NO ADDITIONAL INTERVIEW IMPLEMENTATION
+    REQUIRED`.
+  - AI Learning Assistant work remains separately phased, test-first,
+    human-reviewed, and inactive until explicitly authorized.
+  - Integrated UI-QA remains after all approved legacy-port work.
+- Revisit conditions:
+  - A separately accepted decision replaces DEC-013 or DEC-014.
+  - Current architecture, contract, security, accessibility, accuracy, or
+    product requirements make a specific legacy pattern unsuitable.
