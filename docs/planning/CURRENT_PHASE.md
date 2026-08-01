@@ -13,7 +13,10 @@
   `PHASE_18A_UI_LA1_LEARNING_DOCUMENTS_WORKSPACE_CONVERSATIONS_LEGACY_VISUAL_PORT_APPROVED`
 - UI-LA1 visual approval token accepted: `YES`
 - UI-LA1 implementation commit:
-  `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`
+  `81339ef28fa31275febd28d775c4e386a1c0edd6`
+- UI-LA1 implementation commit subject:
+  `Port legacy learning workspace visuals`
+- UI-LA1 local commit status: `LOCALLY COMMITTED`
 - UI-I1 status: COMPLETED / HUMAN-APPROVED
 - Accepted UI-I1 visual approval token:
   `PHASE_18A_UI_I1_INTERVIEW_LIST_RESPONSE_ERGONOMICS_LEGACY_VISUAL_PORT_APPROVED`
@@ -83,7 +86,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; INTERVIEW/LEARNING COMPARATIVE AUDIT COMPLETED / HUMAN-APPROVED; DEC-014 ACCEPTED; UI-LA1 COMPLETED / HUMAN-APPROVED; UI-LA2 PLANNED / INACTIVE; UI-QA PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED, HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED; SEPARATE EXPLICIT AUTHORIZATION REQUIRED; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; INTERVIEW/LEARNING COMPARATIVE AUDIT COMPLETED / HUMAN-APPROVED; DEC-014 ACCEPTED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-LA2 PLANNED / INACTIVE; UI-QA PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED, HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED; SEPARATE EXPLICIT AUTHORIZATION REQUIRED; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -1127,11 +1130,13 @@
 - Learning implementation phase count: 2.
 - UI-LA1 — Learning Documents, Workspace and Conversations Legacy Visual
   Port:
-  - status: `COMPLETED / HUMAN-APPROVED`;
+  - status: `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`;
   - accepted visual approval token:
     `PHASE_18A_UI_LA1_LEARNING_DOCUMENTS_WORKSPACE_CONVERSATIONS_LEGACY_VISUAL_PORT_APPROVED`;
   - implementation commit:
-    `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`;
+    `81339ef28fa31275febd28d775c4e386a1c0edd6`;
+  - implementation commit subject:
+    `Port legacy learning workspace visuals`;
   - Learning page identity;
   - document-library composition;
   - supported-field document cards;
@@ -1432,8 +1437,11 @@
 
 ### Git and release controls
 
-- Implementation remains unstaged.
-- No commit exists yet for UI-LA1.
+- UI-LA1 implementation and documentation were locally committed together.
+- Final commit: `81339ef28fa31275febd28d775c4e386a1c0edd6`.
+- Commit subject: `Port legacy learning workspace visuals`.
+- Commit parent: `7a0145db51342d40a8e6f3356470089ff5633a36`.
+- The worktree was clean after commit.
 - No push, merge, or deployment occurred.
 - No DNS, cloud, provider, or secret change occurred.
 - UI-LA2 remains inactive.
@@ -1446,10 +1454,10 @@
 - Next planned task:
   UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port.
 - UI-LA2 remains inactive until:
-  1. UI-LA1 documentation is human-reviewed;
-  2. the exact reviewed files are staged;
-  3. a separate direct local-commit authorization is supplied;
-  4. the bounded UI-LA1 local commit succeeds;
+  1. this post-commit reconciliation is human-reviewed;
+  2. the two documentation files are staged exactly;
+  3. a separate local documentation-commit authorization is supplied;
+  4. the documentation-only reconciliation commit succeeds;
   5. the worktree is clean;
   6. a separate UI-LA2 implementation prompt is authorized.
 
@@ -1598,8 +1606,8 @@
 - Preserve the completed and human-approved Phase 18A Interview and Learning
   Legacy Comparative Audit and accepted DEC-014 policy extension.
 - Record Interview Prep Ai as complete with no UI-IP2 required or planned.
-- Preserve UI-LA1 as completed and human-approved, with its implementation
-  unstaged and not yet locally committed.
+- Preserve UI-LA1 as completed, human-approved, and locally committed at
+  `81339ef28fa31275febd28d775c4e386a1c0edd6`.
 - Keep UI-LA2 and UI-QA planned and inactive in that order, with UI-LA2 as the
   next planned UI task.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
@@ -1677,8 +1685,9 @@
 - DEC-014 is `ACCEPTED`.
 - UI-IP2 is `NOT REQUIRED / NOT PLANNED`.
 - UI-LA1 — Learning Documents, Workspace and Conversations Legacy Visual Port
-  is `COMPLETED / HUMAN-APPROVED`; its implementation commit is
-  `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`.
+  is `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`; its implementation
+  commit is `81339ef28fa31275febd28d775c4e386a1c0edd6`
+  (`Port legacy learning workspace visuals`).
 - UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port is
   `PLANNED / INACTIVE` and is the next planned UI task.
 - UI-QA is `PLANNED / INACTIVE` and requires separate authorization.

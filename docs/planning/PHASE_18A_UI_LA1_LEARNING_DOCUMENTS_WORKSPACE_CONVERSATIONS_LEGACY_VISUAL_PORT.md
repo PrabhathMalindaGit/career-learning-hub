@@ -12,9 +12,13 @@
 - Documentation closeout prompt ID:
   `PHASE-18A-UI-LA1-DOCUMENTATION-CLOSEOUT-01`.
 - Branch: `phase-18-staging-deployment`.
-- Starting and current HEAD:
+- Documentation baseline HEAD:
   `7a0145db51342d40a8e6f3356470089ff5633a36`.
-- HEAD subject: `Document Interview and Learning legacy roadmap`.
+- Documentation baseline HEAD subject:
+  `Document Interview and Learning legacy roadmap`.
+- Final local commit: `81339ef28fa31275febd28d775c4e386a1c0edd6`.
+- Commit subject: `Port legacy learning workspace visuals`.
+- Commit parent: `7a0145db51342d40a8e6f3356470089ff5633a36`.
 - Status: `COMPLETED / HUMAN-APPROVED`.
 - Accepted visual approval token:
   `PHASE_18A_UI_LA1_LEARNING_DOCUMENTS_WORKSPACE_CONVERSATIONS_LEGACY_VISUAL_PORT_APPROVED`.
@@ -330,9 +334,14 @@ document-grid repair. The documentation closeout is also human-approved.
 
 - Visual approval is complete.
 - Documentation approval is complete.
-- The twelve reviewed UI-LA1 paths remain unstaged.
-- No UI-LA1 implementation commit exists yet.
-- Exact staging and separate direct local-commit authorization are required.
+- The twelve reviewed paths were locally committed.
+- Final commit: `81339ef28fa31275febd28d775c4e386a1c0edd6`.
+- Commit subject: `Port legacy learning workspace visuals`.
+- Commit parent: `7a0145db51342d40a8e6f3356470089ff5633a36`.
+- The commit has exactly one parent.
+- The commit contains exactly the twelve reviewed paths.
+- Commit summary: 12 files changed, 1,606 insertions and 171 deletions.
+- The post-commit worktree was clean.
 - No push, merge, deployment, DNS, cloud, provider, or secret change occurred.
 - UI-LA2, UI-QA, Phase 18B, and Phase 19 remain inactive.
 
@@ -354,10 +363,10 @@ The next planned UI task is:
 
 UI-LA2 remains `PLANNED / INACTIVE`. It cannot start until:
 
-1. UI-LA1 documentation is human-reviewed;
-2. the exact reviewed files are staged;
-3. a separate direct local-commit authorization is supplied;
-4. the bounded UI-LA1 local commit succeeds;
+1. this post-commit reconciliation is human-reviewed;
+2. the two documentation files are staged exactly;
+3. a separate local documentation-commit authorization is supplied;
+4. the documentation-only reconciliation commit succeeds;
 5. the worktree is clean;
 6. a separate UI-LA2 implementation prompt is authorized.
 
