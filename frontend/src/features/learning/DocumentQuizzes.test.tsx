@@ -125,9 +125,14 @@ describe("Document quizzes", () => {
 
     vi.mocked(learningApi.listQuizzes).mockResolvedValue({
       quizzes: [
-        quiz({ status: "generating", questionCount: 0 }),
+        quiz({
+          title: "Generating architecture quiz",
+          status: "generating",
+          questionCount: 0,
+        }),
         quiz({
           id: "507f1f77bcf86cd799439020",
+          title: "Failed architecture quiz",
           status: "failed",
           questionCount: 0,
           generationError: {
@@ -148,6 +153,17 @@ describe("Document quizzes", () => {
     expect(
       screen.getByRole("link", { name: /Take Architecture boundaries/i }),
     ).not.toBeNull();
+    expect(
+      screen.getByRole("list", {
+        name: "Quizzes for Synthetic architecture notes",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("article", {
+        name: "Quiz Architecture boundaries",
+      }),
+    ).not.toBeNull();
+    expect(screen.getByText("Ready to take")).not.toBeNull();
   });
 
   it("validates generation fields and retains them after recoverable failure", async () => {

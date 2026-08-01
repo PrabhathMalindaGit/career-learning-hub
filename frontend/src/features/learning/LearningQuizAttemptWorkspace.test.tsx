@@ -135,17 +135,35 @@ describe("Learning quiz attempt workspace", () => {
     expect(breadcrumbs.textContent).not.toContain(attemptId);
     expect(screen.getByText("1 of 2 correct")).not.toBeNull();
     expect(screen.getByText("50%")).not.toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Server-authoritative quiz result" }),
+    ).not.toBeNull();
     expect(screen.getByText("Correct")).not.toBeNull();
     expect(screen.getByText("Incorrect")).not.toBeNull();
-    expect(screen.getByText("Your answer: Selected wrong")).not.toBeNull();
-    expect(
-      screen.getByText("Correct answer: Canonical correct"),
-    ).not.toBeNull();
+    expect(screen.getAllByText("Selected answer")).toHaveLength(2);
+    expect(screen.getByText("Selected wrong")).not.toBeNull();
+    expect(screen.getAllByText("Correct answer")).toHaveLength(2);
+    expect(screen.getByText("Canonical correct")).not.toBeNull();
     expect(
       screen.getByText("<strong>Canonical explanation two.</strong>"),
     ).not.toBeNull();
     expect(screen.queryByRole("radio")).toBeNull();
     expect(screen.queryByRole("button", { name: /save|edit|delete/i })).toBeNull();
+  });
+
+  it("omits an explanation surface when the server provides no explanation text", async () => {
+    const result = await learningApi.fetchQuizAttemptReview(documentId, quizId, attemptId, 3);
+    vi.mocked(learningApi.fetchQuizAttemptReview).mockResolvedValue({
+      ...result,
+      review: result.review.map((question) => ({
+        ...question,
+        explanation: "",
+      })),
+    });
+    renderReview();
+
+    await screen.findByRole("heading", { name: "Architecture boundaries" });
+    expect(screen.queryByText("Explanation")).toBeNull();
   });
 
   it("keeps missing and foreign attempts safely indistinguishable", async () => {

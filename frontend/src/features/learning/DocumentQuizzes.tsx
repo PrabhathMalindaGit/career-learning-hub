@@ -30,6 +30,9 @@ const QUIZ_LIMIT = 10;
 const MAX_TITLE = 200;
 const MAX_FOCUS = 500;
 const MAX_QUESTIONS = 100;
+const quizDateFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+});
 
 type SafeError = {
   message: string;
@@ -559,12 +562,25 @@ export function DocumentQuizzes({
           <p>Generate a quiz when you are ready to test your recall.</p>
         </div>
       ) : (
-        <ul className="learning-quiz-set-list">
-          {quizzes.map((quiz) => (
+        <ul
+          className="learning-quiz-set-list"
+          aria-label={`Quizzes for ${document.title}`}
+          role="list"
+        >
+          {quizzes.map((quiz, index) => (
             <li key={quiz.id}>
-              <article>
-                <div>
-                  <strong>{quiz.title}</strong>
+              <article
+                className="learning-collection-card learning-collection-card--quizzes"
+                aria-label={`Quiz ${quiz.title}`}
+              >
+                <div className="learning-collection-card-heading">
+                  <span className="learning-collection-index" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <p className="learning-collection-type">Quiz</p>
+                    <h3>{quiz.title}</h3>
+                  </div>
                   <span
                     className={`learning-status learning-status--${quiz.status}`}
                   >
@@ -572,14 +588,22 @@ export function DocumentQuizzes({
                       ? "Generating"
                       : quiz.status === "failed"
                         ? "Generation failed"
-                        : "Ready"}
+                        : "Ready to take"}
                   </span>
                 </div>
-                <p>
-                  {quiz.questionCount === 1
-                    ? "1 question"
-                    : `${quiz.questionCount} questions`}
-                </p>
+                <div className="learning-collection-meta">
+                  <span>
+                    {quiz.questionCount === 1
+                      ? "1 question"
+                      : `${quiz.questionCount} questions`}
+                  </span>
+                  <span>
+                    Created{" "}
+                    <time dateTime={quiz.createdAt}>
+                      {quizDateFormatter.format(new Date(quiz.createdAt))}
+                    </time>
+                  </span>
+                </div>
                 {quiz.generationError ? (
                   <p className="learning-row-error">
                     {quiz.generationError.message}

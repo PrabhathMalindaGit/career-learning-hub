@@ -2,7 +2,8 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { expect, test } = require("../support/fixtures.cjs");
 
-const evidenceRoot = process.env.UI_LA1_SCREENSHOT_DIR;
+const evidenceRoot =
+  process.env.UI_LA2_SCREENSHOT_DIR || process.env.UI_LA1_SCREENSHOT_DIR;
 
 async function capture(page, name) {
   if (!evidenceRoot) return;
@@ -13,11 +14,29 @@ async function capture(page, name) {
   });
 }
 
+async function captureElement(locator, name) {
+  if (!evidenceRoot) return;
+  fs.mkdirSync(evidenceRoot, { recursive: true });
+  await locator.screenshot({ path: path.join(evidenceRoot, name) });
+}
+
 test("@smoke covers private PDF, chat, Flashcards, and Quiz secrecy", async ({
   page,
   phase14,
 }, testInfo) => {
   const project = testInfo.project.name;
+  const nonLocalRequests = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (
+      !["127.0.0.1", "localhost"].includes(url.hostname) &&
+      !["about:", "blob:", "chrome:", "chrome-extension:", "data:"].includes(
+        url.protocol,
+      )
+    ) {
+      nonLocalRequests.push(url.origin);
+    }
+  });
   const user = await phase14.createUser("learning");
   await phase14.login(page, user);
   await phase14.navigate(page, "Learning");
@@ -159,6 +178,88 @@ test("@smoke covers private PDF, chat, Flashcards, and Quiz secrecy", async ({
   await page.keyboard.press("Home");
   await expect(overviewTab).toHaveAttribute("aria-selected", "true");
 
+  await page.getByRole("tab", { name: "Flashcards" }).click();
+  const flashcardCollection = page.getByRole("region", {
+    name: "Flashcard sets",
+  });
+  await expect(flashcardCollection).toContainText("Phase 14 flashcards");
+  await expect(flashcardCollection).toContainText("Ready to study");
+  if (project === "desktop") {
+    await capture(page, "ui-la2-flashcard-collection-desktop.png");
+
+    const flashcardListPattern = "**/api/v1/flashcard-sets?*";
+    await page.route(flashcardListPattern, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            sets: [],
+            pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+          },
+        }),
+      }),
+    );
+    await page.getByRole("tab", { name: "Quizzes" }).click();
+    await page.getByRole("tab", { name: "Flashcards" }).click();
+    await expect(
+      page.getByRole("heading", { name: "No flashcard sets yet." }),
+    ).toBeVisible();
+    await page.unroute(flashcardListPattern);
+
+    await page.route(flashcardListPattern, (route) => route.abort());
+    await page.getByRole("tab", { name: "Quizzes" }).click();
+    await page.getByRole("tab", { name: "Flashcards" }).click();
+    await expect(
+      page.getByRole("button", { name: "Try flashcard sets again" }),
+    ).toBeVisible();
+    await page.unroute(flashcardListPattern);
+    await page
+      .getByRole("button", { name: "Try flashcard sets again" })
+      .click();
+    await expect(flashcardCollection).toContainText("Phase 14 flashcards");
+  }
+
+  await page.getByRole("tab", { name: "Quizzes" }).click();
+  const quizCollection = page.getByRole("region", { name: "Quizzes" });
+  await expect(quizCollection).toContainText("Phase 14 quiz");
+  await expect(quizCollection).toContainText("Ready to take");
+  if (project === "desktop") {
+    await capture(page, "ui-la2-quiz-collection-desktop.png");
+
+    const quizListPattern = "**/api/v1/quizzes?*";
+    await page.route(quizListPattern, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            quizzes: [],
+            pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+          },
+        }),
+      }),
+    );
+    await page.getByRole("tab", { name: "Flashcards" }).click();
+    await page.getByRole("tab", { name: "Quizzes" }).click();
+    await expect(
+      page.getByRole("heading", { name: "No quizzes yet." }),
+    ).toBeVisible();
+    await page.unroute(quizListPattern);
+
+    await page.route(quizListPattern, (route) => route.abort());
+    await page.getByRole("tab", { name: "Flashcards" }).click();
+    await page.getByRole("tab", { name: "Quizzes" }).click();
+    await expect(
+      page.getByRole("button", { name: "Try quiz list again" }),
+    ).toBeVisible();
+    await page.unroute(quizListPattern);
+    await page.getByRole("button", { name: "Try quiz list again" }).click();
+    await expect(quizCollection).toContainText("Phase 14 quiz");
+  }
+
   await page.getByRole("tab", { name: "Original PDF" }).click();
   await expect(page.getByTitle(`Original PDF: ${title}`)).toHaveAttribute(
     "src",
@@ -241,9 +342,38 @@ test("@smoke covers private PDF, chat, Flashcards, and Quiz secrecy", async ({
   await expect(
     page.getByRole("heading", { name: "Phase 14 flashcards" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Reveal answer" }).click();
+  await expect(
+    page.getByRole("region", { name: "Flashcard answer" }),
+  ).toHaveCount(0);
+  await expect(page.getByText("Beginning of set")).toBeVisible();
+  if (project === "desktop") {
+    await capture(page, "ui-la2-flashcard-study-front.png");
+  } else if (project === "mobile") {
+    await capture(page, "ui-la2-mobile-flashcard-study.png");
+  }
+  const revealAnswer = page.getByRole("button", { name: "Reveal answer" });
+  await revealAnswer.focus();
+  await expect(revealAnswer).toBeFocused();
+  await page.keyboard.press("Enter");
   await expect(page.getByText("Stored synthetic back")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Page 1" })).toBeVisible();
+  await page.getByRole("button", { name: "Page 1" }).click();
+  await expect(page.getByText(/Page 1 is a validated reference/))
+    .toBeVisible();
+  if (project === "desktop") {
+    await capture(page, "ui-la2-flashcard-study-answer.png");
+  }
+  const hideAnswer = page.getByRole("button", { name: "Hide answer" });
+  await hideAnswer.focus();
+  await page.keyboard.press("Space");
+  await expect(page.getByText("Stored synthetic back")).toHaveCount(0);
+  await revealAnswer.focus();
+  await page.keyboard.press("Enter");
   await page.getByRole("button", { name: "Next flashcard" }).click();
+  await expect(page.getByText("End of set")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Next flashcard" }),
+  ).toBeDisabled();
 
   await phase14.openRoute(
     page,
@@ -252,11 +382,48 @@ test("@smoke covers private PDF, chat, Flashcards, and Quiz secrecy", async ({
   await expect(page.getByText("Which state is safe?")).toBeVisible();
   await expect(page.getByText("Stored explanation")).toHaveCount(0);
   await expect(page.getByText(/correct answer/i)).toHaveCount(0);
-  await page.getByRole("radio", { name: "Unavailable without disclosure" })
-    .check();
+  await expect(
+    page.getByRole("button", { name: "Page 1" }),
+  ).toHaveCount(0);
+  const safeChoice = page.getByRole("radio", {
+    name: "Unavailable without disclosure",
+  });
+  await safeChoice.focus();
+  await page.keyboard.press("Space");
+  await expect(safeChoice).toBeChecked();
+  await expect(page.getByText("Selected", { exact: true })).toBeVisible();
+  if (project === "desktop") {
+    await capture(page, "ui-la2-quiz-taking-selected-secret.png");
+  }
   await page.getByRole("button", { name: "Submit quiz answers" }).click();
   await expect(page).toHaveURL(/\/attempts\//);
   await expect(page.getByText("Stored explanation")).toBeVisible();
+  const serverResult = page.getByRole("region", {
+    name: "Server-authoritative quiz result",
+  });
+  await expect(serverResult).toContainText("100%");
+  await expect(serverResult).toContainText("1 of 1 correct");
+  await expect(page.getByText("Correct", { exact: true })).toBeVisible();
+  await expect(page.getByText("Selected answer")).toBeVisible();
+  await expect(page.getByText("Correct answer")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Review source page 1" }),
+  ).toBeVisible();
+  if (project === "desktop") {
+    await captureElement(
+      serverResult,
+      "ui-la2-quiz-result-summary.png",
+    );
+    await captureElement(
+      page.locator(".learning-review-question"),
+      "ui-la2-quiz-answer-review.png",
+    );
+  }
+
+  await page.getByRole("link", { name: "Quiz workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Attempt history" }))
+    .toBeVisible();
+  await expect(page.getByText("Server score")).toBeVisible();
 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await phase14.openRoute(page, "/learning");
@@ -275,4 +442,5 @@ test("@smoke covers private PDF, chat, Flashcards, and Quiz secrecy", async ({
     await phase14.expectPageHealth(page);
   }
   await phase14.expectPageHealth(page);
+  expect([...new Set(nonLocalRequests)]).toEqual([]);
 });

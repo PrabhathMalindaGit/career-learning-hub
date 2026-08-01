@@ -143,9 +143,14 @@ describe("Document flashcards", () => {
   it("renders canonical generating, failed, and ready sets with pagination", async () => {
     vi.mocked(learningApi.listFlashcardSets).mockResolvedValue({
       sets: [
-        setRecord({ status: "generating", cardCount: 0 }),
+        setRecord({
+          title: "Generating architecture cards",
+          status: "generating",
+          cardCount: 0,
+        }),
         setRecord({
           id: "507f1f77bcf86cd799439020",
+          title: "Failed architecture cards",
           status: "failed",
           cardCount: 0,
           generationError: {
@@ -167,6 +172,17 @@ describe("Document flashcards", () => {
     expect(
       screen.getByRole("link", { name: /Study Architecture review/i }),
     ).not.toBeNull();
+    expect(
+      screen.getByRole("list", {
+        name: "Flashcard sets for Synthetic architecture notes",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("article", {
+        name: "Flashcard set Architecture review",
+      }),
+    ).not.toBeNull();
+    expect(screen.getByText("Ready to study")).not.toBeNull();
 
     await userEvent.click(
       screen.getByRole("button", {

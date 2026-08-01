@@ -4,11 +4,25 @@
 - Name: Staging Deployment
 - Status:
   ACTIVE — INTERVIEW AND LEARNING COMPARATIVE AUDIT COMPLETED /
-  HUMAN-APPROVED; UI-LA1 COMPLETED / HUMAN-APPROVED; UI-LA2 AND UI-QA
-  PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE
+  HUMAN-APPROVED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
+  UI-LA2 COMPLETED / HUMAN-APPROVED; UI-QA PLANNED / INACTIVE;
+  PHASE 18B PLANNED / INACTIVE
 - Most recently completed UI task:
-  UI-LA1 — Learning Documents, Workspace and Conversations Legacy Visual Port
-- UI-LA1 status: COMPLETED / HUMAN-APPROVED
+  UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port
+- UI-LA2 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-LA2 visual approval token:
+  `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`
+- UI-LA2 visual approval token accepted: `YES`
+- Accepted UI-LA2 documentation closeout approval token:
+  `PHASE_18A_UI_LA2_DOCUMENTATION_CLOSEOUT_APPROVED`
+- UI-LA2 documentation closeout approval token accepted: `YES`
+- UI-LA2 documentation closeout status: `HUMAN-APPROVED`
+- UI-LA2 implementation baseline HEAD:
+  `dc623f708212b56fae0b0b4525fb03f4848a1b7a`
+- UI-LA2 implementation commit status:
+  `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`
+- UI-LA2 implementation paths: `UNSTAGED / UNCOMMITTED`
+- UI-LA1 status: COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED
 - Accepted UI-LA1 visual approval token:
   `PHASE_18A_UI_LA1_LEARNING_DOCUMENTS_WORKSPACE_CONVERSATIONS_LEGACY_VISUAL_PORT_APPROVED`
 - UI-LA1 visual approval token accepted: `YES`
@@ -16,6 +30,10 @@
   `81339ef28fa31275febd28d775c4e386a1c0edd6`
 - UI-LA1 implementation commit subject:
   `Port legacy learning workspace visuals`
+- UI-LA1 documentation reconciliation commit:
+  `dc623f708212b56fae0b0b4525fb03f4848a1b7a`
+- UI-LA1 documentation reconciliation commit subject:
+  `Record UI-LA1 implementation commit`
 - UI-LA1 local commit status: `LOCALLY COMMITTED`
 - UI-I1 status: COMPLETED / HUMAN-APPROVED
 - Accepted UI-I1 visual approval token:
@@ -54,8 +72,7 @@
   `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`
 - UI-LR1 visual approval token accepted: `YES`
 - Next planned UI task:
-  UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port
-- UI-LA2 status: PLANNED / INACTIVE
+  UI-QA — Integrated Learning Legacy Visual Port Quality Assurance
 - UI-QA status: PLANNED / INACTIVE
 - Phase 18B status: PLANNED / INACTIVE
 - Phase 18B readiness:
@@ -86,7 +103,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; INTERVIEW/LEARNING COMPARATIVE AUDIT COMPLETED / HUMAN-APPROVED; DEC-014 ACCEPTED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-LA2 PLANNED / INACTIVE; UI-QA PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED, HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED; SEPARATE EXPLICIT AUTHORIZATION REQUIRED; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; INTERVIEW/LEARNING COMPARATIVE AUDIT COMPLETED / HUMAN-APPROVED; DEC-014 ACCEPTED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-LA2 COMPLETED / HUMAN-APPROVED / UNSTAGED / UNCOMMITTED; UI-QA PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED, HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED; SEPARATE EXPLICIT AUTHORIZATION REQUIRED; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -1152,7 +1169,14 @@
   - composer and canonical job states;
   - responsive, accessibility, reduced-motion, and native-200% verification.
 - UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port:
-  - status: `PLANNED / INACTIVE`;
+  - status: `COMPLETED / HUMAN-APPROVED`;
+  - accepted visual approval token:
+    `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`;
+  - implementation baseline HEAD:
+    `dc623f708212b56fae0b0b4525fb03f4848a1b7a`;
+  - implementation commit status:
+    `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`;
+  - implementation and test paths remain unstaged and uncommitted;
   - document-scoped Flashcard-set cards;
   - generation states;
   - accessible front/back study framing;
@@ -1168,20 +1192,23 @@
   - responsive, accessibility, reduced-motion, secrecy, and native-200%
     verification.
 - UI-QA status: `PLANNED / INACTIVE`.
-- UI-QA position: after UI-LA1 and UI-LA2 are completed, human-approved,
-  documented, and locally committed.
-- Ordered remaining UI roadmap: `UI-LA2 → UI-QA`.
+- UI-QA position: next planned task after UI-LA2 documentation review,
+  approval, exact staging, local commit, any required reconciliation, and a
+  separate UI-QA authorization.
+- Ordered remaining UI roadmap: `UI-QA`.
 - Next planned UI task:
-  `UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port`.
+  `UI-QA — Integrated Learning Legacy Visual Port Quality Assurance`.
 - Next planned UI task status: `PLANNED / INACTIVE`.
-- UI-LA2 is not activated by this documentation task.
+- UI-QA is not activated by this documentation task.
 
 ### Phase controls
 
 - Phase 18B status: `PLANNED / INACTIVE`.
+- Phase 18B remains blocked.
 - Phase 18B readiness:
   `NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED,
-  HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED`.
+  HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED, FOLLOWED BY SEPARATE
+  ACTIVATION AUTHORIZATION`.
 - Phase 18B authorization: `SEPARATE EXPLICIT AUTHORIZATION REQUIRED`.
 - DOC-18A-IL, UI-LA1, UI-LA2, and UI-QA authorize no push, merge,
   deployment, DNS, cloud-resource, provider, secret, or staging-activation
@@ -1444,22 +1471,78 @@
 - The worktree was clean after commit.
 - No push, merge, or deployment occurred.
 - No DNS, cloud, provider, or secret change occurred.
-- UI-LA2 remains inactive.
-- UI-QA remains inactive.
-- Phase 18B remains inactive.
-- Phase 19 remains inactive.
+- At the time of the UI-LA1 closeout, UI-LA2, UI-QA, Phase 18B, and Phase 19
+  remained inactive.
 
-### Successor
+### Historical successor at UI-LA1 closeout
 
-- Next planned task:
+- At the time of the UI-LA1 closeout, the next planned task was:
   UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port.
-- UI-LA2 remains inactive until:
+- UI-LA2 remained inactive until:
   1. this post-commit reconciliation is human-reviewed;
   2. the two documentation files are staged exactly;
   3. a separate local documentation-commit authorization is supplied;
   4. the documentation-only reconciliation commit succeeds;
   5. the worktree is clean;
   6. a separate UI-LA2 implementation prompt is authorized.
+- Those prerequisites were subsequently completed before UI-LA2 received
+  separate implementation authorization.
+
+## Phase 18A UI-LA2 Learning Flashcards, Quizzes and Review Legacy Visual Port
+
+### Identity and status
+
+- Task ID: `UI-LA2`.
+- Task title:
+  `Learning Flashcards, Quizzes and Review Legacy Visual Port`.
+- Implementation prompt ID:
+  `PHASE-18A-UI-LA2-LEARNING-FLASHCARDS-QUIZZES-REVIEW-LEGACY-VISUAL-PORT-01`.
+- Documentation closeout prompt ID:
+  `PHASE-18A-UI-LA2-DOCUMENTATION-CLOSEOUT-01`.
+- Status: `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`.
+- Documentation closeout status: `HUMAN-APPROVED`.
+- Implementation baseline HEAD:
+  `dc623f708212b56fae0b0b4525fb03f4848a1b7a`.
+- Implementation commit status:
+  `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`.
+- The fourteen implementation and test paths remain unstaged and
+  uncommitted.
+- The two documentation paths remain unstaged and uncommitted.
+
+### Completed scope
+
+- UI-LA2 applies the approved AI Learning Assistant visual language to
+  document-scoped Flashcard collections, Flashcard study, Quiz collections,
+  Quiz taking, immutable attempt history, server results, and read-only
+  answer review.
+- Current React/Vite architecture, authenticated ownership, nested routes,
+  canonical generation jobs, answer secrecy, server-authoritative scoring,
+  immutable attempts, private citation boundaries, AppShell, and Career
+  Learning Hub branding remain authoritative.
+- Human review identified no blocking visual defect in the submitted
+  evidence. The synthetic Phase 14 titles were test fixtures, not production
+  content.
+- Real AI-provider success was not tested. No formal screen-reader session
+  was performed, and no formal WCAG conformance claim is made.
+
+### Successor and phase controls
+
+- Next planned task:
+  `UI-QA — Integrated Learning Legacy Visual Port Quality Assurance`.
+- UI-QA remains `PLANNED / INACTIVE` and requires separate authorization.
+- UI-LA2 documentation review is complete and its approval is recorded.
+- UI-QA cannot start until the exact implementation and documentation paths
+  are staged under separate authorization, the separate local commit
+  succeeds, any required post-commit reconciliation is complete, and the
+  worktree is clean.
+- Phase 18B remains `PLANNED / INACTIVE` and blocked until UI-LA1, UI-LA2,
+  and UI-QA are completed, human-approved, documented, and locally committed,
+  followed by separate activation authorization.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- No staging, commit, push, merge, deployment, DNS, cloud, provider, secret,
+  or later-phase action is authorized by this closeout.
 
 ## Phase 17 security-enabled continuation start
 
@@ -1608,8 +1691,10 @@
 - Record Interview Prep Ai as complete with no UI-IP2 required or planned.
 - Preserve UI-LA1 as completed, human-approved, and locally committed at
   `81339ef28fa31275febd28d775c4e386a1c0edd6`.
-- Keep UI-LA2 and UI-QA planned and inactive in that order, with UI-LA2 as the
-  next planned UI task.
+- Preserve UI-LA2 as completed and human-approved, with its fourteen
+  implementation/test paths unstaged and uncommitted until separately
+  authorized exact staging and local commit.
+- Keep UI-QA planned and inactive as the next planned UI task.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
   unresolved P15-001 restrictions, all existing security/privacy controls,
   and a synthetic-data-only staging policy.
@@ -1689,8 +1774,11 @@
   commit is `81339ef28fa31275febd28d775c4e386a1c0edd6`
   (`Port legacy learning workspace visuals`).
 - UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port is
-  `PLANNED / INACTIVE` and is the next planned UI task.
-- UI-QA is `PLANNED / INACTIVE` and requires separate authorization.
+  `COMPLETED / HUMAN-APPROVED`; its implementation and test paths remain
+  unstaged and uncommitted, and no implementation commit exists.
+- UI-QA — Integrated Learning Legacy Visual Port Quality Assurance is the
+  next planned UI task and remains `PLANNED / INACTIVE` pending separate
+  authorization.
 - Phase 18B is
   `PLANNED / INACTIVE — NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND
   UI-QA ARE COMPLETED, HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED;

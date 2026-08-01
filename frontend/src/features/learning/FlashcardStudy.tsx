@@ -54,14 +54,26 @@ export function FlashcardStudy({
         </p>
       </header>
 
-      <article className="learning-study-card">
-        <p className="learning-study-label">Question</p>
+      <progress
+        className="learning-study-progress"
+        aria-label="Flashcard study progress"
+        max={cards.length}
+        value={index + 1}
+      />
+
+      <article
+        className="learning-study-card"
+        aria-label={`Flashcard ${index + 1} question`}
+      >
+        <p className="learning-study-label">Front · Question</p>
         <p className="learning-study-content">{card.front}</p>
 
         <div className="learning-study-reveal">
           <button
             type="button"
             className="learning-primary-button"
+            aria-controls="learning-flashcard-answer"
+            aria-expanded={revealed}
             onClick={() => {
               setRevealed((current) => !current);
               setSelectedSourcePage(undefined);
@@ -72,8 +84,13 @@ export function FlashcardStudy({
         </div>
 
         {revealed ? (
-          <div className="learning-study-answer">
-            <p className="learning-study-label">Answer</p>
+          <div
+            id="learning-flashcard-answer"
+            className="learning-study-answer"
+            role="region"
+            aria-label="Flashcard answer"
+          >
+            <p className="learning-study-label">Back · Answer</p>
             <p className="learning-study-content">{card.back}</p>
             {card.sourcePages.length > 0 ? (
               <div
@@ -124,9 +141,20 @@ export function FlashcardStudy({
         >
           Previous
         </button>
-        <span aria-hidden="true">
-          {index + 1} / {cards.length}
-        </span>
+        <div className="learning-study-boundary" aria-live="polite">
+          <span aria-hidden="true">
+            {index + 1} / {cards.length}
+          </span>
+          <small>
+            {cards.length === 1
+              ? "Only card in set"
+              : index === 0
+                ? "Beginning of set"
+                : index === cards.length - 1
+                  ? "End of set"
+                  : "Continue studying"}
+          </small>
+        </div>
         <button
           type="button"
           className="learning-secondary-button"
