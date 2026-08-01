@@ -12,11 +12,15 @@
 - Implementation baseline HEAD:
   `dc623f708212b56fae0b0b4525fb03f4848a1b7a`.
 - Baseline HEAD subject: `Record UI-LA1 implementation commit`.
-- Status: `COMPLETED / HUMAN-APPROVED`.
+- Status: `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`.
 - Accepted visual approval token:
   `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`.
-- Implementation commit:
-  `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`.
+- Implementation and documentation commit:
+  `9a07e57296f2b61120a3de75616c31e79c7ac164`.
+- Commit subject: `Port legacy learning flashcard and quiz visuals`.
+- Commit parent: `dc623f708212b56fae0b0b4525fb03f4848a1b7a`.
+- Parent count: `1`.
+- Local commit status: `LOCALLY COMMITTED`.
 
 ## 2. Approved objective
 
@@ -168,6 +172,9 @@ implementation and test paths:
 This documentation closeout also modifies
 `docs/planning/CURRENT_PHASE.md` and creates
 `docs/planning/PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT.md`.
+
+All sixteen approved implementation, test, and documentation paths were
+committed together in `9a07e57296f2b61120a3de75616c31e79c7ac164`.
 
 ## 8. Test-first evidence
 
@@ -349,18 +356,30 @@ Accepted documentation approval token:
 
 ## 20. Git and release controls
 
-- Human documentation review is complete and documentation approval is
-  recorded.
-- All sixteen reviewed implementation, test, and documentation paths remain
-  unstaged.
-- This closeout modifies one tracked documentation file and creates one new
-  untracked report.
-- Nothing is staged.
-- No UI-LA2 implementation and documentation commit exists.
-- Exact staging requires separate authorization.
-- A local commit requires separate authorization.
-- No push, merge, deployment, DNS, cloud, provider, or secret action
+- Accepted post-commit reconciliation approval token:
+  `PHASE_18A_UI_LA2_POST_COMMIT_DOCUMENTATION_RECONCILIATION_APPROVED`.
+- Post-commit documentation-reconciliation status: `HUMAN-APPROVED`.
+- Human review of the post-commit reconciliation is complete and its approval
+  is recorded.
+- The sixteen approved implementation, test, and documentation paths were
+  committed together locally.
+- Commit: `9a07e57296f2b61120a3de75616c31e79c7ac164`.
+- Subject: `Port legacy learning flashcard and quiz visuals`.
+- Parent: `dc623f708212b56fae0b0b4525fb03f4848a1b7a`.
+- Parent count: `1`.
+- Summary: `16 files changed, 1540 insertions(+), 186 deletions(-)`.
+- This dedicated report was added in that commit.
+- The post-commit worktree was clean.
+- No push, merge, deployment, tag, amend, reset, rebase, or cherry-pick
   occurred.
+- Finalization requires exact staging of these two documentation files, one
+  separately authorized documentation-only local commit, and direct Git
+  verification of a clean worktree.
+- The final documentation-only commit hash is intentionally not recorded
+  inside that same commit, avoiding a recursive documentation-reconciliation
+  cycle.
+- No push, merge, deployment, tag, amend, reset, rebase, cherry-pick, or phase
+  activation is authorized by this finalization workflow.
 - UI-QA, Phase 18B, and Phase 19 remain inactive.
 
 ## 21. Remaining limitations
@@ -381,16 +400,28 @@ The next planned task is:
 
 `UI-QA — Integrated Learning Legacy Visual Port Quality Assurance`
 
-UI-QA remains `PLANNED / INACTIVE`. The first two successor prerequisites are
-complete: the UI-LA2 documentation closeout was human-reviewed, and
-documentation approval was recorded. The remaining prerequisites are:
+UI-QA remains `PLANNED / INACTIVE`. These UI-LA2 successor prerequisites are
+complete:
 
-1. the exact implementation and documentation paths are staged;
-2. separate local-commit authorization is supplied;
-3. the UI-LA2 implementation and documentation commit succeeds;
-4. any post-commit reconciliation is completed if required;
-5. the worktree is clean;
-6. a separate UI-QA prompt is authorized.
+- implementation completed;
+- visual approval recorded;
+- documentation closeout completed;
+- documentation approval recorded;
+- exact sixteen-path staging completed;
+- the local implementation-and-documentation commit succeeded;
+- the post-commit worktree was clean;
+- post-commit reconciliation human review completed;
+- post-commit reconciliation approval recorded.
+
+Before separate UI-QA authorization, Git must directly verify:
+
+1. exactly the two approved reconciliation documents were staged;
+2. one documentation-only local commit succeeded;
+3. the resulting worktree is clean;
+4. no push, merge, deployment, or phase activation occurred.
+
+These final Git facts are intentionally verified externally rather than
+self-recorded in the same documentation-only commit.
 
 Phase 18B remains `PLANNED / INACTIVE` and blocked. Phase 19 remains
 `PLANNED / INACTIVE`.

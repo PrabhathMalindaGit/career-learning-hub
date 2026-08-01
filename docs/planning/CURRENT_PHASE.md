@@ -5,11 +5,12 @@
 - Status:
   ACTIVE — INTERVIEW AND LEARNING COMPARATIVE AUDIT COMPLETED /
   HUMAN-APPROVED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
-  UI-LA2 COMPLETED / HUMAN-APPROVED; UI-QA PLANNED / INACTIVE;
+  UI-LA2 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
+  UI-QA PLANNED / INACTIVE;
   PHASE 18B PLANNED / INACTIVE
 - Most recently completed UI task:
   UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port
-- UI-LA2 status: COMPLETED / HUMAN-APPROVED
+- UI-LA2 status: COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED
 - Accepted UI-LA2 visual approval token:
   `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`
 - UI-LA2 visual approval token accepted: `YES`
@@ -17,11 +18,31 @@
   `PHASE_18A_UI_LA2_DOCUMENTATION_CLOSEOUT_APPROVED`
 - UI-LA2 documentation closeout approval token accepted: `YES`
 - UI-LA2 documentation closeout status: `HUMAN-APPROVED`
+- Accepted UI-LA2 post-commit documentation-reconciliation approval token:
+  `PHASE_18A_UI_LA2_POST_COMMIT_DOCUMENTATION_RECONCILIATION_APPROVED`
+- UI-LA2 post-commit documentation-reconciliation approval token accepted:
+  `YES`
+- UI-LA2 post-commit documentation-reconciliation status: `HUMAN-APPROVED`
 - UI-LA2 implementation baseline HEAD:
   `dc623f708212b56fae0b0b4525fb03f4848a1b7a`
-- UI-LA2 implementation commit status:
-  `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`
-- UI-LA2 implementation paths: `UNSTAGED / UNCOMMITTED`
+- UI-LA2 implementation and documentation commit:
+  `9a07e57296f2b61120a3de75616c31e79c7ac164`
+- UI-LA2 commit subject: `Port legacy learning flashcard and quiz visuals`
+- UI-LA2 commit parent: `dc623f708212b56fae0b0b4525fb03f4848a1b7a`
+- UI-LA2 commit parent count: `1`
+- UI-LA2 committed boundary:
+  `16 APPROVED IMPLEMENTATION, TEST, AND DOCUMENTATION PATHS`
+- UI-LA2 local commit status: `LOCALLY COMMITTED`
+- UI-LA2 worktree state after commit: `CLEAN`
+- UI-LA2 finalization policy:
+  `EXACT TWO-FILE STAGING, ONE DOCUMENTATION-ONLY LOCAL COMMIT, CLEAN
+  WORKTREE VERIFICATION, AND SEPARATE UI-QA AUTHORIZATION REQUIRED`
+- The final documentation-only commit hash is intentionally not self-recorded
+  in that same commit because doing so would require another recursive
+  documentation reconciliation.
+- Exact staging, documentation-only commit success, and a clean worktree must
+  be verified directly from Git before separate UI-QA authorization.
+- No UI-LA2 push, merge, deployment, or phase activation occurred.
 - UI-LA1 status: COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED
 - Accepted UI-LA1 visual approval token:
   `PHASE_18A_UI_LA1_LEARNING_DOCUMENTS_WORKSPACE_CONVERSATIONS_LEGACY_VISUAL_PORT_APPROVED`
@@ -103,7 +124,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; INTERVIEW/LEARNING COMPARATIVE AUDIT COMPLETED / HUMAN-APPROVED; DEC-014 ACCEPTED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-LA2 COMPLETED / HUMAN-APPROVED / UNSTAGED / UNCOMMITTED; UI-QA PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED, HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED; SEPARATE EXPLICIT AUTHORIZATION REQUIRED; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; INTERVIEW/LEARNING COMPARATIVE AUDIT COMPLETED / HUMAN-APPROVED; DEC-014 ACCEPTED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-LA2 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-QA PLANNED / INACTIVE; PHASE 18B PLANNED / INACTIVE — NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED, HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED; SEPARATE EXPLICIT AUTHORIZATION REQUIRED; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -1169,14 +1190,19 @@
   - composer and canonical job states;
   - responsive, accessibility, reduced-motion, and native-200% verification.
 - UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port:
-  - status: `COMPLETED / HUMAN-APPROVED`;
+  - status: `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`;
   - accepted visual approval token:
     `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`;
   - implementation baseline HEAD:
     `dc623f708212b56fae0b0b4525fb03f4848a1b7a`;
-  - implementation commit status:
-    `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`;
-  - implementation and test paths remain unstaged and uncommitted;
+  - implementation and documentation commit:
+    `9a07e57296f2b61120a3de75616c31e79c7ac164`;
+  - commit subject: `Port legacy learning flashcard and quiz visuals`;
+  - commit parent: `dc623f708212b56fae0b0b4525fb03f4848a1b7a`;
+  - commit parent count: `1`;
+  - committed boundary:
+    `16 APPROVED IMPLEMENTATION, TEST, AND DOCUMENTATION PATHS`;
+  - post-commit worktree state: `CLEAN`;
   - document-scoped Flashcard-set cards;
   - generation states;
   - accessible front/back study framing;
@@ -1192,9 +1218,15 @@
   - responsive, accessibility, reduced-motion, secrecy, and native-200%
     verification.
 - UI-QA status: `PLANNED / INACTIVE`.
-- UI-QA position: next planned task after UI-LA2 documentation review,
-  approval, exact staging, local commit, any required reconciliation, and a
-  separate UI-QA authorization.
+- UI-QA position: next planned task after the UI-LA2 finalization workflow is
+  verified directly from Git and separate UI-QA authorization is provided.
+- Before UI-QA authorization, the UI-LA2 finalization workflow requires:
+  1. exact staging of the two approved reconciliation documents;
+  2. one separately authorized documentation-only local commit;
+  3. direct Git verification of a clean worktree;
+  4. separate UI-QA authorization.
+- These controls are verified from Git and are not recursively self-recorded
+  in the documentation-only commit.
 - Ordered remaining UI roadmap: `UI-QA`.
 - Next planned UI task:
   `UI-QA — Integrated Learning Legacy Visual Port Quality Assurance`.
@@ -1499,17 +1531,28 @@
   `PHASE-18A-UI-LA2-LEARNING-FLASHCARDS-QUIZZES-REVIEW-LEGACY-VISUAL-PORT-01`.
 - Documentation closeout prompt ID:
   `PHASE-18A-UI-LA2-DOCUMENTATION-CLOSEOUT-01`.
-- Status: `COMPLETED / HUMAN-APPROVED`.
+- Status: `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`.
 - Accepted visual approval token:
   `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`.
 - Documentation closeout status: `HUMAN-APPROVED`.
 - Implementation baseline HEAD:
   `dc623f708212b56fae0b0b4525fb03f4848a1b7a`.
-- Implementation commit status:
-  `NOT YET CREATED — SEPARATE LOCAL-COMMIT AUTHORIZATION REQUIRED`.
-- The fourteen implementation and test paths remain unstaged and
-  uncommitted.
-- The two documentation paths remain unstaged and uncommitted.
+- Implementation and documentation commit:
+  `9a07e57296f2b61120a3de75616c31e79c7ac164`.
+- Commit subject: `Port legacy learning flashcard and quiz visuals`.
+- Commit parent: `dc623f708212b56fae0b0b4525fb03f4848a1b7a`.
+- Commit parent count: `1`.
+- Committed boundary:
+  `16 APPROVED IMPLEMENTATION, TEST, AND DOCUMENTATION PATHS`.
+- Local commit status: `LOCALLY COMMITTED`.
+- Post-commit worktree state: `CLEAN`.
+- Post-commit documentation reconciliation status: `HUMAN-APPROVED`.
+- Finalization policy:
+  `EXACT TWO-FILE STAGING, ONE DOCUMENTATION-ONLY LOCAL COMMIT, CLEAN
+  WORKTREE VERIFICATION, AND SEPARATE UI-QA AUTHORIZATION REQUIRED`.
+- The final documentation-only commit hash is intentionally not self-recorded
+  in that same commit because doing so would require another recursive
+  documentation reconciliation.
 
 ### Completed scope
 
@@ -1532,11 +1575,18 @@
 - Next planned task:
   `UI-QA — Integrated Learning Legacy Visual Port Quality Assurance`.
 - UI-QA remains `PLANNED / INACTIVE` and requires separate authorization.
-- UI-LA2 documentation review is complete and its approval is recorded.
-- UI-QA cannot start until the exact implementation and documentation paths
-  are staged under separate authorization, the separate local commit
-  succeeds, any required post-commit reconciliation is complete, and the
-  worktree is clean.
+- UI-LA2 implementation, visual approval, documentation closeout,
+  documentation approval, exact sixteen-path staging, and the local
+  implementation-and-documentation commit are complete. The post-commit
+  worktree was clean.
+- Post-commit reconciliation human review is complete and its approval is
+  recorded.
+- Before UI-QA authorization, the finalization workflow requires exact
+  staging of the two approved reconciliation documents, one separately
+  authorized documentation-only local commit, direct Git verification of a
+  clean worktree, and separate UI-QA authorization.
+- These final Git controls are verified directly and are not recursively
+  self-recorded in the documentation-only commit.
 - Phase 18B remains `PLANNED / INACTIVE` and blocked until UI-LA1, UI-LA2,
   and UI-QA are completed, human-approved, documented, and locally committed,
   followed by separate activation authorization.
@@ -1691,9 +1741,14 @@
 - Record Interview Prep Ai as complete with no UI-IP2 required or planned.
 - Preserve UI-LA1 as completed, human-approved, and locally committed at
   `81339ef28fa31275febd28d775c4e386a1c0edd6`.
-- Preserve UI-LA2 as completed and human-approved, with its fourteen
-  implementation/test paths unstaged and uncommitted until separately
-  authorized exact staging and local commit.
+- Preserve UI-LA2 as completed, human-approved, and locally committed at
+  `9a07e57296f2b61120a3de75616c31e79c7ac164`.
+- Preserve the human-approved post-commit reconciliation. Its finalization
+  requires exact two-file staging, one separately authorized
+  documentation-only local commit, direct Git verification of a clean
+  worktree, and separate UI-QA authorization.
+- Verify those final Git facts externally rather than recursively
+  self-recording them in the documentation-only commit.
 - Keep UI-QA planned and inactive as the next planned UI task.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
   unresolved P15-001 restrictions, all existing security/privacy controls,
@@ -1774,8 +1829,12 @@
   commit is `81339ef28fa31275febd28d775c4e386a1c0edd6`
   (`Port legacy learning workspace visuals`).
 - UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port is
-  `COMPLETED / HUMAN-APPROVED`; its implementation and test paths remain
-  unstaged and uncommitted, and no implementation commit exists.
+  `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`; its implementation and
+  documentation commit is `9a07e57296f2b61120a3de75616c31e79c7ac164`
+  (`Port legacy learning flashcard and quiz visuals`). Its post-commit
+  documentation reconciliation is `HUMAN-APPROVED`; final staging, commit
+  success, and clean-worktree status must be verified directly from Git and
+  are not recursively self-recorded in that documentation-only commit.
 - UI-QA — Integrated Learning Legacy Visual Port Quality Assurance is the
   next planned UI task and remains `PLANNED / INACTIVE` pending separate
   authorization.
