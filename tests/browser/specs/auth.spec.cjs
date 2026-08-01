@@ -51,6 +51,23 @@ async function expectAuthStorageEmpty(page) {
   expect(storage).toEqual({ local: [], session: [] });
 }
 
+async function installAnonymousRefreshResponse(page) {
+  await page.route("**/api/v1/auth/refresh", async (route) => {
+    await route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: false,
+        error: {
+          code: "REFRESH_TOKEN_REQUIRED",
+          message: "A refresh token is required.",
+          requestId: "ui-qa-anonymous-refresh",
+        },
+      }),
+    });
+  });
+}
+
 test("keeps the authentication bootstrap layout stable", async ({
   page,
   phase14,
@@ -85,6 +102,7 @@ test("renders the factual premium authentication shell across the review matrix"
     testInfo.project.name !== "desktop",
     "The complete viewport matrix runs once in the desktop project.",
   );
+  await installAnonymousRefreshResponse(page);
   const externalRequests = [];
   const artworkResponses = [];
   page.on("request", (request) => {
@@ -105,7 +123,7 @@ test("renders the factual premium authentication shell across the review matrix"
     }
   });
 
-  for (const viewport of [
+  for (const [index, viewport] of [
     { width: 1920, height: 1080 },
     { width: 1440, height: 900 },
     { width: 1024, height: 768 },
@@ -113,9 +131,13 @@ test("renders the factual premium authentication shell across the review matrix"
     { width: 390, height: 844 },
     { width: 320, height: 720 },
     { width: 720, height: 450 },
-  ]) {
+  ].entries()) {
     await page.setViewportSize(viewport);
-    await page.goto("/login");
+    if (index === 0) {
+      await page.goto("/login");
+    } else {
+      await page.getByRole("link", { name: "Sign in" }).click();
+    }
     await expect(
       page.getByRole("heading", { name: "Welcome back" }),
     ).toBeVisible();
@@ -199,7 +221,9 @@ test("renders the factual premium authentication shell across the review matrix"
     ).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
 
-    await page.goto("/register");
+    await page
+      .getByRole("link", { name: "Create an account" })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Create your account" }),
     ).toBeVisible();
@@ -285,6 +309,7 @@ test("keeps login keyboard order, Enter submission, and browser storage safe", a
   page,
   phase14,
 }) => {
+  await installAnonymousRefreshResponse(page);
   const user = await phase14.createUser("auth-keyboard");
   await page.goto("/register");
   const displayName = page.getByRole("textbox", {
@@ -308,7 +333,11 @@ test("keeps login keyboard order, Enter submission, and browser storage safe", a
   await page.keyboard.press("Shift+Tab");
   await expect(registrationPassword).toBeFocused();
 
-  await page.goto("/login");
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(
+    page.getByRole("heading", { name: "Welcome back" }),
+  ).toBeVisible();
   const email = page.getByRole("textbox", { name: "Email address" });
   const password = page.getByLabel("Password");
   const submit = page.getByRole("button", { name: "Sign in" });
@@ -334,6 +363,7 @@ test("keeps login and registration failure states safe and truthful", async ({
   page,
   phase14,
 }) => {
+  await installAnonymousRefreshResponse(page);
   await page.setViewportSize({ width: 320, height: 720 });
   let releaseLogin;
   const loginGate = new Promise((resolve) => {
@@ -398,7 +428,13 @@ test("keeps login and registration failure states safe and truthful", async ({
       }),
     });
   });
-  await page.goto("/register");
+  await page
+    .getByRole("link", { name: "Create an account" })
+    .click();
+  await expect(page).toHaveURL(/\/register$/);
+  await expect(
+    page.getByRole("heading", { name: "Create your account" }),
+  ).toBeVisible();
   await page
     .getByRole("textbox", { name: "Display name" })
     .fill("Synthetic Registration");
@@ -503,9 +539,9 @@ test("preserves responsive auth destinations and keyboard foundations", async ({
   page,
   phase14,
 }) => {
+  await installAnonymousRefreshResponse(page);
   const user = await phase14.createUser("auth-responsive");
   await phase14.login(page, user);
-  await page.goto("/dashboard");
 
   for (const viewport of [
     { width: 1440, height: 900 },
