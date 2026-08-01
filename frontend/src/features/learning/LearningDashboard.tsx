@@ -524,6 +524,16 @@ export function LearningDashboard() {
                   }
                 }}
               />
+              <p
+                className={`learning-file-selection${
+                  file ? " learning-file-selection--selected" : ""
+                }`}
+                aria-live="polite"
+              >
+                {file
+                  ? `Selected: ${file.name}`
+                  : "Choose a PDF from your device."}
+              </p>
             </div>
             {uploadFieldErrors.file ? (
               <p
@@ -670,41 +680,42 @@ export function LearningDashboard() {
         <ol className="learning-document-list">
           {documents.map((document) => (
             <li key={document.id}>
-              <article className="learning-document-row">
-                <div className="learning-document-main">
-                  <div className="learning-document-title-line">
-                    <h2>{document.title}</h2>
-                    <span
-                      className={`learning-status learning-status--${document.status}`}
-                    >
-                      {statusLabel(document.status)}
-                    </span>
+              <article
+                className="learning-document-row"
+                aria-labelledby={`learning-document-title-${document.id}`}
+              >
+                <header className="learning-document-card-header">
+                  <div className="learning-document-mark" aria-hidden="true">
+                    PDF
                   </div>
+                  <span
+                    className={`learning-status learning-status--${document.status}`}
+                  >
+                    {statusLabel(document.status)}
+                  </span>
+                </header>
+                <div className="learning-document-main">
+                  <p className="learning-document-type">PDF document</p>
+                  <h2 id={`learning-document-title-${document.id}`}>
+                    {document.title}
+                  </h2>
                   <p className="learning-filename">
                     {document.originalFilename}
                   </p>
-                  <dl className="learning-document-meta">
+                  <div className="learning-document-facts">
                     {document.pageCount > 0 ? (
-                      <div>
-                        <dt>Pages</dt>
-                        <dd>{document.pageCount}</dd>
-                      </div>
+                      <span>
+                        {document.pageCount}{" "}
+                        {document.pageCount === 1 ? "page" : "pages"}
+                      </span>
                     ) : null}
                     {document.chunkCount > 0 ? (
-                      <div>
-                        <dt>Extracted sections</dt>
-                        <dd>{document.chunkCount}</dd>
-                      </div>
+                      <span>
+                        {document.chunkCount} extracted{" "}
+                        {document.chunkCount === 1 ? "section" : "sections"}
+                      </span>
                     ) : null}
-                    <div>
-                      <dt>Updated</dt>
-                      <dd>
-                        <time dateTime={document.updatedAt}>
-                          {formatDate(document.updatedAt)}
-                        </time>
-                      </dd>
-                    </div>
-                  </dl>
+                  </div>
                   {document.status === "failed" &&
                   document.processingError ? (
                     <p className="learning-row-error">
@@ -712,12 +723,20 @@ export function LearningDashboard() {
                     </p>
                   ) : null}
                 </div>
-                <Link
-                  className="learning-document-link"
-                  to={`/learning/documents/${document.id}`}
-                >
-                  Open workspace
-                </Link>
+                <footer className="learning-document-card-footer">
+                  <p>
+                    Updated{" "}
+                    <time dateTime={document.updatedAt}>
+                      {formatDate(document.updatedAt)}
+                    </time>
+                  </p>
+                  <Link
+                    className="learning-document-link"
+                    to={`/learning/documents/${document.id}`}
+                  >
+                    Open workspace
+                  </Link>
+                </footer>
               </article>
             </li>
           ))}

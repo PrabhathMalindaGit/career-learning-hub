@@ -169,7 +169,30 @@ describe("Document conversations", () => {
       { page: 2, limit: 10 },
       expect.any(AbortSignal),
     );
+  });
 
+  it("presents each conversation as a timestamped semantic record", async () => {
+    vi.mocked(learningApi.listLearningConversations).mockResolvedValue({
+      conversations: [conversation()],
+      pagination: { page: 1, limit: 10, total: 1, pages: 1 },
+    });
+
+    renderConversations();
+
+    const record = await screen.findByRole("article", {
+      name: "Architecture questions",
+    });
+    expect(record.textContent).toContain("2 messages");
+    expect(
+      record.querySelector("time[datetime='2026-07-26T01:00:00.000Z']"),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("link", {
+        name: "Open Architecture questions conversation",
+      }).getAttribute("href"),
+    ).toBe(
+      `/learning/documents/${documentId}/conversations/${conversationId}`,
+    );
   });
 
   it("validates a bounded title and preserves it after failure", async () => {

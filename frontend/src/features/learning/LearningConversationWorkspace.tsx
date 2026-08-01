@@ -71,6 +71,13 @@ function RequestId({ value }: { value?: string }) {
   ) : null;
 }
 
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
 function unavailableMessage(document: LearningDocument): string {
   if (
     document.status === "uploaded" ||
@@ -667,15 +674,28 @@ export function LearningConversationWorkspace() {
             <p>Ask a question when you are ready.</p>
           </div>
         ) : (
-          <ol className="learning-message-list">
+          <ol
+            className="learning-message-list"
+            aria-label="Conversation history"
+          >
             {messages.map((message) => (
               <li key={message.id}>
                 <article
                   className={`learning-message learning-message--${message.role}`}
+                  aria-label={
+                    message.role === "user"
+                      ? "Your message"
+                      : "Assistant message"
+                  }
                 >
-                  <p className="learning-message-role">
-                    {message.role === "user" ? "You" : "Assistant"}
-                  </p>
+                  <header className="learning-message-header">
+                    <p className="learning-message-role">
+                      {message.role === "user" ? "You" : "Assistant"}
+                    </p>
+                    <time dateTime={message.createdAt}>
+                      {formatDate(message.createdAt)}
+                    </time>
+                  </header>
                   <p className="learning-message-content">
                     {message.content}
                   </p>
@@ -683,7 +703,8 @@ export function LearningConversationWorkspace() {
                   message.sourcePages.length > 0 ? (
                     <div
                       className="learning-source-pages"
-                      aria-label="Validated source pages"
+                      role="group"
+                      aria-label="Sources for assistant answer"
                     >
                       {message.sourcePages.map((page) => (
                         <button

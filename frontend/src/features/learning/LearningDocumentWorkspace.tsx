@@ -54,6 +54,14 @@ function formatDate(value: string): string {
   }).format(new Date(value));
 }
 
+function documentStatusLabel(
+  status: LearningDocument["status"],
+): string {
+  return status === "failed"
+    ? "Processing failed"
+    : `${status.charAt(0).toUpperCase()}${status.slice(1)}`;
+}
+
 function RequestId({ value }: { value?: string }) {
   return value ? (
     <p className="request-id">Request ID: {value}</p>
@@ -240,17 +248,29 @@ function SecurePdfViewer({
   }
 
   return (
-    <div className="learning-pdf-viewer">
-      <iframe
-        src={viewerUrl}
-        title={`Original PDF: ${document.title}`}
-        referrerPolicy="no-referrer"
-      />
+    <section
+      className="learning-pdf-viewer"
+      aria-labelledby="learning-pdf-viewer-title"
+    >
+      <header className="learning-viewer-header">
+        <div>
+          <p className="learning-kicker">Private original</p>
+          <h2 id="learning-pdf-viewer-title">Secure PDF viewer</h2>
+        </div>
+        <span>Short-lived access</span>
+      </header>
+      <div className="learning-viewer-frame">
+        <iframe
+          src={viewerUrl}
+          title={`Original PDF: ${document.title}`}
+          referrerPolicy="no-referrer"
+        />
+      </div>
       <p>
         This private viewer uses short-lived access and closes when you
         leave this view.
       </p>
-    </div>
+    </section>
   );
 }
 
@@ -367,7 +387,13 @@ function ExtractedContentReader({
           <li key={chunk.id}>
             <article>
               <header>
-                <span>Section {chunk.chunkIndex + 1}</span>
+                <div className="learning-chunk-label">
+                  <span>Section {chunk.chunkIndex + 1}</span>
+                  <span>
+                    {chunk.wordCount}{" "}
+                    {chunk.wordCount === 1 ? "word" : "words"}
+                  </span>
+                </div>
                 <strong>
                   {chunk.pageStart === chunk.pageEnd
                     ? `Page ${chunk.pageStart}`
@@ -625,9 +651,7 @@ export function LearningDocumentWorkspace() {
           <span
             className={`learning-status learning-status--${document.status}`}
           >
-            {document.status === "failed"
-              ? "Processing failed"
-              : document.status}
+            {documentStatusLabel(document.status)}
           </span>
           <LearningDocumentDeletion
             key={`${accountId}:${document.id}`}
@@ -637,6 +661,32 @@ export function LearningDocumentWorkspace() {
           />
         </div>
       </header>
+      <dl className="learning-workspace-context">
+        <div>
+          <dt>Format</dt>
+          <dd>PDF document</dd>
+        </div>
+        {document.pageCount > 0 ? (
+          <div>
+            <dt>Pages</dt>
+            <dd>{document.pageCount}</dd>
+          </div>
+        ) : null}
+        {document.chunkCount > 0 ? (
+          <div>
+            <dt>Extracted sections</dt>
+            <dd>{document.chunkCount}</dd>
+          </div>
+        ) : null}
+        <div>
+          <dt>Updated</dt>
+          <dd>
+            <time dateTime={document.updatedAt}>
+              {formatDate(document.updatedAt)}
+            </time>
+          </dd>
+        </div>
+      </dl>
 
       {document.status === "uploaded" ||
       document.status === "processing" ? (
@@ -746,7 +796,10 @@ export function LearningDocumentWorkspace() {
                     </div>
                   ) : null}
                 </dl>
-                <section aria-labelledby="learning-summary-title">
+                <section
+                  className="learning-result-card learning-result-card--summary"
+                  aria-label="Stored summary"
+                >
                   <p className="learning-kicker">Stored overview</p>
                   <h2 id="learning-summary-title">Summary</h2>
                   <p className="learning-prose">
@@ -754,7 +807,10 @@ export function LearningDocumentWorkspace() {
                       "No stored summary is available for this document."}
                   </p>
                 </section>
-                <section aria-labelledby="learning-key-points-title">
+                <section
+                  className="learning-result-card learning-result-card--points"
+                  aria-label="Stored key points"
+                >
                   <p className="learning-kicker">Stored overview</p>
                   <h2 id="learning-key-points-title">Key points</h2>
                   {document.summaryKeyPoints.length === 0 ? (
