@@ -246,6 +246,10 @@ describe("Learning quiz workspace", () => {
     expect(
       await screen.findByRole("link", { name: /Review attempt/i }),
     ).not.toBeNull();
+    expect(
+      screen.getByRole("article", { name: /Completed quiz attempt/i }),
+    ).not.toBeNull();
+    expect(screen.getByText("Server score")).not.toBeNull();
     await userEvent.click(
       screen.getByRole("button", { name: "Next attempt page" }),
     );

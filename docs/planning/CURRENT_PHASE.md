@@ -1,21 +1,193 @@
 # Current Execution Phase
 
-- Phase: 17
-- Name: Final Repository and Release-Candidate Review
+- Phase: 18
+- Name: Staging Deployment
+- Phase 18 status: ACTIVE
+- Phase 18A status: COMPLETED / APPROVED
 - Status:
-  COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER
-- Active subphase: none; Phase 18 remains planned and inactive
-- Most recently completed subphase: Phase 17,
-  Final Repository and Release-Candidate Review
+  ACTIVE — INTERVIEW AND LEARNING COMPARATIVE AUDIT COMPLETED /
+  HUMAN-APPROVED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
+  UI-LA2 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
+  UI-QA COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
+  PHASE 18B ACTIVE — PROVIDER/ACCOUNT READINESS AND SECRET-NAME MANIFEST;
+  CURRENT PHASE 18B ACTIVITY COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
+  PROVIDER PROVISIONING NOT STARTED / INACTIVE;
+  STAGING DEPLOYMENT NOT STARTED / INACTIVE
+- Most recently completed UI task:
+  UI-QA — Integrated Pre-Deployment UI Quality Assurance
+- UI-LA2 status: COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED
+- Accepted UI-LA2 visual approval token:
+  `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`
+- UI-LA2 visual approval token accepted: `YES`
+- Accepted UI-LA2 documentation closeout approval token:
+  `PHASE_18A_UI_LA2_DOCUMENTATION_CLOSEOUT_APPROVED`
+- UI-LA2 documentation closeout approval token accepted: `YES`
+- UI-LA2 documentation closeout status: `HUMAN-APPROVED`
+- Accepted UI-LA2 post-commit documentation-reconciliation approval token:
+  `PHASE_18A_UI_LA2_POST_COMMIT_DOCUMENTATION_RECONCILIATION_APPROVED`
+- UI-LA2 post-commit documentation-reconciliation approval token accepted:
+  `YES`
+- UI-LA2 post-commit documentation-reconciliation status: `HUMAN-APPROVED`
+- UI-LA2 implementation baseline HEAD:
+  `dc623f708212b56fae0b0b4525fb03f4848a1b7a`
+- UI-LA2 implementation and documentation commit:
+  `9a07e57296f2b61120a3de75616c31e79c7ac164`
+- UI-LA2 commit subject: `Port legacy learning flashcard and quiz visuals`
+- UI-LA2 commit parent: `dc623f708212b56fae0b0b4525fb03f4848a1b7a`
+- UI-LA2 commit parent count: `1`
+- UI-LA2 committed boundary:
+  `16 APPROVED IMPLEMENTATION, TEST, AND DOCUMENTATION PATHS`
+- UI-LA2 local commit status: `LOCALLY COMMITTED`
+- UI-LA2 worktree state after commit: `CLEAN`
+- UI-LA2 finalization policy:
+  `EXACT TWO-FILE STAGING, ONE DOCUMENTATION-ONLY LOCAL COMMIT, CLEAN
+  WORKTREE VERIFICATION, AND SEPARATE UI-QA AUTHORIZATION REQUIRED`
+- The final documentation-only commit hash is intentionally not self-recorded
+  in that same commit because doing so would require another recursive
+  documentation reconciliation.
+- Exact staging, documentation-only commit success, and a clean worktree must
+  be verified directly from Git before separate UI-QA authorization.
+- No UI-LA2 push, merge, deployment, or phase activation occurred.
+- UI-LA1 status: COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED
+- Accepted UI-LA1 visual approval token:
+  `PHASE_18A_UI_LA1_LEARNING_DOCUMENTS_WORKSPACE_CONVERSATIONS_LEGACY_VISUAL_PORT_APPROVED`
+- UI-LA1 visual approval token accepted: `YES`
+- UI-LA1 implementation commit:
+  `81339ef28fa31275febd28d775c4e386a1c0edd6`
+- UI-LA1 implementation commit subject:
+  `Port legacy learning workspace visuals`
+- UI-LA1 documentation reconciliation commit:
+  `dc623f708212b56fae0b0b4525fb03f4848a1b7a`
+- UI-LA1 documentation reconciliation commit subject:
+  `Record UI-LA1 implementation commit`
+- UI-LA1 local commit status: `LOCALLY COMMITTED`
+- UI-I1 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-I1 visual approval token:
+  `PHASE_18A_UI_I1_INTERVIEW_LIST_RESPONSE_ERGONOMICS_LEGACY_VISUAL_PORT_APPROVED`
+- UI-I1 visual approval token accepted: `YES`
+- Interview/Learning comparative audit status: COMPLETED / HUMAN-APPROVED
+- Accepted comparative-audit approval token:
+  `PHASE_18A_INTERVIEW_LEARNING_LEGACY_COMPARATIVE_AUDIT_APPROVED`
+- DEC-014 status: ACCEPTED
+- UI-A1 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-A1 visual approval token:
+  `PHASE_18A_UI_A1_AUTHENTICATION_LEGACY_VISUAL_PORT_APPROVED`
+- UI-A1 visual approval token accepted: `YES`
+- Accepted UI-A1 asset approval token:
+  `UI_A1_AUTHENTICATION_PATHWAY_ASSET_APPROVED`
+- UI-A1 asset approval token accepted: `YES`
+- UI-D1 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-D1 visual approval token:
+  `PHASE_18A_UI_D1_UNIFIED_DASHBOARD_LEGACY_VISUAL_PORT_APPROVED`
+- UI-D1 visual approval token accepted: `YES`
+- UI-LR3 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-LR3 visual approval token:
+  `PHASE_18A_UI_LR3_LEGACY_RESUME_HISTORY_INSIGHTS_VISUAL_PORT_APPROVED`
+- UI-LR3 visual approval token accepted: `YES`
+- UI-LR2 status: COMPLETED / HUMAN-APPROVED
+- Accepted UI-LR2 visual approval token:
+  `PHASE_18A_UI_LR2_LEGACY_RESUME_ANALYSIS_VISUAL_PORT_APPROVED`
+- UI-LR2 visual approval token accepted: `YES`
+- UI-LR1 status: COMPLETED / HUMAN-APPROVED
+- UI-LR1 implementation commit:
+  `011a36e423ad2432d2dc283c457015c644a9335f`
+- UI-LR1 implementation commit subject:
+  `Improve application features and user experience`
+- UI-LR1 integrity decision: `ACCEPTABLE_EXTERNAL_IMPLEMENTATION_COMMIT`
+- Accepted UI-LR1 visual approval token:
+  `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`
+- UI-LR1 visual approval token accepted: `YES`
+- UI-QA status: COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED
+- Accepted UI-QA approval token:
+  `PHASE_18A_UI_QA_INTEGRATED_PRE_DEPLOYMENT_UI_APPROVED`
+- UI-QA approval token accepted: `YES`
+- UI-QA implementation and documentation commit:
+  `6821833d80f1ca026beb382822ed35ebebbe4911`
+- UI-QA implementation and documentation commit subject:
+  `Complete integrated UI quality assurance`
+- UI-QA implementation and documentation commit parent:
+  `63cc6474d9ee6dcb9fb2832c0196f9c67e70d4cb`
+- UI-QA committed boundary:
+  - `docs/planning/CURRENT_PHASE.md`
+  - `docs/planning/PHASE_18A_UI_QA_INTEGRATED_PRE_DEPLOYMENT_UI_QUALITY_ASSURANCE.md`
+  - `tests/browser/specs/auth.spec.cjs`
+- UI-QA local commit status: `LOCALLY COMMITTED`
+- UI-QA worktree state after the implementation and documentation commit:
+  `CLEAN`
+- UI-QA execution handoff: Outcome B (cross-project process-local refresh-budget
+  contamination) was confirmed. The authorized third repair added only the
+  anonymous refresh route helper and four calls in
+  `tests/browser/specs/auth.spec.cjs`; the targeted gate returned 34 passed and
+  2 intentional skips, and the fresh complete gate returned 43 passed and 2
+  intentional skips (desktop 15/0/0, tablet 14/0/1, mobile 14/0/1). The
+  complete backend refresh ledger recorded zero 429 responses and retained two
+  requests of limiter headroom; teardown reached users=0, owned=0. The
+  supplemental synthetic mixed-quiz, secrecy, Flashcard, long-content, and
+  responsive checks passed. Evidence is preserved outside Git under
+  `/private/tmp/career-learning-hub-ui-qa-evidence-20260801/final-review/` and
+  `/private/tmp/career-learning-hub-ui-qa-auth-diagnostic/`. Native Chrome
+  headed review was performed with the local page and Cmd+0 restoration; the
+  OS did not expose a reliable toolbar percentage readout, so this remains a
+  human-review limitation rather than a pass claim. Human visual review
+  approved UI-QA with this limitation accepted.
+- UI-QA documentation reconciliation policy:
+  this reconciliation is finalized by one exact two-file documentation-only
+  local commit. Its hash is verified directly from Git after commit and is not
+  recursively inserted into that same commit.
+- Phase 18B status:
+  ACTIVE — PROVIDER/ACCOUNT READINESS AND SECRET-NAME MANIFEST
+- Current Phase 18B activity:
+  COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED
+- Phase 18B activation authority:
+  `CLH-PHASE-18B-ACTIVATE-ACCOUNT-READINESS-AND-SECRET-MANIFEST-01`
+- Phase 18B scope:
+  `DOCUMENTATION-ONLY PROVIDER/ACCOUNT READINESS AND SECRET-NAME MANIFEST`
+- Provider provisioning: NOT STARTED / INACTIVE
+- Staging deployment: NOT STARTED / INACTIVE
+- DNS configuration: NOT STARTED / INACTIVE
+- Phase 18B approval token required:
+  `PHASE_18B_PROVIDER_AND_SECRET_MANIFEST_APPROVED`
+- Phase 18B approval token accepted: `YES`
+- Phase 18B approval date: 2026-08-02
+- Phase 18B documentation closeout: COMPLETED
+- Phase 18B local commit status: LOCALLY COMMITTED
+- Phase 18B local commit identity policy:
+  the exact commit hash is verified directly from Git after commit and is
+  intentionally not recursively inserted into the same commit.
+- Phase 18B closeout boundary:
+  no push, merge, provider resource, environment value, secret, DNS,
+  deployment, or Phase 19 action is authorized.
+- Next activity:
+  a separately and explicitly authorized provisioning task is required.
+- Phase 18B readiness record:
+  `docs/deployment/PHASE_18B_PROVIDER_ACCOUNT_AND_SECRET_MANIFEST.md`
+- DEC-015 status: ACCEPTED
+- Phase 19 status: PLANNED / INACTIVE
+- Most recently completed repair:
+  B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair
+- Repair status: COMPLETED / APPROVED
+- Accepted repair approval token:
+  `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED`
+- Repair token accepted: `YES`
+- Active subphase:
+  Phase 18B — Provider/Account Readiness and Secret-Name Manifest
+- Most recently completed subphase:
+  Phase 18A — Staging Architecture and Deployment Readiness Audit
 - Subphase status: COMPLETED / APPROVED
-- Audit baseline branch: `phase-12-unified-frontend`
-- Audit baseline full HEAD: `79e4cfb62524d0cccf919819a78b4dc68ec2df8b`
-- Audit baseline subject: `Complete Phase 16 academic MVP verification`
+- Audit baseline branch: `main`
+- Audit baseline full HEAD: `13c5c96fb4944715e0253b6ce43d68de878556e3`
+- Audit baseline subject: `Complete final repository and release-candidate review`
+- Phase 18 activation branch: `phase-18-staging-deployment`
+- Phase 18 activation full HEAD:
+  `13c5c96fb4944715e0253b6ce43d68de878556e3`
 - Most recently completed major phase: Phase 17, Final Repository and
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 16 AND PHASE 16A-1 THROUGH PHASE 16G COMPLETED AND APPROVED; P17-001 REPAIRED, VERIFIED, AND APPROVED; P17-002 FORMALLY WAIVED / DEFERRED BY OPERATOR — NOT RUN / NO PASS CLAIMED; PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; PHASE 18 PLANNED AND INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; INTERVIEW/LEARNING COMPARATIVE AUDIT COMPLETED / HUMAN-APPROVED; DEC-014 ACCEPTED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-LA2 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-QA COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; DEC-015 ACCEPTED; PHASE 18B ACTIVE — PROVIDER/ACCOUNT READINESS AND SECRET-NAME MANIFEST; CURRENT PHASE 18B ACTIVITY COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; PROVIDER PROVISIONING NOT STARTED / INACTIVE; STAGING DEPLOYMENT NOT STARTED / INACTIVE; DNS CONFIGURATION NOT STARTED / INACTIVE; PHASE 19 PLANNED / INACTIVE`
+- Accepted Phase 18A approval token:
+  `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
+- Phase 18A approval token accepted: `YES`
 - Primary browser-suite name: Full Application Browser Testing
 - Executable browser-suite location: `tests/browser/`
 - Primary command: `npm run test:browser` only when a portable,
@@ -59,6 +231,1432 @@
   `executing-plans`. All were available. The required
   `codex-security:security-scan` capability remains unavailable; no skill or
   scanner was installed or downloaded.
+
+## Phase 18A activation and audit result
+
+- Prompt ID:
+  `CLH-PHASE-18A-ACTIVATE-AND-AUDIT-STAGING-ARCHITECTURE-01`.
+- Closeout prompt ID:
+  `CLH-PHASE-18A-OPERATOR-DECISIONS-AND-CLOSEOUT-01`.
+- Phase 18 was activated on local branch `phase-18-staging-deployment` from
+  verified `main` at
+  `13c5c96fb4944715e0253b6ce43d68de878556e3`
+  (`Complete final repository and release-candidate review`).
+- Local and remote `main` were synchronized at that exact commit with zero
+  commits in either direction. The starting worktree was clean, with nothing
+  staged or untracked and no active Git operation.
+- Phase 18A is documentation-only. It inspected the current deployment
+  surface and current official provider documentation, then produced
+  `docs/deployment/PHASE_18A_STAGING_ARCHITECTURE_AUDIT.md`.
+- The audit records runtime commands, health/readiness behavior, MongoDB
+  transaction and index requirements, private storage, the embedded job
+  worker, exact credentialed CORS, the same-site secure-cookie constraint,
+  trust-proxy behavior, redacted logging, the secret-safe environment
+  manifest, provider comparisons, recommended/fallback topologies, rollback,
+  seven subphases, and twelve operator decisions.
+- Deployment-critical blockers are documented: the imported private-storage
+  adapter directory is ignored and absent from `HEAD`; unrelated provider
+  default domains do not preserve the current `SameSite=Lax` refresh-cookie
+  contract; and P15-001 requires restricted staging access before
+  registration/uploads are reachable.
+- Operator-approved initial topology: Vercel Hobby, Render Free, MongoDB Atlas
+  Free, private AWS S3 in the Singapore regional strategy, provider logs,
+  native Vercel/Render GitHub integrations with branch restrictions/manual
+  promotion, sibling HTTPS staging hostnames, and Cloudflare Access or
+  equivalent deny-by-default protection for the operator account only.
+- Render Free sleeping, cold starts, delayed initial requests, and delayed
+  background jobs are accepted. Synthetic keep-awake traffic is prohibited.
+  Upgrade to an always-on paid service only with separate approval and before
+  a reliability-critical demonstration.
+- Atlas Free storage, capacity, backup, and operational limitations are
+  accepted. Atlas Flex requires separate approval.
+- The operator domain `prabhathmalinda.com.lk` is registered through LK Domain
+  Registry and is `RESERVED — REGISTRY ACTIVATION PENDING`. Planned hostnames
+  are `staging.prabhathmalinda.com.lk` and
+  `api-staging.prabhathmalinda.com.lk`. DNS and live staging configuration
+  must wait for activation.
+- The initial monthly hard ceiling is USD 10. Billing alerts are required
+  before usage-based resource creation.
+- Synthetic users, owned records, and PDFs are deleted immediately after
+  testing. Completed jobs, logs, browser artifacts, monitoring events, and
+  required backups have a maximum seven-day retention. Live AI-provider data
+  is disabled initially.
+- No deployment occurred. No provider account, cloud resource, database,
+  bucket, domain, DNS record, monitoring project, CI/CD workflow, or secret
+  was created.
+- No secret or actual environment file was read or written. Only tracked
+  environment examples and variable names were inspected.
+- No product source, executable test, package, lockfile, configuration,
+  deployment, CI/CD, or environment file changed. No test, coverage, build,
+  browser test, Lighthouse run, migration, application server, provider CLI,
+  or provisioning command ran.
+- Phase 17 remains
+  `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`. The security scan
+  remains `NOT RUN — NO PASS CLAIMED`.
+- P15-001 remains `TECHNICALLY UNRESOLVED`; all controlled academic-MVP
+  restrictions remain binding and staging is synthetic-data-only.
+- OD-18A-001 through OD-18A-012 are
+  `RESOLVED / OPERATOR APPROVED`.
+- Phase 18A is `COMPLETED / APPROVED`.
+- Phase 18B is
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- Approval token:
+  `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`; accepted: `YES`.
+- The next technical development task is a separately authorized repair of
+  the ignored `backend/src/modules/assets/storage/` source.
+- This closeout authorizes one local documentation-only commit containing the
+  three Phase 18A documentation files. It authorizes no push, merge, resource,
+  purchase, DNS change, secret, workflow, deployment, Phase 18B activation, or
+  Phase 19 activation.
+
+## Phase 18 storage-adapter tracking repair
+
+- Prompt ID:
+  `CLH-PHASE-18-STORAGE-ADAPTER-TRACKING-REPAIR-01`.
+- Approval-closeout prompt ID:
+  `CLH-PHASE-18-STORAGE-ADAPTER-REPAIR-APPROVAL-COMMIT-01`.
+- Repair B18A-001 is
+  `COMPLETED / APPROVED`.
+- The original unanchored `.gitignore` rule `storage/` protected runtime
+  private storage but also ignored
+  `backend/src/modules/assets/storage/`.
+- The repair retains `storage/`, re-includes the exact adapter directory,
+  ignores its contents again, and re-includes only these four existing files:
+  `storage.types.ts`, `local.storage.ts`, `s3.storage.ts`, and
+  `storage.factory.ts`.
+- Exactly four regular TypeScript source files became visible to Git. No
+  unexpected ignored path became visible, and runtime storage, environment,
+  build, coverage, migration, log, and temporary-file exclusions remain
+  active.
+- Before/after SHA-256 checksums match for all four files. Their source content,
+  names, imports, exports, and behavior did not change.
+- A focused storage-adapter unit test was added because direct factory and S3
+  command-contract coverage was absent. It uses synthetic data, temporary
+  local storage, and an SDK send mock; it does not contact AWS.
+- `npm run typecheck` and backend test-source typechecking passed.
+- Targeted adapter tests passed 6/6. Existing private-source and cascade
+  deletion tests passed 33/33.
+- Complete backend regression passed: unit 25/25, integration 54/54, security
+  35/35. The existing spoofed-forwarded-header diagnostic remained in the
+  passing security test.
+- The production build passed for the configured workspaces. Storage imports
+  resolved with no missing-module error. Shared types have no separate build
+  script and passed their repository typecheck.
+- Generated build output and TypeScript caches were removed. No persistent
+  service remains and ports 4173, 4174, and 8000 are closed.
+- No actual environment file or secret was read. No AWS, Atlas, provider, DNS,
+  deployment, cloud-resource, AI-provider, or legacy-project action occurred.
+- The reviewed pre-closeout snapshot had nothing staged or committed. This
+  approval-closeout prompt authorizes one local commit containing exactly the
+  ten reviewed repair paths. Its exact hash remains pending until that commit
+  is created; no push is authorized.
+- Phase 18A remains `COMPLETED / APPROVED`.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- Phase 17 remains
+  `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`; the scan remains
+  `NOT RUN — NO PASS CLAIMED`.
+- P15-001 remains `TECHNICALLY UNRESOLVED`; the controlled academic-MVP
+  restrictions and synthetic-data-only staging policy remain binding.
+- Domain status remains `RESERVED — REGISTRY ACTIVATION PENDING`; pending
+  activation does not block this repository repair.
+- Evidence:
+  `docs/deployment/PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR.md`.
+- Approval token:
+  `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED`; accepted: `YES`.
+- The next planned activity is a separately authorized current-versus-legacy
+  UI, feature, and branding audit before deployment. No legacy-project access
+  is authorized by this closeout.
+
+## Phase 18 UI-B1 logo and brand foundation
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-B1-LOGO-BRAND-INTEGRATION-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-B1-CLOSEOUT-COMMIT-01`.
+- UI-B1 is `COMPLETED / HUMAN-APPROVED`.
+- The approved Career Learning Hub identity is the
+  **Open Book + Rising Pathway** symbol with the wordmark
+  **Career Learning Hub**.
+- Production-ready primary, compact, monochrome, reversed, favicon, and
+  application-icon assets were added using controlled solid vector geometry
+  and the approved palette. Existing desktop, mobile, and authentication
+  branding and document metadata now use the approved identity.
+- Focused brand and routing verification passed 65/65 tests. The complete
+  frontend suite passed 657/657 tests. Frontend typecheck and the frontend
+  production build passed.
+- Human visual review approved desktop, tablet, mobile, actual 200% browser
+  zoom, login and registration surfaces, responsive navigation branding,
+  keyboard focus, and browser-tab favicon rendering.
+- Accepted visual approval token:
+  `UI_B1_BRAND_INTEGRATION_VISUAL_APPROVED`; accepted: `YES`.
+- No deployment, DNS, cloud resource, provider, secret, legacy-project, or
+  Phase 18B action occurred.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- The next planned UI task is UI-B2 and requires separate authorization.
+- This closeout authorizes one bounded local commit containing only the
+  approved UI-B1 implementation and this minimum tracking update. It
+  authorizes no push, merge, deployment, DNS, cloud-resource, secret, or
+  Phase 18B action.
+
+## Phase 18 UI-B2 dashboard and settings refinement
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-B2-DASHBOARD-SETTINGS-IMPLEMENTATION-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-B2-CLOSEOUT-COMMIT-01`.
+- UI-B2 is `COMPLETED / HUMAN-APPROVED`.
+- The authenticated Dashboard provides exactly three quick-start links using
+  existing workflows: **Create Resume** at `/resumes?action=create`,
+  **Start Interview Session** at `/interviews?action=create`, and
+  **Upload Learning Document** at `/learning?action=upload`.
+- No continue-work link was added because the existing Dashboard contracts do
+  not expose a reliable bounded destination without inventing prioritization.
+- Settings now uses the shared `PageHeader` and separates
+  **Account information** from **Current session**. Existing public account
+  fields and sign-out behavior remain unchanged; no unsupported editable
+  profile, password, appearance, notification, account-deletion, or
+  session-management control was added.
+- Focused Dashboard, Settings, and affected routing tests passed 125/125. The
+  complete frontend suite passed 661/661 tests. Frontend typecheck and the
+  frontend production build passed.
+- Full Application Browser Testing passed 27/27. Human and automated review
+  covered desktop 1440 × 900, tablet 768 × 1024, mobile 390 × 844, and actual
+  200% Chrome zoom. Keyboard traversal and visible focus, console and page
+  errors, horizontal overflow, branding preservation, and mobile navigation
+  passed review.
+- Synthetic QA records and browser artifacts were removed. All locally
+  started services were stopped.
+- No backend or shared contract changed. No deployment, DNS, cloud resource,
+  provider, secret, legacy-project, UI-R1 implementation, UI-I1
+  implementation, or Phase 18B action occurred.
+- Accepted visual approval token:
+  `UI_B2_DASHBOARD_SETTINGS_VISUAL_APPROVED`; accepted: `YES`.
+- UI-R1 is the next planned implementation phase and remains inactive pending
+  separate authorization.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- This closeout authorizes one bounded local commit containing only the
+  approved UI-B2 implementation, tests, and this minimum tracking update. It
+  authorizes no push, merge, deployment, DNS, cloud-resource, secret, UI-R1,
+  UI-I1, or Phase 18B action.
+
+## Phase 18 UI-R1 Resume navigation and template discovery
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-R1-RESUME-NAVIGATION-TEMPLATES-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-R1-CLOSEOUT-01`.
+- UI-R1 is `COMPLETED / HUMAN-APPROVED`.
+- The Resume editor provides nine accessible direct section links for
+  **Basics**, **Links**, **Experience**, **Education**, **Skills**,
+  **Projects**, **Certifications**, **Languages**, and **Interests**.
+- The three existing Resume templates — **ATS Classic**,
+  **Modern Professional**, and **Compact Technical** — are available as
+  visual radio-card choices using the existing template registry and IDs.
+- The Resume editor and Live preview use the approved stacked workspace
+  layout, with the complete editor before the non-sticky Live preview.
+- Human and automated review passed at native Chrome 200% zoom and at desktop,
+  tablet, and mobile viewport sizes.
+- Accepted visual approval token:
+  `PHASE_18A_UI_R1_RESUME_NAVIGATION_TEMPLATES_VISUAL_APPROVED`; accepted:
+  `YES`.
+- UI-I1 is the next planned UI refinement phase and remains inactive pending
+  separate authorization.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- This closeout authorizes one bounded local commit containing only the
+  approved UI-R1 implementation, tests, and this minimum tracking update. It
+  authorizes no push, merge, deployment, DNS, cloud-resource, secret, UI-I1,
+  or Phase 18B action.
+
+## Phase 18 UI-LR1 Legacy Resume Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-LR1-LEGACY-RESUME-VISUAL-PORT-01`.
+- Documentation closeout prompt ID:
+  `PHASE-18A-UI-LR1-DOCUMENTATION-CLOSEOUT-01`.
+- UI-LR1 is `COMPLETED / HUMAN-APPROVED`.
+- UI-LR1 implementation commit:
+  `011a36e423ad2432d2dc283c457015c644a9335f`
+  (`Improve application features and user experience`).
+- The implementation commit was externally created and pushed between review
+  turns. A read-only provenance and integrity audit returned
+  `ACCEPTABLE_EXTERNAL_IMPLEMENTATION_COMMIT`.
+- The implementation commit directly descends from
+  `c0e76410799d2e8319c37b52d186d0eac3ba823e`, contains exactly the approved
+  eight UI-LR1 implementation files, and requires no history rewrite.
+- UI-LR1 delivered:
+  - rich Resume summary cards;
+  - registry-derived miniature Resume previews;
+  - premium private-PDF upload and drag-and-drop presentation;
+  - visual template radio cards;
+  - visual font radio cards;
+  - visual palette radio cards;
+  - truthful loading and empty states;
+  - bounded microinteractions and reduced-motion handling;
+  - responsive and native Chrome 200% verification.
+- Current Resume DTOs, APIs, ownership, private storage, template IDs,
+  immutable versions, print behavior, and safety contracts were preserved.
+- No legacy backend, authentication, database model, API client, secret,
+  environment configuration, old branding, fake content, or unsupported
+  claim was imported.
+- Accepted visual approval token:
+  `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`; accepted: `YES`.
+- UI-LR2 — Resume Analysis Visual Port is
+  `COMPLETED / HUMAN-APPROVED`; its closeout record follows.
+- UI-I1 remains `PLANNED / INACTIVE`.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+
+## Phase 18 UI-LR2 Resume Analysis Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-LR2-LEGACY-RESUME-ANALYSIS-VISUAL-PORT-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-LR2-CLOSEOUT-01`.
+- UI-LR2 is `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_LR2_LEGACY_RESUME_ANALYSIS_VISUAL_PORT_APPROVED`; accepted:
+  `YES`.
+- UI-LR2 delivered:
+  - a semantic Resume assessment gauge bound only to validated `totalScore`;
+  - four score-category cards for keyword match, clarity, evidence, and
+    formatting;
+  - visually distinct strengths and review-points panels;
+  - textual severity labels that do not rely on colour alone;
+  - truthful missing-keyword review chips;
+  - richer Original-versus-Suggested rewrite comparisons;
+  - preserved semantic `del` and `ins` rendering;
+  - explicit native-checkbox selection and selected-suggestion visual state;
+  - conditional verification-required guidance;
+  - confirmation before applying suggestions;
+  - truthful no-assessment, running, completed, and stale states;
+  - reduced-motion support;
+  - responsive desktop, tablet, mobile, and native Chrome 200% verification.
+- The current `ResumeAnalysis` DTO, validated saved-version identity,
+  immutable Resume versions, explicit suggestion selection, confirmation
+  before application, stale-analysis protection, conflict handling,
+  provider-neutral errors, and Career Learning Hub branding were preserved.
+- No raw internal IDs, fabricated scores, trends, guarantees, employment
+  claims, automatic suggestion application, or unsupported contract behavior
+  was introduced.
+- Verification evidence:
+  - focused Resume analysis tests passed 27/27;
+  - the complete frontend suite passed 674/674;
+  - frontend typecheck and the frontend production build passed;
+  - the Resume browser workflow passed 3/3;
+  - required desktop, tablet, mobile, and native Chrome 200% viewports were
+    reviewed;
+  - no overflow, clipping, overlap, console errors, or page errors were found;
+  - reduced-motion behavior was verified;
+  - synthetic fixture cleanup completed;
+  - ports 4173, 4174, and 8000 were closed;
+  - `git diff --check` and the browser-spec syntax check passed.
+- Legacy mapping summary:
+  - gauge geometry was directly ported from the legacy `AtsGauge`;
+  - strengths, issues, keyword, and rewrite presentation were adapted to
+    current contracts;
+  - score cards, diff, empty states, and loading states were faithfully
+    recreated;
+  - no legacy backend, authentication, API client, secret, branding,
+    unsupported claim, or automatic AI behavior was copied.
+- UI-LR3 — Resume History and Insights Visual Port is the next planned UI task
+  and remains `PLANNED / INACTIVE` pending separate authorization.
+- UI-I1 remains `PLANNED / INACTIVE`.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- No push, merge, or deployment is authorized. This closeout authorizes no
+  DNS, cloud-resource, provider, secret, UI-LR3, UI-I1, or Phase 18B action.
+
+## Phase 18 UI-LR3 Resume History and Insights Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-LR3-LEGACY-RESUME-HISTORY-INSIGHTS-VISUAL-PORT-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-LR3-CLOSEOUT-01`.
+- UI-LR3 is `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_LR3_LEGACY_RESUME_HISTORY_INSIGHTS_VISUAL_PORT_APPROVED`;
+  accepted: `YES`.
+- UI-LR3 delivered:
+  - a rich immutable Resume-version timeline;
+  - a numbered chronological spine with folio-style markers;
+  - textually and visually distinct current-version and historical-version
+    states;
+  - real version numbers and saved timestamps;
+  - readable source badges for Manual edit, PDF import, AI suggestions, and
+    Duplicated resume;
+  - a safe Other source fallback without exposing raw values;
+  - truthful change summaries only when present, with no fabricated fallback
+    summary;
+  - polished Review saved draft and Review snapshot actions;
+  - a structured timeline loading skeleton;
+  - a truthful empty-history state;
+  - a provider-neutral failure state with request ID and retry;
+  - preserved server-owned pagination;
+  - a polished read-only historical snapshot with source, timestamp, and
+    read-only metadata;
+  - an explicit Return to current draft action;
+  - truthful current-design guidance for historical content;
+  - a historical snapshot loading state;
+  - responsive desktop, tablet, mobile, and native-equivalent 200% reflow
+    behavior;
+  - visible keyboard focus and reduced-motion support.
+- Preserved contracts:
+  - Resume ownership and immutable versions;
+  - current-version identity and server-owned version order;
+  - server-owned pagination;
+  - the existing `listResumeVersions` and `fetchResumeVersion` APIs;
+  - dirty-draft preservation and historical read-only behavior;
+  - snapshot request cancellation and stale-response protection after route
+    changes;
+  - failed-snapshot cleanup;
+  - current and historical print-source behavior;
+  - request-ID handling;
+  - no raw Resume or version IDs;
+  - no fabricated authors, activity, scores, deltas, or trends;
+  - no backend or shared-contract expansion.
+- Verification:
+  - focused Resume-history tests passed 28/28;
+  - the complete frontend suite passed 683/683 across 53 files;
+  - frontend typecheck passed;
+  - the production build passed;
+  - the Resume browser workflow passed 3/3;
+  - desktop, tablet, mobile, and native-equivalent 200% reflow were reviewed;
+  - keyboard activation, visible focus, and reduced-motion behavior passed;
+  - no document-level horizontal overflow, clipped controls, overlapping
+    content, application console errors, or page errors were found;
+  - the dirty draft remained intact during historical review;
+  - stale snapshot responses were discarded;
+  - failed snapshot loading cleared the previous historical print source;
+  - synthetic cleanup completed;
+  - ports 4173, 4174, and 8000 were closed;
+  - `git diff --check` and the browser-spec syntax check passed.
+- Legacy mapping summary:
+  - direct visual port: chronology and row composition, selected-version
+    treatment, version-status pills, source-icon and metadata patterns, card
+    depth, loading skeletons, and empty-state hierarchy;
+  - contract adaptation: current `ResumeVersionMetadata`, supported source
+    values, existing version order and pagination, current snapshot loading
+    and cancellation, and current print behavior;
+  - faithful recreation: a semantic document-spine timeline, numbered
+    markers, non-colour current/historical labels, premium historical
+    document frame, historical guidance, responsive behavior, and
+    reduced-motion behavior.
+- `ScoreEvolutionChart` and historical insights visualization were deferred
+  because the current application has no owned per-version historical
+  assessment-list contract. No placeholder, mock point, fabricated score, or
+  backend expansion was added.
+- Exclusions:
+  - no legacy authentication, backend, database model, API client, secret,
+    environment file, provider configuration, or old branding;
+  - no fake activity, authors, score history, employment claim, or unsupported
+    ATS claim;
+  - no dependency or lockfile change.
+- UI-D1 — Unified Dashboard Legacy Visual Port is the next planned UI task and
+  remains `PLANNED / INACTIVE` pending separate authorization.
+- UI-I1 remains `PLANNED / INACTIVE`.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- No push, merge, or deployment is authorized. This closeout authorizes no
+  DNS, cloud-resource, provider, secret, UI-D1, UI-I1, or Phase 18B action.
+
+## Phase 18 UI-D1 Unified Dashboard Legacy Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-D1-UNIFIED-DASHBOARD-LEGACY-VISUAL-PORT-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-D1-CLOSEOUT-01`.
+- UI-D1 is `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_D1_UNIFIED_DASHBOARD_LEGACY_VISUAL_PORT_APPROVED`;
+  accepted: `YES`.
+- UI-D1 delivered:
+  - a premium unified Dashboard hero using the Open Book + Rising Pathway
+    branded visual treatment;
+  - selectable 7-day, 30-day, 90-day, and 365-day progress windows;
+  - three visually distinct quick-start workflow cards retaining exactly
+    `/resumes?action=create`, `/interviews?action=create`, and
+    `/learning?action=upload`;
+  - no fabricated Continue-work action;
+  - a prominent Resume-readiness feature card with a semantic readiness ring
+    bound only to the real current score;
+  - latest target-role presentation and the four real Resume score categories:
+    keyword match, clarity, evidence, and formatting;
+  - real Interview-feedback, Quiz-performance, and AI-request metrics;
+  - Resume-analysis and Interview-progress histories using factual semantic
+    progress rows;
+  - a Learning-document status summary, recent Learning-document
+    presentation, and Quiz-performance history;
+  - detailed AI-usage presentation with recorded token totals, input/output
+    token values, real average latency where available, factual partial or
+    complete cost-estimate labelling, and feature-level usage breakdown;
+  - a recent-activity timeline with safe user-facing labels, a safe
+    **Recorded activity** fallback for unknown event types, and server-owned
+    pagination;
+  - structured Dashboard skeletons and truthful module-empty states;
+  - independent progress and activity failure handling, safe request-ID
+    presentation, and independent **Retry progress** and
+    **Retry activity** actions;
+  - long-label wrapping, responsive desktop, tablet, mobile, and
+    represented-200% layouts, visible keyboard focus, and reduced-motion
+    behavior.
+- Preserved contracts:
+  - the existing Dashboard progress and activity APIs and current Dashboard
+    DTOs;
+  - authenticated ownership boundaries;
+  - current progress-window parameters, trend limits, recent-document limit,
+    activity pagination, and ActivityEvent order;
+  - current request cancellation and stale-response protection;
+  - provider-neutral errors;
+  - real current data only, with no raw internal IDs;
+  - no fake metrics, trends, subscriptions, plans, or quotas;
+  - no fabricated Resume, Interview, or Learning progress;
+  - no unsupported ATS, recruiter, or employment claims;
+  - no backend or shared-contract expansion.
+- Current contract support:
+  - Resume readiness visual: `SUPPORTED`;
+  - Interview trend visual: `SUPPORTED`;
+  - Learning document and Quiz visuals: `SUPPORTED`;
+  - general Learning completion percentage:
+    `NOT AVAILABLE / NOT FABRICATED`;
+  - AI usage visual: `SUPPORTED`;
+  - recent activity timeline: `SUPPORTED`;
+  - Continue-work destination: `NOT AVAILABLE / NOT INVENTED`;
+  - Resume title or version destination from Dashboard:
+    `NOT AVAILABLE / NOT INVENTED`;
+  - activity free-text or destination metadata:
+    `NOT AVAILABLE / NOT FABRICATED`.
+- Verification:
+  - the expected test-first run produced four failing requirements before
+    implementation;
+  - focused Dashboard tests passed 34/34;
+  - the complete frontend suite passed 688/688 across 53 files;
+  - frontend typecheck and the production build passed;
+  - the Dashboard browser workflow passed 9/9;
+  - browser-spec and fixture syntax checks passed;
+  - desktop, tablet, and mobile states were reviewed at 1920 × 1080,
+    1440 × 900, 1024 × 768, 768 × 1024, 390 × 844, and 320 × 720;
+  - represented 200% reflow was reviewed; actual native Chrome 200% remains
+    retained for final integrated UI-QA;
+  - complete, partial, empty, loading, failure, retry, pagination, and
+    long-label scenarios were verified;
+  - all three quick-start actions passed keyboard and Enter-key activation;
+  - visible focus and reduced-motion behavior were verified;
+  - no document-level horizontal overflow, clipped controls, overlapping
+    content, application console errors, or page errors were found;
+  - no fabricated metrics, trends, unsupported claims, or visible raw
+    internal IDs were found;
+  - synthetic cleanup completed with final fixture counts
+    `users=0` and `owned=0`;
+  - ports 4173, 4174, and 8000 were closed;
+  - `git diff --check` passed and the changed-file secret scan found no
+    matches.
+- Legacy mapping summary:
+  - port with contract adaptation: legacy Dashboard composition, StatCard
+    patterns, ATS/readiness gauge treatment, ActivityFeed patterns, Card and
+    Badge surfaces, EmptyState patterns, and Skeleton patterns;
+  - faithful visual recreation: score-evolution charts converted to semantic
+    meter rows, Resume summary treatments converted to the current readiness
+    composition, legacy Progress and StepProgress patterns converted to
+    factual progress tracks, document cards converted to current
+    Learning-document data, and varied Dashboard analytical surfaces
+    recreated using current contracts;
+  - direct port: none copied verbatim because the legacy components depended
+    on obsolete JavaScript architecture, Tailwind, Recharts, Framer Motion,
+    Lucide, old branding, obsolete routes, or incompatible contracts;
+  - deferred: VersionStack Dashboard destination, Resume-record summary
+    destination, Continue-work action, activity destinations, and activity
+    free text because the current Dashboard contract does not provide
+    canonical bounded destinations or supporting metadata;
+  - rejected: fake identity and profile data, plan or subscription claims,
+    local-storage logout, legacy authentication, unsupported recommendations,
+    fabricated deltas, unsupported statistics, ATS certification, recruiter
+    and employment claims, old product branding, and obsolete API and routing
+    behavior.
+- Exclusions:
+  - no legacy backend, database models, API clients, authentication logic,
+    secrets, environment files, or provider configuration;
+  - no dependency or lockfile change;
+  - no old logo, old product name, fake testimonials, fake notifications, or
+    fabricated activity.
+- UI-A1 — Authentication Legacy Visual Port is the next planned visual task
+  and remains `PLANNED / INACTIVE` pending separate authorization.
+- UI-A1 is expected to preserve the current secure authentication behavior
+  while porting or faithfully recreating suitable legacy split-layout,
+  feature-preview, and visual-storytelling patterns.
+- UI-I1 remains `PLANNED / INACTIVE`.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- No push, merge, or deployment is authorized. This closeout authorizes no
+  DNS, cloud-resource, provider, secret, UI-A1, UI-I1, or Phase 18B action.
+
+## Phase 18 UI-A1 Authentication Legacy Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-A1-AUTHENTICATION-LEGACY-VISUAL-PORT-01`.
+- Artwork integration prompt ID:
+  `PHASE-18A-UI-A1-AUTHENTICATION-ARTWORK-INTEGRATION-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-A1-CLOSEOUT-01`.
+- UI-A1 is `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_A1_AUTHENTICATION_LEGACY_VISUAL_PORT_APPROVED`;
+  accepted: `YES`.
+- Accepted asset approval token:
+  `UI_A1_AUTHENTICATION_PATHWAY_ASSET_APPROVED`;
+  accepted: `YES`.
+- UI-A1 delivered:
+  - a premium split-screen authentication composition;
+  - Career Learning Hub Open Book + Rising Pathway branding;
+  - distinct public authentication form and brand panels;
+  - factual unified-platform storytelling;
+  - factual capability cards for **Resume Studio**, **Interview Coach**,
+    **Learning Workspace**, and **One Dashboard**;
+  - refined login and registration form hierarchies;
+  - a stable secure-session bootstrap presentation;
+  - structured validation summaries and field-associated validation errors;
+  - provider-neutral server failures with request-ID presentation;
+  - truthful submitting and disabled states;
+  - responsive desktop, tablet, mobile, and represented-200% layouts;
+  - mobile form-first priority;
+  - visible keyboard focus and reduced-motion handling;
+  - generated authentication pathway artwork with decorative empty-alt
+    semantics;
+  - a transparent 2400 × 800 production PNG presented on desktop and tablet
+    and intentionally hidden at the narrow mobile breakpoint.
+- Preserved authentication contracts:
+  - the existing login, registration, refresh, and logout APIs;
+  - current request payloads and trimming behavior;
+  - in-memory access-token handling and HttpOnly refresh-cookie behavior;
+  - session rotation and authenticated reload restoration;
+  - public-only route redirects, protected-route redirects, and intended
+    internal-route restoration;
+  - current validation contracts and password requirements;
+  - neutral duplicate-registration failure behavior;
+  - current loading, disabled, request-ID, focus-management, and routing
+    behavior;
+  - no token or session storage in `localStorage`, `sessionStorage`, or
+    IndexedDB;
+  - no token or session exposure in URLs or visible content.
+- Approved artwork:
+  - asset:
+    `frontend/public/brand/career-learning-hub-authentication-pathway.png`;
+  - format: `PNG / RGBA TRANSPARENCY`;
+  - dimensions: `2400 × 800`;
+  - aspect ratio: `3:1`;
+  - SHA-256:
+    `25699019ee2a9ce0cdedf023a6a078cfb107ae5b26b32a0ac4306b3bf315c652`;
+  - usage: login, registration, secure-session bootstrap, and the desktop
+    and tablet brand panel;
+  - the artwork is hidden at the existing narrow mobile breakpoint.
+- Legacy mapping summary:
+  - **PORT WITH CONTRACT ADAPTATION**:
+    - AI Resume Analyser split AuthShell composition;
+    - form hierarchy;
+    - input and button framing;
+    - validation and failure framing;
+    - feature-preview card composition;
+    - dark brand-panel treatment.
+  - **FAITHFUL VISUAL RECREATION**:
+    - static factual platform-capability cards;
+    - responsive form-first mobile composition;
+    - stable secure-session bootstrap;
+    - accessible validation reveal;
+    - reduced-motion behavior;
+    - generated open-book and rising-pathway artwork integration.
+  - **DIRECT PORT**:
+    - selected safe visual constants and surface treatments;
+    - 140-degree dark forest panel gradient;
+    - 28 px panel geometry;
+    - inset vignette and layered depth;
+    - restrained pressed-button scale.
+- No legacy component was copied verbatim because the legacy implementations
+  depended on obsolete JavaScript architecture, Tailwind, Framer Motion,
+  Lucide, old branding, insecure authentication behavior, obsolete routes,
+  or incompatible contracts.
+- Rejected for security or accuracy:
+  - localStorage token handling and legacy AuthContext behavior;
+  - obsolete API clients and unsupported photo upload;
+  - old product identity;
+  - continuous logo or marquee animation;
+  - fake scores, files, statistics, employers, and ATS claims;
+  - testimonials, free-plan claims, and no-credit-card claims;
+  - forgot-password, social-login, and remember-me controls;
+  - unsupported privacy or employment claims.
+- Verification evidence:
+  - the test-first RED gate produced two expected failures before
+    implementation;
+  - focused routing and authentication tests passed 57/57;
+  - the complete frontend suite passed 690/690 across 53 files;
+  - frontend typecheck and the production build passed;
+  - the authentication browser workflow passed 22 tests with 2 intentional
+    duplicate-matrix skips;
+  - browser-spec syntax and the artwork capture workflow passed;
+  - desktop was reviewed at 1920 × 1080 and 1440 × 900;
+  - desktop and tablet were reviewed at 1024 × 768;
+  - tablet was reviewed at 768 × 1024;
+  - mobile was reviewed at 390 × 844 and 320 × 720;
+  - represented 200% reflow was reviewed at 720 × 450 CSS pixels;
+  - actual native Chrome-toolbar 200% remains retained for final integrated
+    UI-QA;
+  - login idle, validation, failure, submitting, and success states were
+    verified;
+  - registration idle, validation, neutral failure, submitting, and success
+    states were verified;
+  - authentication bootstrap, protected/public redirects, hard reload,
+    session restoration, and logout were verified;
+  - keyboard order, Shift+Tab, Enter submission, and visible focus were
+    verified;
+  - long validation messages and request IDs wrap safely;
+  - reduced-motion behavior was verified;
+  - CLS was 0.0000 on desktop, tablet, and mobile;
+  - no horizontal overflow, clipped controls, overlapping content, failed
+    artwork request, application page error, or external or legacy request
+    was found;
+  - expected anonymous-refresh 401 diagnostics exposed no private
+    information;
+  - browser storage remained empty;
+  - synthetic cleanup completed with `users=0` and `owned=0`;
+  - ports 4173, 4174, and 8000 were closed;
+  - `git diff --check` and the untracked-file whitespace check passed;
+  - the changed-file secret scan found no high-confidence match.
+- Exclusions:
+  - no backend, shared-contract, authentication-endpoint, cookie,
+    session-model, JWT, or rate-limit change;
+  - no package, dependency, lockfile, environment-file, deployment, or CI/CD
+    change;
+  - no legacy-project write;
+  - no provider, DNS, cloud, or secret action;
+  - no UI-I1 action and no Phase 18B or Phase 19 activation.
+- UI-I1 is the next planned UI task and remains
+  `PLANNED / INACTIVE` pending separate authorization.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- No push, merge, or deployment is authorized.
+
+## Phase 18 UI-I1 Interview List and Response Ergonomics Legacy Visual Port
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-I1-INTERVIEW-LIST-RESPONSE-ERGONOMICS-LEGACY-VISUAL-PORT-01`.
+- Responsive repair prompt ID:
+  `PHASE-18A-UI-I1-RESPONSIVE-POLISH-REPAIR-01`.
+- Closeout prompt ID:
+  `PHASE-18A-UI-I1-CLOSEOUT-01`.
+- UI-I1 is `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_I1_INTERVIEW_LIST_RESPONSE_ERGONOMICS_LEGACY_VISUAL_PORT_APPROVED`;
+  accepted: `YES`.
+- UI-I1 delivered:
+  - refined Interview Coach page identity and hierarchy;
+  - richer Interview session-list composition;
+  - role-led Interview session cards;
+  - meaningful session-title support;
+  - experience-level metadata;
+  - readable Interview mode labels;
+  - readable session lifecycle labels;
+  - real question counts;
+  - real last-updated timestamps;
+  - exact current session destinations;
+  - truthful list loading skeletons;
+  - truthful empty, failure, and retry states;
+  - preserved list filters and server-owned pagination;
+  - refined question-reading surfaces;
+  - clear question index and selected-question presentation;
+  - visible pinned-question state and preserved pin behavior;
+  - refined private-notes presentation with explicit save and clear actions;
+  - written-response composer improvements;
+  - preserved immutable-attempt recording and failed-answer draft retention;
+  - refined attempt-history cards with server-owned ordering and pagination;
+  - explicit attempt-status filtering;
+  - refined recorded-answer presentation;
+  - distinct model-answer, explanation, and model-generated feedback
+    presentation;
+  - bounded **Copy model answer** and **Copy explanation** controls;
+  - safe accessible copy success and failure states;
+  - explicit user-triggered explanation and feedback requests;
+  - provider-neutral errors and safe request-ID presentation;
+  - responsive desktop, tablet, mobile, and represented-200% layouts;
+  - visible keyboard focus, logical keyboard order, and reduced-motion
+    behavior;
+  - no custom raster artwork.
+- Preserved Interview contracts:
+  - Interview ownership boundaries;
+  - current session creation contract and current session fields;
+  - server-owned session ordering and pagination;
+  - current list filters, route identity, and create-intent behavior;
+  - existing `/interviews?action=create` behavior;
+  - session loading, question listing, and question pagination;
+  - manual-question creation and explicit AI-question generation;
+  - generation request UUID behavior;
+  - ambiguous-submission retry UUID reuse;
+  - explicit terminal-failure retry UUID replacement;
+  - question pinning and private notes;
+  - immutable attempt recording and failed-answer draft preservation;
+  - attempt history and attempt-status filtering;
+  - explicit feedback and explanation requests;
+  - provider-job polling;
+  - request cancellation and stale-response protection;
+  - route-owned, question-owned, and attempt-owned operation isolation;
+  - provider-neutral error handling and canonical request-ID filtering;
+  - authenticated routing and current lifecycle transitions;
+  - read-mostly completed sessions and read-only archived sessions;
+  - no automatic AI activity.
+- Current contract fields used:
+  - **Session**:
+    `targetRole`, `title`, `experienceLevel`, `mode`, `status`,
+    `questionCount`, `focusTopics`, `skillGaps`, optional `jobDescription`,
+    and `updatedAt`;
+  - **Question**:
+    `category`, `difficulty`, `question`, `isPinned`, `userNotes`, optional
+    `modelAnswer`, optional `explanation`, and optional
+    `explanationKeyPoints`;
+  - **Attempt**:
+    `answerText`, `status`, optional `feedback`, and `createdAt`.
+- Copy behavior:
+  - **Copy model answer**:
+    `IMPLEMENTED WHEN REAL MODEL-ANSWER TEXT EXISTS`;
+  - **Copy explanation**:
+    `IMPLEMENTED WHEN REAL EXPLANATION TEXT EXISTS`;
+  - each copy control is a native button using the native Clipboard API;
+  - only exact visible plain text is copied;
+  - empty or missing text produces no copy control;
+  - controls have accessible names and accessible local status;
+  - results are bounded to `Copied` or safe `Copy failed` wording;
+  - no hidden metadata, IDs, HTML, or provider details are copied;
+  - no global toast provider or copy dependency was introduced.
+- Legacy directory:
+  `/Users/prabhathmalinda/Documents/Projects/Career Learning Hub Legacy References/Interview Prep Ai/frontend/interview-prep-ai/src`.
+- Legacy files inspected:
+  - `pages/Home/Dashboard.jsx`;
+  - `components/Cards/SummaryCard.jsx`;
+  - `components/Cards/QuestionCard.jsx`;
+  - `components/Loader/SkeletonLoader.jsx`;
+  - `pages/InterviewPrep/InterviewPrep.jsx`;
+  - `pages/InterviewPrep/components/AIResponsePreview.jsx`;
+  - `pages/InterviewPrep/components/RoleInfoHeader.jsx`;
+  - `pages/Home/CreateSessionForm.jsx`;
+  - `index.css`.
+- Direct port:
+  - no legacy source or CSS was copied verbatim.
+- Port with contract adaptation:
+  - `SummaryCard` became a role-led Interview session dossier card using real
+    current metadata and exact current routing;
+  - `QuestionCard` informed the stronger question-prompt presentation,
+    visible pin state, notes, and immutable response records;
+  - `AIResponsePreview` informed native bounded copy controls using current
+    real model-answer and explanation text.
+- Faithful visual recreation:
+  - `RoleInfoHeader` informed a restrained role identity treatment without
+    continuous decorative animation;
+  - `SkeletonLoader` informed geometry-only Interview session skeletons with
+    reduced-motion support;
+  - legacy response-card hierarchy was adapted into current attempt-history,
+    recorded-answer, explanation, and feedback surfaces.
+- Rejected for security, accuracy, or contract mismatch:
+  - legacy authentication, token handling, local storage, backend, API
+    clients, and provider configuration;
+  - legacy session orchestration, deletion workflow, and unsupported
+    navigation;
+  - old product identity;
+  - fake session data, candidates, employers, Interview schedules, scores,
+    trends, feedback, and model answers;
+  - automatic AI activity;
+  - unsupported speech, audio, and video;
+  - Tailwind-specific implementation;
+  - Framer Motion and Lucide dependencies;
+  - remote-font assumptions and continuous animation.
+- Responsive repair status:
+  `COMPLETED / HUMAN-APPROVED`.
+- Session context grid repair:
+  - root cause: the fixed four-column desktop grid and two-column responsive
+    grid created a visually implied empty cell when `jobDescription` was
+    absent;
+  - correction: explicit three-entry and four-entry context-grid states;
+  - exactly three real entries render when `jobDescription` is absent;
+  - exactly four real entries render when `jobDescription` is present;
+  - Updated spans the tablet row in the three-entry state;
+  - narrow mobile uses one clean column;
+  - semantic `dl`, `dt`, and `dd` markup is preserved;
+  - no placeholder or fabricated context content was added.
+- Mobile chip-width repair:
+  - root cause: the narrow `.interview-section-heading` layout used
+    `align-items: stretch`, which stretched direct Interview chips across the
+    panel;
+  - direct heading chips now retain intrinsic width with
+    `width: fit-content`, `max-width: 100%`, and
+    `align-self: flex-start`;
+  - question-count, attempt-count, and difficulty chips remain compact;
+  - actual button touch targets are unchanged.
+- Initial UI-I1 verification:
+  - focused Interview tests passed 53/53;
+  - the complete frontend suite passed 696/696 across 53 files;
+  - frontend typecheck and the production build passed;
+  - the Interview browser workflow passed 3/3;
+  - browser-spec syntax passed;
+  - desktop was reviewed at 1920 × 1080 and 1440 × 900;
+  - desktop and tablet were reviewed at 1024 × 768;
+  - tablet was reviewed at 768 × 1024;
+  - mobile was reviewed at 390 × 844 and 320 × 720;
+  - represented-200% reflow was reviewed at 640 × 450 CSS pixels;
+  - native browser-toolbar 200% was unavailable and was not claimed.
+- Post-repair verification:
+  - focused Interview tests passed 55/55;
+  - the complete frontend suite passed 698/698 across 53 files;
+  - frontend typecheck and the production build passed;
+  - the Interview browser workflow passed 3/3;
+  - browser-spec syntax passed;
+  - sessions without `jobDescription` were reviewed on desktop and tablet;
+  - 390 × 844 and 320 × 720 were reviewed;
+  - represented-200% reflow was reviewed at 640 × 450 CSS pixels;
+  - a desktop session with a real `jobDescription` was reviewed;
+  - no visually implied empty Session context cells remained;
+  - real Session context entries used the complete grid;
+  - long job descriptions wrapped safely;
+  - narrow chips remained compact, with no stretched chip bars;
+  - no document-level horizontal overflow, clipped controls, or overlapping
+    content was found;
+  - no application console error, page error, external request, or legacy
+    request was found.
+- Functional and security evidence:
+  - target role, meaningfully different session title, experience level, mode,
+    status, question count, and updated timestamp render from real contract
+    data;
+  - missing optional fields are not fabricated;
+  - session destinations, question order and pagination, attempt order and
+    pagination, filters, create-session behavior, and manual-question behavior
+    are unchanged;
+  - pin, notes, attempt payload, and failed-answer draft behavior are
+    unchanged;
+  - explanation and feedback remain explicit user-triggered requests;
+  - no automatic AI request was introduced;
+  - stale session, question, and attempt operations are ignored;
+  - route changes abort owned mutations;
+  - raw session, question, and attempt IDs are not displayed;
+  - malformed request IDs are not displayed and valid canonical request IDs
+    are displayed;
+  - no fake Interview scores, employers, model answers, fabricated trends, or
+    unsupported claims were introduced;
+  - no legacy authentication, token storage, or private error leakage was
+    introduced;
+  - synthetic cleanup completed with `users=0` and `owned=0`;
+  - ports 4173, 4174, and 8000 were closed;
+  - `git diff --check` and untracked-file whitespace checks passed;
+  - the changed-file secret scan found no match.
+- Verification note:
+  - one complete frontend run encountered one unrelated asynchronous
+    route-transition assertion failure;
+  - the test passed immediately in isolation, and the complete frontend suite
+    passed on the fresh full rerun without a production-code change;
+  - this is not an unresolved failure.
+- Exclusions:
+  - no backend, shared-contract, API, database-model, migration,
+    authentication, session, or token change;
+  - no dependency, package, lockfile, environment-file, deployment, CI/CD,
+    DNS, cloud-resource, provider, or secret change;
+  - no legacy-project write or custom image asset;
+  - no UI-QA action and no Phase 18B or Phase 19 action.
+- UI-QA is the next planned UI task and remains
+  `PLANNED / INACTIVE` pending separate authorization.
+- Phase 18B remains
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- No push, merge, or deployment is authorized.
+
+## Phase 18 Interview and Learning legacy-policy and roadmap correction
+
+### Comparative audit
+
+- Task ID: `DOC-18A-IL`.
+- Audit: Phase 18A Interview and Learning Legacy Comparative Audit.
+- Audit status: `COMPLETED / HUMAN-APPROVED`.
+- Accepted audit approval token:
+  `PHASE_18A_INTERVIEW_LEARNING_LEGACY_COMPARATIVE_AUDIT_APPROVED`.
+- Audit report:
+  `docs/planning/PHASE_18A_INTERVIEW_LEARNING_LEGACY_COMPARATIVE_AUDIT.md`.
+- Audit date: 2026-07-31.
+- Audit mode: `READ-ONLY SOURCE-TO-SOURCE STATIC AUDIT`.
+- Runtime/browser limitation: the audit inspected source, contracts, routes,
+  CSS, tests, and assets but did not run applications, tests, builds, browser
+  workflows, assistive technology, responsive runtime checks, or native
+  Chrome 200%.
+
+### Source roots
+
+- Interview legacy project:
+  `/Users/prabhathmalinda/Documents/Projects/Career Learning Hub Legacy References/Interview Prep Ai`.
+- Interview legacy frontend:
+  `/Users/prabhathmalinda/Documents/Projects/Career Learning Hub Legacy References/Interview Prep Ai/frontend/interview-prep-ai`.
+- Interview authored frontend file count: 38.
+- AI Learning Assistant legacy project:
+  `/Users/prabhathmalinda/Documents/Projects/Career Learning Hub Legacy References/AI Learning Assistant`.
+- AI Learning Assistant legacy frontend:
+  `/Users/prabhathmalinda/Documents/Projects/Career Learning Hub Legacy References/AI Learning Assistant/frontend/ai-learning-assistant`.
+- AI Learning Assistant authored frontend file count: 50.
+
+### Policy
+
+- DEC-014 status: `ACCEPTED`.
+- Controlling legacy-port applications:
+  1. Resume Builder;
+  2. AI Resume Analyser;
+  3. Interview Prep Ai;
+  4. AI Learning Assistant.
+- Controlling rule: directly port, copy, or faithfully recreate the strongest
+  legacy frontend experiences, then connect them to the current Career
+  Learning Hub architecture with equal or better functionality.
+- Each legacy application requires a source-to-source audit before being
+  declared complete.
+
+### Interview result
+
+- Interview verdict:
+  `A. COMPLETE — NO ADDITIONAL INTERVIEW IMPLEMENTATION REQUIRED`.
+- Interview follow-up required: `NO`.
+- UI-IP2 status: `NOT REQUIRED / NOT PLANNED`.
+- UI-I1 remains `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`.
+- Do not create or activate UI-IP2.
+
+### Learning roadmap
+
+- Learning implementation phase count: 2.
+- UI-LA1 — Learning Documents, Workspace and Conversations Legacy Visual
+  Port:
+  - status: `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`;
+  - accepted visual approval token:
+    `PHASE_18A_UI_LA1_LEARNING_DOCUMENTS_WORKSPACE_CONVERSATIONS_LEGACY_VISUAL_PORT_APPROVED`;
+  - implementation commit:
+    `81339ef28fa31275febd28d775c4e386a1c0edd6`;
+  - implementation commit subject:
+    `Port legacy learning workspace visuals`;
+  - Learning page identity;
+  - document-library composition;
+  - supported-field document cards;
+  - native PDF selection presentation;
+  - upload and processing states;
+  - document workspace hierarchy;
+  - secure signed-viewer surroundings;
+  - extracted-content reader;
+  - stored summary and key points;
+  - conversation collection;
+  - grounded user/assistant message hierarchy;
+  - citations;
+  - composer and canonical job states;
+  - responsive, accessibility, reduced-motion, and native-200% verification.
+- UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port:
+  - status: `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`;
+  - accepted visual approval token:
+    `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`;
+  - implementation baseline HEAD:
+    `dc623f708212b56fae0b0b4525fb03f4848a1b7a`;
+  - implementation and documentation commit:
+    `9a07e57296f2b61120a3de75616c31e79c7ac164`;
+  - commit subject: `Port legacy learning flashcard and quiz visuals`;
+  - commit parent: `dc623f708212b56fae0b0b4525fb03f4848a1b7a`;
+  - commit parent count: `1`;
+  - committed boundary:
+    `16 APPROVED IMPLEMENTATION, TEST, AND DOCUMENTATION PATHS`;
+  - post-commit worktree state: `CLEAN`;
+  - document-scoped Flashcard-set cards;
+  - generation states;
+  - accessible front/back study framing;
+  - explicit reveal and hide;
+  - positional study progress;
+  - document-scoped Quiz cards;
+  - focused one-question Quiz flow;
+  - accessible choices and retained selections;
+  - immutable attempt history;
+  - server-authoritative score and result presentation;
+  - correct/incorrect review;
+  - explanations and source pages;
+  - responsive, accessibility, reduced-motion, secrecy, and native-200%
+    verification.
+- UI-QA status: `PLANNED / INACTIVE`.
+- UI-QA position: next planned task after the UI-LA2 finalization workflow is
+  verified directly from Git and separate UI-QA authorization is provided.
+- Before UI-QA authorization, the UI-LA2 finalization workflow requires:
+  1. exact staging of the two approved reconciliation documents;
+  2. one separately authorized documentation-only local commit;
+  3. direct Git verification of a clean worktree;
+  4. separate UI-QA authorization.
+- These controls are verified from Git and are not recursively self-recorded
+  in the documentation-only commit.
+- Ordered remaining UI roadmap: `UI-QA`.
+- Next planned UI task:
+  `UI-QA — Integrated Learning Legacy Visual Port Quality Assurance`.
+- Next planned UI task status: `PLANNED / INACTIVE`.
+- UI-QA is not activated by this documentation task.
+
+### Historical phase controls at comparative-audit approval
+
+The following inactive statuses record the comparative-audit approval point.
+They are historical and do not override the current Phase 18B activation at
+the top of this file.
+
+- Phase 18B status: `PLANNED / INACTIVE`.
+- Phase 18B remains blocked.
+- Phase 18B readiness:
+  `NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED,
+  HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED, FOLLOWED BY SEPARATE
+  ACTIVATION AUTHORIZATION`.
+- Phase 18B authorization: `SEPARATE EXPLICIT AUTHORIZATION REQUIRED`.
+- DOC-18A-IL, UI-LA1, UI-LA2, and UI-QA authorize no push, merge,
+  deployment, DNS, cloud-resource, provider, secret, or staging-activation
+  action.
+- Phase 19 status: `PLANNED / INACTIVE`.
+- No migration action is authorized.
+
+### Audit findings
+
+- Interview Prep Ai:
+  - the strongest compatible experiences are already covered by UI-I1;
+  - the current Interview implementation is equal or better;
+  - unsupported deletion is rejected;
+  - old authentication, backend, API client, provider setup, old branding,
+    unsafe Markdown, hover-only actions, and motion-dependent patterns remain
+    rejected.
+- AI Learning Assistant port or faithful-recreation candidates:
+  - stronger document-library hierarchy;
+  - stronger supported-field card composition;
+  - stronger native-file selection feedback;
+  - stronger workspace context;
+  - stronger user/assistant conversation hierarchy;
+  - stronger Flashcard set and study framing;
+  - stronger focused Quiz flow;
+  - stronger result-review hierarchy.
+- Preserve the current stronger Learning behavior:
+  - secure authentication, ownership, private storage, and signed PDF access;
+  - page-aware extraction, grounded citations, cancellation, and
+    stale-response protection;
+  - canonical contract validation, provider-neutral errors, and explicit AI
+    actions;
+  - accessible Flashcard reveal, Quiz answer secrecy, server-authoritative
+    scoring, and immutable attempts;
+  - shared AppShell and current branding.
+- Rejected or deferred:
+  - legacy authentication, localStorage tokens, backend/API/provider
+    configuration, and old branding;
+  - fake statistics or progress and unsupported document-card size or
+    Flashcard/Quiz totals;
+  - global Flashcard or Quiz libraries;
+  - favorites, stars, persisted study progress, unsupported difficulty, and
+    set deletion;
+  - raw PDF paths, automatic AI actions, unsafe raw HTML, unsanitized
+    Markdown, arbitrary external links, and motion-only Flashcard flipping;
+  - new dependencies added only to match legacy visuals.
+
+## Phase 18A UI-LA1 Learning Documents, Workspace and Conversations Legacy Visual Port
+
+### Identity
+
+- Implementation prompt ID:
+  `PHASE-18A-UI-LA1-LEARNING-DOCUMENTS-WORKSPACE-CONVERSATIONS-LEGACY-VISUAL-PORT-01`.
+- Repair prompt ID:
+  `PHASE-18A-UI-LA1-DOCUMENT-CARD-GRID-CLEANUP-REPAIR-01`.
+- Documentation closeout prompt ID:
+  `PHASE-18A-UI-LA1-DOCUMENTATION-CLOSEOUT-01`.
+- Status: `COMPLETED / HUMAN-APPROVED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_LA1_LEARNING_DOCUMENTS_WORKSPACE_CONVERSATIONS_LEGACY_VISUAL_PORT_APPROVED`.
+- Accepted UI-LA1 documentation closeout approval token:
+  `PHASE_18A_UI_LA1_DOCUMENTATION_CLOSEOUT_APPROVED`.
+- UI-LA1 documentation closeout approval token accepted: `YES`.
+
+### Scope completed
+
+- UI-LA1 delivered:
+  - stronger Learning page identity;
+  - responsive dossier-style PDF document cards;
+  - supported-field-only metadata;
+  - accessible native PDF selection presentation;
+  - truthful selected-file feedback;
+  - upload, validation, processing, failure, retry, and paused states;
+  - stronger document-workspace header and context;
+  - preserved keyboard-operable document tabs;
+  - refined signed-PDF viewer surroundings;
+  - improved extracted-content hierarchy;
+  - polished stored summary and key-point surfaces;
+  - improved conversation collection;
+  - grounded user/assistant message hierarchy;
+  - source-page citation controls;
+  - improved composer and canonical job-state presentation;
+  - responsive desktop, tablet, mobile, and actual native Chrome 200%
+    behavior.
+
+### Legacy-port classifications
+
+- **DIRECT OR VISUAL PORT**:
+  - Learning page hierarchy;
+  - PDF document-card language;
+  - upload-panel hierarchy;
+  - conversation-card structure;
+  - chat-bubble alignment;
+  - composer grouping;
+  - restrained document motif.
+- **PORT WITH CONTRACT ADAPTATION**:
+  - document statuses;
+  - supported page and extracted-section counts;
+  - supported timestamps;
+  - selected filename;
+  - stored summaries;
+  - stored key points;
+  - extracted word counts;
+  - conversation message counts;
+  - canonical message timestamps;
+  - validated source pages.
+- **FAITHFUL RECREATION**:
+  - private-PDF emphasis;
+  - explicit workspace actions;
+  - user-versus-assistant distinction;
+  - conversation-history treatment;
+  - upload-validation hierarchy.
+- **CURRENT EQUAL OR BETTER RETAINED**:
+  - private owned PDFs;
+  - signed PDF target;
+  - credential-free and no-referrer PDF fetch;
+  - content-type and size validation;
+  - revocable object URLs;
+  - target expiry;
+  - page-aware extraction;
+  - canonical ordering;
+  - document-scoped conversations;
+  - request UUID reuse;
+  - ambiguous-submit reconciliation;
+  - job polling;
+  - paused and terminal failure states;
+  - cancellation;
+  - stale-response protection;
+  - request-ID filtering;
+  - provider-neutral errors;
+  - accessible Dialog behavior;
+  - Flashcard reveal safety;
+  - Quiz answer secrecy.
+
+### Rejected legacy behavior
+
+- UI-LA1 did not copy:
+  - legacy authentication;
+  - localStorage tokens;
+  - legacy backend or API clients;
+  - provider configuration;
+  - old branding;
+  - raw PDF paths;
+  - unsafe Markdown;
+  - arbitrary links or images;
+  - fabricated data;
+  - fake drag-and-drop support;
+  - fake byte upload progress;
+  - unsupported persisted file size;
+  - unsupported Flashcard or Quiz totals;
+  - automatic AI actions;
+  - duplicate Dashboard or AppShell;
+  - new Tailwind, Framer Motion, Markdown, icon, or syntax-highlighting
+    dependencies.
+
+### Exact changed files
+
+- `frontend/src/features/learning/DocumentConversations.tsx`
+- `frontend/src/features/learning/DocumentConversations.test.tsx`
+- `frontend/src/features/learning/LearningConversationWorkspace.tsx`
+- `frontend/src/features/learning/LearningConversationWorkspace.test.tsx`
+- `frontend/src/features/learning/LearningDashboard.tsx`
+- `frontend/src/features/learning/LearningDashboard.test.tsx`
+- `frontend/src/features/learning/LearningDocumentWorkspace.tsx`
+- `frontend/src/features/learning/LearningDocumentWorkspace.test.tsx`
+- `frontend/src/features/learning/learningWorkspace.css`
+- `tests/browser/specs/learning.spec.cjs`
+
+### Test and verification evidence
+
+- Baseline focused Learning verification: 5 files, 85 tests passed.
+- Test-first RED evidence: 6 new assertions failed as intended; 68 existing
+  assertions passed.
+- Focused final Learning verification: 5 files, 88/88 tests passed.
+- LearningDashboard final verification: 25/25 tests passed.
+- Complete frontend suite: 53 files, 701/701 tests passed.
+- Frontend typecheck: `PASSED`.
+- Frontend production build: `PASSED`.
+- Existing build warnings retained: React Router directive warnings and
+  application chunk larger than 500 kB.
+- Final Learning browser workflow: 3/3 browser projects passed.
+- Browser-spec syntax: `PASSED`.
+- `git diff --check`: `PASSED`.
+- Changed-file whitespace verification: `PASSED`.
+- Changed-file secret scan: `PASSED`.
+
+### Browser and responsive evidence
+
+- 1440 × 900 passed.
+- 1024 × 768 passed.
+- 768 × 1024 passed.
+- 390 × 844 passed.
+- 320 × 720 passed.
+- Actual Chrome-toolbar 200% passed, and browser zoom was returned to 100%.
+- No represented CSS viewport was labelled as native 200%.
+- Document-grid repair:
+  - root cause: `repeat(auto-fit, ...)` collapsed unused tracks and stretched
+    a single document card across the full collection width;
+  - correction:
+    `repeat(auto-fill, minmax(min(100%, 260px), 1fr))`;
+  - desktop one-document assertion: card width divided by collection width is
+    below 0.6;
+  - mobile assertion: card width divided by collection width is above 0.9;
+  - three synthetic documents formed one three-column row at 1440 × 900.
+
+### Accessibility evidence
+
+- Evidence covered semantic document and conversation articles; explicit
+  links and buttons; a labelled native file input; a focusable validation
+  summary; keyboard-operable tabs; ArrowLeft, ArrowRight, Home, and End tab
+  navigation; Escape closing the deletion dialog; dialog focus returning to
+  the Delete document control; visible focus rings; labelled message roles;
+  semantic time metadata; grouped source citations; non-color status labels;
+  reduced-motion behavior; long-content wrapping; and mobile touch targets.
+- No formal WCAG conformance or assistive-technology certification is
+  claimed.
+
+### Security and contract preservation
+
+- No API, DTO, schema, authentication, ownership, token-storage, private
+  storage, polling, signed-PDF, provider, job-worker, or answer-secrecy
+  behavior changed.
+- No backend or shared-contract file changed.
+- No dependency, package, or lockfile changed.
+- No legacy-project write occurred.
+- No external provider or internet request occurred.
+- Only localhost, blob, data, and Chromium built-in PDF viewer resources were
+  observed.
+
+### Cleanup evidence
+
+- Synthetic users = 0.
+- Owned synthetic records/files = 0.
+- The isolated native-zoom database/runtime was destroyed.
+- `/private/tmp/career-learning-hub-phase14` was removed and confirmed
+  absent.
+- Repository build output, TypeScript caches, repository screenshots,
+  browser reports, and test results were removed.
+- Frontend, backend, MongoDB, and browser runtime were stopped.
+- Ports 4173, 4174, and 8000 were closed.
+- No generated repository artifact remained.
+
+### Screenshot evidence
+
+- Screenshots were stored outside Git and were not committed.
+- Primary repair evidence directory:
+  `/private/tmp/career-learning-hub-ui-la1-repair-evidence-20260801/`.
+- Repair evidence filenames:
+  - `ui-la1-learning-library-desktop-repaired.png`;
+  - `ui-la1-learning-library-multiple-documents-repaired.png`;
+  - `ui-la1-mobile-library-repaired.png`;
+  - `ui-la1-native-chrome-200-percent-repaired.png`.
+- Temporary screenshots are not permanent repository evidence.
+
+### Git and release controls
+
+- UI-LA1 implementation and documentation were locally committed together.
+- Final commit: `81339ef28fa31275febd28d775c4e386a1c0edd6`.
+- Commit subject: `Port legacy learning workspace visuals`.
+- Commit parent: `7a0145db51342d40a8e6f3356470089ff5633a36`.
+- The worktree was clean after commit.
+- No push, merge, or deployment occurred.
+- No DNS, cloud, provider, or secret change occurred.
+- At the time of the UI-LA1 closeout, UI-LA2, UI-QA, Phase 18B, and Phase 19
+  remained inactive.
+
+### Historical successor at UI-LA1 closeout
+
+- At the time of the UI-LA1 closeout, the next planned task was:
+  UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port.
+- UI-LA2 remained inactive until:
+  1. this post-commit reconciliation is human-reviewed;
+  2. the two documentation files are staged exactly;
+  3. a separate local documentation-commit authorization is supplied;
+  4. the documentation-only reconciliation commit succeeds;
+  5. the worktree is clean;
+  6. a separate UI-LA2 implementation prompt is authorized.
+- Those prerequisites were subsequently completed before UI-LA2 received
+  separate implementation authorization.
+
+## Phase 18A UI-LA2 Learning Flashcards, Quizzes and Review Legacy Visual Port
+
+### Identity and status
+
+- Task ID: `UI-LA2`.
+- Task title:
+  `Learning Flashcards, Quizzes and Review Legacy Visual Port`.
+- Implementation prompt ID:
+  `PHASE-18A-UI-LA2-LEARNING-FLASHCARDS-QUIZZES-REVIEW-LEGACY-VISUAL-PORT-01`.
+- Documentation closeout prompt ID:
+  `PHASE-18A-UI-LA2-DOCUMENTATION-CLOSEOUT-01`.
+- Status: `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`.
+- Accepted visual approval token:
+  `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`.
+- Documentation closeout status: `HUMAN-APPROVED`.
+- Implementation baseline HEAD:
+  `dc623f708212b56fae0b0b4525fb03f4848a1b7a`.
+- Implementation and documentation commit:
+  `9a07e57296f2b61120a3de75616c31e79c7ac164`.
+- Commit subject: `Port legacy learning flashcard and quiz visuals`.
+- Commit parent: `dc623f708212b56fae0b0b4525fb03f4848a1b7a`.
+- Commit parent count: `1`.
+- Committed boundary:
+  `16 APPROVED IMPLEMENTATION, TEST, AND DOCUMENTATION PATHS`.
+- Local commit status: `LOCALLY COMMITTED`.
+- Post-commit worktree state: `CLEAN`.
+- Post-commit documentation reconciliation status: `HUMAN-APPROVED`.
+- Finalization policy:
+  `EXACT TWO-FILE STAGING, ONE DOCUMENTATION-ONLY LOCAL COMMIT, CLEAN
+  WORKTREE VERIFICATION, AND SEPARATE UI-QA AUTHORIZATION REQUIRED`.
+- The final documentation-only commit hash is intentionally not self-recorded
+  in that same commit because doing so would require another recursive
+  documentation reconciliation.
+
+### Completed scope
+
+- UI-LA2 applies the approved AI Learning Assistant visual language to
+  document-scoped Flashcard collections, Flashcard study, Quiz collections,
+  Quiz taking, immutable attempt history, server results, and read-only
+  answer review.
+- Current React/Vite architecture, authenticated ownership, nested routes,
+  canonical generation jobs, answer secrecy, server-authoritative scoring,
+  immutable attempts, private citation boundaries, AppShell, and Career
+  Learning Hub branding remain authoritative.
+- Human review identified no blocking visual defect in the submitted
+  evidence. The synthetic Phase 14 titles were test fixtures, not production
+  content.
+- Real AI-provider success was not tested. No formal screen-reader session
+  was performed, and no formal WCAG conformance claim is made.
+
+### Successor and phase controls
+
+- Next planned task:
+  `UI-QA — Integrated Learning Legacy Visual Port Quality Assurance`.
+- UI-QA remains `PLANNED / INACTIVE` and requires separate authorization.
+- UI-LA2 implementation, visual approval, documentation closeout,
+  documentation approval, exact sixteen-path staging, and the local
+  implementation-and-documentation commit are complete. The post-commit
+  worktree was clean.
+- Post-commit reconciliation human review is complete and its approval is
+  recorded.
+- Before UI-QA authorization, the finalization workflow requires exact
+  staging of the two approved reconciliation documents, one separately
+  authorized documentation-only local commit, direct Git verification of a
+  clean worktree, and separate UI-QA authorization.
+- These final Git controls are verified directly and are not recursively
+  self-recorded in the documentation-only commit.
+- Phase 18B remains `PLANNED / INACTIVE` and blocked until UI-LA1, UI-LA2,
+  and UI-QA are completed, human-approved, documented, and locally committed,
+  followed by separate activation authorization.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- No staging, commit, push, merge, deployment, DNS, cloud, provider, secret,
+  or later-phase action is authorized by this closeout.
 
 ## Phase 17 security-enabled continuation start
 
@@ -183,23 +1781,45 @@
 
 ## Objective
 
-- Present every stored Resume suggestion as an accessible Original,
-  Suggested rewrite, Reason, verification warning, and explicit selection
-  comparison without changing its provenance or apply contract.
-- Preserve the approved browser Print / Save as PDF behavior for canonical
-  saved Resume versions, with dirty-draft blocking and A4/Letter design
-  persistence.
-- Preserve the approved responsive AppShell, shared create actions, mobile
-  navigation drawer, and contextual deep-route breadcrumbs.
-- Preserve the accepted Phase 15 limitations, including P15-001 operating
-  restrictions, and all ownership, private-file, Quiz-secrecy, immutable
-  Resume-version, and AI provenance safeguards.
-- Verify the complete Phase 16 diff, automated gates, browser matrix,
-  security/privacy boundaries, accessibility/performance evidence, and
-  cleanup without changing product or executable-test behavior.
-- Complete the final repository and release-candidate verification without
-  changing product or executable-test behavior.
-- Keep Phase 18 planned and inactive until a separate activation prompt.
+- Preserve the completed and approved Phase 18A staging architecture,
+  deployment-readiness audit, and twelve operator-approved decisions.
+- Preserve the completed and approved B18A-001 storage-adapter repair and the
+  human-approved UI-B1 logo and brand foundation.
+- Preserve the completed and human-approved UI-B2 Dashboard and Settings
+  refinement.
+- Preserve the completed and human-approved UI-R1 Resume navigation,
+  template discovery, and stacked workspace refinement.
+- Preserve the completed and human-approved UI-LR1 Legacy Resume Visual Port.
+- Preserve the completed and human-approved UI-LR2 Resume Analysis Visual
+  Port.
+- Preserve the completed and human-approved UI-LR3 Resume History and Insights
+  Visual Port.
+- Preserve the completed and human-approved UI-D1 Unified Dashboard Legacy
+  Visual Port.
+- Preserve the completed and human-approved UI-A1 Authentication Legacy
+  Visual Port.
+- Preserve the completed and human-approved UI-I1 Interview List and Response
+  Ergonomics Legacy Visual Port.
+- Preserve the completed and human-approved Phase 18A Interview and Learning
+  Legacy Comparative Audit and accepted DEC-014 policy extension.
+- Record Interview Prep Ai as complete with no UI-IP2 required or planned.
+- Preserve UI-LA1 as completed, human-approved, and locally committed at
+  `81339ef28fa31275febd28d775c4e386a1c0edd6`.
+- Preserve UI-LA2 as completed, human-approved, and locally committed at
+  `9a07e57296f2b61120a3de75616c31e79c7ac164`.
+- Preserve UI-QA as completed, human-approved, and locally committed at
+  `6821833d80f1ca026beb382822ed35ebebbe4911`.
+- Preserve the accepted UI-QA approval token and the human-accepted native
+  Chrome toolbar-percentage limitation without claiming a toolbar-200% pass.
+- Finalize this reconciliation with exactly one two-file documentation-only
+  local commit. Verify its hash directly from Git rather than recursively
+  recording that commit in itself.
+- Preserve the Phase 17 security-scan waiver boundary, the technically
+  unresolved P15-001 restrictions, all existing security/privacy controls,
+  and a synthetic-data-only staging policy.
+- Keep Phase 18B planned and inactive, ready for separate activation, and
+  subject to separate explicit activation authorization.
+- Keep Phase 19 planned and inactive with no migration action authorized.
 
 ## Phase status controls
 
@@ -245,7 +1865,48 @@
 - Phase 16G is `COMPLETED` / `APPROVED`.
 - Phase 17 is
   `COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`.
-- Phase 18 remains `PLANNED` / `INACTIVE`.
+- Phase 18 is `ACTIVE`.
+- Phase 18A is `COMPLETED / APPROVED`.
+- UI-B1 — Logo and Brand Foundation is `COMPLETED / HUMAN-APPROVED`.
+- UI-B2 — Dashboard Quick-Start Actions and Settings Visual Refinement is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-R1 — Resume Editor Navigation and Template Discovery is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-LR1 — Legacy Resume Visual Port is `COMPLETED / HUMAN-APPROVED`.
+- UI-LR2 — Resume Analysis Visual Port is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-LR3 — Resume History and Insights Visual Port is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-D1 — Unified Dashboard Legacy Visual Port is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-A1 — Authentication Legacy Visual Port is
+  `COMPLETED / HUMAN-APPROVED`.
+- UI-I1 — Interview List and Response Ergonomics Legacy Visual Port is
+  `COMPLETED / HUMAN-APPROVED`.
+- Phase 18A Interview and Learning Legacy Comparative Audit is
+  `COMPLETED / HUMAN-APPROVED`.
+- DEC-014 is `ACCEPTED`.
+- UI-IP2 is `NOT REQUIRED / NOT PLANNED`.
+- UI-LA1 — Learning Documents, Workspace and Conversations Legacy Visual Port
+  is `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`; its implementation
+  commit is `81339ef28fa31275febd28d775c4e386a1c0edd6`
+  (`Port legacy learning workspace visuals`).
+- UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port is
+  `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`; its implementation and
+  documentation commit is `9a07e57296f2b61120a3de75616c31e79c7ac164`
+  (`Port legacy learning flashcard and quiz visuals`). Its post-commit
+  documentation reconciliation is `HUMAN-APPROVED`; final staging, commit
+  success, and clean-worktree status must be verified directly from Git and
+  are not recursively self-recorded in that documentation-only commit.
+- UI-QA — Integrated Pre-Deployment UI Quality Assurance is
+  `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`; its implementation and
+  documentation commit is `6821833d80f1ca026beb382822ed35ebebbe4911`
+  (`Complete integrated UI quality assurance`).
+- Phase 18B is
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 18B authorization remains
+  `SEPARATE EXPLICIT AUTHORIZATION REQUIRED`.
+- Phase 19 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with
   `PHASE_12A_PRIVATE_PDF_CONTRACT_REVIEW_APPROVED`.

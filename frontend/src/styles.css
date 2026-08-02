@@ -168,11 +168,17 @@ h2 {
   display: inline-flex;
   min-height: var(--minimum-interactive-target);
   align-items: center;
+  gap: 12px;
   margin-bottom: 38px;
   color: #18211b;
-  font-size: 0.94rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1.2;
   text-decoration: none;
+}
+
+.product-link .brand-lockup__mark {
+  width: 50px;
 }
 
 .auth-intro,
@@ -424,17 +430,15 @@ h2 {
   text-decoration: none;
 }
 
-.app-brand__mark {
-  display: grid;
-  width: 36px;
-  height: 36px;
+.brand-lockup__mark {
+  display: block;
+  width: 42px;
+  height: auto;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: 10px;
-  color: #ffffff;
-  background: var(--accent);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+}
+
+.brand-lockup__name {
+  min-width: 0;
 }
 
 .primary-navigation {
@@ -717,9 +721,52 @@ h2 {
   line-height: 1.65;
 }
 
+.settings-page {
+  display: grid;
+  min-width: 0;
+  gap: 18px;
+}
+
+.settings-heading {
+  --page-header-shadow: 0 14px 40px rgba(20, 45, 31, 0.06);
+}
+
+.settings-heading p:not(.eyebrow) {
+  max-width: 680px;
+  margin: 14px 0 0;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.settings-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.75fr);
+  gap: 18px;
+}
+
+.settings-panel {
+  min-width: 0;
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(20, 45, 31, 0.045);
+}
+
+.settings-panel__header h2 {
+  color: #233128;
+  font-size: 1.2rem;
+}
+
+.settings-panel__header p {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 .settings-list {
   display: grid;
-  margin: 40px 0 0;
+  margin: 24px 0 0;
   border-top: 1px solid var(--border);
 }
 
@@ -749,7 +796,21 @@ h2 {
 }
 
 .settings-actions {
-  margin-top: 28px;
+  margin-top: 24px;
+}
+
+.settings-session-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-session-panel .settings-actions {
+  margin-top: auto;
+  padding-top: 28px;
+}
+
+.settings-actions .secondary-button {
+  width: 100%;
 }
 
 .route-state {
@@ -810,6 +871,10 @@ h2 {
   .mobile-nav-toggle {
     min-height: var(--minimum-interactive-target);
   }
+
+  .settings-content-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 700px) {
@@ -820,6 +885,8 @@ h2 {
 
   .auth-card,
   .workspace-section,
+  .settings-heading,
+  .settings-panel,
   .route-state {
     padding: 28px;
     border-radius: 18px;
@@ -851,6 +918,8 @@ h2 {
 
   .auth-card,
   .workspace-section,
+  .settings-heading,
+  .settings-panel,
   .route-state {
     padding: 22px;
   }

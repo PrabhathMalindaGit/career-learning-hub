@@ -247,6 +247,31 @@ describe("Learning document library", () => {
     expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
   });
 
+  it("presents supported dossier metadata through explicit semantic actions", async () => {
+    vi.mocked(learningApi.listLearningDocuments).mockResolvedValue(
+      pageResult([learningDocument()]),
+    );
+
+    renderLibrary();
+
+    const card = await screen.findByRole("article", {
+      name: "Synthetic systems notes",
+    });
+    expect(card.textContent).toContain("synthetic-systems-notes.pdf");
+    expect(card.textContent).toContain("PDF document");
+    expect(card.textContent).toContain("4 pages");
+    expect(card.textContent).toContain("7 extracted sections");
+    expect(
+      card.querySelector("time[datetime='2026-07-26T01:00:00.000Z']"),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("link", {
+        name: "Open workspace",
+      }).getAttribute("href"),
+    ).toBe(`/learning/documents/${documentId}`);
+    expect(card.textContent).not.toMatch(/file size|flashcards|quizzes/i);
+  });
+
   it("offers manual refresh and preserves a safe request ID on failure", async () => {
     vi.mocked(learningApi.listLearningDocuments).mockRejectedValue(
       new ApiError(
@@ -354,6 +379,23 @@ describe("Learning PDF upload", () => {
       screen.getByText("Choose a PDF file no larger than 15 MB."),
     ).not.toBeNull();
     expect(screen.getByText(/OCR is not supported/i)).not.toBeNull();
+  });
+
+  it("reports the selected PDF filename without claiming drag and drop", async () => {
+    renderLibrary();
+    await openUploadForm();
+
+    await userEvent.upload(
+      screen.getByLabelText("PDF file"),
+      new File(["%PDF"], "selected-private-notes.pdf", {
+        type: "application/pdf",
+      }),
+    );
+
+    expect(
+      screen.getByText("Selected: selected-private-notes.pdf"),
+    ).not.toBeNull();
+    expect(screen.queryByText(/drag and drop/i)).toBeNull();
   });
 
   it("prevents duplicate submission while upload is pending", async () => {

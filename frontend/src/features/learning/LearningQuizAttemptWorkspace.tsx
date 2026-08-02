@@ -276,16 +276,22 @@ export function LearningQuizAttemptWorkspace() {
 
       <section
         className="learning-score-card"
-        aria-labelledby="learning-score-title"
+        aria-label="Server-authoritative quiz result"
       >
-        <p className="learning-kicker">Canonical server result</p>
-        <h2 id="learning-score-title">
-          {attempt.attempt.correctCount} of{" "}
-          {attempt.attempt.questionCount} correct
-        </h2>
-        <strong>
-          {scoreFormatter.format(attempt.attempt.scorePercent)}%
-        </strong>
+        <div>
+          <p className="learning-kicker">Canonical server result</p>
+          <h2>Quiz result</h2>
+          <p>
+            {attempt.attempt.correctCount} of{" "}
+            {attempt.attempt.questionCount} correct
+          </p>
+        </div>
+        <div className="learning-score-value">
+          <span>Score</span>
+          <strong>
+            {scoreFormatter.format(attempt.attempt.scorePercent)}%
+          </strong>
+        </div>
       </section>
 
       <section aria-labelledby="learning-review-title">
@@ -314,18 +320,22 @@ export function LearningQuizAttemptWorkspace() {
                   </strong>
                 </header>
                 <h3>{question.prompt}</h3>
-                <p>
-                  Your answer:{" "}
-                  {question.choices[question.selectedChoiceIndex]}
-                </p>
-                <p>
-                  Correct answer:{" "}
-                  {question.choices[question.correctChoiceIndex]}
-                </p>
-                <div className="learning-review-explanation">
-                  <strong>Explanation</strong>
-                  <p>{question.explanation}</p>
-                </div>
+                <dl className="learning-review-answers">
+                  <div>
+                    <dt>Selected answer</dt>
+                    <dd>{question.choices[question.selectedChoiceIndex]}</dd>
+                  </div>
+                  <div>
+                    <dt>Correct answer</dt>
+                    <dd>{question.choices[question.correctChoiceIndex]}</dd>
+                  </div>
+                </dl>
+                {question.explanation.trim() !== "" ? (
+                  <div className="learning-review-explanation">
+                    <strong>Explanation</strong>
+                    <p>{question.explanation}</p>
+                  </div>
+                ) : null}
                 {question.sourcePages.length > 0 ? (
                   <div className="learning-source-pages">
                     <span>Source pages:</span>

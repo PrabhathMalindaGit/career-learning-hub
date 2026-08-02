@@ -77,25 +77,25 @@ function renderTaker(
 }
 
 describe("Quiz taker", () => {
-  it("renders canonical prompts and choices as plain text without review data", () => {
+  it("renders one canonical question at a time without review data or source hints", () => {
     renderTaker();
 
     expect(screen.getByText("**Which** boundary is <canonical>?")).not.toBeNull();
+    expect(screen.queryByText("Where are drafts kept?")).toBeNull();
     expect(
       screen.getByText("<script>Browser guess</script>"),
     ).not.toBeNull();
     expect(screen.queryByText(/correct answer/i)).toBeNull();
     expect(screen.queryByText(/explanation/i)).toBeNull();
-    expect(screen.getAllByRole("group")).toHaveLength(2);
+    expect(screen.getAllByRole("group")).toHaveLength(1);
+    expect(screen.getByText("Question 1 of 2")).not.toBeNull();
+    expect(screen.getByText("Unanswered")).not.toBeNull();
+    expect(screen.queryByRole("link", { name: "Review source page 1" })).toBeNull();
   });
 
-  it("allows exactly one choice per question and submits only when complete", async () => {
+  it("retains accessible single-choice answers while navigating and submits only when complete", async () => {
     const onSubmit = vi.fn();
     renderTaker(onSubmit);
-    const submit = screen.getByRole("button", {
-      name: "Submit quiz answers",
-    });
-    expect((submit as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText("0 of 2 questions answered")).not.toBeNull();
 
     await userEvent.click(
@@ -115,9 +115,29 @@ describe("Quiz taker", () => {
     ).toBe(false);
     expect(screen.getByText("1 of 2 questions answered")).not.toBeNull();
 
+    await userEvent.click(screen.getByRole("button", { name: "Next question" }));
+    expect(screen.getByText("Where are drafts kept?")).not.toBeNull();
+    expect(screen.queryByText("**Which** boundary is <canonical>?")).toBeNull();
+    expect(screen.getByText("Question 2 of 2")).not.toBeNull();
+    expect(screen.getByText("Unanswered")).not.toBeNull();
     await userEvent.click(
       screen.getByRole("radio", { name: "React memory" }),
     );
+    expect(screen.getByText("Selected")).not.toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Previous question" }),
+    );
+    expect(
+      (
+        screen.getByRole("radio", {
+          name: "<script>Browser guess</script>",
+        }) as HTMLInputElement
+      ).checked,
+    ).toBe(true);
+    await userEvent.click(screen.getByRole("button", { name: "Next question" }));
+    const submit = screen.getByRole("button", {
+      name: "Submit quiz answers",
+    });
     expect((submit as HTMLButtonElement).disabled).toBe(false);
     await userEvent.click(submit);
 
@@ -127,15 +147,10 @@ describe("Quiz taker", () => {
     ]);
   });
 
-  it("shows only canonical source pages and disables interaction while submitting", () => {
+  it("keeps source pages hidden and disables interaction while submitting", async () => {
     renderTaker(vi.fn(), true);
 
-    expect(
-      screen
-        .getByRole("link", { name: "Review source page 1" })
-        .getAttribute("href"),
-    ).toBe(`/learning/documents/${documentId}`);
-    expect(screen.getByText(/open Extracted Content/i)).not.toBeNull();
+    expect(screen.queryByRole("link", { name: "Review source page 1" })).toBeNull();
     expect(
       (
         screen.getByRole("radio", {
@@ -144,16 +159,30 @@ describe("Quiz taker", () => {
       ).disabled,
     ).toBe(true);
     expect(
-      (
-        screen.getByRole("button", {
-          name: "Submitting quiz answers…",
-        }) as HTMLButtonElement
-      ).disabled,
+      (screen.getByRole("button", { name: "Next question" }) as HTMLButtonElement)
+        .disabled,
     ).toBe(true);
-    const submit = screen.getByRole("button", {
-      name: "Submitting quiz answers…",
-    });
+    await userEvent.click(
+      screen.getByRole("radio", { name: "The server boundary" }),
+    );
+    expect(screen.getByText("Question 1 of 2")).not.toBeNull();
+  });
+
+  it("submits the complete canonical answer set from the final question", async () => {
+    const onSubmit = vi.fn();
+    renderTaker(onSubmit);
+    await userEvent.click(
+      screen.getByRole("radio", { name: "The server boundary" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Next question" }));
+    await userEvent.click(screen.getByRole("radio", { name: "React memory" }));
+    const submit = screen.getByRole("button", { name: "Submit quiz answers" });
     expect(submit.classList.contains("primary-button")).toBe(true);
-    expect(submit.getAttribute("aria-busy")).toBe("true");
+    await userEvent.click(submit);
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit).toHaveBeenCalledWith([
+      { questionIndex: 0, selectedChoiceIndex: 0 },
+      { questionIndex: 1, selectedChoiceIndex: 0 },
+    ]);
   });
 });

@@ -10,6 +10,7 @@ import {
   Outlet,
   useLocation,
 } from "react-router-dom";
+import { BrandLockup } from "./components/BrandLockup";
 import { Dialog } from "./components/Dialog";
 import { useAuth } from "./features/auth/AuthProvider";
 
@@ -159,10 +160,7 @@ export function AppShell() {
 
       <aside className="app-sidebar">
         <NavLink className="app-brand" to="/dashboard">
-          <span className="app-brand__mark" aria-hidden="true">
-            CL
-          </span>
-          <span>Career &amp; Learning Hub</span>
+          <BrandLockup />
         </NavLink>
         <CreateMenu />
         <PrimaryNavigation label="Primary navigation" />
@@ -183,10 +181,7 @@ export function AppShell() {
 
       <header className="app-header">
         <NavLink className="app-brand" to="/dashboard">
-          <span className="app-brand__mark" aria-hidden="true">
-            CL
-          </span>
-          <span>Career &amp; Learning Hub</span>
+          <BrandLockup />
         </NavLink>
         <button
           ref={mobileToggleRef}

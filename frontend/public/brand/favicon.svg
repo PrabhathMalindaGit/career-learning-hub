@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title description">
+  <title id="title">Career Learning Hub favicon</title>
+  <desc id="description">The open-book and rising-pathway symbol on a light square.</desc>
+  <rect x="1" y="1" width="62" height="62" rx="12" fill="#f4f7f5"/>
+  <g transform="translate(4 9) scale(.466667)">
+    <path fill="#287a4a" d="M4 12C24 10 43 15 58 24V82L60 88C43 73 26 68 4 70Z"/>
+    <path fill="#1e6039" d="M62 24C77 15 96 10 116 12V70C94 68 77 72 60 88Z"/>
+    <path fill="#1e6039" d="M4 70C23 44 52 22 88 16C52 29 29 49 18 72Z"/>
+    <path fill="#ffffff" d="M26 68C36 44 55 27 88 16C62 31 46 49 42 72Z"/>
+    <path fill="#ffffff" d="M62 84C50 69 49 56 55 44C64 30 79 21 99 16C80 28 68 41 65 54C62 66 66 76 73 80Z"/>
+  </g>
+</svg>

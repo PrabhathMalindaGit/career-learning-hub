@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import {
   render,
   screen,
@@ -56,6 +59,10 @@ const jobId = "507f1f77bcf86cd799439015";
 const stableId = "123e4567-e89b-42d3-a456-426614174000";
 const suggestionId = "123e4567-e89b-42d3-a456-426614174001";
 const timestamp = "2026-07-24T10:00:00.000Z";
+const resumeWorkspaceCss = readFileSync(
+  resolve(process.cwd(), "src/features/resumes/resumeWorkspace.css"),
+  "utf8",
+);
 
 function workspace(
   activeVersionId = versionId,
@@ -209,6 +216,64 @@ describe("ResumeWorkspace", () => {
       screen.getByText(/saved design choices are no longer available/i),
     ).not.toBeNull();
     expect(resumeApi.updateResumeDesign).not.toHaveBeenCalled();
+  });
+
+  it("stacks the editor, preview, assessments, and history without a sticky live preview", async () => {
+    renderWorkspace();
+    await screen.findByLabelText("Full name");
+
+    const editor = screen.getByRole("region", {
+      name: "Resume editor",
+    });
+    const preview = screen.getByRole("region", {
+      name: "Live preview",
+    });
+    const roleAwareAssessment = screen.getByRole("complementary", {
+      name: "Role-aware assessment",
+    });
+    const aiAssessment = screen.getByRole("complementary", {
+      name: "AI-assisted assessment",
+    });
+    const versionHistory = screen.getByRole("region", {
+      name: "Version history",
+    });
+    const applySuggestions = screen.getByRole("button", {
+      name: "Apply selected suggestions",
+    });
+    const workspaceGrid = editor.parentElement;
+
+    expect(workspaceGrid?.classList.contains("resume-workspace-grid")).toBe(
+      true,
+    );
+    expect(Array.from(workspaceGrid?.children ?? [])).toEqual([
+      editor,
+      preview,
+      roleAwareAssessment,
+      aiAssessment,
+    ]);
+    expect(
+      aiAssessment.compareDocumentPosition(versionHistory) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    expect(aiAssessment.contains(applySuggestions)).toBe(true);
+
+    const workspaceGridRule = resumeWorkspaceCss.match(
+      /\.resume-workspace-grid\s*\{([^}]*)\}/,
+    )?.[1];
+    const previewPanelRule = resumeWorkspaceCss.match(
+      /\.resume-preview-panel\s*\{([^}]*)\}/,
+    )?.[1];
+    const livePaperRule = resumeWorkspaceCss.match(
+      /\.resume-workspace-grid > \.resume-preview-panel \.resume-paper\s*\{([^}]*)\}/,
+    )?.[1];
+
+    expect(workspaceGridRule).toContain(
+      "grid-template-columns: minmax(0, 1fr);",
+    );
+    expect(previewPanelRule).toContain("position: static;");
+    expect(previewPanelRule).not.toContain("position: sticky;");
+    expect(livePaperRule).toContain("max-width: 860px;");
+    expect(livePaperRule).toContain("margin-inline: auto;");
   });
 
   it("edits with stable identity, previews live, and adopts the canonical save response", async () => {
@@ -381,17 +446,14 @@ describe("ResumeWorkspace", () => {
     const user = userEvent.setup();
     const fullName = await screen.findByLabelText("Full name");
 
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Template" }),
-      "modern-professional",
+    await user.click(
+      screen.getByRole("radio", { name: /Modern Professional/i }),
     );
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Font" }),
-      "Georgia",
+    await user.click(
+      screen.getByRole("radio", { name: /Georgia/i }),
     );
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Palette" }),
-      "navy",
+    await user.click(
+      screen.getByRole("radio", { name: /Navy/i }),
     );
 
     const draftPreview = screen.getByLabelText("Resume preview");
@@ -450,9 +512,8 @@ describe("ResumeWorkspace", () => {
     const user = userEvent.setup();
     await screen.findByLabelText("Full name");
 
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Template" }),
-      "compact-technical",
+    await user.click(
+      screen.getByRole("radio", { name: /Compact Technical/i }),
     );
     await user.click(screen.getByRole("button", { name: "Save design" }));
 
@@ -487,9 +548,8 @@ describe("ResumeWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     await screen.findByLabelText("Full name");
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Palette" }),
-      "forest",
+    await user.click(
+      screen.getByRole("radio", { name: /Forest/i }),
     );
     await user.click(screen.getByRole("button", { name: "Save design" }));
 
@@ -499,9 +559,9 @@ describe("ResumeWorkspace", () => {
       }) as HTMLSelectElement).disabled,
     ).toBe(true);
     expect(
-      (screen.getByRole("combobox", {
-        name: "Template",
-      }) as HTMLSelectElement).disabled,
+      (screen.getByRole("radio", {
+        name: /ATS Classic/i,
+      }) as HTMLInputElement).disabled,
     ).toBe(true);
     expect(resumeApi.updateResumeDesign).toHaveBeenCalledTimes(1);
 
@@ -619,7 +679,9 @@ describe("ResumeWorkspace", () => {
     await user.clear(fullName);
     await user.type(fullName, "Draft Candidate");
     await user.click(
-      screen.getByRole("button", { name: "View version 1" }),
+      screen.getByRole("button", {
+        name: "View current saved version 1",
+      }),
     );
 
     expect(
@@ -685,14 +747,16 @@ describe("ResumeWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     await user.click(
-      await screen.findByRole("button", { name: "View version 1" }),
+      await screen.findByRole("button", {
+        name: "View current saved version 1",
+      }),
     );
     expect(
       await screen.findAllByText("First Historical Candidate"),
     ).toHaveLength(2);
 
     await user.click(
-      screen.getByRole("button", { name: "View version 2" }),
+      screen.getByRole("button", { name: "View saved version 2" }),
     );
 
     expect(
@@ -750,7 +814,9 @@ describe("ResumeWorkspace", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: "View version 1" }),
+      screen.getByRole("button", {
+        name: "View current saved version 1",
+      }),
     );
     await waitFor(() => {
       expect(resumeApi.fetchResumeVersion).toHaveBeenCalledTimes(1);
@@ -1101,5 +1167,41 @@ describe("ResumeWorkspace", () => {
       keepEditingAgain,
     );
     expect(router.state.location.pathname).toBe(`/resumes/${resumeId}`);
+  });
+
+  it("preserves dirty-state and validation-summary behavior with the section index", async () => {
+    renderWorkspace();
+    const user = userEvent.setup();
+    const email = await screen.findByLabelText("Email");
+    await user.type(email, "invalid-address");
+    const save = screen.getByRole("button", { name: "Save new version" });
+
+    save.focus();
+    await user.click(save);
+
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    expect(
+      screen.getByRole("alert").textContent,
+    ).toContain("Email needs a valid address.");
+    expect(document.activeElement).toBe(save);
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("navigation", { name: "Resume sections" }),
+    ).not.toBeNull();
+  });
+
+  it("allows router-managed section navigation while the draft is dirty", async () => {
+    const router = renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+
+    await user.click(
+      screen.getByRole("link", { name: "Certifications" }),
+    );
+
+    expect(router.state.location.hash).toBe("#resume-section-certifications");
+    expect(screen.queryByRole("dialog", { name: "Unsaved changes" })).toBeNull();
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
   });
 });

@@ -241,10 +241,19 @@ describe("Learning document workspace", () => {
   it("shows a ready overview with stored summary and key points", async () => {
     renderWorkspace();
 
-    expect(await screen.findByText(/A stored summary/)).not.toBeNull();
+    const summary = await screen.findByRole("region", {
+      name: "Stored summary",
+    });
+    const keyPoints = screen.getByRole("region", {
+      name: "Stored key points",
+    });
+    expect(summary.textContent).toContain("A stored summary");
+    expect(keyPoints.textContent).toContain("First stored point");
     expect(screen.getByText("First stored point")).not.toBeNull();
     expect(screen.getByText("<img src=x onerror=alert(1)>")).not.toBeNull();
     expect(document.querySelector("img")).toBeNull();
+    expect(screen.getByText("Ready")).not.toBeNull();
+    expect(screen.getByText("PDF document")).not.toBeNull();
   });
 
   it("renders summary and key points as plain escaped text", async () => {
@@ -566,6 +575,7 @@ describe("Page-aware extracted content", () => {
 
     expect(await screen.findByText("Page 1")).not.toBeNull();
     expect(screen.getByText("Pages 4–6")).not.toBeNull();
+    expect(screen.getAllByText("3 words")).toHaveLength(2);
     expect(screen.queryByText("Page 0")).toBeNull();
   });
 
@@ -703,6 +713,14 @@ describe("Page-aware extracted content", () => {
     await userEvent.keyboard("{ArrowRight}");
     expect(document.activeElement).toBe(original);
     expect(original.getAttribute("aria-selected")).toBe("true");
+
+    await userEvent.keyboard("{End}");
+    expect(document.activeElement).toBe(quizzes);
+    expect(quizzes.getAttribute("aria-selected")).toBe("true");
+
+    await userEvent.keyboard("{Home}");
+    expect(document.activeElement).toBe(overview);
+    expect(overview.getAttribute("aria-selected")).toBe("true");
   });
 
   it("does not persist private source or document content", async () => {

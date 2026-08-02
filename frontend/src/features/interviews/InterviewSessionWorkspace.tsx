@@ -36,6 +36,7 @@ import type {
   InterviewSessionDetail,
   Pagination,
 } from "./types";
+import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
 import "./interviewCoach.css";
 
 const PAGE_SIZE = 20;
@@ -1425,7 +1426,11 @@ export function InterviewSessionWorkspace() {
         aria-labelledby="session-context-title"
       >
         <h2 id="session-context-title">Session context</h2>
-        <dl>
+        <dl
+          className={`interview-context-grid interview-context-grid--${
+            session.jobDescription ? "four" : "three"
+          }`}
+        >
           <div>
             <dt>Focus topics</dt>
             <dd>
@@ -1448,7 +1453,7 @@ export function InterviewSessionWorkspace() {
               <dd>{session.jobDescription}</dd>
             </div>
           ) : null}
-          <div>
+          <div className="interview-context-grid__updated">
             <dt>Updated</dt>
             <dd>{new Date(session.updatedAt).toLocaleString()}</dd>
           </div>
@@ -1746,6 +1751,11 @@ export function InterviewSessionWorkspace() {
                       {question.category} · {question.difficulty}
                     </span>
                     <strong>{question.question}</strong>
+                    {question.isPinned ? (
+                      <span className="interview-pinned-label">
+                        <span aria-hidden="true">◆</span> Pinned
+                      </span>
+                    ) : null}
                   </button>
                 </li>
               ))}
@@ -1807,6 +1817,14 @@ export function InterviewSessionWorkspace() {
           ) : (
             <>
               <article className="interview-question-card">
+                <div className="interview-question-card__label">
+                  <span>Question prompt</span>
+                  {selectedQuestion.isPinned ? (
+                    <span className="interview-pinned-label">
+                      <span aria-hidden="true">◆</span> Pinned
+                    </span>
+                  ) : null}
+                </div>
                 <p>{selectedQuestion.question}</p>
                 {editable ? (
                   <button
@@ -1824,13 +1842,31 @@ export function InterviewSessionWorkspace() {
 
               {selectedQuestion.modelAnswer ? (
                 <section className="interview-record-block">
-                  <h3>Model answer</h3>
+                  <div className="interview-record-heading">
+                    <div>
+                      <p className="interview-kicker">Reference</p>
+                      <h3>Model answer</h3>
+                    </div>
+                    <CopyInterviewTextButton
+                      label="Model answer"
+                      text={selectedQuestion.modelAnswer}
+                    />
+                  </div>
                   <p>{selectedQuestion.modelAnswer}</p>
                 </section>
               ) : null}
               {selectedQuestion.explanation ? (
                 <section className="interview-record-block">
-                  <h3>Explanation</h3>
+                  <div className="interview-record-heading">
+                    <div>
+                      <p className="interview-kicker">Guidance</p>
+                      <h3>Explanation</h3>
+                    </div>
+                    <CopyInterviewTextButton
+                      label="Explanation"
+                      text={selectedQuestion.explanation}
+                    />
+                  </div>
                   <p>{selectedQuestion.explanation}</p>
                   {selectedQuestion.explanationKeyPoints.length > 0 ? (
                     <ul>

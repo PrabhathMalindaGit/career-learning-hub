@@ -554,8 +554,15 @@ export function LearningQuizWorkspace() {
           <ol className="learning-attempt-list">
             {attempts.map((attempt) => (
               <li key={attempt.id}>
-                <article>
-                  <div>
+                <article
+                  aria-label={`Completed quiz attempt ${attemptDateFormatter.format(
+                    new Date(attempt.completedAt),
+                  )}`}
+                >
+                  <div className="learning-attempt-result">
+                    <span className="learning-collection-type">
+                      Server score
+                    </span>
                     <strong>
                       {scoreFormatter.format(attempt.scorePercent)}%
                     </strong>

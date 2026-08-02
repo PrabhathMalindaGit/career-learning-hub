@@ -20,7 +20,9 @@ import {
   importResumePdf,
   listResumes,
 } from "./resumeApi";
+import { ResumeMiniDocument } from "./ResumeMiniDocument";
 import { pollResumeJob } from "./resumePolling";
+import { resolveResumePresentation } from "./resumeTemplateRegistry";
 import type {
   Pagination,
   ResumeJob,
@@ -58,6 +60,16 @@ function validTitle(value: string): boolean {
   return length >= 1 && length <= 120;
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function titleCase(value: string): string {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
 export function ResumeListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -76,6 +88,7 @@ export function ResumeListPage() {
   const [createTitleError, setCreateTitleError] = useState(false);
   const [importTitle, setImportTitle] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [importDragDepth, setImportDragDepth] = useState(0);
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState<SafeError | null>(null);
   const [importFieldErrors, setImportFieldErrors] =
@@ -281,11 +294,22 @@ export function ResumeListPage() {
           </div>
 
           {loading ? (
-            <StateSurface
-              mode="status"
-              className="resume-state"
-              body="Loading resumes…"
-            />
+            <div
+              className="resume-loading-state"
+              role="status"
+              aria-label="Loading resumes"
+            >
+              <p>Loading resumes…</p>
+              <div className="resume-skeleton-grid" aria-hidden="true">
+                {[0, 1, 2].map((index) => (
+                  <span className="resume-skeleton-card" key={index}>
+                    <span className="resume-skeleton-document" />
+                    <span className="resume-skeleton-line resume-skeleton-line--title" />
+                    <span className="resume-skeleton-line" />
+                  </span>
+                ))}
+              </div>
+            </div>
           ) : listError ? (
             <StateSurface
               mode="alert"
@@ -302,33 +326,72 @@ export function ResumeListPage() {
               }
             />
           ) : resumes.length === 0 ? (
-            <StateSurface
-              mode="static"
-              className="resume-state"
-              body="No resumes yet. Create a blank resume or import a private PDF."
-            />
+            <div className="resume-empty-state">
+              <span className="resume-empty-state-icon" aria-hidden="true">
+                <svg viewBox="0 0 32 32">
+                  <path d="M8 4.5h11l5 5V27.5H8z" />
+                  <path d="M19 4.5v5h5M12 15h8M12 19h8M12 23h5" />
+                </svg>
+              </span>
+              <div>
+                <strong>No resumes yet</strong>
+                <p>
+                  No resumes yet. Create a blank resume or import a private PDF.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="resume-secondary-button"
+                onClick={() => createTitleRef.current?.focus()}
+              >
+                Start a blank resume
+              </button>
+            </div>
           ) : (
             <ul className="resume-record-list">
-              {resumes.map((resume) => (
-                <li key={resume.id}>
-                  <div>
-                    <strong>{resume.title}</strong>
-                    <span>
-                      Version {resume.latestVersionNumber} · {resume.status}
-                    </span>
-                    <small>
-                      Updated{" "}
-                      {new Date(resume.updatedAt).toLocaleDateString()}
-                    </small>
-                  </div>
-                  <Link
-                    to={`/resumes/${resume.id}`}
-                    aria-label={`Open ${resume.title}`}
-                  >
-                    Open
-                  </Link>
-                </li>
-              ))}
+              {resumes.map((resume) => {
+                const presentation = resolveResumePresentation(resume.design);
+                return (
+                  <li className="resume-record-card" key={resume.id}>
+                    <div className="resume-record-card-preview">
+                      <ResumeMiniDocument
+                        templateId={presentation.template.option.id}
+                        colorPaletteId={presentation.palette.option.id}
+                        fontFamily={presentation.font.option.value}
+                        context="card"
+                      />
+                      <span className="resume-record-status">
+                        {titleCase(resume.status)}
+                      </span>
+                    </div>
+                    <div className="resume-record-card-body">
+                      <div className="resume-record-card-heading">
+                        <strong>{resume.title}</strong>
+                        <span>Version {resume.latestVersionNumber}</span>
+                      </div>
+                      <div className="resume-record-design">
+                        <span>{presentation.template.option.label}</span>
+                        <span>
+                          {presentation.palette.option.label} palette
+                        </span>
+                      </div>
+                      <div className="resume-record-card-footer">
+                        <small>
+                          Updated{" "}
+                          {new Date(resume.updatedAt).toLocaleDateString()}
+                        </small>
+                        <Link
+                          to={`/resumes/${resume.id}`}
+                          aria-label={`Open ${resume.title}`}
+                        >
+                          Open resume
+                          <span aria-hidden="true">→</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
 
@@ -476,20 +539,41 @@ export function ResumeListPage() {
                 {importFieldErrors.title}
               </p>
             ) : null}
-            <div className="field-shell">
-              <label
-                className="field-label required-label"
-                htmlFor={importFileId}
-              >
-                Private PDF
-              </label>
+            <div
+              className="resume-upload-dropzone"
+              role="group"
+              aria-label="Private PDF dropzone"
+              aria-describedby={`${importFileId}-help${
+                importFieldErrors.file ? ` ${importFileId}-error` : ""
+              }`}
+              data-drag-active={importDragDepth > 0 ? "true" : "false"}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setImportDragDepth((depth) => depth + 1);
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+              }}
+              onDragLeave={(event) => {
+                event.preventDefault();
+                setImportDragDepth((depth) => Math.max(0, depth - 1));
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                setImportDragDepth(0);
+                setImportFile(event.dataTransfer.files[0] ?? null);
+              }}
+            >
               <input
                 ref={importFileRef}
+                className="resume-file-input"
                 id={importFileId}
                 name="importResumePdf"
                 type="file"
                 accept="application/pdf,.pdf"
                 required
+                aria-label="Private PDF"
                 aria-invalid={Boolean(importFieldErrors.file)}
                 aria-describedby={`${importFileId}-help${
                   importFieldErrors.file
@@ -500,17 +584,61 @@ export function ResumeListPage() {
                   setImportFile(event.target.files?.[0] ?? null)
                 }
               />
+              {importFile ? (
+                <div className="resume-selected-file">
+                  <span
+                    className="resume-selected-file-icon"
+                    aria-hidden="true"
+                  >
+                    PDF
+                  </span>
+                  <span className="resume-selected-file-copy">
+                    <strong>{importFile.name}</strong>
+                    <small>{formatBytes(importFile.size)}</small>
+                  </span>
+                  <button
+                    type="button"
+                    disabled={importBusy}
+                    onClick={() => {
+                      setImportFile(null);
+                      if (importFileRef.current) {
+                        importFileRef.current.value = "";
+                      }
+                    }}
+                  >
+                    Clear selection
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="resume-dropzone-trigger"
+                  aria-label="Choose a private PDF"
+                  disabled={importBusy}
+                  onClick={() => importFileRef.current?.click()}
+                >
+                  <span className="resume-dropzone-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32">
+                      <path d="M16 21V8m0 0-5 5m5-5 5 5" />
+                      <path d="M7 20v5h18v-5" />
+                    </svg>
+                  </span>
+                  <strong>
+                    {importDragDepth > 0
+                      ? "Drop the PDF here"
+                      : "Choose a private PDF"}
+                  </strong>
+                  <span>or drag and drop it here</span>
+                </button>
+              )}
+              <p id={`${importFileId}-help`}>
+                <strong>PDF only · maximum 15 MB</strong>
+                <span>
+                  Your document is processed privately. Scanned-image OCR is
+                  not available.
+                </span>
+              </p>
             </div>
-            {importFile ? (
-              <p className="resume-file-name">{importFile.name}</p>
-            ) : null}
-            <p
-              className="field-help resume-privacy-note"
-              id={`${importFileId}-help`}
-            >
-              The private PDF is processed to create canonical resume
-              content. Scanned-image OCR is not available.
-            </p>
             {importFieldErrors.file ? (
               <p
                 className="field-error resume-field-error"

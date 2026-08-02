@@ -5,6 +5,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import {
   beforeEach,
   describe,
@@ -264,6 +265,14 @@ function setSuccessfulDefaults() {
   ).mockResolvedValue(activityPage());
 }
 
+function renderDashboard() {
+  return render(
+    <MemoryRouter>
+      <MainDashboard />
+    </MemoryRouter>,
+  );
+}
+
 describe("MainDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -282,14 +291,14 @@ describe("MainDashboard", () => {
       new Promise<DashboardActivityPage>(() => undefined),
     );
 
-    render(<MainDashboard />);
+    renderDashboard();
 
     expect(screen.getByText("Loading progress")).not.toBeNull();
     expect(screen.getByText("Loading activity")).not.toBeNull();
   });
 
   it("renders a clear page heading and returned domain metrics", async () => {
-    render(<MainDashboard />);
+    renderDashboard();
 
     expect(
       screen.getByRole("heading", {
@@ -299,7 +308,7 @@ describe("MainDashboard", () => {
     ).not.toBeNull();
     expect(
       screen.getByText(
-        "Owned progress recorded across resumes, interviews, learning, quizzes, and AI usage in the last 30 days.",
+        "See owned progress across Resume Studio, Interview Coach, Learning Workspace, quizzes, and AI usage for the last 30 days.",
       ),
     ).not.toBeNull();
     expect(
@@ -329,7 +338,7 @@ describe("MainDashboard", () => {
     expect(screen.getByText("840 ms")).not.toBeNull();
 
     const scoreMeters = screen.getAllByRole("meter");
-    expect(scoreMeters).toHaveLength(3);
+    expect(scoreMeters).toHaveLength(4);
     expect(scoreMeters[0]?.getAttribute("aria-valuenow")).toBe(
       "84",
     );
@@ -341,12 +350,175 @@ describe("MainDashboard", () => {
     );
   });
 
+  it("presents the real bounded Resume readiness value as the dashboard feature visual", async () => {
+    renderDashboard();
+
+    const readiness = await screen.findByRole("meter", {
+      name: "Resume readiness: 84 out of 100",
+    });
+    expect(readiness.getAttribute("aria-valuenow")).toBe("84");
+    expect(readiness.getAttribute("aria-valuemin")).toBe("0");
+    expect(readiness.getAttribute("aria-valuemax")).toBe("100");
+    expect(
+      screen.getAllByText("Platform engineer").length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Keyword match")).not.toBeNull();
+    expect(screen.getByText("20 / 25")).not.toBeNull();
+  });
+
+  it("renders truthful module empty states without a fabricated Resume score or trend", async () => {
+    vi.mocked(
+      dashboardApi.fetchProgressSnapshot,
+    ).mockResolvedValue(emptyProgressFixture());
+
+    renderDashboard();
+
+    expect(
+      await screen.findByText("No Resume analysis yet"),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("No Interview activity yet"),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("No Learning documents yet"),
+    ).not.toBeNull();
+    expect(screen.getByText("No AI usage yet")).not.toBeNull();
+    expect(
+      screen.queryByRole("meter", {
+        name: /Resume readiness:/,
+      }),
+    ).toBeNull();
+    expect(screen.queryByText(/continue work/i)).toBeNull();
+  });
+
+  it("uses structured skeletons without placeholder names, scores, or dates", () => {
+    vi.mocked(
+      dashboardApi.fetchProgressSnapshot,
+    ).mockReturnValue(
+      new Promise<DashboardProgress>(() => undefined),
+    );
+    vi.mocked(
+      dashboardApi.fetchDashboardActivity,
+    ).mockReturnValue(
+      new Promise<DashboardActivityPage>(() => undefined),
+    );
+
+    const { container } = renderDashboard();
+
+    expect(
+      container.querySelectorAll(".dashboard-skeleton-card").length,
+    ).toBeGreaterThanOrEqual(4);
+    expect(container.textContent).not.toMatch(
+      /(?:\d{1,3}%|sample|demo|platform engineer|updated \d)/i,
+    );
+  });
+
+  it("does not render legacy branding, plans, provider claims, or raw record IDs", async () => {
+    renderDashboard();
+
+    await screen.findAllByText("Platform engineer");
+    const content = document.body.textContent ?? "";
+
+    expect(content).toContain("Career Learning Hub");
+    expect(content).not.toMatch(
+      /AI Resume Analyser|Resume Builder|Pro plan|recruiter approved|certified ATS|provider|continue work/i,
+    );
+    expect(content).not.toMatch(
+      /analysis-1|resume-1|version-1|attempt-1|document-1|activity-1/i,
+    );
+  });
+
+  it("renders long returned labels without substituting or truncating their values", async () => {
+    const fixture = progressFixture();
+    const targetRole =
+      "Platform reliability and distributed systems engineering specialist for a deliberately long synthetic role";
+    const documentTitle =
+      "Distributed systems learning notes with a deliberately long synthetic title for responsive wrapping";
+    const feature =
+      "resume-analysis-with-a-deliberately-long-synthetic-feature-label";
+    vi.mocked(
+      dashboardApi.fetchProgressSnapshot,
+    ).mockResolvedValue({
+      ...fixture,
+      resumeReadiness: {
+        ...fixture.resumeReadiness,
+        latest: fixture.resumeReadiness.latest
+          ? {
+              ...fixture.resumeReadiness.latest,
+              targetRole,
+            }
+          : null,
+        trend: fixture.resumeReadiness.trend.map((point) => ({
+          ...point,
+          targetRole,
+        })),
+      },
+      learning: {
+        ...fixture.learning,
+        recentDocuments: fixture.learning.recentDocuments.map(
+          (document) => ({
+            ...document,
+            title: documentTitle,
+          }),
+        ),
+      },
+      aiUsage: {
+        ...fixture.aiUsage,
+        byFeature: fixture.aiUsage.byFeature.map((entry) => ({
+          ...entry,
+          feature,
+        })),
+      },
+    });
+
+    renderDashboard();
+
+    expect(
+      (await screen.findAllByText(targetRole)).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(documentTitle)).not.toBeNull();
+    expect(screen.getByText(feature)).not.toBeNull();
+  });
+
+  it("renders exactly the three approved quick-start workflow links", () => {
+    renderDashboard();
+
+    const quickStart = screen.getByRole("navigation", {
+      name: "Quick start",
+    });
+    const links = within(quickStart).getAllByRole("link");
+
+    expect(links).toHaveLength(3);
+    expect(
+      within(quickStart)
+        .getByRole("link", { name: /Create Resume/ })
+        .getAttribute("href"),
+    ).toBe("/resumes?action=create");
+    expect(
+      within(quickStart)
+        .getByRole("link", {
+          name: /Start Interview Session/,
+        })
+        .getAttribute("href"),
+    ).toBe("/interviews?action=create");
+    expect(
+      within(quickStart)
+        .getByRole("link", {
+          name: /Upload Learning Document/,
+        })
+        .getAttribute("href"),
+    ).toBe("/learning?action=upload");
+    expect(
+      within(quickStart).queryByRole("button"),
+    ).toBeNull();
+  });
+
   it("shows factual zero counts and unavailable null scores", async () => {
     vi.mocked(
       dashboardApi.fetchProgressSnapshot,
     ).mockResolvedValue(emptyProgressFixture());
 
-    render(<MainDashboard />);
+    renderDashboard();
 
     expect(
       await screen.findByText("No recorded dashboard data"),
@@ -395,7 +567,7 @@ describe("MainDashboard", () => {
       },
     });
 
-    render(<MainDashboard />);
+    renderDashboard();
 
     expect(
       await screen.findByText("1 analysis across 1 resume"),
@@ -411,7 +583,7 @@ describe("MainDashboard", () => {
   });
 
   it("requests all four approved windows and communicates the active selection", async () => {
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     await waitFor(() => {
@@ -446,7 +618,7 @@ describe("MainDashboard", () => {
     vi.mocked(dashboardApi.fetchProgressSnapshot)
       .mockReturnValueOnce(first.promise)
       .mockReturnValueOnce(second.promise);
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     await waitFor(() => {
@@ -511,7 +683,7 @@ describe("MainDashboard", () => {
         },
       });
 
-      render(<MainDashboard />);
+      renderDashboard();
 
       expect(await screen.findByText(label)).not.toBeNull();
     },
@@ -528,7 +700,7 @@ describe("MainDashboard", () => {
         "activity-request-id-1",
       ),
     );
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     expect(await screen.findByText("84%")).not.toBeNull();
@@ -570,7 +742,7 @@ describe("MainDashboard", () => {
         { privateValidationDetails: "must not render" },
       ),
     );
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     expect(
@@ -606,7 +778,7 @@ describe("MainDashboard", () => {
   });
 
   it("renders safe activity labels in returned order without metadata", async () => {
-    render(<MainDashboard />);
+    renderDashboard();
 
     const feed = await screen.findByRole("region", {
       name: "Recent activity",
@@ -624,7 +796,7 @@ describe("MainDashboard", () => {
       .mockResolvedValueOnce(activityPage(1, 2))
       .mockResolvedValueOnce(activityPage(2, 2))
       .mockResolvedValueOnce(activityPage(1, 2));
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     const previous = await screen.findByRole("button", {
@@ -656,7 +828,7 @@ describe("MainDashboard", () => {
     vi.mocked(dashboardApi.fetchDashboardActivity)
       .mockResolvedValueOnce(activityPage(1, 2))
       .mockReturnValueOnce(nextPage.promise);
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     await screen.findByText("Page 1 of 2");
@@ -686,7 +858,7 @@ describe("MainDashboard", () => {
       .mockResolvedValueOnce(initial)
       .mockReturnValueOnce(secondPage.promise)
       .mockReturnValueOnce(thirdPage.promise);
-    render(<MainDashboard />);
+    renderDashboard();
     const user = userEvent.setup();
 
     await screen.findByText("Page 1 of 3");

@@ -201,6 +201,21 @@ describe("Learning conversation workspace", () => {
     expect(screen.queryByRole("link", { name: "Page 99" })).toBeNull();
     expect(screen.getByRole("button", { name: "Page 2" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Page 4" })).not.toBeNull();
+    expect(
+      screen.getByRole("list", { name: "Conversation history" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("article", { name: "Your message" }),
+    ).not.toBeNull();
+    const assistant = screen.getByRole("article", {
+      name: "Assistant message",
+    });
+    expect(
+      assistant.querySelector("time[datetime='2026-07-26T01:00:01.000Z']"),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("group", { name: "Sources for assistant answer" }),
+    ).not.toBeNull();
   });
 
   it("paginates canonical history without retaining the old page", async () => {

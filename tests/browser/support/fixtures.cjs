@@ -108,20 +108,188 @@ async function seedDashboard(user) {
   const db = await connection();
   try {
     const userId = new mongoose.Types.ObjectId(user.id);
-    const now = Date.now();
-    await db.collection("activityevents").insertMany(
-      Array.from({ length: 25 }, (_, index) => ({
+    const now = new Date();
+    const prior = new Date(now.getTime() - 24 * 60 * 60 * 1_000);
+    const resumeId = new mongoose.Types.ObjectId();
+    const resumeVersionId = new mongoose.Types.ObjectId();
+    const priorResumeVersionId = new mongoose.Types.ObjectId();
+    const sessionId = new mongoose.Types.ObjectId();
+    const completedSessionId = new mongoose.Types.ObjectId();
+    const questionId = new mongoose.Types.ObjectId();
+    const documentId = new mongoose.Types.ObjectId();
+    const quizId = new mongoose.Types.ObjectId();
+    const targetRole =
+      "Platform reliability and distributed systems engineering specialist for a deliberately long synthetic role";
+
+    await Promise.all([
+      db.collection("resumes").insertOne({
+        _id: resumeId,
         userId,
-        type: "quiz.completed",
-        resourceType: "quiz-attempt",
-        resourceId: `phase14-${index + 1}`,
-        origin: "api",
-        metadata: {},
-        occurredAt: new Date(now - index * 1_000),
-        createdAt: new Date(now - index * 1_000),
-        updatedAt: new Date(now - index * 1_000),
-      })),
-    );
+        title: "Synthetic platform Resume",
+        status: "draft",
+        currentVersionId: resumeVersionId,
+        latestVersionNumber: 2,
+        createdAt: prior,
+        updatedAt: now,
+      }),
+      db.collection("resumeversions").insertMany([
+        {
+          _id: priorResumeVersionId,
+          userId,
+          resumeId,
+          versionNumber: 1,
+          source: "manual",
+          content: blankResumeContent(),
+          createdAt: prior,
+          updatedAt: prior,
+        },
+        {
+          _id: resumeVersionId,
+          userId,
+          resumeId,
+          versionNumber: 2,
+          source: "manual",
+          content: blankResumeContent(),
+          createdAt: now,
+          updatedAt: now,
+        },
+      ]),
+      db.collection("resumeanalyses").insertMany([
+        {
+          userId,
+          resumeId,
+          resumeVersionId: priorResumeVersionId,
+          target: { role: targetRole },
+          scoreBreakdown: {
+            keywordMatch: 18,
+            clarity: 20,
+            evidence: 19,
+            formatting: 20,
+          },
+          totalScore: 77,
+          createdAt: prior,
+          updatedAt: prior,
+        },
+        {
+          userId,
+          resumeId,
+          resumeVersionId,
+          target: { role: targetRole },
+          scoreBreakdown: {
+            keywordMatch: 21,
+            clarity: 22,
+            evidence: 20,
+            formatting: 21,
+          },
+          totalScore: 84,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ]),
+      db.collection("interviewsessions").insertMany([
+        {
+          _id: sessionId,
+          userId,
+          title: "Synthetic platform interview",
+          targetRole: "Platform engineer",
+          status: "active",
+          createdAt: prior,
+          updatedAt: now,
+        },
+        {
+          _id: completedSessionId,
+          userId,
+          title: "Synthetic completed interview",
+          targetRole: "Platform engineer",
+          status: "completed",
+          createdAt: prior,
+          updatedAt: now,
+        },
+      ]),
+      db.collection("interviewattempts").insertOne({
+        userId,
+        sessionId: completedSessionId,
+        questionId,
+        answerText: "Synthetic interview answer.",
+        status: "feedback-completed",
+        feedback: {
+          score: 82,
+          completedAt: now,
+        },
+        createdAt: now,
+        updatedAt: now,
+      }),
+      db.collection("learningdocuments").insertOne({
+        _id: documentId,
+        userId,
+        assetId: new mongoose.Types.ObjectId(),
+        title:
+          "Synthetic distributed systems notes with a deliberately long title for responsive wrapping verification",
+        originalFilename: "synthetic-learning.pdf",
+        mimeType: "application/pdf",
+        status: "ready",
+        pageCount: 12,
+        chunkCount: 24,
+        processedAt: now,
+        createdAt: prior,
+        updatedAt: now,
+      }),
+      db.collection("quizattempts").insertOne({
+        userId,
+        documentId,
+        quizId,
+        answers: [],
+        correctCount: 8,
+        questionCount: 10,
+        scorePercent: 80,
+        completedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      }),
+      db.collection("usageevents").insertMany([
+        {
+          userId,
+          feature:
+            "resume-analysis-with-a-deliberately-long-synthetic-feature-label",
+          provider: "synthetic-disabled",
+          model: "synthetic-disabled",
+          requestCount: 1,
+          inputTokens: 800,
+          outputTokens: 200,
+          estimatedCostUsd: 0.01,
+          status: "success",
+          latencyMs: 640,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          userId,
+          feature: "interview-feedback",
+          provider: "synthetic-disabled",
+          model: "synthetic-disabled",
+          requestCount: 1,
+          inputTokens: 500,
+          outputTokens: 150,
+          status: "failure",
+          latencyMs: 920,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ]),
+      db.collection("activityevents").insertMany(
+        Array.from({ length: 25 }, (_, index) => ({
+          userId,
+          type: "quiz.completed",
+          resourceType: "quiz-attempt",
+          resourceId: `phase14-${index + 1}`,
+          origin: "api",
+          metadata: {},
+          occurredAt: new Date(now.getTime() - index * 1_000),
+          createdAt: new Date(now.getTime() - index * 1_000),
+          updatedAt: new Date(now.getTime() - index * 1_000),
+        })),
+      ),
+    ]);
   } finally {
     await db.close();
   }
@@ -571,7 +739,7 @@ const test = base.extend({
         if ((targetPage.viewportSize()?.width ?? 1440) < 980) {
           if (label === "Dashboard") {
             await targetPage
-              .getByRole("link", { name: "Career & Learning Hub" })
+              .getByRole("link", { name: "Career Learning Hub" })
               .click();
             return;
           }

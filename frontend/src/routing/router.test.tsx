@@ -330,12 +330,28 @@ describe("application routing", () => {
 
       try {
         const main = screen.getByRole("main");
-        expect(main.classList.contains("auth-bootstrap-layout")).toBe(true);
+        expect(main.classList.contains("authentication-shell")).toBe(true);
+        expect(
+          main.querySelector(".authentication-shell__frame"),
+        ).not.toBeNull();
+        expect(
+          main.querySelector(".authentication-form-panel"),
+        ).not.toBeNull();
         expect(
           within(main).getByRole("status", {
             name: "Restoring your session",
           }),
         ).not.toBeNull();
+        const artwork = main.querySelector(
+          "[data-authentication-artwork]",
+        );
+        const artworkImage = artwork?.querySelector("img");
+        expect(artwork?.getAttribute("aria-hidden")).toBe("true");
+        expect(artworkImage?.getAttribute("src")).toBe(
+          "/brand/career-learning-hub-authentication-pathway.png",
+        );
+        expect(artworkImage?.getAttribute("alt")).toBe("");
+        expect(artwork?.querySelector("svg")).toBeNull();
         expect(
           screen.queryByRole("heading", { name: destinationHeading }),
         ).toBeNull();
@@ -394,6 +410,85 @@ describe("application routing", () => {
       }),
     ).not.toBeNull();
   });
+
+  it.each([
+    ["/login", "Welcome back"],
+    ["/register", "Create your account"],
+  ])(
+    "renders the approved accessible brand link on %s",
+    async (path, heading) => {
+      vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
+
+      renderRoute(path);
+
+      await screen.findByRole("heading", { name: heading });
+      const brandLink = screen.getByRole("link", {
+        name: "Career Learning Hub",
+      });
+      const mark = brandLink.querySelector("img");
+
+      expect(brandLink.getAttribute("href")).toBe("/");
+      expect(mark?.getAttribute("src")).toBe(
+        "/brand/career-learning-hub-mark.svg",
+      );
+      expect(mark?.getAttribute("alt")).toBe("");
+      expect(screen.queryByText("CL")).toBeNull();
+    },
+  );
+
+  it.each([
+    ["/login", "Welcome back"],
+    ["/register", "Create your account"],
+  ])(
+    "ports the factual Career Learning Hub authentication story on %s",
+    async (path, heading) => {
+      vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
+
+      renderRoute(path);
+
+      await screen.findByRole("heading", { name: heading });
+      const main = screen.getByRole("main");
+      const overview = within(main).getByRole("complementary", {
+        name: "Career Learning Hub platform overview",
+      });
+      const artwork = overview.querySelector(
+        "[data-authentication-artwork]",
+      );
+      const artworkImage = artwork?.querySelector("img");
+
+      expect(main.classList.contains("authentication-shell")).toBe(true);
+      expect(
+        main.querySelector(".authentication-shell__frame"),
+      ).not.toBeNull();
+      expect(
+        within(overview).getByText("Career Learning Hub"),
+      ).not.toBeNull();
+      expect(within(overview).getByText("Resume Studio")).not.toBeNull();
+      expect(within(overview).getByText("Interview Coach")).not.toBeNull();
+      expect(
+        within(overview).getByText("Learning Workspace"),
+      ).not.toBeNull();
+      expect(within(overview).getByText("One Dashboard")).not.toBeNull();
+      expect(artwork?.getAttribute("aria-hidden")).toBe("true");
+      expect(artworkImage?.getAttribute("src")).toBe(
+        "/brand/career-learning-hub-authentication-pathway.png",
+      );
+      expect(artworkImage?.getAttribute("alt")).toBe("");
+      expect(artwork?.querySelector("svg")).toBeNull();
+      expect(document.body.textContent).not.toMatch(
+        /AI Resume Roaster|Resume Builder|free forever|customers|employers/i,
+      );
+      expect(
+        screen.queryByRole("button", { name: /continue with/i }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole("link", { name: /forgot|reset password/i }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole("checkbox", { name: /remember/i }),
+      ).toBeNull();
+    },
+  );
 
   it.each([
     "/dashboard",
@@ -468,7 +563,7 @@ describe("application routing", () => {
       "/learning/documents/507f1f77bcf86cd799439011/quizzes/507f1f77bcf86cd799439014/attempts/507f1f77bcf86cd799439015",
       "Connected quiz",
     ],
-    ["/settings", "Session settings"],
+    ["/settings", "Settings"],
   ])("matches protected target path %s", async (path, heading) => {
     vi.mocked(authApi.refreshSession).mockResolvedValue(
       authenticatedSession,
@@ -543,6 +638,19 @@ describe("application routing", () => {
     expect(
       screen.getByText("Router Test User"),
     ).not.toBeNull();
+    const brandLinks = screen.getAllByRole("link", {
+      name: "Career Learning Hub",
+    });
+    expect(brandLinks).toHaveLength(2);
+    for (const brandLink of brandLinks) {
+      const mark = brandLink.querySelector("img");
+      expect(brandLink.getAttribute("href")).toBe("/dashboard");
+      expect(mark?.getAttribute("src")).toBe(
+        "/brand/career-learning-hub-mark.svg",
+      );
+      expect(mark?.getAttribute("alt")).toBe("");
+    }
+    expect(screen.queryByText("CL")).toBeNull();
   });
 
   it("keeps historical example dashboards off deferred routes", async () => {
@@ -1016,7 +1124,7 @@ describe("authentication forms and shell interaction", () => {
     });
     expect(
       await screen.findByRole("heading", {
-        name: "Session settings",
+        name: "Settings",
       }),
     ).not.toBeNull();
   });

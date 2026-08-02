@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -8,6 +11,10 @@ import type { Flashcard } from "./types";
 const documentId = "507f1f77bcf86cd799439011";
 const setId = "507f1f77bcf86cd799439012";
 const createdAt = "2026-07-26T01:00:00.000Z";
+const learningWorkspaceCss = readFileSync(
+  resolve(process.cwd(), "src/features/learning/learningWorkspace.css"),
+  "utf8",
+);
 
 const cards: Flashcard[] = [
   {
@@ -44,6 +51,12 @@ describe("Flashcard study", () => {
   it("shows the canonical question with the answer hidden initially", () => {
     renderStudy();
 
+    expect(
+      screen.getByRole("article", { name: "Flashcard 1 question" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("progressbar", { name: "Flashcard study progress" }),
+    ).toHaveProperty("value", 1);
     expect(screen.getByText("What does **bounded** mean?")).not.toBeNull();
     expect(screen.queryByText("<strong>It remains plain text.</strong>")).toBeNull();
     expect(screen.getByText("Card 1 of 2")).not.toBeNull();
@@ -60,12 +73,25 @@ describe("Flashcard study", () => {
     );
     await user.keyboard("{Enter}");
     expect(
+      screen
+        .getByRole("button", { name: "Hide answer" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
+    expect(
+      screen.getByRole("region", { name: "Flashcard answer" }),
+    ).not.toBeNull();
+    expect(
       screen.getByText("<strong>It remains plain text.</strong>"),
     ).not.toBeNull();
     expect(document.querySelector("script")).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Hide answer" }));
     expect(screen.queryByText("<strong>It remains plain text.</strong>")).toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "Reveal answer" })
+        .getAttribute("aria-expanded"),
+    ).toBe("false");
   });
 
   it("enforces card boundaries and hides the answer on navigation", async () => {
@@ -76,6 +102,7 @@ describe("Flashcard study", () => {
     }) as HTMLButtonElement;
 
     expect(previous.disabled).toBe(true);
+    expect(screen.getByText("Beginning of set")).not.toBeNull();
     await user.click(screen.getByRole("button", { name: "Reveal answer" }));
     await user.click(screen.getByRole("button", { name: "Next flashcard" }));
 
@@ -87,6 +114,7 @@ describe("Flashcard study", () => {
         name: "Next flashcard",
       }) as HTMLButtonElement).disabled,
     ).toBe(true);
+    expect(screen.getByText("End of set")).not.toBeNull();
   });
 
   it("shows only canonical source-page controls and a factual source note", async () => {
@@ -129,5 +157,20 @@ describe("Flashcard study", () => {
     expect(screen.queryByText("<strong>It remains plain text.</strong>")).toBeNull();
     expect(storageWrite).not.toHaveBeenCalled();
     storageWrite.mockRestore();
+  });
+
+  it("defines responsive wrapping and reduced-motion safeguards for UI-LA2 surfaces", () => {
+    expect(learningWorkspaceCss).toMatch(
+      /\.learning-flashcard-set-list[\s\S]*minmax\(min\(100%, 270px\), 1fr\)/,
+    );
+    expect(learningWorkspaceCss).toMatch(
+      /\.learning-review-answers dd[\s\S]*overflow-wrap: anywhere/,
+    );
+    const reducedMotionRule = learningWorkspaceCss.match(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*)\}\s*$/,
+    )?.[1];
+    expect(reducedMotionRule).toContain(".learning-study-card");
+    expect(reducedMotionRule).toContain(".learning-quiz-stage");
+    expect(reducedMotionRule).toContain(".learning-collection-card");
   });
 });

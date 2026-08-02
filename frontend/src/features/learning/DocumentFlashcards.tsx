@@ -31,6 +31,9 @@ const SET_LIMIT = 10;
 const MAX_SET_TITLE = 200;
 const MAX_FOCUS_LENGTH = 500;
 const MAX_FLASHCARDS = 100;
+const setDateFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+});
 
 type SafeError = {
   message: string;
@@ -571,12 +574,25 @@ export function DocumentFlashcards({
           <p>Generate a set when you are ready to study this document.</p>
         </div>
       ) : (
-        <ul className="learning-flashcard-set-list">
-          {sets.map((set) => (
+        <ul
+          className="learning-flashcard-set-list"
+          aria-label={`Flashcard sets for ${document.title}`}
+          role="list"
+        >
+          {sets.map((set, index) => (
             <li key={set.id}>
-              <article>
-                <div>
-                  <strong>{set.title}</strong>
+              <article
+                className="learning-collection-card learning-collection-card--flashcards"
+                aria-label={`Flashcard set ${set.title}`}
+              >
+                <div className="learning-collection-card-heading">
+                  <span className="learning-collection-index" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <p className="learning-collection-type">Flashcard set</p>
+                    <h3>{set.title}</h3>
+                  </div>
                   <span
                     className={`learning-status learning-status--${set.status}`}
                   >
@@ -584,14 +600,22 @@ export function DocumentFlashcards({
                       ? "Generating"
                       : set.status === "failed"
                         ? "Generation failed"
-                        : "Ready"}
+                        : "Ready to study"}
                   </span>
                 </div>
-                <p>
-                  {set.cardCount === 1
-                    ? "1 card"
-                    : `${set.cardCount} cards`}
-                </p>
+                <div className="learning-collection-meta">
+                  <span>
+                    {set.cardCount === 1
+                      ? "1 card"
+                      : `${set.cardCount} cards`}
+                  </span>
+                  <span>
+                    Created{" "}
+                    <time dateTime={set.createdAt}>
+                      {setDateFormatter.format(new Date(set.createdAt))}
+                    </time>
+                  </span>
+                </div>
                 {set.generationError ? (
                   <p className="learning-row-error">
                     {set.generationError.message}

@@ -43,6 +43,13 @@ function RequestId({ value }: { value?: string }) {
   ) : null;
 }
 
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
 export function DocumentConversations({
   accountId,
   document,
@@ -271,16 +278,42 @@ export function DocumentConversations({
         <ul className="learning-conversation-list">
           {conversations.map((conversation) => (
             <li key={conversation.id}>
-              <Link
-                to={`/learning/documents/${document.id}/conversations/${conversation.id}`}
+              <article
+                aria-labelledby={`learning-conversation-title-${conversation.id}`}
               >
-                <strong>{conversation.title}</strong>
-                <span>
-                  {conversation.messageCount === 1
-                    ? "1 message"
-                    : `${conversation.messageCount} messages`}
-                </span>
-              </Link>
+                <div>
+                  <p className="learning-kicker">Document conversation</p>
+                  <h3 id={`learning-conversation-title-${conversation.id}`}>
+                    {conversation.title}
+                  </h3>
+                  <div className="learning-conversation-meta">
+                    <span>
+                      {conversation.messageCount === 1
+                        ? "1 message"
+                        : `${conversation.messageCount} messages`}
+                    </span>
+                    <span>
+                      {conversation.lastMessageAt ? "Last message" : "Updated"}{" "}
+                      <time
+                        dateTime={
+                          conversation.lastMessageAt ?? conversation.updatedAt
+                        }
+                      >
+                        {formatDate(
+                          conversation.lastMessageAt ?? conversation.updatedAt,
+                        )}
+                      </time>
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  className="learning-document-link"
+                  to={`/learning/documents/${document.id}/conversations/${conversation.id}`}
+                  aria-label={`Open ${conversation.title} conversation`}
+                >
+                  Open conversation
+                </Link>
+              </article>
             </li>
           ))}
         </ul>

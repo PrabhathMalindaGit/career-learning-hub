@@ -289,3 +289,136 @@
     current Resume design contract.
   - Phase 16F measurements demonstrate that a different bounded performance
     repair is necessary.
+
+## DEC-013: Direct legacy frontend port and adaptation policy
+
+- Decision ID: `DEC-013`
+- Date: 2026-07-30
+- Status: ACCEPTED
+- Decision:
+  - The Resume Builder and AI Resume Analyser legacy frontends are approved
+    component and visual sources for Career Learning Hub.
+  - Relevant presentational code, layouts, CSS, microinteractions, animations,
+    visual hierarchy, and suitable assets may be directly ported or faithfully
+    recreated rather than merely used as inspiration.
+  - Ported frontend work must be adapted to:
+    - the current React and TypeScript architecture;
+    - current APIs and DTOs;
+    - current security and ownership controls;
+    - Career Learning Hub branding;
+    - responsive layouts;
+    - keyboard accessibility;
+    - reduced-motion preferences;
+    - native 200% zoom;
+    - equal or improved functionality.
+  - The following must not be copied:
+    - legacy authentication;
+    - legacy backend or database models;
+    - legacy API clients;
+    - legacy secrets or environment files;
+    - legacy provider configuration;
+    - old branding;
+    - fake testimonials;
+    - fake activity or statistics;
+    - unsupported ATS or employment guarantees;
+    - automatic application of AI changes.
+- Rationale:
+  - Directly reusing approved presentational patterns preserves the strongest
+    legacy visual work while the current architecture and contracts remain
+    authoritative.
+  - Explicit exclusions prevent obsolete branding, unsupported claims, and
+    legacy security or data boundaries from entering Career Learning Hub.
+- Consequences:
+  - UI-LR1 — Legacy Resume Visual Port is the first completed implementation
+    of this decision in commit
+    `011a36e423ad2432d2dc283c457015c644a9335f`.
+  - UI-LR1 was human-approved with
+    `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`.
+  - The implementation commit passed the read-only integrity audit with
+    `ACCEPTABLE_EXTERNAL_IMPLEMENTATION_COMMIT`; no history rewrite was
+    required.
+  - Future legacy UI ports remain separately scoped and require current
+    contract, accessibility, responsive, and human-review verification.
+- Revisit conditions:
+  - A separately accepted decision replaces this legacy frontend reuse policy.
+  - Current architecture, security, accessibility, or accuracy requirements
+    make a specific legacy presentational pattern unsuitable.
+
+## DEC-014: Extend direct legacy frontend port and adaptation policy
+
+- Decision ID: `DEC-014`
+- Date: 2026-07-31
+- Status: ACCEPTED
+- Decision:
+  - Interview Prep Ai and AI Learning Assistant are added as approved component
+    and visual sources for Career Learning Hub under the direct legacy frontend
+    port and adaptation policy established by DEC-013.
+  - Relevant presentational code, layouts, CSS, microinteractions, animations,
+    visual hierarchy, and suitable assets may be directly ported, adapted, or
+    faithfully recreated only after a source-to-source audit of the specific
+    legacy application.
+  - Each legacy application requires its own source-to-source audit before its
+    Career Learning Hub coverage can be declared complete.
+  - The current Career Learning Hub React and TypeScript architecture, APIs,
+    DTOs, authentication, ownership controls, private storage, routes,
+    branding, accessibility, responsive behavior, native 200% capability, and
+    real functionality remain authoritative.
+  - All DEC-013 exclusions remain binding. In particular, no legacy
+    authentication, backend or database model, API client, secret or
+    environment file, provider configuration, old branding, fake testimonial,
+    fake activity or statistic, unsupported ATS or employment guarantee, or
+    automatic application of AI changes may be copied.
+  - The extension also excludes unsupported global libraries or routes,
+    fabricated scores or progress, unsafe raw HTML, unsanitized Markdown,
+    arbitrary external links, inaccessible interaction, and contract expansion
+    hidden inside a visual-port phase.
+- Rationale:
+  - Interview Prep Ai and AI Learning Assistant contain useful presentational
+    patterns, but their legacy data, security, accessibility, and application
+    boundaries are not authoritative.
+  - Mandatory source-to-source audits prevent visual reuse from silently
+    introducing unsupported behavior and allow an application to be declared
+    complete when the current implementation is already equal or better.
+- Consequences:
+  - The Phase 18A Interview and Learning Legacy Comparative Audit is the first
+    audit governed by this extension.
+  - Interview Prep Ai requires no additional implementation when the accepted
+    audit verdict is `A. COMPLETE — NO ADDITIONAL INTERVIEW IMPLEMENTATION
+    REQUIRED`.
+  - AI Learning Assistant work remains separately phased, test-first,
+    human-reviewed, and inactive until explicitly authorized.
+  - Integrated UI-QA remains after all approved legacy-port work.
+- Revisit conditions:
+  - A separately accepted decision replaces DEC-013 or DEC-014.
+  - Current architecture, contract, security, accessibility, accuracy, or
+    product requirements make a specific legacy pattern unsuitable.
+
+## DEC-015: Use a dedicated Atlas project for Career Learning Hub staging
+
+- Decision ID: `DEC-015`
+- Date: 2026-08-02
+- Status: ACCEPTED
+- Decision:
+  - Do not reuse the existing Interview Prep AI Atlas project or Cluster0.
+  - Create a separate Atlas project named Career Learning Hub Staging only in
+    a later authorized provisioning task.
+  - Use a separately scoped staging cluster, database user, network controls,
+    credentials, indexes, synthetic data, cleanup, and rollback boundary.
+  - Leave the Interview Prep AI project and Cluster0 unchanged.
+- Rationale:
+  - Prevent cross-project data mixing.
+  - Prevent accidental modification of legacy application data.
+  - Isolate credentials, access rules, indexes, retention, cleanup, cost, and
+    rollback.
+  - Preserve a clear staging resource boundary.
+- Consequences:
+  - A new Atlas project and free-eligible cluster must be provisioned later.
+  - No existing Interview Prep AI connection string may be reused.
+  - Career Learning Hub staging secrets must be newly generated and separately
+    stored.
+  - The old project requires no data inspection for this deployment.
+- Revisit conditions:
+  - A separately reviewed migration requirement proves specific legacy data
+    must be imported through sanitized fixtures and an approved migration
+    process.
+  - The operator explicitly accepts a replacement architecture decision.

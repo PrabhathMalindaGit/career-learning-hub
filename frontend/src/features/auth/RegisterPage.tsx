@@ -11,9 +11,11 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { BrandLockup } from "../../components/BrandLockup";
 import {
   intendedLocationFromState,
 } from "./AuthRoute";
+import { AuthenticationShell } from "./AuthenticationShell";
 import { useAuth } from "./AuthProvider";
 
 type RegistrationErrors = {
@@ -133,22 +135,24 @@ export function RegisterPage() {
   }
 
   return (
-    <main className="auth-layout">
-      <section className="auth-card" aria-labelledby="register-heading">
-        <Link className="product-link" to="/">
-          Career &amp; Learning Hub
-        </Link>
-        <p className="eyebrow">Create your workspace</p>
-        <h1 id="register-heading">Create your account</h1>
-        <p className="auth-intro">
-          Set up one secure account for your career and learning tools.
-        </p>
+    <AuthenticationShell
+      labelledBy="register-heading"
+      mode="register"
+    >
+      <Link className="product-link" to="/">
+        <BrandLockup />
+      </Link>
+      <p className="eyebrow">Create your workspace</p>
+      <h1 id="register-heading">Create your account</h1>
+      <p className="auth-intro">
+        Set up one secure account for your career and learning tools.
+      </p>
 
-        <form
-          className="auth-form"
-          onSubmit={handleSubmit}
-          noValidate
-        >
+      <form
+        className="auth-form"
+        onSubmit={handleSubmit}
+        noValidate
+      >
           {Object.keys(errors).length > 1 ? (
             <div
               className="validation-summary"
@@ -301,12 +305,11 @@ export function RegisterPage() {
           >
             {busy ? "Creating account…" : "Create account"}
           </button>
-        </form>
+      </form>
 
-        <p className="auth-switch">
-          Already have an account? <Link to="/login">Sign in</Link>
-        </p>
-      </section>
-    </main>
+      <p className="auth-switch">
+        Already have an account? <Link to="/login">Sign in</Link>
+      </p>
+    </AuthenticationShell>
   );
 }
