@@ -6,10 +6,10 @@
   ACTIVE — INTERVIEW AND LEARNING COMPARATIVE AUDIT COMPLETED /
   HUMAN-APPROVED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
   UI-LA2 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
-  UI-QA IMPLEMENTED / READY FOR HUMAN REVIEW;
-  PHASE 18B PLANNED / INACTIVE
+  UI-QA COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
+  PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION
 - Most recently completed UI task:
-  UI-LA2 — Learning Flashcards, Quizzes and Review Legacy Visual Port
+  UI-QA — Integrated Pre-Deployment UI Quality Assurance
 - UI-LA2 status: COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED
 - Accepted UI-LA2 visual approval token:
   `PHASE_18A_UI_LA2_LEARNING_FLASHCARDS_QUIZZES_REVIEW_LEGACY_VISUAL_PORT_APPROVED`
@@ -92,9 +92,23 @@
 - Accepted UI-LR1 visual approval token:
   `PHASE_18A_UI_LR1_LEGACY_RESUME_VISUAL_PORT_APPROVED`
 - UI-LR1 visual approval token accepted: `YES`
-- Next planned UI task:
-  UI-QA — Integrated Learning Legacy Visual Port Quality Assurance
-- UI-QA status: IMPLEMENTED / READY FOR HUMAN REVIEW
+- UI-QA status: COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED
+- Accepted UI-QA approval token:
+  `PHASE_18A_UI_QA_INTEGRATED_PRE_DEPLOYMENT_UI_APPROVED`
+- UI-QA approval token accepted: `YES`
+- UI-QA implementation and documentation commit:
+  `6821833d80f1ca026beb382822ed35ebebbe4911`
+- UI-QA implementation and documentation commit subject:
+  `Complete integrated UI quality assurance`
+- UI-QA implementation and documentation commit parent:
+  `63cc6474d9ee6dcb9fb2832c0196f9c67e70d4cb`
+- UI-QA committed boundary:
+  - `docs/planning/CURRENT_PHASE.md`
+  - `docs/planning/PHASE_18A_UI_QA_INTEGRATED_PRE_DEPLOYMENT_UI_QUALITY_ASSURANCE.md`
+  - `tests/browser/specs/auth.spec.cjs`
+- UI-QA local commit status: `LOCALLY COMMITTED`
+- UI-QA worktree state after the implementation and documentation commit:
+  `CLEAN`
 - UI-QA execution handoff: Outcome B (cross-project process-local refresh-budget
   contamination) was confirmed. The authorized third repair added only the
   anonymous refresh route helper and four calls in
@@ -109,11 +123,13 @@
   `/private/tmp/career-learning-hub-ui-qa-auth-diagnostic/`. Native Chrome
   headed review was performed with the local page and Cmd+0 restoration; the
   OS did not expose a reliable toolbar percentage readout, so this remains a
-  human-review limitation rather than a pass claim.
-- Phase 18B status: PLANNED / INACTIVE / BLOCKED
-- Phase 18B readiness:
-  NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED,
-  HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED
+  human-review limitation rather than a pass claim. Human visual review
+  approved UI-QA with this limitation accepted.
+- UI-QA documentation reconciliation policy:
+  this reconciliation is finalized by one exact two-file documentation-only
+  local commit. Its hash is verified directly from Git after commit and is not
+  recursively inserted into that same commit.
+- Phase 18B status: PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION
 - Phase 18B authorization: SEPARATE EXPLICIT AUTHORIZATION REQUIRED
 - Phase 19 status: PLANNED / INACTIVE
 - Most recently completed repair:
@@ -122,10 +138,8 @@
 - Accepted repair approval token:
   `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED`
 - Repair token accepted: `YES`
-- Active subphase: none; Phase 18B remains planned/inactive and is not ready
-  for activation until UI-LA1, UI-LA2, and UI-QA are completed,
-  human-approved, documented, and locally committed; separate explicit
-  authorization is required
+- Active subphase: none; Phase 18B is planned/inactive and ready for separate
+  activation, but separate explicit authorization is still required
 - Most recently completed subphase:
   Phase 18A — Staging Architecture and Deployment Readiness Audit
 - Subphase status: COMPLETED / APPROVED
@@ -139,7 +153,7 @@
   Release-Candidate Review
   (`COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER`)
 - Current workflow state:
-  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; INTERVIEW/LEARNING COMPARATIVE AUDIT COMPLETED / HUMAN-APPROVED; DEC-014 ACCEPTED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-LA2 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-QA IMPLEMENTED / READY FOR HUMAN REVIEW; PHASE 18B PLANNED / INACTIVE — NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND UI-QA ARE COMPLETED, HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED; SEPARATE EXPLICIT AUTHORIZATION REQUIRED; PHASE 19 PLANNED / INACTIVE`
+  `PHASE 17 COMPLETED / APPROVED WITH FORMAL SECURITY-SCAN WAIVER; SECURITY SCAN NOT RUN — NO PASS CLAIMED; P15-001 TECHNICALLY UNRESOLVED WITH CONTROLLED ACADEMIC-MVP RESTRICTIONS BINDING; PHASE 18 ACTIVE; PHASE 18A COMPLETED / APPROVED; B18A-001 COMPLETED / APPROVED; UI-B1 COMPLETED / HUMAN-APPROVED; UI-B2 COMPLETED / HUMAN-APPROVED; UI-R1 COMPLETED / HUMAN-APPROVED; UI-LR1 COMPLETED / HUMAN-APPROVED; UI-LR2 COMPLETED / HUMAN-APPROVED; UI-LR3 COMPLETED / HUMAN-APPROVED; UI-D1 COMPLETED / HUMAN-APPROVED; UI-A1 COMPLETED / HUMAN-APPROVED; UI-I1 COMPLETED / HUMAN-APPROVED; INTERVIEW/LEARNING COMPARATIVE AUDIT COMPLETED / HUMAN-APPROVED; DEC-014 ACCEPTED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-LA2 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; UI-QA COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; PHASE 18B PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION; SEPARATE EXPLICIT AUTHORIZATION REQUIRED; PHASE 19 PLANNED / INACTIVE`
 - Accepted Phase 18A approval token:
   `PHASE_18A_STAGING_ARCHITECTURE_AUDIT_APPROVED`
 - Phase 18A approval token accepted: `YES`
@@ -1758,19 +1772,18 @@
   `81339ef28fa31275febd28d775c4e386a1c0edd6`.
 - Preserve UI-LA2 as completed, human-approved, and locally committed at
   `9a07e57296f2b61120a3de75616c31e79c7ac164`.
-- Preserve the human-approved post-commit reconciliation. Its finalization
-  requires exact two-file staging, one separately authorized
-  documentation-only local commit, direct Git verification of a clean
-  worktree, and separate UI-QA authorization.
-- Verify those final Git facts externally rather than recursively
-  self-recording them in the documentation-only commit.
-- Keep UI-QA planned and inactive as the next planned UI task.
+- Preserve UI-QA as completed, human-approved, and locally committed at
+  `6821833d80f1ca026beb382822ed35ebebbe4911`.
+- Preserve the accepted UI-QA approval token and the human-accepted native
+  Chrome toolbar-percentage limitation without claiming a toolbar-200% pass.
+- Finalize this reconciliation with exactly one two-file documentation-only
+  local commit. Verify its hash directly from Git rather than recursively
+  recording that commit in itself.
 - Preserve the Phase 17 security-scan waiver boundary, the technically
   unresolved P15-001 restrictions, all existing security/privacy controls,
   and a synthetic-data-only staging policy.
-- Keep Phase 18B planned and inactive until UI-LA1, UI-LA2, and UI-QA are
-  completed, human-approved, documented, and locally committed, then require
-  separate explicit activation authorization.
+- Keep Phase 18B planned and inactive, ready for separate activation, and
+  subject to separate explicit activation authorization.
 - Keep Phase 19 planned and inactive with no migration action authorized.
 
 ## Phase status controls
@@ -1850,13 +1863,14 @@
   documentation reconciliation is `HUMAN-APPROVED`; final staging, commit
   success, and clean-worktree status must be verified directly from Git and
   are not recursively self-recorded in that documentation-only commit.
-- UI-QA — Integrated Learning Legacy Visual Port Quality Assurance is the
-  next planned UI task and remains `PLANNED / INACTIVE` pending separate
-  authorization.
+- UI-QA — Integrated Pre-Deployment UI Quality Assurance is
+  `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`; its implementation and
+  documentation commit is `6821833d80f1ca026beb382822ed35ebebbe4911`
+  (`Complete integrated UI quality assurance`).
 - Phase 18B is
-  `PLANNED / INACTIVE — NOT READY FOR ACTIVATION UNTIL UI-LA1, UI-LA2, AND
-  UI-QA ARE COMPLETED, HUMAN-APPROVED, DOCUMENTED, AND LOCALLY COMMITTED;
-  SEPARATE EXPLICIT AUTHORIZATION REQUIRED`.
+  `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+- Phase 18B authorization remains
+  `SEPARATE EXPLICIT AUTHORIZATION REQUIRED`.
 - Phase 19 remains `PLANNED` / `INACTIVE`.
 - Pass A — Private-PDF Contract is `COMPLETED`.
 - Pass A review was approved with

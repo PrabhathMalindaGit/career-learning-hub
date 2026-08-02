@@ -2,24 +2,25 @@
 
 ## Handoff status
 
-`UI-QA: IMPLEMENTED / READY FOR HUMAN REVIEW`
+`UI-QA: COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`
 
 This report records the verification-first execution of prompt
 `PHASE-18A-UI-QA-INTEGRATED-PRE-DEPLOYMENT-QUALITY-ASSURANCE-01`. The supplied
-activation prompt authorized execution; the future human visual-review token
-`PHASE_18A_UI_QA_INTEGRATED_PRE_DEPLOYMENT_UI_APPROVED` remains unaccepted.
-No product, backend, shared-contract, package, dependency, lockfile,
-environment, provider, cloud, DNS, deployment, staging, Git, or
-phase-activation change was made. The separately authorized diagnostic below
-made one bounded executable-test change to `tests/browser/specs/auth.spec.cjs`.
+activation prompt authorized execution. The human visual-review token
+`PHASE_18A_UI_QA_INTEGRATED_PRE_DEPLOYMENT_UI_APPROVED` is accepted (`YES`).
+The initial verification prompt made no product, backend, shared-contract,
+package, dependency, lockfile, environment, provider, cloud, DNS, deployment,
+staging, Git, or phase-activation change. The separately authorized diagnostic
+below made one bounded executable-test change to
+`tests/browser/specs/auth.spec.cjs`.
 
 The original 45-test gate was blocked by ordered cross-project refresh-budget
 contamination. The separately authorized third bounded repair isolated only
 anonymous bootstrap requests in `tests/browser/specs/auth.spec.cjs`. The fresh
 targeted gate returned 34 passed and 2 intentional skips; the fresh complete
 gate returned 43 passed and 2 intentional skips. Supplemental synthetic UI-QA
-checks passed. UI-QA is ready for human review; the future approval token
-remains unaccepted.
+checks passed, and human visual review approved the result with the native
+Chrome toolbar-percentage limitation recorded below.
 
 ## Exact baseline and preflight
 
@@ -337,11 +338,60 @@ them as historical RED evidence.
   `/private/tmp/career-learning-hub-ui-qa-evidence-20260801/final-review/`.
 - Sanitized ledgers and command logs:
   `/private/tmp/career-learning-hub-ui-qa-auth-diagnostic/third-repair/`.
-- No product, backend, shared-contract, configuration, dependency, package,
+- At that verification handoff, no product, backend, shared-contract,
+  configuration, dependency, package,
   lockfile, environment, provider, cloud, DNS, deployment, staging, commit,
   push, merge, or unauthorized phase action occurred.
-- UI-QA: **IMPLEMENTED / READY FOR HUMAN REVIEW**.
-- Phase 18B: **PLANNED / INACTIVE / BLOCKED**.
+- UI-QA at this verification handoff: **IMPLEMENTED / READY FOR HUMAN REVIEW**.
+- Phase 18B at this verification handoff: **PLANNED / INACTIVE / BLOCKED**.
 - Phase 19: **PLANNED / INACTIVE**.
-- Future human approval token remains unaccepted:
+- Human approval token required at this verification handoff:
   `PHASE_18A_UI_QA_INTEGRATED_PRE_DEPLOYMENT_UI_APPROVED`.
+
+## Post-commit approval reconciliation
+
+This is the final current-controlling section. It supersedes the earlier
+planned, blocked, repair, and ready-for-review statuses while preserving them
+as historical execution evidence.
+
+- UI-QA status: **COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED**.
+- Accepted UI-QA approval token:
+  `PHASE_18A_UI_QA_INTEGRATED_PRE_DEPLOYMENT_UI_APPROVED`.
+- UI-QA approval token accepted: **YES**.
+- UI-QA implementation and documentation commit:
+  `6821833d80f1ca026beb382822ed35ebebbe4911`.
+- Commit subject: `Complete integrated UI quality assurance`.
+- Commit parent: `63cc6474d9ee6dcb9fb2832c0196f9c67e70d4cb`.
+- Committed boundary:
+  - `docs/planning/CURRENT_PHASE.md`
+  - `docs/planning/PHASE_18A_UI_QA_INTEGRATED_PRE_DEPLOYMENT_UI_QUALITY_ASSURANCE.md`
+  - `tests/browser/specs/auth.spec.cjs`
+- Local commit status: **LOCALLY COMMITTED**.
+- Worktree after the implementation and documentation commit: **CLEAN**.
+- Outcome B remains confirmed: ordered cross-project test-harness
+  refresh-budget contamination. No product authentication defect was found.
+- Auth browser-spec SHA-256:
+  `9c74af693dd484610bb4a384c87dcf0212a4f4c94ba1b96e05c243a2e20a00e4`.
+- Targeted browser result: 34 passed, 0 failed, 2 intentional skips.
+- Complete browser result: 43 passed, 0 failed, 2 intentional skips. Desktop
+  passed 15/0/0, tablet passed 14/0/1, and mobile passed 14/0/1.
+- Backend refresh HTTP 429 responses: zero. Final refresh headroom: two
+  requests.
+- Supplemental Learning verification: passed.
+- Human visual review: approved.
+- Native Chrome toolbar percentage remains an accepted limitation. A reliable
+  percentage readout was unavailable, so no toolbar-reported 200% pass is
+  claimed.
+- Cleanup remained verified at users=0, owned=0, with ports 4173, 4174, and
+  8000 closed.
+- Phase 18: **ACTIVE**.
+- Phase 18A: **COMPLETED / APPROVED**.
+- UI-LA1: **COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED**.
+- UI-LA2: **COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED**.
+- Phase 18B: **PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION**.
+- Phase 18B authorization: **SEPARATE EXPLICIT AUTHORIZATION REQUIRED**.
+- Phase 19: **PLANNED / INACTIVE**.
+- This reconciliation is finalized by one exact two-file documentation-only
+  local commit. Its hash is verified directly from Git after commit; no
+  further recursive documentation commit is required merely to record its own
+  hash.
