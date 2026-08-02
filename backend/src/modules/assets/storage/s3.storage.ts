@@ -114,6 +114,7 @@ export class S3PrivateStorageAdapter implements PrivateStorageAdapter {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,
+      ResponseCacheControl: "private, no-store",
     });
 
     return {

@@ -163,6 +163,9 @@ describe("private storage adapters", () => {
       expect(new URL(target.url).searchParams.has("X-Amz-Signature")).toBe(
         true,
       );
+      expect(
+        new URL(target.url).searchParams.get("response-cache-control"),
+      ).toBe("private, no-store");
     }
     expect(
       (send.mock.calls[1]?.[0] as PutObjectCommand).input,
