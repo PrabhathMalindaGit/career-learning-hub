@@ -2402,15 +2402,19 @@ repair attempt. The repair verification record below controls current status.
 #### Status
 
 - Status:
-  `ACTIVE — STORAGE-ADAPTER TRACKING REPAIR COMPLETED / APPROVED; PHASE 18B
-  PLANNED / INACTIVE`
+  `ACTIVE — PHASE 18A COMPLETED / APPROVED; PHASE 18B ACTIVE —
+  PROVIDER/ACCOUNT READINESS AND SECRET-NAME MANIFEST; CURRENT PHASE 18B
+  ACTIVITY COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED; PROVIDER
+  PROVISIONING NOT STARTED / INACTIVE; STAGING DEPLOYMENT NOT STARTED /
+  INACTIVE; DNS CONFIGURATION NOT STARTED / INACTIVE`
 - Most recently completed repair:
   `B18A-001 — Ignored Private-Storage Adapter Source Tracking Repair`
 - Repair status: `COMPLETED / APPROVED`
 - Accepted repair token:
   `PHASE_18_STORAGE_ADAPTER_TRACKING_REPAIR_APPROVED`
 - Repair token accepted: `YES`
-- Active subphase: none; Phase 18B remains inactive
+- Active subphase:
+  `Phase 18B — Provider/Account Readiness and Secret-Name Manifest`
 - Most recently completed subphase:
   `Phase 18A — Staging Architecture and Deployment Readiness Audit`
 - Phase 18 activation branch: `phase-18-staging-deployment`
@@ -2493,6 +2497,36 @@ repair attempt. The repair verification record below controls current status.
 - The separately authorized repair of the ignored
   `backend/src/modules/assets/storage/` source is completed and approved.
 
+#### Phase 18B activation record
+
+- Activation prompt:
+  `CLH-PHASE-18B-ACTIVATE-ACCOUNT-READINESS-AND-SECRET-MANIFEST-01`.
+- Activation date: 2026-08-02.
+- Phase 18B status:
+  `ACTIVE — PROVIDER/ACCOUNT READINESS AND SECRET-NAME MANIFEST`.
+- Current activity:
+  `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`.
+- Evidence:
+  `docs/deployment/PHASE_18B_PROVIDER_ACCOUNT_AND_SECRET_MANIFEST.md`.
+- DEC-015 establishes a dedicated Atlas project for Career Learning Hub
+  staging and excludes the existing Interview Prep AI project and Cluster0.
+- Provider provisioning, staging deployment, DNS configuration, secret
+  generation, environment-value entry, push, and merge remain
+  `NOT STARTED / INACTIVE`.
+- Required human-review token:
+  `PHASE_18B_PROVIDER_AND_SECRET_MANIFEST_APPROVED`.
+- Human-review token accepted: `YES` on 2026-08-02.
+- Documentation closeout: `COMPLETED`.
+- Local commit status: `LOCALLY COMMITTED`.
+- The exact commit hash is verified directly from Git after commit and is not
+  recursively inserted into this same commit.
+- Provider provisioning, staging deployment, and DNS configuration remain
+  `NOT STARTED / INACTIVE`.
+- Phase 19 remains `PLANNED / INACTIVE`.
+- The next activity requires separate explicit provisioning authorization.
+- No provider, environment-value, secret, DNS, deployment, push, or merge
+  action occurred.
+
 #### B18A-001 storage-adapter tracking repair
 
 - Prompt:
@@ -2560,7 +2594,8 @@ repair attempt. The repair verification record below controls current status.
    `COMPLETED / APPROVED`.
 2. Phase 18B — Provider Selection, Account Readiness and Secret Manifest
    Approval:
-   `PLANNED / INACTIVE — READY FOR SEPARATE ACTIVATION`.
+   `ACTIVE — PROVIDER/ACCOUNT READINESS AND SECRET-NAME MANIFEST;
+   COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED`.
 3. Phase 18C — MongoDB Staging and Private Storage Provisioning:
    `PLANNED / INACTIVE`.
 4. Phase 18D — Backend Staging Deployment and Health Verification:
@@ -2574,17 +2609,19 @@ repair attempt. The repair verification record below controls current status.
 
 #### Current authority boundary
 
-- Phase 18B is not active and requires a separate explicit activation prompt.
+- Phase 18B is active only for documentation of provider/account readiness and
+  secret-name manifest review.
 - The accepted Phase 18A decisions authorize no purchase, account, resource,
   credential, domain activation, DNS change, workflow,
   push, or deployment.
-- B18A-001 repair authority is limited to the exact ignore rule, four existing
-  adapter files, focused storage test, three governance records, and repair
-  report. This approval-closeout prompt authorizes staging those exact ten
-  paths and creating one local commit. It authorizes no push or Phase 18B
-  activation.
-- This closeout authorizes one local documentation-only commit containing the
-  three Phase 18A documentation paths.
+- Historical B18A-001 repair authority was limited to the exact ignore rule,
+  four existing adapter files, focused storage test, three governance records,
+  and repair report. That closeout authority is not reused here.
+- The historical Phase 18A documentation-only commit authority is not reused
+  by the current Phase 18B review task.
+- The current Phase 18B activation authorizes no provisioning, provider
+  resource, environment value, secret generation, DNS change, deployment,
+  push, merge, or commit.
 - Phase 19 remains `PLANNED / INACTIVE`.
 
 ### Execution Phase 19: Legacy Data Migration Preparation

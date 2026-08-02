@@ -392,3 +392,33 @@
   - A separately accepted decision replaces DEC-013 or DEC-014.
   - Current architecture, contract, security, accessibility, accuracy, or
     product requirements make a specific legacy pattern unsuitable.
+
+## DEC-015: Use a dedicated Atlas project for Career Learning Hub staging
+
+- Decision ID: `DEC-015`
+- Date: 2026-08-02
+- Status: ACCEPTED
+- Decision:
+  - Do not reuse the existing Interview Prep AI Atlas project or Cluster0.
+  - Create a separate Atlas project named Career Learning Hub Staging only in
+    a later authorized provisioning task.
+  - Use a separately scoped staging cluster, database user, network controls,
+    credentials, indexes, synthetic data, cleanup, and rollback boundary.
+  - Leave the Interview Prep AI project and Cluster0 unchanged.
+- Rationale:
+  - Prevent cross-project data mixing.
+  - Prevent accidental modification of legacy application data.
+  - Isolate credentials, access rules, indexes, retention, cleanup, cost, and
+    rollback.
+  - Preserve a clear staging resource boundary.
+- Consequences:
+  - A new Atlas project and free-eligible cluster must be provisioned later.
+  - No existing Interview Prep AI connection string may be reused.
+  - Career Learning Hub staging secrets must be newly generated and separately
+    stored.
+  - The old project requires no data inspection for this deployment.
+- Revisit conditions:
+  - A separately reviewed migration requirement proves specific legacy data
+    must be imported through sanitized fixtures and an approved migration
+    process.
+  - The operator explicitly accepts a replacement architecture decision.
