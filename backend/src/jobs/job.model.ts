@@ -1,4 +1,10 @@
 import { Schema, Types, model } from "mongoose";
+import {
+  aiRoutingActions,
+  aiRoutingSnapshotSchema,
+  type AiRoutingSnapshot,
+} from "../modules/ai/aiRoutingSnapshot.js";
+import { aiExecutionStates } from "../modules/ai/aiProvider.types.js";
 
 export type JobStatus =
   | "queued"
@@ -28,12 +34,45 @@ export interface JobRecord {
     stack?: string;
   };
   idempotencyKey?: string;
+  aiRoutingSnapshot?: AiRoutingSnapshot;
   completedAt?: Date;
   failedAt?: Date;
   expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const aiRoutingSnapshotMongooseSchema = new Schema<AiRoutingSnapshot>(
+  {
+    snapshotId: { type: String, required: true, immutable: true },
+    snapshotVersion: { type: Number, enum: [1], required: true, immutable: true },
+    userId: { type: String, required: true, immutable: true },
+    action: { type: String, enum: aiRoutingActions, required: true, immutable: true },
+    provider: { type: String, enum: aiExecutionStates, required: true, immutable: true },
+    mode: { type: String, enum: ["direct", "disabled"], required: true, immutable: true },
+    preferenceRevision: { type: Number, required: true, min: 0, immutable: true },
+    routingProfileId: { type: String, required: true, immutable: true },
+    routingProfileVersion: { type: Number, required: true, min: 1, immutable: true },
+    credentialSource: {
+      type: String,
+      enum: ["none", "user-managed", "administrator-managed"],
+      required: true,
+      immutable: true,
+    },
+    credentialId: { type: String, immutable: true },
+    credentialSecretVersion: { type: Number, min: 1, immutable: true },
+    administratorCredentialPolicyVersion: { type: Number, min: 1, immutable: true },
+    directModelId: { type: String, immutable: true },
+    maximumInputTokens: { type: Number, required: true, min: 1, immutable: true },
+    maximumOutputTokens: { type: Number, required: true, min: 1, immutable: true },
+    ttftMs: { type: Number, required: true, min: 1, immutable: true },
+    streamIdleMs: { type: Number, required: true, min: 1, immutable: true },
+    totalMs: { type: Number, required: true, min: 1, immutable: true },
+    executeBefore: { type: Date, required: true, immutable: true },
+    createdAt: { type: Date, required: true, immutable: true },
+  },
+  { _id: false, strict: "throw" },
+);
 
 const jobRecordSchema = new Schema<JobRecord>(
   {
@@ -112,6 +151,11 @@ const jobRecordSchema = new Schema<JobRecord>(
       type: String,
       maxlength: 255,
     },
+    aiRoutingSnapshot: {
+      type: aiRoutingSnapshotMongooseSchema,
+      required: false,
+      immutable: true,
+    },
     completedAt: Date,
     failedAt: Date,
     expiresAt: Date,
@@ -119,6 +163,39 @@ const jobRecordSchema = new Schema<JobRecord>(
   {
     timestamps: true,
     versionKey: false,
+  },
+);
+
+jobRecordSchema.pre("validate", function validateAiRoutingSnapshot() {
+  if (this.aiRoutingSnapshot) {
+    const snapshot = this.aiRoutingSnapshot as AiRoutingSnapshot & {
+      toObject?: () => unknown;
+    };
+    aiRoutingSnapshotSchema.parse(
+      typeof snapshot.toObject === "function"
+        ? snapshot.toObject()
+        : snapshot,
+    );
+  }
+});
+
+jobRecordSchema.pre(
+  ["updateOne", "updateMany", "findOneAndUpdate"],
+  function rejectRoutingSnapshotUpdate() {
+    const update = this.getUpdate();
+    if (!update || typeof update !== "object") return;
+    const record = update as Record<string, unknown>;
+    const keys = [
+      ...Object.keys(record).filter((key) => !key.startsWith("$")),
+      ...Object.values(record)
+        .filter((value): value is Record<string, unknown> =>
+          Boolean(value) && typeof value === "object" && !Array.isArray(value),
+        )
+        .flatMap((value) => Object.keys(value)),
+    ];
+    if (keys.some((key) => key === "aiRoutingSnapshot" || key.startsWith("aiRoutingSnapshot."))) {
+      throw new Error("AI routing snapshots are immutable.");
+    }
   },
 );
 

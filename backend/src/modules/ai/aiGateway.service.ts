@@ -15,6 +15,7 @@ import {
   AiProviderError,
   type AiProviderAdapter,
 } from "./providers/provider.types.js";
+import { authorizeAiJobExecution } from "./aiRouting.service.js";
 
 const providers: Record<string, AiProviderAdapter> = {
   gemini: new GeminiProviderAdapter(),
@@ -73,6 +74,12 @@ export async function generateStructuredOutput<
   jobId?: string;
   metadata?: Record<string, unknown>;
 }): Promise<z.output<TSchema>> {
+  const routingAuthorization =
+    env.AI_ROUTING_FOUNDATION_ENABLED && input.jobId
+      ? await authorizeAiJobExecution({ jobId: input.jobId })
+      : undefined;
+
+  try {
   const providerName = input.provider ?? env.AI_DEFAULT_PROVIDER;
   const provider = providers[providerName];
 
@@ -94,7 +101,10 @@ export async function generateStructuredOutput<
   });
 
   const startedAt = Date.now();
-  let model = input.model ?? env.GEMINI_MODEL;
+  let model =
+    routingAuthorization?.snapshot.directModelId ??
+    input.model ??
+    env.GEMINI_MODEL;
   let actualInputTokens = 0;
   let actualOutputTokens = 0;
   let gatewayAttempts = 0;
@@ -106,8 +116,9 @@ export async function generateStructuredOutput<
         systemPrompt: input.systemPrompt,
         userPrompt: input.userPrompt,
         responseJsonSchema,
-        model: input.model,
+        model: routingAuthorization?.snapshot.directModelId ?? input.model,
         signal,
+        credential: routingAuthorization?.credential,
       });
     });
 
@@ -200,5 +211,8 @@ export async function generateStructuredOutput<
       "AI_REQUEST_FAILED",
       "The AI request failed.",
     );
+  }
+  } finally {
+    await routingAuthorization?.release();
   }
 }

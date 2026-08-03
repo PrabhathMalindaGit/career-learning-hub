@@ -9,6 +9,11 @@ export interface ProviderStructuredRequest {
   responseJsonSchema: Record<string, unknown>;
   model?: string;
   signal: AbortSignal;
+  credential?: ProviderCredentialHandle;
+}
+
+export interface ProviderCredentialHandle {
+  read(): string;
 }
 
 export interface ProviderStructuredResponse {

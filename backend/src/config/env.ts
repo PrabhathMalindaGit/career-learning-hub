@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { logger } from "../shared/logger.js";
+import { parseEncryptionKeyRing } from "../modules/ai/credentialVault.js";
 
 const optionalString = z.preprocess(
   (value) => (value === "" ? undefined : value),
@@ -156,6 +157,16 @@ const envSchema = z
     AI_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
     AI_DAILY_REQUEST_LIMIT: z.coerce.number().int().min(1).default(100),
     AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1_000).default(500_000),
+    BYOK_ENCRYPTION_KEY: optionalString,
+    BYOK_ENCRYPTION_KEY_PREVIOUS: optionalString,
+    AI_ROUTING_FOUNDATION_ENABLED: booleanFromEnv.default(false),
+    AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED: booleanFromEnv.default(false),
+    AI_ADMIN_GEMINI_POLICY_VERSION: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(1_000_000)
+      .default(1),
 
     JOB_WORKER_ENABLED: booleanFromEnv.default(true),
     JOB_WORKER_ID: z.string().min(1).max(120).default("api-local-worker"),
@@ -409,6 +420,31 @@ const envSchema = z
           });
         }
       }
+    }
+
+    try {
+      parseEncryptionKeyRing({
+        current: value.BYOK_ENCRYPTION_KEY,
+        previous: value.BYOK_ENCRYPTION_KEY_PREVIOUS,
+      });
+    } catch {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["BYOK_ENCRYPTION_KEY"],
+        message: "Invalid BYOK encryption key configuration.",
+      });
+    }
+
+    if (
+      value.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED &&
+      !value.AI_ROUTING_FOUNDATION_ENABLED
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED"],
+        message:
+          "Administrator Gemini compatibility requires the routing foundation.",
+      });
     }
   });
 

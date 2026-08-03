@@ -7,6 +7,7 @@ import {
   isLearningDocumentWorkInvalidated,
 } from "../modules/learning/learningDocumentWorkFence.js";
 import type { LearningDocumentStatus } from "../modules/learning/learningDocument.model.js";
+import { compileAiRoutingSnapshotForJob } from "../modules/ai/aiRouting.service.js";
 import { JobRecordModel, type JobRecord } from "./job.model.js";
 
 const learningJobRetryStatuses: Readonly<
@@ -103,6 +104,14 @@ export async function enqueueJob(input: {
     if (existing) return existing;
   }
 
+  const aiRoutingSnapshot =
+    env.AI_ROUTING_FOUNDATION_ENABLED && input.userId
+      ? await compileAiRoutingSnapshotForJob({
+          type: input.type,
+          userId: input.userId,
+        })
+      : undefined;
+
   try {
     return await JobRecordModel.create({
       userId: input.userId,
@@ -112,6 +121,7 @@ export async function enqueueJob(input: {
       maxAttempts: input.maxAttempts ?? 3,
       runAt: input.runAt ?? new Date(),
       idempotencyKey: input.idempotencyKey,
+      ...(aiRoutingSnapshot ? { aiRoutingSnapshot } : {}),
     });
   } catch (error) {
     if (

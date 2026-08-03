@@ -45,11 +45,13 @@ export const corsOptions: CorsOptions = {
     "Accept",
     "Authorization",
     "Content-Type",
+    "Idempotency-Key",
     "If-Match",
     "X-Request-Id",
   ],
   exposedHeaders: [
     "X-Request-Id",
+    "ETag",
     "RateLimit-Limit",
     "RateLimit-Remaining",
     "RateLimit-Reset",

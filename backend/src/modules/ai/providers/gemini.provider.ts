@@ -29,7 +29,8 @@ export class GeminiProviderAdapter implements AiProviderAdapter {
   async generateStructured(
     request: ProviderStructuredRequest,
   ): Promise<ProviderStructuredResponse> {
-    if (!env.GEMINI_API_KEY) {
+    const apiKey = request.credential?.read() ?? env.GEMINI_API_KEY;
+    if (!apiKey) {
       throw new AiProviderError(
         "Gemini is not configured.",
         "GEMINI_NOT_CONFIGURED",
@@ -53,7 +54,7 @@ export class GeminiProviderAdapter implements AiProviderAdapter {
         model,
       )}:generateContent`,
     );
-    endpoint.searchParams.set("key", env.GEMINI_API_KEY);
+    endpoint.searchParams.set("key", apiKey);
 
     let response: globalThis.Response;
 
