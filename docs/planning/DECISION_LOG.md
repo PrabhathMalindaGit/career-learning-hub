@@ -500,3 +500,70 @@
     transporting additional JSON Schema annotations.
   - A separately authorized AI-2 routing architecture defines a replacement
     provider contract while preserving equivalent validation and accounting.
+
+## DEC-018: Isolate one active AI provider with encrypted credentials and frozen routing
+
+- Decision ID: `DEC-018`
+- Date: 2026-08-03
+- Status: ACCEPTED
+- Decision:
+  - Each user has one authoritative `AiProviderPreference` document whose
+    scalar `activeProvider` is `openrouter`, one direct-provider identity, or
+    `disabled`. Credential documents do not carry competing active flags.
+  - User-owned provider credentials are stored only as AES-256-GCM
+    ciphertext, nonce, and authentication tag under versioned server-only
+    `BYOK_ENCRYPTION_KEY` material. Plaintext never persists, returns after
+    save, or enters jobs, usage, audit, errors, or logs.
+  - OpenRouter mode may use a ranked, task-specific approved free-model list
+    and an optional separately requested paid model, but both attempts stay
+    inside OpenRouter. Paid fallback requires explicit permission, trusted
+    pricing, an exact approved model, and atomic request/token/spend limits.
+  - A direct-provider mode calls only that direct provider. It has no
+    OpenRouter or cross-direct-provider fallback; verified transient failures
+    may receive only a bounded same-provider retry.
+  - AI jobs store an immutable, secret-free routing snapshot at enqueue time.
+    The worker resolves the referenced credential only at execution and must
+    reject the job when current active-provider state, credential secret
+    version, paid permission, model safety, or execution deadline invalidates
+    the snapshot.
+  - DEC-017 remains authoritative: provider-side structural JSON Schema is a
+    generation constraint, while strict post-response Zod parsing, feature
+    semantic validation, ownership, fencing, persistence, and secrecy checks
+    remain enforcement boundaries.
+- Rationale:
+  - One preference row and revision compare-and-set provide a simpler atomic
+    invariant than coordinating active flags across several credentials.
+  - Separating credentials from active routing lets users configure providers
+    without allowing inactive credentials to receive requests.
+  - Free and paid OpenRouter attempts require different authorization and
+    budget gates; a separate paid request prevents a paid model from entering
+    the free candidate array.
+  - Enqueue-time snapshots preserve user intent, cost ceilings, and audit
+    context, while the execution-time revocation gate prevents stale consent
+    from calling an inactive or replaced credential.
+  - Provider diversity must not weaken validated feature contracts or expose
+    the same private content to unselected providers.
+- Consequences:
+  - The architecture, data/API contracts, migration, threat model, and phased
+    implementation order are defined in the AI-2 documents.
+  - Provider switching cancels or fails queued jobs for the former provider;
+    jobs never silently reroute or adopt a replacement credential.
+  - OpenRouter model IDs and pricing remain validated catalogue data rather
+    than volatile application constants.
+  - Paid fallback and browser streaming remain disabled until their dedicated
+    accounting, interruption, privacy, and verification phases pass.
+  - Existing environment Gemini behavior is unchanged in AI-2. Later
+    migration may retain a clearly labeled administrator-managed source only
+    through explicit server policy and per-user authorization.
+- Rejected alternatives:
+  - multiple active providers, direct cross-fallback, worker-time-only routing,
+    credentials in browser storage or jobs, plaintext MongoDB keys,
+    unrestricted automatic routers, hardcoded free models, unbounded paid
+    fallback, raw provider errors, and replacing Zod with provider schemas.
+- Revisit conditions:
+  - A verified provider contract cannot preserve the required structural and
+    semantic validation boundary.
+  - Deployment topology cannot support the required transactional preference,
+    execution-lease, and cost-reservation invariants.
+  - Human review changes the administrator-managed credential policy, paid
+    ceilings, retention policy, or AI-3 boundary.
