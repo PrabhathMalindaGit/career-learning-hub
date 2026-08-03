@@ -39,6 +39,15 @@ export class GeminiProviderAdapter implements AiProviderAdapter {
     }
 
     const model = request.model ?? env.GEMINI_MODEL;
+    const generationConfig: Record<string, unknown> = {
+      responseMimeType: "application/json",
+      responseJsonSchema: request.responseJsonSchema,
+    };
+
+    if (!/^gemini-3(?:[.-]|$)/i.test(model)) {
+      generationConfig.temperature = 0.2;
+    }
+
     const endpoint = new URL(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
         model,
@@ -65,10 +74,7 @@ export class GeminiProviderAdapter implements AiProviderAdapter {
               parts: [{ text: request.userPrompt }],
             },
           ],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.2,
-          },
+          generationConfig,
         }),
       });
     } catch (error) {
@@ -98,7 +104,7 @@ export class GeminiProviderAdapter implements AiProviderAdapter {
         response.status >= 500;
 
       throw new AiProviderError(
-        body.error?.message ?? `Gemini returned HTTP ${response.status}.`,
+        `Gemini returned HTTP ${response.status}.`,
         body.error?.status ?? "GEMINI_API_ERROR",
         retryable,
         response.status,

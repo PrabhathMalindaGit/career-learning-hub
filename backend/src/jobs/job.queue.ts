@@ -279,8 +279,10 @@ export async function failOrRetryJob(
     !env.isProduction && error instanceof Error
       ? error.stack?.slice(0, 8_000)
       : undefined;
+  const retryable =
+    !(error instanceof AppError) || error.retryable !== false;
 
-  if (job.attempts < job.maxAttempts) {
+  if (retryable && job.attempts < job.maxAttempts) {
     const retryAt = new Date(Date.now() + retryDelay(job.attempts));
     const retryFence = learningJobRetryFence(job);
 

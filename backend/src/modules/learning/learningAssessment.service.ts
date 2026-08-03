@@ -175,6 +175,8 @@ export async function attachFlashcardJob(input: {
     if (attached.matchedCount !== 1) {
       throw learningDocumentWorkInvalidatedError();
     }
+
+    return true;
   });
 }
 
@@ -360,6 +362,8 @@ export async function generateFlashcards(input: {
           "The flashcard generation job is no longer current.",
         );
       }
+
+      return true;
     });
 
     await recordActivitySafely({
@@ -589,6 +593,8 @@ export async function attachQuizJob(input: {
     if (attached.matchedCount !== 1) {
       throw learningDocumentWorkInvalidatedError();
     }
+
+    return true;
   });
 }
 
@@ -778,6 +784,8 @@ export async function generateQuiz(input: {
           "The quiz generation job is no longer current.",
         );
       }
+
+      return true;
     });
 
     await recordActivitySafely({

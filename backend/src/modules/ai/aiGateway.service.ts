@@ -4,6 +4,7 @@ import { AppError } from "../../shared/appError.js";
 import { logger, serializeErrorForLog } from "../../shared/logger.js";
 import { UsageEventModel } from "./usageEvent.model.js";
 import { validateStructuredAiOutput } from "./aiOutputValidation.js";
+import { toProviderJsonSchema } from "./providerJsonSchema.js";
 import {
   estimateTokens,
   reconcileAiTokenUsage,
@@ -86,6 +87,7 @@ export async function generateStructuredOutput<
   const estimatedTokens = estimateTokens(
     `${input.systemPrompt}\n${input.userPrompt}`,
   );
+  const responseJsonSchema = toProviderJsonSchema(input.schema);
   await reserveAiQuota({
     userId: input.userId,
     estimatedTokens,
@@ -93,18 +95,25 @@ export async function generateStructuredOutput<
 
   const startedAt = Date.now();
   let model = input.model ?? env.GEMINI_MODEL;
+  let actualInputTokens = 0;
+  let actualOutputTokens = 0;
+  let gatewayAttempts = 0;
 
   try {
-    const result = await executeWithRetry((signal) =>
-      provider.generateStructured({
+    const result = await executeWithRetry((signal) => {
+      gatewayAttempts += 1;
+      return provider.generateStructured({
         systemPrompt: input.systemPrompt,
         userPrompt: input.userPrompt,
+        responseJsonSchema,
         model: input.model,
         signal,
-      }),
-    );
+      });
+    });
 
     model = result.model;
+    actualInputTokens = result.usage.inputTokens;
+    actualOutputTokens = result.usage.outputTokens;
     const parsed = validateStructuredAiOutput(
       result.text,
       input.schema,
@@ -128,7 +137,10 @@ export async function generateStructuredOutput<
         status: "success",
         latencyMs: Date.now() - startedAt,
         jobId: input.jobId,
-        metadata: input.metadata,
+        metadata: {
+          ...input.metadata,
+          gatewayAttempts,
+        },
       }),
     ]);
 
@@ -141,20 +153,31 @@ export async function generateStructuredOutput<
           ? error.code
           : "AI_UNKNOWN_ERROR";
 
-    await UsageEventModel.create({
-      userId: input.userId,
-      feature: input.feature,
-      provider: provider.name,
-      model,
-      requestCount: 1,
-      inputTokens: 0,
-      outputTokens: 0,
-      status: "failure",
-      latencyMs: Date.now() - startedAt,
-      errorCode,
-      jobId: input.jobId,
-      metadata: input.metadata,
-    }).catch((loggingError: unknown) => {
+    await Promise.all([
+      reconcileAiTokenUsage({
+        userId: input.userId,
+        estimatedTokens,
+        actualInputTokens,
+        actualOutputTokens,
+      }),
+      UsageEventModel.create({
+        userId: input.userId,
+        feature: input.feature,
+        provider: provider.name,
+        model,
+        requestCount: 1,
+        inputTokens: actualInputTokens,
+        outputTokens: actualOutputTokens,
+        status: "failure",
+        latencyMs: Date.now() - startedAt,
+        errorCode,
+        jobId: input.jobId,
+        metadata: {
+          ...input.metadata,
+          gatewayAttempts,
+        },
+      }),
+    ]).catch((loggingError: unknown) => {
       logger.error("ai.usage-log.failed", {
         feature: input.feature,
         ...serializeErrorForLog(loggingError),
@@ -167,6 +190,8 @@ export async function generateStructuredOutput<
         error.statusCode ?? 502,
         error.code,
         error.message,
+        undefined,
+        error.retryable,
       );
     }
 

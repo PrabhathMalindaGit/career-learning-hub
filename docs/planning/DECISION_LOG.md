@@ -422,3 +422,81 @@
     must be imported through sanitized fixtures and an approved migration
     process.
   - The operator explicitly accepts a replacement architecture decision.
+
+## DEC-016: Verify the direct Gemini baseline before provider expansion
+
+- Decision ID: `DEC-016`
+- Date: 2026-08-03
+- Status: ACCEPTED
+- Decision:
+  - AI-1 documents and verifies the existing direct Gemini implementation at
+    merged baseline commit `54aacb62bb1371fa16d32c3311c07dfa7bdbcbab`.
+  - Preserve `gemini-2.5-flash` unless a verified incompatibility requires a
+    separately reviewed change.
+  - Do not add another provider, provider switching, cross-provider fallback,
+    credential storage, a Settings provider UI, or cloud configuration in
+    AI-1.
+  - Live verification uses only a privately configured backend key, synthetic
+    content, and the existing embedded worker.
+- Rationale:
+  - The current backend registers only the Gemini adapter, while Resume,
+    Interview, and Learning workflows share the same gateway and durable job
+    system.
+  - Establishing call paths, validation, retry behavior, and current failures
+    before adding routing prevents existing uncertainty from being multiplied
+    across providers.
+- Consequences:
+  - `docs/planning/PHASE_AI_1_GEMINI_BASELINE.md` is the baseline evidence
+    record.
+  - Missing live credentials, unverified retry behavior, and test gaps are
+    reported as limitations rather than bypassed with production changes.
+  - AI-2 readiness depends on review of the AI-1 findings and blockers.
+- Revisit conditions:
+  - AI-1 live verification establishes a different model compatibility fact.
+  - A separately authorized and accepted AI-2 architecture supersedes the
+    Gemini-only implementation boundary.
+
+## DEC-017: Transport structural JSON Schema while retaining authoritative validation
+
+- Decision ID: `DEC-017`
+- Date: 2026-08-03
+- Status: ACCEPTED
+- Decision:
+  - The existing provider gateway request carries a provider-neutral
+    `responseJsonSchema` generated from each feature's Zod output schema.
+  - The direct Gemini adapter transports the Gemini-compatible structural
+    subset of that schema alongside `application/json` response handling.
+  - Strict post-response Zod parsing and all feature-specific semantic,
+    ownership, fencing, and secrecy checks remain authoritative.
+  - Deterministic provider and output-contract errors are explicitly
+    non-retryable at both gateway and worker boundaries; transient failures
+    retain the existing bounded retry policies.
+  - Failed provider calls release estimated token reservations while retaining
+    the auditable request-attempt count and sanitized failure UsageEvent.
+- Rationale:
+  - MIME-only JSON generation did not tell Gemini the object contract and
+    caused valid JSON with invalid feature shapes.
+  - The installed Zod schemas are the single existing application contract;
+    deriving the provider constraint avoids a second hand-maintained schema.
+  - The tested Gemini 3.6 endpoint accepted the preserved structural schema but
+    rejected the larger annotation-bearing conversion with
+    `INVALID_ARGUMENT`, so Zod remains the correct enforcement boundary for
+    annotations and refinements.
+  - Retrying authentication, invalid-request, missing-model, or invalid-output
+    failures wastes worker attempts, while token estimates from failed calls
+    should not remain permanently reserved.
+- Consequences:
+  - Resume, Interview, Learning summary/chat, Flashcard, and Quiz live outputs
+    satisfy their existing schema and semantic contracts with the locally
+    configured `gemini-3.6-flash` model.
+  - `gemini-2.5-flash` is recorded only as returning `NOT_FOUND` for the tested
+    key/account; no global retirement claim is made.
+  - The provider-neutral contract does not introduce provider selection,
+    fallback, credentials, or another provider implementation.
+  - Future adapters must translate this contract without weakening the
+    authoritative post-response validation boundary.
+- Revisit conditions:
+  - Authoritative Gemini compatibility documentation or tests support safely
+    transporting additional JSON Schema annotations.
+  - A separately authorized AI-2 routing architecture defines a replacement
+    provider contract while preserving equivalent validation and accounting.

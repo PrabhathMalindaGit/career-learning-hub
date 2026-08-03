@@ -6,6 +6,7 @@ export interface ProviderUsage {
 export interface ProviderStructuredRequest {
   systemPrompt: string;
   userPrompt: string;
+  responseJsonSchema: Record<string, unknown>;
   model?: string;
   signal: AbortSignal;
 }

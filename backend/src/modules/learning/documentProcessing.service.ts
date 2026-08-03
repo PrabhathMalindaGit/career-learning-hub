@@ -288,6 +288,8 @@ export async function processLearningDocument(input: {
           "The document processing job is no longer current.",
         );
       }
+
+      return true;
     });
 
     await promoteOwnedAsset(input.userId, input.assetId, {
