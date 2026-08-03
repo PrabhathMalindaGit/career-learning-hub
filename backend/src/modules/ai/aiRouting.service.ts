@@ -9,6 +9,8 @@ import { AiCredentialExecutionLeaseModel } from "./aiCredentialExecutionLease.mo
 import { AiProviderPreferenceModel } from "./aiProviderPreference.model.js";
 import { ensureAiFoundation, recordAudit } from "./aiProvider.service.js";
 import { AiRoutingProfileModel } from "./aiRoutingProfile.model.js";
+import { OPENROUTER_RANKING_POLICY_VERSION } from "./openRouterCatalogue.js";
+import { isOpenRouterPlanSecure } from "./openRouterCatalogue.service.js";
 import {
   aiActionForJobType,
   aiRoutingSnapshotSchema,
@@ -29,6 +31,7 @@ const releasedLeaseRetentionMilliseconds = 24 * 60 * 60 * 1_000;
 
 export interface AiExecutionAuthorization {
   snapshot: AiRoutingSnapshot;
+  workerAttempt: number;
   credential?: { read(): string };
   leaseId?: string;
   release(): Promise<void>;
@@ -73,7 +76,7 @@ function snapshotFromState(input: {
 }): AiRoutingSnapshot {
   const { userId, action, now, preference, profile } = input;
   const gemini = profile.geminiDirect;
-  const common = {
+  const identity = {
     snapshotId: randomUUID(),
     snapshotVersion: 1 as const,
     userId,
@@ -81,6 +84,9 @@ function snapshotFromState(input: {
     preferenceRevision: preference.revision,
     routingProfileId: profile._id.toString(),
     routingProfileVersion: profile.version,
+    createdAt: now,
+  };
+  const geminiExecution = {
     maximumInputTokens: gemini.maximumInputTokens,
     maximumOutputTokens: gemini.maximumOutputTokens,
     ttftMs: gemini.timeoutProfile.ttftMs,
@@ -89,15 +95,49 @@ function snapshotFromState(input: {
     executeBefore: new Date(
       now.getTime() + gemini.executionDeadlineSeconds * 1_000,
     ),
-    createdAt: now,
   };
 
   if (preference.activeProvider === "disabled") {
     return aiRoutingSnapshotSchema.parse({
-      ...common,
+      ...identity,
+      ...geminiExecution,
       provider: "disabled",
       mode: "disabled",
       credentialSource: "none",
+    });
+  }
+  if (preference.activeProvider === "openrouter") {
+    const openRouter = profile.openRouterActions?.find(
+      (entry) => entry.action === action,
+    );
+    if (
+      !openRouter ||
+      preference.credentialSource !== "user-managed" ||
+      !preference.activeCredentialId ||
+      !preference.activeCredentialSecretVersion
+    ) {
+      throw routingError("routing_configuration_invalid");
+    }
+    return aiRoutingSnapshotSchema.parse({
+      ...identity,
+      provider: "openrouter",
+      mode: "openrouter",
+      credentialSource: "user-managed",
+      credentialId: preference.activeCredentialId.toString(),
+      credentialSecretVersion: preference.activeCredentialSecretVersion,
+      rankingPolicyVersion: openRouter.rankingPolicyVersion,
+      catalogueVersion: openRouter.catalogueVersion,
+      pricingObservedAt: openRouter.pricingObservedAt,
+      freeModelIds: openRouter.freeModelIds,
+      paidFallbackAllowed: false,
+      maximumInputTokens: openRouter.maximumInputTokens,
+      maximumOutputTokens: openRouter.maximumOutputTokens,
+      ttftMs: openRouter.timeoutProfile.ttftMs,
+      streamIdleMs: openRouter.timeoutProfile.streamIdleMs,
+      totalMs: openRouter.timeoutProfile.totalMs,
+      executeBefore: new Date(
+        now.getTime() + openRouter.executionDeadlineSeconds * 1_000,
+      ),
     });
   }
   if (preference.activeProvider !== "gemini-direct") {
@@ -109,7 +149,8 @@ function snapshotFromState(input: {
     preference.activeCredentialSecretVersion
   ) {
     return aiRoutingSnapshotSchema.parse({
-      ...common,
+      ...identity,
+      ...geminiExecution,
       provider: "gemini-direct",
       mode: "direct",
       credentialSource: "user-managed",
@@ -123,7 +164,8 @@ function snapshotFromState(input: {
     preference.administratorCredentialPolicyVersion
   ) {
     return aiRoutingSnapshotSchema.parse({
-      ...common,
+      ...identity,
+      ...geminiExecution,
       provider: "gemini-direct",
       mode: "direct",
       credentialSource: "administrator-managed",
@@ -137,13 +179,30 @@ function snapshotFromState(input: {
 
 export async function compileAiRoutingSnapshot(input: {
   userId: string;
-  action: AiRoutingAction;
+  action:
+    | AiRoutingAction
+    | "interview-attempt-feedback"
+    | "learning-document-summary"
+    | "learning-flashcard-generation"
+    | "learning-quiz-generation";
   now?: Date;
 }): Promise<AiRoutingSnapshot> {
   if (!env.AI_ROUTING_FOUNDATION_ENABLED) {
     throw routingError("routing_configuration_invalid");
   }
   const now = input.now ?? new Date();
+  const legacyActionAliases = {
+    "interview-attempt-feedback": "interview-answer-feedback",
+    "learning-document-summary": "learning-summary",
+    "learning-flashcard-generation": "flashcard-generation",
+    "learning-quiz-generation": "quiz-generation",
+  } as const;
+  const action =
+    input.action in legacyActionAliases
+      ? legacyActionAliases[
+          input.action as keyof typeof legacyActionAliases
+        ]
+      : input.action as AiRoutingAction;
   const { preference } = await ensureAiFoundation(input.userId);
   const profile = await AiRoutingProfileModel.findOne({
     _id: preference.routingProfileId,
@@ -156,7 +215,7 @@ export async function compileAiRoutingSnapshot(input: {
 
   return Object.freeze(snapshotFromState({
     userId: input.userId,
-    action: input.action,
+    action,
     now,
     preference,
     profile,
@@ -268,6 +327,7 @@ async function releaseLease(input: {
   leaseId: Types.ObjectId;
   credentialId: Types.ObjectId;
   userId: string;
+  provider: AiRoutingSnapshot["provider"];
   secret: Buffer;
 }): Promise<void> {
   clearSecretBuffer(input.secret);
@@ -292,7 +352,7 @@ async function releaseLease(input: {
     await recordAudit({
       userId: input.userId,
       action: "execution-lease.release-failed",
-      provider: "gemini-direct",
+      provider: input.provider,
       outcome: "failure",
       normalizedReason: "lease_release_failed",
       context: { actorRole: "system" },
@@ -323,8 +383,13 @@ export async function authorizeAiJobExecution(input: {
   if (snapshot.userId !== userId) {
     return rejectStaleSnapshot(snapshot, userId, "snapshot_owner_mismatch");
   }
-  if (snapshot.provider !== "gemini-direct") {
-    if (snapshot.provider !== "disabled") {
+  if (snapshot.provider === "disabled") {
+    return rejectStaleSnapshot(snapshot, userId, "ai_disabled");
+  }
+  if (
+    snapshot.provider !== "gemini-direct" &&
+    snapshot.provider !== "openrouter"
+  ) {
       await recordAudit({
         userId,
         action: "routing.stale-rejected",
@@ -336,14 +401,24 @@ export async function authorizeAiJobExecution(input: {
         context: { actorRole: "system" },
       });
       throw routingError("provider_not_available");
-    }
-    return rejectStaleSnapshot(snapshot, userId, "ai_disabled");
   }
   if (
     snapshot.executeBefore.getTime() <= now.getTime() ||
     (snapshot.directModelId && input.hardDisabledModelIds?.has(snapshot.directModelId))
   ) {
     return rejectStaleSnapshot(snapshot, userId, "execution_policy_stale");
+  }
+  if (snapshot.provider === "openrouter") {
+    if (
+      snapshot.rankingPolicyVersion !== OPENROUTER_RANKING_POLICY_VERSION ||
+      !await isOpenRouterPlanSecure({
+        action: snapshot.action,
+        modelIds: snapshot.freeModelIds ?? [],
+        now,
+      })
+    ) {
+      return rejectStaleSnapshot(snapshot, userId, "openrouter_model_plan_stale");
+    }
   }
 
   const preference = await AiProviderPreferenceModel.findOne({
@@ -363,10 +438,31 @@ export async function authorizeAiJobExecution(input: {
     version: snapshot.routingProfileVersion,
     status: "active",
     activeMarker: "active",
-    "geminiDirect.directModelId": snapshot.directModelId,
   }).lean();
   if (!profile) {
     return rejectStaleSnapshot(snapshot, userId, "routing_profile_changed");
+  }
+  if (
+    snapshot.provider === "gemini-direct" &&
+    profile.geminiDirect.directModelId !== snapshot.directModelId
+  ) {
+    return rejectStaleSnapshot(snapshot, userId, "routing_profile_changed");
+  }
+  if (snapshot.provider === "openrouter") {
+    const planned = profile.openRouterActions?.find(
+      (entry) => entry.action === snapshot.action,
+    );
+    if (
+      !planned ||
+      planned.catalogueVersion !== snapshot.catalogueVersion ||
+      planned.rankingPolicyVersion !== snapshot.rankingPolicyVersion ||
+      planned.freeModelIds.length !== snapshot.freeModelIds?.length ||
+      planned.freeModelIds.some(
+        (modelId, index) => modelId !== snapshot.freeModelIds?.[index],
+      )
+    ) {
+      return rejectStaleSnapshot(snapshot, userId, "routing_profile_changed");
+    }
   }
 
   if (snapshot.credentialSource === "administrator-managed") {
@@ -380,7 +476,11 @@ export async function authorizeAiJobExecution(input: {
     ) {
       return rejectStaleSnapshot(snapshot, userId, "administrator_policy_changed");
     }
-    return { snapshot, release: async () => undefined };
+    return {
+      snapshot,
+      workerAttempt: job.attempts,
+      release: async () => undefined,
+    };
   }
 
   if (
@@ -410,7 +510,7 @@ export async function authorizeAiJobExecution(input: {
       const credential = await AiCredentialModel.findOne({
         _id: snapshot.credentialId,
         userId,
-        provider: "gemini-direct",
+      provider: snapshot.provider,
         secretVersion: snapshot.credentialSecretVersion,
         state: "valid",
         connectionStatus: "valid",
@@ -430,7 +530,7 @@ export async function authorizeAiJobExecution(input: {
         {
           _id: credential._id,
           userId,
-          provider: "gemini-direct",
+          provider: snapshot.provider,
           secretVersion: snapshot.credentialSecretVersion,
           state: "valid",
           connectionStatus: "valid",
@@ -464,7 +564,7 @@ export async function authorizeAiJobExecution(input: {
       await recordAudit({
         userId,
         action: "execution-lease.acquisition-failed",
-        provider: "gemini-direct",
+        provider: snapshot.provider,
         credentialSecretVersion: snapshot.credentialSecretVersion,
         preferenceRevision: snapshot.preferenceRevision,
         routingProfileVersion: snapshot.routingProfileVersion,
@@ -480,7 +580,7 @@ export async function authorizeAiJobExecution(input: {
     await recordAudit({
       userId,
       action: "execution-lease.acquisition-failed",
-      provider: "gemini-direct",
+      provider: snapshot.provider,
       credentialSecretVersion: snapshot.credentialSecretVersion,
       outcome: "failure",
       normalizedReason: "lease_acquisition_failed",
@@ -495,7 +595,7 @@ export async function authorizeAiJobExecution(input: {
       encryptedSecret,
       credentialId: credentialId.toString(),
       userId,
-      provider: "gemini-direct",
+      provider: snapshot.provider,
       secretVersion: snapshot.credentialSecretVersion,
       keyRing: parseEncryptionKeyRing({
         current: env.BYOK_ENCRYPTION_KEY,
@@ -516,7 +616,7 @@ export async function authorizeAiJobExecution(input: {
       await recordAudit({
         userId,
         action: "credential.decryption-failed",
-        provider: "gemini-direct",
+        provider: snapshot.provider,
         credentialSecretVersion: snapshot.credentialSecretVersion,
         preferenceRevision: snapshot.preferenceRevision,
         routingProfileVersion: snapshot.routingProfileVersion,
@@ -536,12 +636,19 @@ export async function authorizeAiJobExecution(input: {
   let released = false;
   return {
     snapshot,
+    workerAttempt: job.attempts,
     credential: { read: () => secret.toString("utf8") },
     leaseId: leaseId.toString(),
     release: async () => {
       if (released) return;
       released = true;
-      await releaseLease({ leaseId, credentialId, userId, secret });
+      await releaseLease({
+        leaseId,
+        credentialId,
+        userId,
+        provider: snapshot.provider,
+        secret,
+      });
     },
   };
 }

@@ -58,6 +58,22 @@ export const requireAiRevision: RequestHandler = (
   next();
 };
 
+export const requireAiAdministrator: RequestHandler = (
+  request,
+  _response,
+  next,
+) => {
+  if (!request.user?.roles.includes("admin")) {
+    next(new AppError(
+      403,
+      "permission_denied",
+      "Administrator authorization is required.",
+    ));
+    return;
+  }
+  next();
+};
+
 export function readAiIdempotencyKey(request: Request): string {
   return request.get("idempotency-key")!;
 }

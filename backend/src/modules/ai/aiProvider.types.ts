@@ -19,3 +19,13 @@ export function isAi3CallableProvider(
 ): provider is "gemini-direct" | "disabled" {
   return provider === "gemini-direct" || provider === "disabled";
 }
+
+export function isAi4CallableProvider(
+  provider: AiExecutionState,
+): provider is "openrouter" | "gemini-direct" | "disabled" {
+  return (
+    provider === "openrouter" ||
+    provider === "gemini-direct" ||
+    provider === "disabled"
+  );
+}

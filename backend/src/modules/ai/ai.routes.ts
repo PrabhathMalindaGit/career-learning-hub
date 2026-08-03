@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../../middleware/authenticate.js";
 import {
   aiActivationRateLimiter,
+  aiCatalogueRefreshRateLimiter,
   aiCredentialMutationRateLimiter,
   aiCredentialTestRateLimiter,
   aiProviderReadRateLimiter,
@@ -21,14 +22,21 @@ import {
   testCredentialController,
 } from "./aiProvider.controller.js";
 import {
+  listAiModelsController,
+  refreshAiModelsController,
+} from "./aiModels.controller.js";
+import {
   activationBodySchema,
   aiProviderParamsSchema,
   credentialBodySchema,
   credentialTestBodySchema,
   emptyAiMutationBodySchema,
+  aiModelsQuerySchema,
+  aiModelsRefreshBodySchema,
 } from "./aiProvider.schemas.js";
 import {
   requireAiIdempotencyKey,
+  requireAiAdministrator,
   requireAiMutationOrigin,
   requireAiRevision,
 } from "./aiRequestGuards.js";
@@ -40,6 +48,21 @@ aiRouter.get(
   "/providers",
   aiProviderReadRateLimiter,
   asyncHandler(listProvidersController),
+);
+aiRouter.get(
+  "/models",
+  aiProviderReadRateLimiter,
+  validate({ query: aiModelsQuerySchema }),
+  asyncHandler(listAiModelsController),
+);
+aiRouter.post(
+  "/models/refresh",
+  aiCatalogueRefreshRateLimiter,
+  requireAiAdministrator,
+  requireAiMutationOrigin,
+  requireAiIdempotencyKey,
+  validate({ body: aiModelsRefreshBodySchema }),
+  asyncHandler(refreshAiModelsController),
 );
 aiRouter.get(
   "/routing",

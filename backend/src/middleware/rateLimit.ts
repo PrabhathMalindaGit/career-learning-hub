@@ -157,3 +157,10 @@ export const aiActivationRateLimiter = createRateLimiter({
   identifier: "ai-provider-activation",
   keyGenerator: authenticatedUserKey,
 });
+
+export const aiCatalogueRefreshRateLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1_000,
+  limit: 6,
+  identifier: "ai-catalogue-refresh",
+  keyGenerator: authenticatedUserKey,
+});

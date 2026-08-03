@@ -1,4 +1,25 @@
 import { Schema, model, type Types } from "mongoose";
+import { openRouterActions, type OpenRouterAction } from "./openRouterCatalogue.js";
+
+export interface OpenRouterRoutingActionProfile {
+  action: OpenRouterAction;
+  freeModelIds: string[];
+  catalogueVersion: number;
+  pricingObservedAt: Date;
+  rankingPolicyVersion: string;
+  timeoutProfile: {
+    ttftMs: number;
+    streamIdleMs: number;
+    totalMs: number;
+  };
+  maximumInputTokens: number;
+  maximumOutputTokens: number;
+  validatorIdentity: string;
+  validatorVersion: number;
+  executionDeadlineSeconds: number;
+  allowValidationRegeneration: false;
+  paidFallbackAllowed: false;
+}
 
 export interface AiRoutingProfile {
   userId: Types.ObjectId;
@@ -20,6 +41,7 @@ export interface AiRoutingProfile {
     executionDeadlineSeconds: number;
     maximumCostMicrousd: 0;
   };
+  openRouterActions?: OpenRouterRoutingActionProfile[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +88,45 @@ const geminiDirectProfileSchema = new Schema<AiRoutingProfile["geminiDirect"]>(
   { _id: false, strict: "throw" },
 );
 
+const openRouterActionProfileSchema = new Schema<OpenRouterRoutingActionProfile>(
+  {
+    action: { type: String, enum: openRouterActions, required: true },
+    freeModelIds: {
+      type: [String],
+      required: true,
+      validate: {
+        validator: (value: string[]) => value.length >= 1 && value.length <= 10,
+        message: "OpenRouter profiles require a bounded free model list.",
+      },
+    },
+    catalogueVersion: { type: Number, required: true, min: 1 },
+    pricingObservedAt: { type: Date, required: true },
+    rankingPolicyVersion: { type: String, required: true, maxlength: 120 },
+    timeoutProfile: { type: timeoutProfileSchema, required: true },
+    maximumInputTokens: { type: Number, required: true, min: 1, max: 2_000_000 },
+    maximumOutputTokens: { type: Number, required: true, min: 1, max: 200_000 },
+    validatorIdentity: { type: String, required: true, maxlength: 120 },
+    validatorVersion: { type: Number, required: true, min: 1 },
+    executionDeadlineSeconds: {
+      type: Number,
+      required: true,
+      min: 30,
+      max: 86_400,
+    },
+    allowValidationRegeneration: {
+      type: Boolean,
+      required: true,
+      validate: (value: boolean) => value === false,
+    } as never,
+    paidFallbackAllowed: {
+      type: Boolean,
+      required: true,
+      validate: (value: boolean) => value === false,
+    } as never,
+  },
+  { _id: false, strict: "throw" },
+);
+
 const aiRoutingProfileSchema = new Schema<AiRoutingProfile>(
   {
     userId: {
@@ -85,6 +146,19 @@ const aiRoutingProfileSchema = new Schema<AiRoutingProfile>(
     geminiDirect: {
       type: geminiDirectProfileSchema,
       required: true,
+      immutable: true,
+    },
+    openRouterActions: {
+      type: [openRouterActionProfileSchema],
+      required: false,
+      default: undefined,
+      validate: {
+        validator: (value: OpenRouterRoutingActionProfile[] | undefined) =>
+          value === undefined ||
+          (value.length === openRouterActions.length &&
+            new Set(value.map((entry) => entry.action)).size === openRouterActions.length),
+        message: "OpenRouter routing profiles require all authorized actions exactly once.",
+      },
       immutable: true,
     },
   },

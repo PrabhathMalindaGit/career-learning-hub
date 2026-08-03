@@ -28,7 +28,7 @@ import {
 } from "./aiProviderPreference.model.js";
 import {
   aiProviderIds,
-  isAi3CallableProvider,
+  isAi4CallableProvider,
   type AiExecutionState,
   type AiProviderId,
 } from "./aiProvider.types.js";
@@ -38,7 +38,13 @@ import {
   type SecurityAuditEvent,
 } from "./securityAuditEvent.model.js";
 import { GeminiProviderAdapter } from "./providers/gemini.provider.js";
+import { OpenRouterProviderAdapter } from "./providers/openRouter.provider.js";
 import { AiProviderError } from "./providers/provider.types.js";
+import {
+  compileOpenRouterActionProfiles,
+  getOpenRouterActionPlan,
+  getOpenRouterCatalogueStatus,
+} from "./openRouterCatalogue.service.js";
 
 const connectionResultSchema = z.object({
   status: z.literal("ok"),
@@ -99,10 +105,12 @@ function providerNotAvailable(): never {
   );
 }
 
-function requireGeminiCredentialProvider(
+function requireCredentialProvider(
   provider: AiExecutionState,
-): asserts provider is "gemini-direct" {
-  if (provider !== "gemini-direct") providerNotAvailable();
+): asserts provider is "gemini-direct" | "openrouter" {
+  if (provider !== "gemini-direct" && provider !== "openrouter") {
+    providerNotAvailable();
+  }
 }
 
 function serializeCredential(
@@ -316,9 +324,10 @@ export async function withAiIdempotency<T>(input: {
 }
 
 export async function listProviderSettings(userId: string) {
-  const [preference, credentials] = await Promise.all([
+  const [preference, credentials, openRouterStatus] = await Promise.all([
     AiProviderPreferenceModel.findOne({ userId }).lean(),
     AiCredentialModel.find({ userId, deletedAt: null }).lean(),
+    getOpenRouterCatalogueStatus(),
   ]);
   const byProvider = new Map(
     credentials.map((credential) => [credential.provider, credential]),
@@ -332,7 +341,9 @@ export async function listProviderSettings(userId: string) {
       const credential = byProvider.get(id);
       return {
         id,
-        available: id === "gemini-direct",
+        available:
+          id === "gemini-direct" ||
+          (id === "openrouter" && openRouterStatus.available),
         configured: Boolean(credential),
         ...(credential
           ? {
@@ -378,6 +389,7 @@ export async function getRoutingSettings(userId: string) {
           policyVersion: profile.policyVersion,
           status: profile.status,
           geminiDirect: profile.geminiDirect,
+          openRouterActions: profile.openRouterActions,
         }
       : null,
   };
@@ -391,7 +403,7 @@ export async function saveCredential(input: {
   expectedRevision?: number;
   audit?: AiAuditContext;
 }): Promise<{ created: boolean; credential: CredentialMetadata }> {
-  requireGeminiCredentialProvider(input.provider);
+  requireCredentialProvider(input.provider);
   const existing = await AiCredentialModel.findOne({
     userId: input.userId,
     provider: input.provider,
@@ -445,7 +457,9 @@ export async function saveCredential(input: {
         _id: credentialId,
         userId: input.userId,
         provider: input.provider,
-        label: input.label ?? "Gemini Direct",
+        label:
+          input.label ??
+          (input.provider === "openrouter" ? "OpenRouter" : "Gemini Direct"),
         maskedSuffix: maskCredentialSuffix(input.apiKey),
         secretVersion,
         state: "configured",
@@ -541,7 +555,7 @@ export async function testCredentialConnection(input: {
   credentialVersion: number;
   audit?: AiAuditContext;
 }): Promise<{ credential: CredentialMetadata }> {
-  requireGeminiCredentialProvider(input.provider);
+  requireCredentialProvider(input.provider);
   const credential = await AiCredentialModel.findOne({
     userId: input.userId,
     provider: input.provider,
@@ -591,7 +605,15 @@ export async function testCredentialConnection(input: {
   }
 
   try {
-    const adapter = new GeminiProviderAdapter();
+    const openRouterPlan = input.provider === "openrouter"
+      ? await getOpenRouterActionPlan({
+          action: "interview-question-explanation",
+          now: new Date(),
+        })
+      : undefined;
+    const adapter = input.provider === "openrouter"
+      ? new OpenRouterProviderAdapter()
+      : new GeminiProviderAdapter();
     const result = await adapter.generateStructured({
       systemPrompt: "This is a credential connection check.",
       userPrompt: 'Return exactly {"status":"ok"}.',
@@ -601,7 +623,13 @@ export async function testCredentialConnection(input: {
         required: ["status"],
         additionalProperties: false,
       },
-      model: env.GEMINI_MODEL,
+      ...(input.provider === "openrouter"
+        ? {
+            models: openRouterPlan!.modelIds,
+            maximumOutputTokens: 32,
+            timeoutMs: 15_000,
+          }
+        : { model: env.GEMINI_MODEL }),
       signal: new AbortController().signal,
       credential: { read: () => secret.toString("utf8") },
     });
@@ -684,7 +712,7 @@ export async function activateProvider(input: {
   expectedRevision: number;
   audit?: AiAuditContext;
 }) {
-  if (!isAi3CallableProvider(input.provider)) providerNotAvailable();
+  if (!isAi4CallableProvider(input.provider)) providerNotAvailable();
   if (!env.AI_ROUTING_FOUNDATION_ENABLED) {
     throw new AppError(
       409,
@@ -693,6 +721,19 @@ export async function activateProvider(input: {
     );
   }
   await ensureAiFoundation(input.userId);
+  let compiledOpenRouterActions:
+    Awaited<ReturnType<typeof compileOpenRouterActionProfiles>> | undefined;
+  if (input.provider === "openrouter") {
+    try {
+      compiledOpenRouterActions = await compileOpenRouterActionProfiles();
+    } catch {
+      throw new AppError(
+        409,
+        "provider_not_available",
+        "The selected AI provider is not available.",
+      );
+    }
+  }
 
   try {
     return await withMongoTransaction(async (session) => {
@@ -708,7 +749,7 @@ export async function activateProvider(input: {
         );
       }
 
-      const profile = await AiRoutingProfileModel.findOne({
+      let profile = await AiRoutingProfileModel.findOne({
         userId: input.userId,
         version: input.routingProfileVersion ?? preference.routingProfileVersion,
         status: "active",
@@ -720,6 +761,48 @@ export async function activateProvider(input: {
           "routing_configuration_invalid",
           "The selected AI routing profile is unavailable.",
         );
+      }
+
+      if (input.provider === "openrouter") {
+        const expectedCatalogueVersion = compiledOpenRouterActions?.[0]?.catalogueVersion;
+        const currentActions = profile.openRouterActions;
+        const canReuse = Boolean(
+          currentActions &&
+          compiledOpenRouterActions &&
+          currentActions.length === compiledOpenRouterActions.length &&
+          currentActions.every(
+            (entry, index) => {
+              const compiled = compiledOpenRouterActions[index];
+              return (
+                entry.action === compiled.action &&
+                entry.catalogueVersion === expectedCatalogueVersion &&
+                entry.rankingPolicyVersion === compiled.rankingPolicyVersion &&
+                entry.freeModelIds.length === compiled.freeModelIds.length &&
+                entry.freeModelIds.every(
+                  (modelId, modelIndex) =>
+                    modelId === compiled.freeModelIds[modelIndex],
+                )
+              );
+            },
+          ),
+        );
+        if (!canReuse) {
+          await AiRoutingProfileModel.updateOne(
+            { _id: profile._id, status: "active", activeMarker: "active" },
+            { $set: { status: "retired" }, $unset: { activeMarker: 1 } },
+            { session },
+          );
+          const [replacement] = await AiRoutingProfileModel.create([{
+            userId: profile.userId,
+            version: profile.version + 1,
+            status: "active",
+            activeMarker: "active",
+            policyVersion: profile.policyVersion,
+            geminiDirect: profile.toObject().geminiDirect,
+            openRouterActions: compiledOpenRouterActions,
+          }], { session });
+          profile = replacement;
+        }
       }
 
       let set: Record<string, unknown>;
@@ -742,7 +825,7 @@ export async function activateProvider(input: {
       } else if (input.credentialSource === "user-managed") {
         const credential = await AiCredentialModel.findOne({
           userId: input.userId,
-          provider: "gemini-direct",
+          provider: input.provider,
           state: "valid",
           connectionStatus: "valid",
           deletedAt: null,
@@ -756,7 +839,7 @@ export async function activateProvider(input: {
         }
         credentialSecretVersion = credential.secretVersion;
         set = {
-          activeProvider: "gemini-direct",
+          activeProvider: input.provider,
           credentialSource: "user-managed",
           activeCredentialId: credential._id,
           activeCredentialSecretVersion: credential.secretVersion,
@@ -767,6 +850,7 @@ export async function activateProvider(input: {
         unset.disabledReason = 1;
         action = "provider.activated";
       } else if (
+        input.provider === "gemini-direct" &&
         input.credentialSource === "administrator-managed" &&
         env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED &&
         env.GEMINI_API_KEY
@@ -860,7 +944,7 @@ export async function deleteCredential(input: {
   expectedRevision: number;
   audit?: AiAuditContext;
 }): Promise<{ pending: boolean }> {
-  requireGeminiCredentialProvider(input.provider);
+  requireCredentialProvider(input.provider);
   const live = await AiCredentialModel.findOne({
     userId: input.userId,
     provider: input.provider,

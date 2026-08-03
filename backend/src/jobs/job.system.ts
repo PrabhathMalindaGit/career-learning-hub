@@ -1,5 +1,9 @@
 import { env } from "../config/env.js";
 import { expireCredentialExecutionLeases } from "../modules/ai/aiRouting.service.js";
+import {
+  nextOpenRouterRefreshDelay,
+  refreshOpenRouterCatalogue,
+} from "../modules/ai/openRouterCatalogue.service.js";
 import { logger, serializeErrorForLog } from "../shared/logger.js";
 import { enqueueJob } from "./job.queue.js";
 import { registerInfrastructureJobHandlers } from "./job.handlers.js";
@@ -13,6 +17,8 @@ export async function initializeJobSystem(): Promise<JobSystemHandle> {
   registerInfrastructureJobHandlers();
 
   let worker: JobWorkerHandle | undefined;
+  let openRouterRefreshTimer: NodeJS.Timeout | undefined;
+  let stopping = false;
   if (env.JOB_WORKER_ENABLED) {
     worker = startJobWorker();
   }
@@ -41,10 +47,28 @@ export async function initializeJobSystem(): Promise<JobSystemHandle> {
     });
   }
 
+  async function refreshOpenRouterAndSchedule(): Promise<void> {
+    if (!env.AI_ROUTING_FOUNDATION_ENABLED || stopping) return;
+    await refreshOpenRouterCatalogue({
+      ownerId: `${env.JOB_WORKER_ID}:openrouter-catalogue`,
+    }).catch((error) => {
+      logger.error("ai.openrouter-catalogue-refresh.failed", {
+        ...serializeErrorForLog(error),
+      });
+    });
+    if (stopping) return;
+    openRouterRefreshTimer = setTimeout(
+      () => void refreshOpenRouterAndSchedule(),
+      nextOpenRouterRefreshDelay(),
+    );
+    openRouterRefreshTimer.unref();
+  }
+
   await Promise.all([
     enqueueAssetCleanup(),
     expireAiCredentialLeases(),
   ]);
+  void refreshOpenRouterAndSchedule();
 
   const maintenanceTimer = setInterval(
     () => void enqueueAssetCleanup(),
@@ -62,8 +86,10 @@ export async function initializeJobSystem(): Promise<JobSystemHandle> {
 
   return {
     async stop() {
+      stopping = true;
       clearInterval(maintenanceTimer);
       clearInterval(credentialLeaseTimer);
+      if (openRouterRefreshTimer) clearTimeout(openRouterRefreshTimer);
       await worker?.stop();
     },
   };

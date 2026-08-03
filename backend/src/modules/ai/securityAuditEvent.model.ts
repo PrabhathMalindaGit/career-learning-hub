@@ -13,6 +13,8 @@ export const securityAuditActions = [
   "routing.stale-rejected",
   "execution-lease.acquisition-failed",
   "execution-lease.release-failed",
+  "catalogue.refresh-requested",
+  "catalogue.refresh-completed",
 ] as const;
 
 export interface SecurityAuditEvent {

@@ -1,6 +1,7 @@
 export interface ProviderUsage {
   inputTokens: number;
   outputTokens: number;
+  totalTokens?: number;
 }
 
 export interface ProviderStructuredRequest {
@@ -8,6 +9,9 @@ export interface ProviderStructuredRequest {
   userPrompt: string;
   responseJsonSchema: Record<string, unknown>;
   model?: string;
+  models?: readonly string[];
+  maximumOutputTokens?: number;
+  timeoutMs?: number;
   signal: AbortSignal;
   credential?: ProviderCredentialHandle;
 }
@@ -20,6 +24,8 @@ export interface ProviderStructuredResponse {
   text: string;
   model: string;
   usage: ProviderUsage;
+  providerRequestId?: string;
+  finishReason?: string;
 }
 
 export interface AiProviderAdapter {

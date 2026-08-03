@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { aiExecutionStates } from "./aiProvider.types.js";
+import { openRouterActions } from "./openRouterCatalogue.js";
 
 export const aiProviderParamsSchema = z.object({
   provider: z.enum(aiExecutionStates),
@@ -26,3 +27,12 @@ export const activationBodySchema = z.object({
 }).strict();
 
 export const emptyAiMutationBodySchema = z.object({}).strict().default({});
+
+export const aiModelsQuerySchema = z.object({
+  provider: z.literal("openrouter"),
+  action: z.enum(openRouterActions),
+}).strict();
+
+export const aiModelsRefreshBodySchema = z.object({
+  provider: z.literal("openrouter"),
+}).strict();

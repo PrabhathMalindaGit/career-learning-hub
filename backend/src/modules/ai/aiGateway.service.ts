@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createHash } from "node:crypto";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
 import { logger, serializeErrorForLog } from "../../shared/logger.js";
@@ -11,6 +12,7 @@ import {
   reserveAiQuota,
 } from "./aiQuota.service.js";
 import { GeminiProviderAdapter } from "./providers/gemini.provider.js";
+import { OpenRouterProviderAdapter } from "./providers/openRouter.provider.js";
 import {
   AiProviderError,
   type AiProviderAdapter,
@@ -19,6 +21,7 @@ import { authorizeAiJobExecution } from "./aiRouting.service.js";
 
 const providers: Record<string, AiProviderAdapter> = {
   gemini: new GeminiProviderAdapter(),
+  openrouter: new OpenRouterProviderAdapter(),
 };
 
 async function delay(milliseconds: number): Promise<void> {
@@ -27,6 +30,7 @@ async function delay(milliseconds: number): Promise<void> {
 
 async function executeWithRetry<T>(
   operation: (signal: AbortSignal) => Promise<T>,
+  timeoutMs = env.AI_REQUEST_TIMEOUT_MS,
 ): Promise<T> {
   let lastError: unknown;
 
@@ -34,7 +38,7 @@ async function executeWithRetry<T>(
     const controller = new AbortController();
     const timeout = setTimeout(
       () => controller.abort(),
-      env.AI_REQUEST_TIMEOUT_MS,
+      timeoutMs,
     );
 
     try {
@@ -80,7 +84,9 @@ export async function generateStructuredOutput<
       : undefined;
 
   try {
-  const providerName = input.provider ?? env.AI_DEFAULT_PROVIDER;
+  const providerName = routingAuthorization?.snapshot.provider === "openrouter"
+    ? "openrouter"
+    : input.provider ?? env.AI_DEFAULT_PROVIDER;
   const provider = providers[providerName];
 
   if (!provider) {
@@ -103,6 +109,7 @@ export async function generateStructuredOutput<
   const startedAt = Date.now();
   let model =
     routingAuthorization?.snapshot.directModelId ??
+    routingAuthorization?.snapshot.freeModelIds?.[0] ??
     input.model ??
     env.GEMINI_MODEL;
   let actualInputTokens = 0;
@@ -117,10 +124,14 @@ export async function generateStructuredOutput<
         userPrompt: input.userPrompt,
         responseJsonSchema,
         model: routingAuthorization?.snapshot.directModelId ?? input.model,
+        models: routingAuthorization?.snapshot.freeModelIds,
+        maximumOutputTokens:
+          routingAuthorization?.snapshot.maximumOutputTokens,
+        timeoutMs: routingAuthorization?.snapshot.totalMs,
         signal,
         credential: routingAuthorization?.credential,
       });
-    });
+    }, routingAuthorization?.snapshot.totalMs);
 
     model = result.model;
     actualInputTokens = result.usage.inputTokens;
@@ -151,6 +162,28 @@ export async function generateStructuredOutput<
         metadata: {
           ...input.metadata,
           gatewayAttempts,
+          ...(routingAuthorization?.snapshot.provider === "openrouter"
+            ? {
+                plannedModelListHash: createHash("sha256")
+                  .update(routingAuthorization.snapshot.freeModelIds!.join("\n"))
+                  .digest("hex"),
+                actualModel: result.model,
+                freeTier: true,
+                catalogueVersion: routingAuthorization.snapshot.catalogueVersion,
+                routingProfileVersion:
+                  routingAuthorization.snapshot.routingProfileVersion,
+                rankingPolicyVersion:
+                  routingAuthorization.snapshot.rankingPolicyVersion,
+                providerRequestId: result.providerRequestId,
+                finishReason: result.finishReason,
+                totalTokens:
+                  result.usage.totalTokens ??
+                  result.usage.inputTokens + result.usage.outputTokens,
+                workerAttempt: routingAuthorization.workerAttempt,
+                fallbackWithinFreeModels:
+                  routingAuthorization.snapshot.freeModelIds!.indexOf(result.model),
+              }
+            : {}),
         },
       }),
     ]);
@@ -186,6 +219,20 @@ export async function generateStructuredOutput<
         metadata: {
           ...input.metadata,
           gatewayAttempts,
+          ...(routingAuthorization?.snapshot.provider === "openrouter"
+            ? {
+                plannedModelListHash: createHash("sha256")
+                  .update(routingAuthorization.snapshot.freeModelIds!.join("\n"))
+                  .digest("hex"),
+                freeTier: true,
+                catalogueVersion: routingAuthorization.snapshot.catalogueVersion,
+                routingProfileVersion:
+                  routingAuthorization.snapshot.routingProfileVersion,
+                rankingPolicyVersion:
+                  routingAuthorization.snapshot.rankingPolicyVersion,
+                workerAttempt: routingAuthorization.workerAttempt,
+              }
+            : {}),
         },
       }),
     ]).catch((loggingError: unknown) => {
