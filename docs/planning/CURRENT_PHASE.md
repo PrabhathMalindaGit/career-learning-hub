@@ -3,7 +3,7 @@
 - Phase: G-5
 - Name: Gemini-only Settings and Credential Integration
 - Prompt ID: `CLH-G-5-GEMINI-SETTINGS-CREDENTIAL-INTEGRATION`
-- Status: `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED / PR #2 DRAFT / MERGE AND STAGING DEPLOYMENT PENDING`
+- Status: `COMPLETED / MERGED / STAGING DEPLOYED / CLOUD SMOKE TEST PASSED`
 - Branch: `feature/multi-provider-ai-routing`
 - Starting commit: `8e6ba33de1aa6b49ac2cf78133c1b683823ff481`
 - Starting subject: `Harden Gemini job resilience and progress delivery`
@@ -24,7 +24,7 @@
 - G-5 human review:
   `LOCAL GEMINI SETTINGS, PERSONAL CREDENTIAL SAVE/TEST, RESPONSIVE LAYOUT, AND SECRET-SAFETY REVIEW APPROVED`
 - G-5 release status:
-  `PR #2 DRAFT; NOT MERGED; RENDER AND VERCEL MAIN-BRANCH DEPLOYMENT PENDING`
+  `PR #2 MERGED AS 8418f53; RENDER BACKEND LIVE; VERCEL FRONTEND LIVE; CLOUD SMOKE TEST PASSED`
 - Baseline report: `docs/planning/PHASE_AI_1_GEMINI_BASELINE.md`
 - AI-2 architecture:
   `docs/architecture/MULTI_PROVIDER_AI_ARCHITECTURE.md`
