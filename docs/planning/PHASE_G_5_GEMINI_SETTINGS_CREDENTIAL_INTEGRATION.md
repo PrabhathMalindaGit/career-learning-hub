@@ -128,5 +128,30 @@ Final verified results:
 - GitHub PR #2 remains draft and unmerged.
 - Render staging variables required by G-5 have been configured separately
   from Git.
-- Main-branch Render and Vercel deployment verification remains pending until
-  PR #2 is merged.
+- Main-branch Render and Vercel deployment verification completed after PR #2
+  merged as `8418f53dd1ab520d6383018a7366a57ef94b46e4`.
+
+## Staging deployment closeout
+
+Final staging verification completed on 2026-08-06:
+
+- GitHub PR #2 was merged into `main`.
+- Merge commit: `8418f53dd1ab520d6383018a7366a57ef94b46e4`.
+- Render backend deployment completed successfully.
+- Vercel frontend production deployment completed successfully.
+- The Vercel staging origin was added to Render `CLIENT_ORIGINS`.
+- `JOB_WORKER_ENABLED=true` was applied so queued Resume and Learning jobs run.
+- Account registration and authenticated access were verified.
+- Personal Gemini credential save, encryption, masking, and connection testing
+  were verified in the deployed application.
+- Learning PDF upload and background processing were verified.
+- Resume PDF import and background processing were verified.
+- Gemini-backed workflows completed successfully using the fixed
+  `gemini-3.6-flash` model.
+- OpenRouter remained unavailable in the active Settings UI and runtime path.
+- MongoDB Atlas connectivity and persisted application records were verified.
+- Render currently uses `ASSET_STORAGE_DRIVER=local`. This is accepted only as
+  a staging limitation because local uploaded files may not survive service
+  restarts, redeployments, or instance replacement.
+- Persistent S3-compatible private file storage remains future deployment work.
+- Phase 19 remains planned and inactive pending separate authorization.
