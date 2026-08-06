@@ -6,9 +6,9 @@
 - Starting commit: `8e6ba33de1aa6b49ac2cf78133c1b683823ff481`
 - Starting subject: `Harden Gemini job resilience and progress delivery`
 - Authorization: approved by the G-5 implementation prompt on 2026-08-06
-- Status: implemented; final backend/security, browser, live, and human review
-  gates blocked by unavailable local-listener escalation
-- Proposed future commit subject: `Add secure Gemini credential settings`
+- Status: completed and human-approved locally; pull-request merge and
+  staging deployment verification remain pending
+- Implementation commit: `c7b3a0979783e4a8dff3ba27f4ccb82627d7d0c7`
 
 G-5 releases only Gemini Direct with fixed model `gemini-3.6-flash`. It does
 not activate OpenRouter, provider/model selection, fallback, streaming, SSE,
@@ -69,7 +69,7 @@ WebSockets, deployment, Phase 19, or any Git publication action.
   Settings verification. Controlled live verification uses at most three
   synthetic Gemini operations and leaves no temporary records.
 
-## Verification record
+## Initial Codex verification record
 
 Executed on 2026-08-06:
 
@@ -100,3 +100,33 @@ Executed on 2026-08-06:
 
 No browser, live, security-suite, or complete-backend success is inferred from
 these partial results. Human review remains pending.
+
+## Final local verification closeout
+
+The initial Codex sandbox listener restriction was superseded by successful
+execution on the developer workstation.
+
+Final verified results:
+
+- Complete backend suite: 34 files and 389 tests passed.
+- Security suite: 4 files and 36 tests passed.
+- Frontend suite: 56 files and 758 tests passed.
+- Workspace typecheck: passed.
+- Backend test typecheck: passed.
+- Production build: passed.
+- `git diff --check`: passed.
+- Focused Gemini Settings desktop and responsive review: passed.
+- Personal Gemini credential save, encryption, masking, and stored-connection
+  test: passed.
+- Failed candidate replacement preserved the existing valid credential.
+- No plaintext Gemini credential was found in browser storage, URLs, Git, or
+  API responses.
+- OpenRouter remained unavailable in the active Settings UI and runtime path.
+- Human visual approval was granted.
+- Implementation commit:
+  `c7b3a0979783e4a8dff3ba27f4ccb82627d7d0c7`.
+- GitHub PR #2 remains draft and unmerged.
+- Render staging variables required by G-5 have been configured separately
+  from Git.
+- Main-branch Render and Vercel deployment verification remains pending until
+  PR #2 is merged.
