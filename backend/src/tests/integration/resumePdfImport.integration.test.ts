@@ -302,7 +302,7 @@ describe("Resume PDF import persistence", () => {
         title: "Transient failure",
       }),
     ).rejects.toMatchObject({ code: "UNAVAILABLE", retryable: true });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(0);
     await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(0);
   });

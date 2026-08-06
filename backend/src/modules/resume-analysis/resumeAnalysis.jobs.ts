@@ -23,6 +23,7 @@ export function registerResumeAnalysisJobHandlers(): void {
       const result = await importResumePdf({
         ...payload,
         jobId: context.jobId,
+        execution: context,
       });
       await context.reportProgress(100);
       return result;
@@ -44,6 +45,7 @@ export function registerResumeAnalysisJobHandlers(): void {
       const analysis = await analyzeResume({
         ...payload,
         jobId: context.jobId,
+        execution: context,
       });
       await context.reportProgress(100);
 

@@ -8,6 +8,12 @@ import { useBlocker, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { Dialog } from "../../components/Dialog";
+import { JobResilienceActions } from "../jobs/JobResilienceActions";
+import {
+  cancelJob,
+  normalizeSafeJob,
+  retryJob,
+} from "../jobs/jobResilience";
 import { AiRecommendations } from "./AiRecommendations";
 import {
   ResumeDesignControls,
@@ -207,6 +213,9 @@ export function ResumeWorkspace() {
   const snapshotControllerRef = useRef<AbortController | undefined>(
     undefined,
   );
+  const analysisControllerRef = useRef<AbortController | undefined>(
+    undefined,
+  );
   const designMutationRef = useRef(false);
   const saveMutationRef = useRef(false);
   const keepEditingButtonRef = useRef<HTMLButtonElement>(null);
@@ -243,6 +252,7 @@ export function ResumeWorkspace() {
 
   useEffect(() => {
     snapshotControllerRef.current?.abort();
+    analysisControllerRef.current?.abort();
     snapshotControllerRef.current = undefined;
     setSaving(false);
     saveMutationRef.current = false;
@@ -413,6 +423,41 @@ export function ResumeWorkspace() {
     }
   }
 
+  async function cancelAnalysis(signal: AbortSignal): Promise<void> {
+    if (!analysisJob) return;
+    const cancelled = await cancelJob(analysisJob.id, signal);
+    if (signal.aborted) return;
+    if (cancelled.id !== analysisJob.id || cancelled.type !== "resume.analyze") {
+      throw new ApiError(502, "INVALID_RESUME_JOB", "The server returned a mismatched resume job.");
+    }
+    if (cancelled.status !== "cancelled") {
+      setAnalysisJob({ ...analysisJob, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt });
+      return;
+    }
+    analysisControllerRef.current?.abort();
+    setAnalysisBusy(false);
+    setAnalysisJob({
+      ...analysisJob,
+      status: "cancelled",
+      phase: cancelled.phase,
+      phaseSequence: cancelled.phaseSequence,
+      canRetry: cancelled.canRetry,
+      updatedAt: cancelled.updatedAt,
+    });
+    setNotice({ tone: "warning", message: "The assessment job was cancelled." });
+  }
+
+  async function retryAnalysis(signal: AbortSignal): Promise<void> {
+    if (!analysisJob) return;
+    const retried = await retryJob(analysisJob.id, signal);
+    if (signal.aborted) return;
+    if (retried.type !== "resume.analyze") {
+      throw new ApiError(502, "INVALID_RESUME_JOB", "The server returned a mismatched resume job.");
+    }
+    setAnalysisJobId(retried.id);
+    await completeAnalysisPolling(retried.id);
+  }
+
   async function handleViewVersion(version: ResumeVersionMetadata) {
     if (!resumeId) return;
     snapshotControllerRef.current?.abort();
@@ -568,6 +613,8 @@ export function ResumeWorkspace() {
     if (!resumeId || !workspace) return;
     const expectedVersionId = workspace.version.id;
     const controller = beginOperation();
+    analysisControllerRef.current?.abort();
+    analysisControllerRef.current = controller;
     setAnalysisBusy(true);
     setNotice({
       tone: "info",
@@ -660,6 +707,9 @@ export function ResumeWorkspace() {
         );
       }
     } finally {
+      if (analysisControllerRef.current === controller) {
+        analysisControllerRef.current = undefined;
+      }
       finishOperation(controller);
       setAnalysisBusy(false);
     }
@@ -1004,9 +1054,14 @@ export function ResumeWorkspace() {
             </p>
           ) : null}
           {analysisJob ? (
-            <p className="resume-job-status" aria-live="polite">
-              Job status: {analysisJob.status} · {analysisJob.progress}%
-            </p>
+            <div className="resume-job-status">
+              <span>{analysisJob.progress}% checked</span>
+              <JobResilienceActions
+                job={normalizeSafeJob(analysisJob)}
+                onCancel={cancelAnalysis}
+                onRetry={retryAnalysis}
+              />
+            </div>
           ) : null}
           <div className="resume-button-row">
             <button

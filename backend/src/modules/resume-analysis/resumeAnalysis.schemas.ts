@@ -12,11 +12,15 @@ const parsedOptionalNonEmptyText = (maximum: number) =>
   );
 
 export const importPdfBodySchema = z
-  .object({ title: z.string().trim().min(1).max(120) })
+  .object({
+    requestId: z.string().uuid(),
+    title: z.string().trim().min(1).max(120),
+  })
   .strict();
 
 export const analyzeResumeBodySchema = z
   .object({
+    requestId: z.string().uuid(),
     versionId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
     targetRole: z.string().trim().min(2).max(200),
     company: z.string().trim().max(200).optional(),

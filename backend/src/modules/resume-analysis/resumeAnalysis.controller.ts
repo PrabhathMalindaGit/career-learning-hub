@@ -2,8 +2,9 @@ import type { Request, Response } from "express";
 import multer from "multer";
 import { env } from "../../config/env.js";
 import { enqueueJob } from "../../jobs/job.queue.js";
+import { JobRecordModel } from "../../jobs/job.model.js";
 import { AppError } from "../../shared/appError.js";
-import { createAsset } from "../assets/asset.service.js";
+import { createAsset, deleteOwnedAsset } from "../assets/asset.service.js";
 import {
   getOwnedResumeVersion,
   requireOwnedResume,
@@ -34,6 +35,33 @@ export async function importPdfController(
     );
   }
 
+  const idempotencyKey = [
+    "resume.import-pdf",
+    request.auth!.userId,
+    request.body.requestId,
+  ].join(":");
+  const existing = await JobRecordModel.findOne({
+    userId: request.auth!.userId,
+    idempotencyKey,
+  }).lean();
+  if (existing) {
+    const payload = existing.payload as { assetId?: unknown };
+    response.status(202).json({
+      success: true,
+      data: {
+        ...(typeof payload.assetId === "string"
+          ? { assetId: payload.assetId }
+          : {}),
+        job: {
+          id: existing._id.toString(),
+          type: existing.type,
+          status: existing.status,
+        },
+      },
+    });
+    return;
+  }
+
   const asset = await createAsset({
     userId: request.auth!.userId,
     purpose: "resume-import",
@@ -51,12 +79,22 @@ export async function importPdfController(
       title: request.body.title,
     },
     maxAttempts: env.RESUME_ANALYSIS_JOB_MAX_ATTEMPTS,
+    idempotencyKey,
   });
+
+  const winningPayload = job.payload as { assetId?: unknown };
+  const winningAssetId =
+    typeof winningPayload.assetId === "string"
+      ? winningPayload.assetId
+      : asset._id.toString();
+  if (winningAssetId !== asset._id.toString()) {
+    await deleteOwnedAsset(request.auth!.userId, asset._id.toString());
+  }
 
   response.status(202).json({
     success: true,
     data: {
-      assetId: asset._id.toString(),
+      assetId: winningAssetId,
       job: {
         id: job._id.toString(),
         type: job.type,
@@ -104,6 +142,12 @@ export async function queueAnalysisController(
       jobDescription: request.body.jobDescription,
     },
     maxAttempts: env.RESUME_ANALYSIS_JOB_MAX_ATTEMPTS,
+    idempotencyKey: [
+      "resume.analyze",
+      request.auth!.userId,
+      request.params.resumeId,
+      request.body.requestId,
+    ].join(":"),
   });
 
   response.status(202).json({

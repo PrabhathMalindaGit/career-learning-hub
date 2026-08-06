@@ -567,3 +567,44 @@
     execution-lease, and cost-reservation invariants.
   - Human review changes the administrator-managed credential policy, paid
     ceilings, retention policy, or AI-3 boundary.
+
+## DEC-019: Use progress-only polling for durable Gemini workflows
+
+- Decision ID: `DEC-019`
+- Date: 2026-08-06
+- Status: ACCEPTED
+- Decision:
+  - Every durable AI workflow delivers only safe job phases through the
+    existing authenticated owned-job polling route.
+  - Cancellation is accepted only before the execution atomically enters
+    `persisting`; Retry creates a new owned, idempotent, linked job and never
+    revives a terminal job.
+  - The durable worker is the only retry owner. One worker attempt makes at
+    most one Gemini provider attempt.
+  - Final structured results remain fully buffered, strictly validated,
+    execution-fenced, and atomically persisted.
+  - Token streaming, SSE, and WebSockets are intentionally not implemented.
+  - Gemini Direct remains the only active G-4 provider. OpenRouter remains
+    disabled with no fallback.
+- Rationale:
+  - Token streaming would complicate citation validation, cancellation races,
+    duplicate suppression, and the guarantee that users see only an atomic
+    validated final result.
+  - Progress-only polling preserves the existing authentication, ownership,
+    request-ID, error-normalization, and bounded cleanup architecture.
+  - A database execution fence plus active abort propagation protects
+    cancellation, lease-loss, timeout, and late-provider-response races across
+    worker instances.
+- Consequences:
+  - Public progress is limited to the allowlisted phases documented in the
+    approved G-4 design; provider bodies, provisional tokens, prompts, routing
+    snapshots, credentials, and execution internals remain private.
+  - Polling is bounded and single-flight per mounted workflow, and navigation,
+    unmount, replacement, cancellation, and terminal state stop timers and
+    in-flight requests.
+  - Existing future streaming sections in the multi-provider roadmap are not
+    active implementation authority for G-4.
+- Revisit conditions:
+  - A separately approved design proves citation-safe incremental validation,
+    durable cancellation linearization, duplicate suppression, privacy, and
+    browser cleanup without weakening atomic final-result guarantees.

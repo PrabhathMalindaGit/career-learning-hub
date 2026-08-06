@@ -8,6 +8,12 @@ import {
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
+import { JobResilienceActions } from "../jobs/JobResilienceActions";
+import {
+  cancelJob,
+  normalizeSafeJob,
+  retryJob,
+} from "../jobs/jobResilience";
 import {
   addManualQuestion,
   fetchInterviewAttempt,
@@ -922,6 +928,76 @@ export function InterviewSessionWorkspace() {
     }
   }
 
+  async function cancelActiveJob(signal: AbortSignal): Promise<void> {
+    if (!activeJob || !("progress" in activeJob.job)) return;
+    const current = activeJob;
+    const cancelled = await cancelJob(current.job.id, signal);
+    if (signal.aborted) return;
+    if (cancelled.id !== current.job.id || cancelled.type !== current.job.type) {
+      throw new ApiError(502, "INVALID_INTERVIEW_JOB", "The server returned a mismatched interview job.");
+    }
+    if (cancelled.status !== "cancelled") {
+      setActiveJob({ ...current, job: { ...current.job, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt } });
+      return;
+    }
+    providerOperation.current?.controller.abort();
+    providerOperation.current = null;
+    setProviderBusy(false);
+    setActiveJob({
+      ...current,
+      paused: false,
+      job: {
+        ...current.job,
+        status: "cancelled",
+        phase: cancelled.phase,
+        phaseSequence: cancelled.phaseSequence,
+        canRetry: cancelled.canRetry,
+        updatedAt: cancelled.updatedAt,
+      },
+    });
+  }
+
+  async function retryActiveJob(signal: AbortSignal): Promise<void> {
+    if (!activeJob || !("progress" in activeJob.job)) return;
+    const current = activeJob;
+    const retried = await retryJob(current.job.id, signal);
+    if (signal.aborted) return;
+    if (retried.type !== current.job.type) {
+      throw new ApiError(502, "INVALID_INTERVIEW_JOB", "The server returned a mismatched interview job.");
+    }
+    const controller = makeController(
+      current.scope === "generation"
+        ? "route"
+        : current.scope === "explanation"
+          ? "question"
+          : "attempt",
+    );
+    const operation = beginProviderOperation(current.scope, controller);
+    const accepted = {
+      id: retried.id,
+      type: current.job.type,
+      status: "queued" as const,
+    };
+    setActiveJob({ ...current, paused: false, job: accepted });
+    setProviderBusy(true);
+    try {
+      await pollAcceptedJob(
+        current.scope,
+        accepted,
+        controller,
+        operation,
+        current.resourceId,
+        current.questionId,
+      );
+    } finally {
+      releaseController(controller);
+      if (providerOperation.current === operation) {
+        providerOperation.current = null;
+        setProviderBusy(false);
+      }
+    }
+  }
+
   async function changeStatus(status: "completed" | "archived") {
     if (statusBusy) return;
     const controller = makeController();
@@ -1633,11 +1709,18 @@ export function InterviewSessionWorkspace() {
               : activeJob.job.status.replace("-", " ")}
           </span>
           {"progress" in activeJob.job ? (
-            <progress
-              max={100}
-              value={activeJob.job.progress}
-              aria-label={`${activeJob.job.progress}% complete`}
-            />
+            <>
+              <progress
+                max={100}
+                value={activeJob.job.progress}
+                aria-label={`${activeJob.job.progress}% complete`}
+              />
+              <JobResilienceActions
+                job={normalizeSafeJob(activeJob.job)}
+                onCancel={cancelActiveJob}
+                onRetry={retryActiveJob}
+              />
+            </>
           ) : null}
           {activeJob.paused ? (
             <button

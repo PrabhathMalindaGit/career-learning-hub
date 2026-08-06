@@ -5,6 +5,7 @@ import {
   type AiRoutingSnapshot,
 } from "../modules/ai/aiRoutingSnapshot.js";
 import { aiExecutionStates } from "../modules/ai/aiProvider.types.js";
+import { aiProviderFailureClassifications } from "../modules/ai/providers/provider.types.js";
 
 export type JobStatus =
   | "queued"
@@ -12,6 +13,28 @@ export type JobStatus =
   | "completed"
   | "failed"
   | "cancelled";
+
+export const jobPhases = [
+  "queued",
+  "preparing",
+  "contacting_provider",
+  "waiting_for_first_response",
+  "receiving_response",
+  "validating",
+  "persisting",
+  "retry_scheduled",
+  "completed",
+  "failed",
+  "cancelled",
+] as const;
+
+export type JobPhase = (typeof jobPhases)[number];
+
+export interface JobExecutionIdentity {
+  jobId: string;
+  executionId: string;
+  attempt: number;
+}
 
 export interface JobRecord {
   _id: Types.ObjectId;
@@ -27,16 +50,30 @@ export interface JobRecord {
   lockExpiresAt?: Date;
   lockedBy?: string;
   progress: number;
+  phase: JobPhase;
+  phaseSequence: number;
+  executionId?: string;
   result?: unknown;
   error?: {
     code: string;
     message: string;
-    stack?: string;
+    classification?: (typeof aiProviderFailureClassifications)[number];
+    retryable?: boolean;
+    timeoutPhase?:
+      | "connection"
+      | "first_response"
+      | "idle"
+      | "total"
+      | "job_attempt";
   };
   idempotencyKey?: string;
+  retryOfJobId?: Types.ObjectId;
+  rootJobId?: Types.ObjectId;
   aiRoutingSnapshot?: AiRoutingSnapshot;
   completedAt?: Date;
   failedAt?: Date;
+  cancelledAt?: Date;
+  cancellationReason?: "user_requested" | "work_invalidated";
   expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -137,6 +174,22 @@ const jobRecordSchema = new Schema<JobRecord>(
       max: 100,
       default: 0,
     },
+    phase: {
+      type: String,
+      enum: jobPhases,
+      default: "queued",
+      required: true,
+    },
+    phaseSequence: {
+      type: Number,
+      min: 0,
+      default: 0,
+      required: true,
+    },
+    executionId: {
+      type: String,
+      maxlength: 36,
+    },
     result: Schema.Types.Mixed,
     error: {
       code: {
@@ -147,14 +200,35 @@ const jobRecordSchema = new Schema<JobRecord>(
         type: String,
         maxlength: 2_000,
       },
-      stack: {
+      classification: {
         type: String,
-        maxlength: 8_000,
+        enum: aiProviderFailureClassifications,
+      },
+      retryable: Boolean,
+      timeoutPhase: {
+        type: String,
+        enum: [
+          "connection",
+          "first_response",
+          "idle",
+          "total",
+          "job_attempt",
+        ],
       },
     },
     idempotencyKey: {
       type: String,
       maxlength: 255,
+    },
+    retryOfJobId: {
+      type: Schema.Types.ObjectId,
+      ref: "JobRecord",
+      index: true,
+    },
+    rootJobId: {
+      type: Schema.Types.ObjectId,
+      ref: "JobRecord",
+      index: true,
     },
     aiRoutingSnapshot: {
       type: aiRoutingSnapshotMongooseSchema,
@@ -163,6 +237,11 @@ const jobRecordSchema = new Schema<JobRecord>(
     },
     completedAt: Date,
     failedAt: Date,
+    cancelledAt: Date,
+    cancellationReason: {
+      type: String,
+      enum: ["user_requested", "work_invalidated"],
+    },
     expiresAt: Date,
   },
   {

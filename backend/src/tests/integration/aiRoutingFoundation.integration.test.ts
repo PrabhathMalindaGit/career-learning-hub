@@ -276,7 +276,9 @@ describe("AI routing foundation", () => {
       {
         $set: {
           status: "processing",
+          phase: "preparing",
           attempts: 1,
+          executionId: randomUUID(),
           lockedBy: env.JOB_WORKER_ID,
           lockedAt: new Date(),
           lockExpiresAt: new Date(Date.now() + 60_000),

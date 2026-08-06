@@ -168,6 +168,15 @@ structured Zod validation, and usage-event logging.
 - `POST /api/v1/jobs/infrastructure-test` — development only
 - `GET /api/v1/jobs/:jobId`
 - `DELETE /api/v1/jobs/:jobId` — cancels an owned queued job
+- `POST /api/v1/jobs/:jobId/cancel` — cancels owned queued or pre-persistence
+  processing work and returns the safe terminal job
+- `POST /api/v1/jobs/:jobId/retry` — creates or returns one owned idempotent
+  linked retry job for an eligible failed or cancelled AI job
+
+Owned job responses expose only allowlisted status, safe phase, progress,
+attempt counts, retry eligibility/lineage, validated final result, normalized
+safe error fields, and timestamps. Token streaming, SSE, and WebSockets are not
+part of the job transport.
 
 ## Production notes
 

@@ -16,6 +16,7 @@ import { OpenRouterProviderAdapter } from "./providers/openRouter.provider.js";
 import {
   AiProviderError,
   type AiProviderAdapter,
+  type ProviderProgressPhase,
 } from "./providers/provider.types.js";
 import { authorizeAiJobExecution } from "./aiRouting.service.js";
 
@@ -23,47 +24,6 @@ const providers: Record<string, AiProviderAdapter> = {
   gemini: new GeminiProviderAdapter(),
   openrouter: new OpenRouterProviderAdapter(),
 };
-
-async function delay(milliseconds: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
-async function executeWithRetry<T>(
-  operation: (signal: AbortSignal) => Promise<T>,
-  timeoutMs = env.AI_REQUEST_TIMEOUT_MS,
-): Promise<T> {
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt <= env.AI_MAX_RETRIES; attempt += 1) {
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      timeoutMs,
-    );
-
-    try {
-      return await operation(controller.signal);
-    } catch (error) {
-      lastError = error;
-      const retryable =
-        error instanceof AiProviderError && error.retryable;
-
-      if (!retryable || attempt >= env.AI_MAX_RETRIES) {
-        throw error;
-      }
-
-      const backoff = Math.min(
-        5_000,
-        250 * 2 ** attempt + Math.floor(Math.random() * 200),
-      );
-      await delay(backoff);
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-
-  throw lastError;
-}
 
 export async function generateStructuredOutput<
   TSchema extends z.ZodTypeAny,
@@ -77,6 +37,10 @@ export async function generateStructuredOutput<
   model?: string;
   jobId?: string;
   metadata?: Record<string, unknown>;
+  signal?: AbortSignal;
+  reportPhase?(
+    phase: ProviderProgressPhase | "validating",
+  ): void | Promise<void>;
 }): Promise<z.output<TSchema>> {
   const routingAuthorization =
     env.AI_ROUTING_FOUNDATION_ENABLED && input.jobId
@@ -114,12 +78,11 @@ export async function generateStructuredOutput<
     env.GEMINI_MODEL;
   let actualInputTokens = 0;
   let actualOutputTokens = 0;
-  let gatewayAttempts = 0;
+  const providerAttempt = 1;
 
   try {
-    const result = await executeWithRetry((signal) => {
-      gatewayAttempts += 1;
-      return provider.generateStructured({
+    await input.reportPhase?.("contacting_provider");
+    const result = await provider.generateStructured({
         systemPrompt: input.systemPrompt,
         userPrompt: input.userPrompt,
         responseJsonSchema,
@@ -127,15 +90,34 @@ export async function generateStructuredOutput<
         models: routingAuthorization?.snapshot.freeModelIds,
         maximumOutputTokens:
           routingAuthorization?.snapshot.maximumOutputTokens,
-        timeoutMs: routingAuthorization?.snapshot.totalMs,
-        signal,
+        timeoutMs:
+          routingAuthorization?.snapshot.totalMs ??
+          env.GEMINI_TOTAL_TIMEOUT_MS,
+        timeouts: {
+          connectMs: Math.min(
+            env.GEMINI_CONNECT_TIMEOUT_MS,
+            routingAuthorization?.snapshot.totalMs ??
+              env.GEMINI_TOTAL_TIMEOUT_MS,
+          ),
+          firstResponseMs:
+            routingAuthorization?.snapshot.ttftMs ??
+            env.GEMINI_FIRST_RESPONSE_TIMEOUT_MS,
+          idleMs:
+            routingAuthorization?.snapshot.streamIdleMs ??
+            env.GEMINI_IDLE_TIMEOUT_MS,
+          totalMs:
+            routingAuthorization?.snapshot.totalMs ??
+            env.GEMINI_TOTAL_TIMEOUT_MS,
+        },
+        signal: input.signal ?? new AbortController().signal,
+        onPhase: input.reportPhase,
         credential: routingAuthorization?.credential,
       });
-    }, routingAuthorization?.snapshot.totalMs);
 
     model = result.model;
     actualInputTokens = result.usage.inputTokens;
     actualOutputTokens = result.usage.outputTokens;
+    await input.reportPhase?.("validating");
     const parsed = validateStructuredAiOutput(
       result.text,
       input.schema,
@@ -161,7 +143,7 @@ export async function generateStructuredOutput<
         jobId: input.jobId,
         metadata: {
           ...input.metadata,
-          gatewayAttempts,
+          providerAttempt,
           ...(routingAuthorization?.snapshot.provider === "openrouter"
             ? {
                 plannedModelListHash: createHash("sha256")
@@ -218,7 +200,16 @@ export async function generateStructuredOutput<
         jobId: input.jobId,
         metadata: {
           ...input.metadata,
-          gatewayAttempts,
+          providerAttempt,
+          ...(error instanceof AiProviderError
+            ? {
+                classification: error.classification,
+                retryable: error.retryable,
+                ...(error.timeoutPhase
+                  ? { timeoutPhase: error.timeoutPhase }
+                  : {}),
+              }
+            : {}),
           ...(routingAuthorization?.snapshot.provider === "openrouter"
             ? {
                 plannedModelListHash: createHash("sha256")
@@ -250,6 +241,8 @@ export async function generateStructuredOutput<
         error.message,
         undefined,
         error.retryable,
+        error.classification,
+        error.timeoutPhase,
       );
     }
 

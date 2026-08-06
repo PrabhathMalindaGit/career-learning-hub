@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { Types } from "mongoose";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { failOrRetryJob } from "../../jobs/job.queue.js";
+import { z } from "zod";
+import { failOrRetryJob, retryOwnedJob } from "../../jobs/job.queue.js";
 import { JobRecordModel } from "../../jobs/job.model.js";
 import {
   attachFlashcardJob,
@@ -36,6 +37,15 @@ function mockGemini(value: unknown) {
   );
 }
 
+function executionLifecycle() {
+  return {
+    signal: new AbortController().signal,
+    reportPhase: vi.fn().mockResolvedValue(undefined),
+    assertActive: vi.fn().mockResolvedValue(undefined),
+    beginPersistence: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
 describe("AI retry classification and provider-to-persistence", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -47,7 +57,9 @@ describe("AI retry classification and provider-to-persistence", () => {
       type: "resume.analysis",
       payload: {},
       status: "processing",
+      phase: "preparing",
       attempts: 1,
+      executionId: randomUUID(),
       maxAttempts: 3,
       lockedBy: "vitest-worker",
       lockedAt: new Date(),
@@ -67,13 +79,46 @@ describe("AI retry classification and provider-to-persistence", () => {
     });
   });
 
+  it("treats invalid durable job input as non-retryable", async () => {
+    const job = await JobRecordModel.create({
+      userId: new Types.ObjectId(),
+      type: "resume.analysis",
+      payload: {},
+      status: "processing",
+      phase: "preparing",
+      attempts: 1,
+      executionId: randomUUID(),
+      maxAttempts: 3,
+      lockedBy: "vitest-worker",
+      lockedAt: new Date(),
+      lockExpiresAt: new Date(Date.now() + 60_000),
+    });
+
+    const invalidInput = z.object({ resumeId: z.string().uuid() }).safeParse({});
+    if (invalidInput.success) throw new Error("Expected invalid test input.");
+    await failOrRetryJob(job, invalidInput.error);
+
+    await expect(JobRecordModel.findById(job._id).lean()).resolves.toMatchObject({
+      status: "failed",
+      attempts: 1,
+      maxAttempts: 3,
+      error: {
+        code: "INVALID_APPLICATION_INPUT",
+        classification: "NON_RETRYABLE_REQUEST",
+        retryable: false,
+      },
+    });
+  });
+
   it("keeps transient errors eligible for the existing worker retry bound", async () => {
     const job = await JobRecordModel.create({
       userId: new Types.ObjectId(),
       type: "resume.analysis",
       payload: {},
       status: "processing",
+      phase: "preparing",
       attempts: 1,
+      executionId: randomUUID(),
       maxAttempts: 3,
       lockedBy: "vitest-worker",
       lockedAt: new Date(),
@@ -93,6 +138,33 @@ describe("AI retry classification and provider-to-persistence", () => {
     });
   });
 
+  it("does not retry semantic application failures without positive transient evidence", async () => {
+    const job = await JobRecordModel.create({
+      userId: new Types.ObjectId(),
+      type: "resume.analysis",
+      payload: {},
+      status: "processing",
+      phase: "preparing",
+      attempts: 1,
+      executionId: randomUUID(),
+      maxAttempts: 3,
+      lockedBy: "vitest-worker",
+      lockedAt: new Date(),
+      lockExpiresAt: new Date(Date.now() + 60_000),
+    });
+
+    await failOrRetryJob(
+      job,
+      new AppError(502, "AI_UNKNOWN_BULLET_ID", "Synthetic semantic failure."),
+    );
+
+    await expect(JobRecordModel.findById(job._id).lean()).resolves.toMatchObject({
+      status: "failed",
+      attempts: 1,
+      error: { code: "AI_UNKNOWN_BULLET_ID", retryable: false },
+    });
+  });
+
   it("persists a schema-valid Resume provider response", async () => {
     const userId = new Types.ObjectId().toString();
     const created = await createResume({
@@ -109,15 +181,50 @@ describe("AI retry classification and provider-to-persistence", () => {
       issues: [], strengths: [], missingKeywords: [], suggestions: [],
     });
 
+    const execution = executionLifecycle();
     const analysis = await analyzeResume({
       userId,
       resumeId: created.resume._id.toString(),
       targetRole: "Synthetic Engineer",
       jobId: new Types.ObjectId().toString(),
+      execution,
     });
 
     expect(analysis.totalScore).toBe(40);
+    expect(execution.reportPhase).toHaveBeenCalledWith("validating");
+    expect(execution.beginPersistence).toHaveBeenCalledTimes(1);
+    expect(execution.assertActive).toHaveBeenCalledTimes(1);
     await expect(ResumeAnalysisModel.countDocuments({ userId })).resolves.toBe(1);
+  });
+
+  it("does not persist a Resume result when cancellation wins before persistence", async () => {
+    const userId = new Types.ObjectId().toString();
+    const created = await createResume({
+      userId,
+      title: "Synthetic cancelled analysis",
+      content: {
+        basics: { fullName: "Synthetic Candidate", links: [] },
+        experience: [], education: [], skills: [], projects: [],
+        certifications: [], languages: [], interests: [],
+      },
+    });
+    mockGemini({
+      scoreBreakdown: { keywordMatch: 10, clarity: 10, evidence: 10, formatting: 10 },
+      issues: [], strengths: [], missingKeywords: [], suggestions: [],
+    });
+    const execution = executionLifecycle();
+    execution.beginPersistence.mockRejectedValueOnce(
+      new AppError(409, "JOB_EXECUTION_FENCE_LOST", "Synthetic cancellation."),
+    );
+
+    await expect(analyzeResume({
+      userId,
+      resumeId: created.resume._id.toString(),
+      targetRole: "Synthetic Engineer",
+      jobId: new Types.ObjectId().toString(),
+      execution,
+    })).rejects.toMatchObject({ code: "JOB_EXECUTION_FENCE_LOST" });
+    await expect(ResumeAnalysisModel.countDocuments({ userId })).resolves.toBe(0);
   });
 
   it("rejects a schema-valid Resume response that violates feature semantics", async () => {
@@ -183,6 +290,7 @@ describe("AI retry classification and provider-to-persistence", () => {
       }],
     });
 
+    const execution = executionLifecycle();
     const result = await generateInterviewQuestions({
       userId: userId.toString(),
       sessionId: session._id.toString(),
@@ -190,9 +298,12 @@ describe("AI retry classification and provider-to-persistence", () => {
       categories: ["Technical"],
       difficultyMix: { easy: 1, medium: 0, hard: 0 },
       jobId: new Types.ObjectId().toString(),
+      execution,
     });
 
     expect(result.insertedCount).toBe(1);
+    expect(execution.beginPersistence).toHaveBeenCalledTimes(1);
+    expect(execution.assertActive).toHaveBeenCalledTimes(1);
     await expect(InterviewQuestionModel.countDocuments({ userId })).resolves.toBe(1);
   });
 
@@ -235,15 +346,19 @@ describe("AI retry classification and provider-to-persistence", () => {
       }],
     });
 
+    const execution = executionLifecycle();
     const result = await generateFlashcards({
       userId: userId.toString(),
       documentId: document._id.toString(),
       setId: set._id.toString(),
       count: 1,
       jobId: jobId.toString(),
+      execution,
     });
 
     expect(result.cardCount).toBe(1);
+    expect(execution.beginPersistence).toHaveBeenCalledTimes(1);
+    expect(execution.assertActive).toHaveBeenCalledTimes(1);
     await expect(FlashcardModel.countDocuments({ userId })).resolves.toBe(1);
   });
 
@@ -297,5 +412,80 @@ describe("AI retry classification and provider-to-persistence", () => {
     await expect(QuizModel.findById(quiz._id).lean()).resolves.toMatchObject({
       generationJobId: new Types.ObjectId(jobId),
     });
+  });
+
+  it("links a new Retry job to the Learning resource instead of reviving the terminal job", async () => {
+    const userId = new Types.ObjectId();
+    const document = await LearningDocumentModel.create({
+      userId,
+      assetId: new Types.ObjectId(),
+      title: "Synthetic retry document",
+      originalFilename: "synthetic.pdf",
+      mimeType: "application/pdf",
+      status: "ready",
+    });
+    const setId = new Types.ObjectId().toString();
+    const source = await JobRecordModel.create({
+      userId,
+      type: "learning.flashcards.generate",
+      payload: {
+        userId: userId.toString(),
+        documentId: document._id.toString(),
+        setId,
+        count: 1,
+      },
+      status: "cancelled",
+      phase: "cancelled",
+    });
+    await FlashcardSetModel.create({
+      _id: setId,
+      userId,
+      documentId: document._id,
+      requestId: randomUUID(),
+      title: "Synthetic retry cards",
+      status: "failed",
+      generationJobId: source._id,
+    });
+
+    const retry = await retryOwnedJob(userId.toString(), source._id.toString());
+
+    expect(retry._id.toString()).not.toBe(source._id.toString());
+    await expect(FlashcardSetModel.findById(setId).lean()).resolves.toMatchObject({
+      status: "generating",
+      generationJobId: retry._id,
+    });
+    await expect(JobRecordModel.findById(source._id).lean()).resolves.toMatchObject({
+      status: "cancelled",
+    });
+  });
+
+  it("deduplicates concurrent Retry creation for one owned terminal job", async () => {
+    const userId = new Types.ObjectId();
+    const source = await JobRecordModel.create({
+      userId,
+      type: "resume.analyze",
+      payload: {
+        userId: userId.toString(),
+        resumeId: new Types.ObjectId().toString(),
+        targetRole: "Synthetic Engineer",
+      },
+      status: "failed",
+      phase: "failed",
+      error: {
+        code: "AI_PROVIDER_UNAVAILABLE",
+        message: "The provider is temporarily unavailable.",
+        retryable: true,
+      },
+    });
+
+    const [first, second] = await Promise.all([
+      retryOwnedJob(userId.toString(), source._id.toString()),
+      retryOwnedJob(userId.toString(), source._id.toString()),
+    ]);
+
+    expect(second._id.toString()).toBe(first._id.toString());
+    await expect(JobRecordModel.countDocuments({
+      retryOfJobId: source._id,
+    })).resolves.toBe(1);
   });
 });

@@ -4,8 +4,10 @@ import { validate } from "../middleware/validate.js";
 import { asyncHandler } from "../shared/asyncHandler.js";
 import {
   cancelJobController,
+  cancelJobPostController,
   createInfrastructureTestJobController,
   getJobController,
+  retryJobController,
 } from "./job.controller.js";
 import {
   infrastructureTestJobBodySchema,
@@ -26,6 +28,18 @@ jobRouter.get(
   "/:jobId",
   validate({ params: jobIdParamsSchema }),
   asyncHandler(getJobController),
+);
+
+jobRouter.post(
+  "/:jobId/cancel",
+  validate({ params: jobIdParamsSchema }),
+  asyncHandler(cancelJobPostController),
+);
+
+jobRouter.post(
+  "/:jobId/retry",
+  validate({ params: jobIdParamsSchema }),
+  asyncHandler(retryJobController),
 );
 
 jobRouter.delete(

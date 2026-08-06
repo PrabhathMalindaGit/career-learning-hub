@@ -938,3 +938,21 @@ h2 {
     transition-duration: 0.01ms !important;
   }
 }
+
+.job-resilience-actions,
+.job-resilience-actions__buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.job-resilience-actions {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.job-resilience-actions > p {
+  margin: 0;
+}

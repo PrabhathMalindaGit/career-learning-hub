@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { AiJobExecutionLifecycle } from "../../jobs/job.registry.js";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
 import { withMongoTransaction } from "../../shared/mongoTransaction.js";
@@ -75,6 +76,7 @@ export async function importResumePdf(input: {
   assetId: string;
   title: string;
   jobId?: string;
+  execution?: AiJobExecutionLifecycle;
 }) {
   const asset = await getOwnedAsset(input.userId, input.assetId);
 
@@ -117,10 +119,12 @@ export async function importResumePdf(input: {
     userId: input.userId,
     text: extracted.text,
     jobId: input.jobId,
+    execution: input.execution,
   });
 
   let created: Awaited<ReturnType<typeof createResume>>;
   try {
+    await input.execution?.beginPersistence();
     created = await createResume({
       userId: input.userId,
       title: input.title,
@@ -128,6 +132,7 @@ export async function importResumePdf(input: {
       source: "pdf-import",
       sourceAssetId: input.assetId,
       changeSummary: `Imported from PDF (${extracted.pageCount} pages)`,
+      beforeWrites: input.execution?.assertActive,
     });
   } catch (error) {
     if (!isDuplicateKeyError(error)) throw error;
@@ -181,6 +186,7 @@ export async function analyzeResume(input: {
   company?: string;
   jobDescription?: string;
   jobId?: string;
+  execution?: AiJobExecutionLifecycle;
 }): Promise<ResumeAnalysisDocument> {
   if (input.jobId) {
     const existing = await ResumeAnalysisModel.findOne({
@@ -214,6 +220,8 @@ export async function analyzeResume(input: {
     userId: input.userId,
     feature: "resume.analysis",
     jobId: input.jobId,
+    signal: input.execution?.signal,
+    reportPhase: input.execution?.reportPhase,
     systemPrompt: [
       "You are a conservative resume-readiness reviewer.",
       "This is not an actual ATS result. Score only the supplied resume against the supplied target.",
@@ -284,27 +292,35 @@ export async function analyzeResume(input: {
   let analysis: ResumeAnalysisDocument;
 
   try {
-    analysis = await ResumeAnalysisModel.create({
-    userId: input.userId,
-    resumeId: input.resumeId,
-    resumeVersionId: versionId,
-    target: {
-      role: input.targetRole,
-      company: input.company,
-      jobDescription: input.jobDescription,
-    },
-    scoringVersion: SCORING_VERSION,
-    promptVersion: ANALYSIS_PROMPT_VERSION,
-    provider: env.AI_DEFAULT_PROVIDER,
-    model: env.GEMINI_MODEL,
-    scoreBreakdown,
-    totalScore,
-    issues: result.issues,
-    strengths: result.strengths,
-    missingKeywords: result.missingKeywords,
-    suggestions,
-    jobId: input.jobId,
-  });
+    await input.execution?.beginPersistence();
+    analysis = await withMongoTransaction(async (mongoSession) => {
+      await input.execution?.assertActive(mongoSession);
+      const [createdAnalysis] = await ResumeAnalysisModel.create(
+        [{
+          userId: input.userId,
+          resumeId: input.resumeId,
+          resumeVersionId: versionId,
+          target: {
+            role: input.targetRole,
+            company: input.company,
+            jobDescription: input.jobDescription,
+          },
+          scoringVersion: SCORING_VERSION,
+          promptVersion: ANALYSIS_PROMPT_VERSION,
+          provider: env.AI_DEFAULT_PROVIDER,
+          model: env.GEMINI_MODEL,
+          scoreBreakdown,
+          totalScore,
+          issues: result.issues,
+          strengths: result.strengths,
+          missingKeywords: result.missingKeywords,
+          suggestions,
+          jobId: input.jobId,
+        }],
+        { session: mongoSession },
+      );
+      return createdAnalysis;
+    });
   } catch (error) {
     if (
       input.jobId &&

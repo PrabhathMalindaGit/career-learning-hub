@@ -341,6 +341,7 @@ describe("resumeApi", () => {
       "https://api.example.test/api/v1/resume-analyses/import-pdf",
     );
     const body = requestAt()[1].body as FormData;
+    expect(body.get("requestId")).toMatch(/^[0-9a-f-]{36}$/i);
     expect(body.get("title")).toBe("Imported Resume");
     expect(body.get("file")).toBe(file);
     expect(new Headers(requestAt()[1].headers).has("Content-Type")).toBe(false);
@@ -368,6 +369,7 @@ describe("resumeApi", () => {
     });
 
     expect(JSON.parse(String(requestAt()[1].body))).toEqual({
+      requestId: expect.stringMatching(/^[0-9a-f-]{36}$/i),
       versionId,
       targetRole: "Platform Engineer",
     });

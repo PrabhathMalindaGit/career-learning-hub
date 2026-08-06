@@ -1,4 +1,5 @@
 import { ApiError } from "../../api/apiClient";
+import { parseJobResilienceMetadata } from "../jobs/jobResilience";
 import type {
   AcceptedInterviewJob,
   FeedbackRequestResult,
@@ -473,6 +474,7 @@ export function parseInterviewJob(value: unknown): InterviewJob {
     id: id(item.id),
     type,
     status,
+    ...parseJobResilienceMetadata(item, status),
     progress: integer(item.progress, 0, 100),
     attempts: integer(item.attempts, 0, 10),
     maxAttempts: integer(item.maxAttempts, 1, 10),

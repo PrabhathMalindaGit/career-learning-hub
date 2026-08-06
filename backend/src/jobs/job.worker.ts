@@ -1,13 +1,24 @@
 import { env } from "../config/env.js";
+import { AppError } from "../shared/appError.js";
 import { logger, serializeErrorForLog } from "../shared/logger.js";
 import { getJobHandler } from "./job.registry.js";
 import {
+  assertJobExecutionActive,
+  beginJobPersistence,
   claimNextJob,
   completeJob,
   failOrRetryJob,
   heartbeatJob,
   updateJobProgress,
+  updateJobPhase,
 } from "./job.queue.js";
+import {
+  abortAllActiveJobExecutions,
+  abortActiveJobExecution,
+  registerActiveJobExecution,
+  unregisterActiveJobExecution,
+} from "./job.execution.js";
+import type { JobExecutionIdentity } from "./job.model.js";
 
 export interface JobWorkerHandle {
   stop(): Promise<void>;
@@ -21,11 +32,26 @@ export function startJobWorker(): JobWorkerHandle {
   async function processOne(): Promise<void> {
     const job = await claimNextJob();
     if (!job) return;
+    if (!job.executionId) {
+      throw new Error("A claimed job is missing its execution ID.");
+    }
+
+    const execution: JobExecutionIdentity = {
+      jobId: job._id.toString(),
+      executionId: job.executionId,
+      attempt: job.attempts,
+    };
+    const controller = new AbortController();
+    registerActiveJobExecution(execution, controller);
+    const deadlineTimer = setTimeout(() => {
+      abortActiveJobExecution(execution, "job_attempt_timeout");
+    }, env.AI_JOB_ATTEMPT_TIMEOUT_MS);
+    deadlineTimer.unref();
 
     active += 1;
     const heartbeatTimer = setInterval(
       () =>
-        heartbeatJob(job._id.toString()).catch((error) => {
+        heartbeatJob(execution).catch((error) => {
           logger.warn("job.heartbeat.failed", {
             jobId: job._id.toString(),
             jobType: job.type,
@@ -40,16 +66,63 @@ export function startJobWorker(): JobWorkerHandle {
       const registered = getJobHandler(job.type);
       const payload = registered.schema.parse(job.payload);
 
+      const assertSignalActive = () => {
+        if (!controller.signal.aborted) return;
+        if (controller.signal.reason === "job_attempt_timeout") {
+          throw new AppError(
+            504,
+            "AI_JOB_ATTEMPT_TIMEOUT",
+            "The AI job attempt took too long.",
+            undefined,
+            false,
+            "CANCELLED",
+            "job_attempt",
+          );
+        }
+        if (controller.signal.reason === "worker_stopping") {
+          throw new AppError(
+            503,
+            "JOB_WORKER_STOPPED",
+            "The job worker stopped before the attempt completed.",
+            undefined,
+            true,
+          );
+        }
+        throw new AppError(
+          409,
+          "JOB_EXECUTION_CANCELLED",
+          "The job execution was cancelled.",
+          undefined,
+          false,
+          "CANCELLED",
+        );
+      };
+
       const result = await registered.handler(payload, {
-        jobId: job._id.toString(),
+        ...execution,
         userId: job.userId?.toString(),
-        attempt: job.attempts,
+        signal: controller.signal,
         reportProgress: (progress) =>
-          updateJobProgress(job._id.toString(), progress),
-        heartbeat: () => heartbeatJob(job._id.toString()),
+          updateJobProgress(execution, progress),
+        reportPhase: async (phase) => {
+          assertSignalActive();
+          await updateJobPhase(execution, phase);
+        },
+        assertActive: async (session) => {
+          assertSignalActive();
+          await assertJobExecutionActive(execution, session);
+        },
+        beginPersistence: async () => {
+          assertSignalActive();
+          await beginJobPersistence(execution);
+        },
+        heartbeat: () => heartbeatJob(execution),
       });
 
-      await completeJob(job._id.toString(), result);
+      assertSignalActive();
+      await beginJobPersistence(execution);
+      assertSignalActive();
+      await completeJob(execution, result);
     } catch (error) {
       logger.error("job.execution.failed", {
         jobId: job._id.toString(),
@@ -60,6 +133,8 @@ export function startJobWorker(): JobWorkerHandle {
       await failOrRetryJob(job, error);
     } finally {
       clearInterval(heartbeatTimer);
+      clearTimeout(deadlineTimer);
+      unregisterActiveJobExecution(execution);
       active -= 1;
     }
   }
@@ -94,6 +169,7 @@ export function startJobWorker(): JobWorkerHandle {
     async stop() {
       stopping = true;
       if (timer) clearTimeout(timer);
+      abortAllActiveJobExecutions("worker_stopping");
 
       const deadline = Date.now() + env.JOB_LEASE_SECONDS * 1_000;
       while (active > 0 && Date.now() < deadline) {

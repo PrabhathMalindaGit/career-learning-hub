@@ -155,6 +155,36 @@ const envSchema = z
       .max(120_000)
       .default(30_000),
     AI_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
+    GEMINI_CONNECT_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(120_000)
+      .default(45_000),
+    GEMINI_FIRST_RESPONSE_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(120_000)
+      .default(8_000),
+    GEMINI_IDLE_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(120_000)
+      .default(15_000),
+    GEMINI_TOTAL_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(45_000),
+    AI_JOB_ATTEMPT_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(16_000)
+      .max(600_000)
+      .default(60_000),
     AI_DAILY_REQUEST_LIMIT: z.coerce.number().int().min(1).default(100),
     AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1_000).default(500_000),
     BYOK_ENCRYPTION_KEY: optionalString,
@@ -444,6 +474,32 @@ const envSchema = z
         path: ["AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED"],
         message:
           "Administrator Gemini compatibility requires the routing foundation.",
+      });
+    }
+
+    for (const field of [
+      "GEMINI_CONNECT_TIMEOUT_MS",
+      "GEMINI_FIRST_RESPONSE_TIMEOUT_MS",
+      "GEMINI_IDLE_TIMEOUT_MS",
+    ] as const) {
+      if (value[field] > value.GEMINI_TOTAL_TIMEOUT_MS) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: `${field} must not exceed GEMINI_TOTAL_TIMEOUT_MS.`,
+        });
+      }
+    }
+
+    if (
+      value.AI_JOB_ATTEMPT_TIMEOUT_MS <
+      value.GEMINI_TOTAL_TIMEOUT_MS + 15_000
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["AI_JOB_ATTEMPT_TIMEOUT_MS"],
+        message:
+          "AI_JOB_ATTEMPT_TIMEOUT_MS must allow 15000ms beyond the Gemini total timeout.",
       });
     }
   });

@@ -209,11 +209,12 @@ describe("Gemini structured output", () => {
   });
 
   it.each([
-    [404, "NOT_FOUND"],
-    [400, "INVALID_ARGUMENT"],
-    [401, "UNAUTHENTICATED"],
-    [403, "PERMISSION_DENIED"],
-  ])("classifies deterministic HTTP %i %s failures as non-retryable", async (status, code) => {
+    [400, "INVALID_ARGUMENT", "NON_RETRYABLE_REQUEST"],
+    [401, "UNAUTHENTICATED", "NON_RETRYABLE_AUTHENTICATION"],
+    [403, "PERMISSION_DENIED", "NON_RETRYABLE_AUTHENTICATION"],
+    [404, "NOT_FOUND", "NON_RETRYABLE_CONFIGURATION"],
+    [409, "ABORTED", "NON_RETRYABLE_REQUEST"],
+  ] as const)("classifies deterministic HTTP %i %s failures as non-retryable", async (status, code, classification) => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -223,10 +224,22 @@ describe("Gemini structured output", () => {
 
     await expect(
       new GeminiProviderAdapter().generateStructured(providerRequest()),
-    ).rejects.toMatchObject({ code, retryable: false, statusCode: status });
+    ).rejects.toMatchObject({
+      code,
+      classification,
+      retryable: false,
+      statusCode: status,
+    });
   });
 
-  it.each([429, 500, 503])("classifies transient HTTP %i failures as retryable", async (status) => {
+  it.each([
+    [408, "RETRYABLE_PROVIDER_TIMEOUT"],
+    [429, "RETRYABLE_RATE_LIMIT"],
+    [500, "RETRYABLE_PROVIDER_UNAVAILABLE"],
+    [502, "RETRYABLE_PROVIDER_UNAVAILABLE"],
+    [503, "RETRYABLE_PROVIDER_UNAVAILABLE"],
+    [504, "RETRYABLE_PROVIDER_TIMEOUT"],
+  ] as const)("classifies transient HTTP %i failures as retryable", async (status, classification) => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -236,10 +249,27 @@ describe("Gemini structured output", () => {
 
     await expect(
       new GeminiProviderAdapter().generateStructured(providerRequest()),
-    ).rejects.toMatchObject({ retryable: true, statusCode: status });
+    ).rejects.toMatchObject({ classification, retryable: true, statusCode: status });
   });
 
-  it("classifies abort timeouts as retryable", async () => {
+  it("uses HTTP status when a transient error body is malformed", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("temporarily unavailable", { status: 503 }),
+      ),
+    );
+
+    await expect(
+      new GeminiProviderAdapter().generateStructured(providerRequest()),
+    ).rejects.toMatchObject({
+      classification: "RETRYABLE_PROVIDER_UNAVAILABLE",
+      retryable: true,
+      statusCode: 503,
+    });
+  });
+
+  it("classifies parent cancellation as terminal", async () => {
     const controller = new AbortController();
     controller.abort();
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("aborted")));
@@ -248,10 +278,14 @@ describe("Gemini structured output", () => {
       new GeminiProviderAdapter().generateStructured(
         providerRequest({ signal: controller.signal }),
       ),
-    ).rejects.toMatchObject({ code: "AI_TIMEOUT", retryable: true });
+    ).rejects.toMatchObject({
+      code: "AI_REQUEST_CANCELLED",
+      classification: "CANCELLED",
+      retryable: false,
+    });
   });
 
-  it("retries a transient provider response within the configured bound", async () => {
+  it("returns one retryable failure after exactly one provider attempt", async () => {
     const userId = new Types.ObjectId().toString();
     const fetchMock = vi
       .fn()
@@ -273,11 +307,41 @@ describe("Gemini structured output", () => {
         userPrompt: "Synthetic input.",
         schema: z.object({ answer: z.string() }).strict(),
       }),
-    ).resolves.toEqual({ answer: "after retry" });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    ).rejects.toMatchObject({ retryable: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     await expect(UsageEventModel.findOne({ userId }).lean()).resolves.toMatchObject({
-      metadata: { gatewayAttempts: 2 },
+      metadata: { providerAttempt: 1 },
     });
+  });
+
+  it("reports safe provider progress without exposing response fragments", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        geminiResponse({
+          candidates: [{ content: { parts: [{ text: '{"answer":"valid"}' }] } }],
+        }),
+      ),
+    );
+    const phases: string[] = [];
+
+    await generateStructuredOutput({
+      userId: new Types.ObjectId().toString(),
+      feature: "test.progress",
+      systemPrompt: "Return JSON.",
+      userPrompt: "Synthetic input.",
+      schema: z.object({ answer: z.string() }).strict(),
+      reportPhase: async (phase) => {
+        phases.push(phase);
+      },
+    });
+
+    expect(phases).toEqual([
+      "contacting_provider",
+      "waiting_for_first_response",
+      "receiving_response",
+      "validating",
+    ]);
   });
 
   it("does not expose provider details that may contain credentials", async () => {

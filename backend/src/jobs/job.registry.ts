@@ -1,13 +1,29 @@
 import { z } from "zod";
+import type { ClientSession } from "mongoose";
 import { AppError } from "../shared/appError.js";
+import type { JobExecutionIdentity, JobPhase } from "./job.model.js";
 
-export interface JobExecutionContext {
+export interface JobExecutionContext extends JobExecutionIdentity {
   jobId: string;
   userId?: string;
   attempt: number;
+  signal: AbortSignal;
   reportProgress(progress: number): Promise<void>;
+  reportPhase(
+    phase: Exclude<
+      JobPhase,
+      "queued" | "retry_scheduled" | "completed" | "failed" | "cancelled"
+    >,
+  ): Promise<void>;
+  assertActive(session?: ClientSession): Promise<void>;
+  beginPersistence(): Promise<void>;
   heartbeat(): Promise<void>;
 }
+
+export type AiJobExecutionLifecycle = Pick<
+  JobExecutionContext,
+  "signal" | "reportPhase" | "assertActive" | "beginPersistence"
+>;
 
 interface RuntimeHandler {
   schema: z.ZodTypeAny;

@@ -33,6 +33,7 @@ export async function createResume(input: {
   source?: ResumeSource;
   sourceAssetId?: string;
   changeSummary?: string;
+  beforeWrites?(session: ClientSession): Promise<void>;
 }): Promise<{
   resume: ResumeDocument;
   version: ResumeVersionDocument;
@@ -42,6 +43,7 @@ export async function createResume(input: {
     : createBlankResumeContent();
 
   const result = await withMongoTransaction(async (session) => {
+    await input.beforeWrites?.(session);
     const [resume] = await ResumeModel.create(
       [
         {

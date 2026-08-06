@@ -45,6 +45,7 @@ export function registerLearningJobHandlers(): void {
       const result = await processLearningDocument({
         ...payload,
         jobId: context.jobId,
+        execution: context,
       });
       await context.reportProgress(100);
       return result;
@@ -86,6 +87,7 @@ export function registerLearningJobHandlers(): void {
       const result = await generateDocumentChatResponse({
         ...payload,
         jobId: context.jobId,
+        execution: context,
       });
       await context.reportProgress(100);
       return result;
@@ -111,6 +113,7 @@ export function registerLearningJobHandlers(): void {
       const result = await generateFlashcards({
         ...payload,
         jobId: context.jobId,
+        execution: context,
       });
       await context.reportProgress(100);
       return result;
@@ -136,6 +139,7 @@ export function registerLearningJobHandlers(): void {
       const result = await generateQuiz({
         ...payload,
         jobId: context.jobId,
+        execution: context,
       });
       await context.reportProgress(100);
       return result;
