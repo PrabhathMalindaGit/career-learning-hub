@@ -1,4 +1,5 @@
 import { ApiError } from "../../api/apiClient";
+import { parseJobResilienceMetadata } from "../jobs/jobResilience";
 import type {
   AcceptedLearningQuizJob,
   LearningPagination,
@@ -151,7 +152,11 @@ function parseGenerationError(
 ): QuizSummary["generationError"] {
   const item = record(value);
   if (Object.keys(item).length === 0) return undefined;
-  exactKeys(item, ["code", "message"]);
+  exactKeys(
+    item,
+    ["code", "message"],
+    ["classification", "retryable", "timeoutPhase"],
+  );
   return {
     code: text(item.code, 120, 1),
     message: text(item.message, 2_000, 1),
@@ -368,7 +373,15 @@ export function parseLearningQuizJob(
       "createdAt",
       "updatedAt",
     ],
-    ["result", "error"],
+    [
+      "result",
+      "error",
+      "phase",
+      "phaseSequence",
+      "canRetry",
+      "retryOfJobId",
+      "rootJobId",
+    ],
   );
   if (
     item.type !== "learning.quiz.generate" ||
@@ -401,6 +414,10 @@ export function parseLearningQuizJob(
     id: jobId,
     type: "learning.quiz.generate",
     status: item.status as LearningQuizJob["status"],
+    ...parseJobResilienceMetadata(
+      item,
+      item.status as LearningQuizJob["status"],
+    ),
     progress: integer(item.progress, 0, 100),
     attempts: integer(item.attempts, 0, 10),
     maxAttempts: integer(item.maxAttempts, 1, 10),

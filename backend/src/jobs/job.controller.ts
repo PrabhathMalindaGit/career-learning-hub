@@ -2,14 +2,58 @@ import type { Request, Response } from "express";
 import { env } from "../config/env.js";
 import { AppError } from "../shared/appError.js";
 import {
+  cancelOwnedJobExecution,
   cancelOwnedQueuedJob,
+  canRetryJob,
   enqueueJob,
   getOwnedJob,
+  retryOwnedJob,
 } from "./job.queue.js";
+import type { JobRecord } from "./job.model.js";
 
 type JobIdParams = {
   jobId: string;
 };
+
+function publicJob(job: JobRecord) {
+  return {
+    id: job._id.toString(),
+    type: job.type,
+    status: job.status,
+    phase: job.phase ?? job.status,
+    phaseSequence: job.phaseSequence ?? 0,
+    progress: job.progress,
+    attempts: job.attempts,
+    maxAttempts: job.maxAttempts,
+    canRetry: canRetryJob(job),
+    ...(job.retryOfJobId
+      ? { retryOfJobId: job.retryOfJobId.toString() }
+      : {}),
+    ...(job.rootJobId
+      ? { rootJobId: job.rootJobId.toString() }
+      : {}),
+    ...(job.result === undefined ? {} : { result: job.result }),
+    ...(job.error === undefined
+      ? {}
+      : {
+          error: {
+            code: job.error.code,
+            message: job.error.message,
+            ...(job.error.classification
+              ? { classification: job.error.classification }
+              : {}),
+            ...(job.error.retryable === undefined
+              ? {}
+              : { retryable: job.error.retryable }),
+            ...(job.error.timeoutPhase
+              ? { timeoutPhase: job.error.timeoutPhase }
+              : {}),
+          },
+        }),
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
+  };
+}
 
 export async function getJobController(
   request: Request<JobIdParams>,
@@ -23,26 +67,36 @@ export async function getJobController(
   response.status(200).json({
     success: true,
     data: {
-      job: {
-        id: job._id.toString(),
-        type: job.type,
-        status: job.status,
-        progress: job.progress,
-        attempts: job.attempts,
-        maxAttempts: job.maxAttempts,
-        result: job.result,
-        ...(job.error === undefined
-          ? {}
-          : {
-              error: {
-                code: job.error.code,
-                message: job.error.message,
-              },
-            }),
-        createdAt: job.createdAt,
-        updatedAt: job.updatedAt,
-      },
+      job: publicJob(job),
     },
+  });
+}
+
+export async function cancelJobPostController(
+  request: Request<JobIdParams>,
+  response: Response,
+): Promise<void> {
+  const job = await cancelOwnedJobExecution(
+    request.auth!.userId,
+    request.params.jobId,
+  );
+  response.status(200).json({
+    success: true,
+    data: { job: publicJob(job) },
+  });
+}
+
+export async function retryJobController(
+  request: Request<JobIdParams>,
+  response: Response,
+): Promise<void> {
+  const job = await retryOwnedJob(
+    request.auth!.userId,
+    request.params.jobId,
+  );
+  response.status(202).json({
+    success: true,
+    data: { job: publicJob(job) },
   });
 }
 

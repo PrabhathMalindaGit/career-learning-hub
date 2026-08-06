@@ -422,3 +422,230 @@
     must be imported through sanitized fixtures and an approved migration
     process.
   - The operator explicitly accepts a replacement architecture decision.
+
+## DEC-016: Verify the direct Gemini baseline before provider expansion
+
+- Decision ID: `DEC-016`
+- Date: 2026-08-03
+- Status: ACCEPTED
+- Decision:
+  - AI-1 documents and verifies the existing direct Gemini implementation at
+    merged baseline commit `54aacb62bb1371fa16d32c3311c07dfa7bdbcbab`.
+  - Preserve `gemini-2.5-flash` unless a verified incompatibility requires a
+    separately reviewed change.
+  - Do not add another provider, provider switching, cross-provider fallback,
+    credential storage, a Settings provider UI, or cloud configuration in
+    AI-1.
+  - Live verification uses only a privately configured backend key, synthetic
+    content, and the existing embedded worker.
+- Rationale:
+  - The current backend registers only the Gemini adapter, while Resume,
+    Interview, and Learning workflows share the same gateway and durable job
+    system.
+  - Establishing call paths, validation, retry behavior, and current failures
+    before adding routing prevents existing uncertainty from being multiplied
+    across providers.
+- Consequences:
+  - `docs/planning/PHASE_AI_1_GEMINI_BASELINE.md` is the baseline evidence
+    record.
+  - Missing live credentials, unverified retry behavior, and test gaps are
+    reported as limitations rather than bypassed with production changes.
+  - AI-2 readiness depends on review of the AI-1 findings and blockers.
+- Revisit conditions:
+  - AI-1 live verification establishes a different model compatibility fact.
+  - A separately authorized and accepted AI-2 architecture supersedes the
+    Gemini-only implementation boundary.
+
+## DEC-017: Transport structural JSON Schema while retaining authoritative validation
+
+- Decision ID: `DEC-017`
+- Date: 2026-08-03
+- Status: ACCEPTED
+- Decision:
+  - The existing provider gateway request carries a provider-neutral
+    `responseJsonSchema` generated from each feature's Zod output schema.
+  - The direct Gemini adapter transports the Gemini-compatible structural
+    subset of that schema alongside `application/json` response handling.
+  - Strict post-response Zod parsing and all feature-specific semantic,
+    ownership, fencing, and secrecy checks remain authoritative.
+  - Deterministic provider and output-contract errors are explicitly
+    non-retryable at both gateway and worker boundaries; transient failures
+    retain the existing bounded retry policies.
+  - Failed provider calls release estimated token reservations while retaining
+    the auditable request-attempt count and sanitized failure UsageEvent.
+- Rationale:
+  - MIME-only JSON generation did not tell Gemini the object contract and
+    caused valid JSON with invalid feature shapes.
+  - The installed Zod schemas are the single existing application contract;
+    deriving the provider constraint avoids a second hand-maintained schema.
+  - The tested Gemini 3.6 endpoint accepted the preserved structural schema but
+    rejected the larger annotation-bearing conversion with
+    `INVALID_ARGUMENT`, so Zod remains the correct enforcement boundary for
+    annotations and refinements.
+  - Retrying authentication, invalid-request, missing-model, or invalid-output
+    failures wastes worker attempts, while token estimates from failed calls
+    should not remain permanently reserved.
+- Consequences:
+  - Resume, Interview, Learning summary/chat, Flashcard, and Quiz live outputs
+    satisfy their existing schema and semantic contracts with the locally
+    configured `gemini-3.6-flash` model.
+  - `gemini-2.5-flash` is recorded only as returning `NOT_FOUND` for the tested
+    key/account; no global retirement claim is made.
+  - The provider-neutral contract does not introduce provider selection,
+    fallback, credentials, or another provider implementation.
+  - Future adapters must translate this contract without weakening the
+    authoritative post-response validation boundary.
+- Revisit conditions:
+  - Authoritative Gemini compatibility documentation or tests support safely
+    transporting additional JSON Schema annotations.
+  - A separately authorized AI-2 routing architecture defines a replacement
+    provider contract while preserving equivalent validation and accounting.
+
+## DEC-018: Isolate one active AI provider with encrypted credentials and frozen routing
+
+- Decision ID: `DEC-018`
+- Date: 2026-08-03
+- Status: ACCEPTED
+- Decision:
+  - Each user has one authoritative `AiProviderPreference` document whose
+    scalar `activeProvider` is `openrouter`, one direct-provider identity, or
+    `disabled`. Credential documents do not carry competing active flags.
+  - User-owned provider credentials are stored only as AES-256-GCM
+    ciphertext, nonce, and authentication tag under versioned server-only
+    `BYOK_ENCRYPTION_KEY` material. Plaintext never persists, returns after
+    save, or enters jobs, usage, audit, errors, or logs.
+  - OpenRouter mode may use a ranked, task-specific approved free-model list
+    and an optional separately requested paid model, but both attempts stay
+    inside OpenRouter. Paid fallback requires explicit permission, trusted
+    pricing, an exact approved model, and atomic request/token/spend limits.
+  - A direct-provider mode calls only that direct provider. It has no
+    OpenRouter or cross-direct-provider fallback; verified transient failures
+    may receive only a bounded same-provider retry.
+  - AI jobs store an immutable, secret-free routing snapshot at enqueue time.
+    The worker resolves the referenced credential only at execution and must
+    reject the job when current active-provider state, credential secret
+    version, paid permission, model safety, or execution deadline invalidates
+    the snapshot.
+  - DEC-017 remains authoritative: provider-side structural JSON Schema is a
+    generation constraint, while strict post-response Zod parsing, feature
+    semantic validation, ownership, fencing, persistence, and secrecy checks
+    remain enforcement boundaries.
+- Rationale:
+  - One preference row and revision compare-and-set provide a simpler atomic
+    invariant than coordinating active flags across several credentials.
+  - Separating credentials from active routing lets users configure providers
+    without allowing inactive credentials to receive requests.
+  - Free and paid OpenRouter attempts require different authorization and
+    budget gates; a separate paid request prevents a paid model from entering
+    the free candidate array.
+  - Enqueue-time snapshots preserve user intent, cost ceilings, and audit
+    context, while the execution-time revocation gate prevents stale consent
+    from calling an inactive or replaced credential.
+  - Provider diversity must not weaken validated feature contracts or expose
+    the same private content to unselected providers.
+- Consequences:
+  - The architecture, data/API contracts, migration, threat model, and phased
+    implementation order are defined in the AI-2 documents.
+  - Provider switching cancels or fails queued jobs for the former provider;
+    jobs never silently reroute or adopt a replacement credential.
+  - OpenRouter model IDs and pricing remain validated catalogue data rather
+    than volatile application constants.
+  - Paid fallback and browser streaming remain disabled until their dedicated
+    accounting, interruption, privacy, and verification phases pass.
+  - Existing environment Gemini behavior is unchanged in AI-2. Later
+    migration may retain a clearly labeled administrator-managed source only
+    through explicit server policy and per-user authorization.
+- Rejected alternatives:
+  - multiple active providers, direct cross-fallback, worker-time-only routing,
+    credentials in browser storage or jobs, plaintext MongoDB keys,
+    unrestricted automatic routers, hardcoded free models, unbounded paid
+    fallback, raw provider errors, and replacing Zod with provider schemas.
+- Revisit conditions:
+  - A verified provider contract cannot preserve the required structural and
+    semantic validation boundary.
+  - Deployment topology cannot support the required transactional preference,
+    execution-lease, and cost-reservation invariants.
+  - Human review changes the administrator-managed credential policy, paid
+    ceilings, retention policy, or AI-3 boundary.
+
+## DEC-019: Use progress-only polling for durable Gemini workflows
+
+- Decision ID: `DEC-019`
+- Date: 2026-08-06
+- Status: ACCEPTED
+- Decision:
+  - Every durable AI workflow delivers only safe job phases through the
+    existing authenticated owned-job polling route.
+  - Cancellation is accepted only before the execution atomically enters
+    `persisting`; Retry creates a new owned, idempotent, linked job and never
+    revives a terminal job.
+  - The durable worker is the only retry owner. One worker attempt makes at
+    most one Gemini provider attempt.
+  - Final structured results remain fully buffered, strictly validated,
+    execution-fenced, and atomically persisted.
+  - Token streaming, SSE, and WebSockets are intentionally not implemented.
+  - Gemini Direct remains the only active G-4 provider. OpenRouter remains
+    disabled with no fallback.
+- Rationale:
+  - Token streaming would complicate citation validation, cancellation races,
+    duplicate suppression, and the guarantee that users see only an atomic
+    validated final result.
+  - Progress-only polling preserves the existing authentication, ownership,
+    request-ID, error-normalization, and bounded cleanup architecture.
+  - A database execution fence plus active abort propagation protects
+    cancellation, lease-loss, timeout, and late-provider-response races across
+    worker instances.
+- Consequences:
+  - Public progress is limited to the allowlisted phases documented in the
+    approved G-4 design; provider bodies, provisional tokens, prompts, routing
+    snapshots, credentials, and execution internals remain private.
+  - Polling is bounded and single-flight per mounted workflow, and navigation,
+    unmount, replacement, cancellation, and terminal state stop timers and
+    in-flight requests.
+  - Existing future streaming sections in the multi-provider roadmap are not
+    active implementation authority for G-4.
+- Revisit conditions:
+  - A separately approved design proves citation-safe incremental validation,
+    durable cancellation linearization, duplicate suppression, privacy, and
+    browser cleanup without weakening atomic final-result guarantees.
+
+## DEC-020: Release Gemini-only credential settings on the routing foundation
+
+- Decision ID: `DEC-020`
+- Date: 2026-08-06
+- Status: ACCEPTED
+- Decision:
+  - Gemini Direct is the only provider available to G-5 Settings and runtime
+    execution, with fixed model `gemini-3.6-flash`.
+  - Each user explicitly selects an administrator-managed Gemini credential,
+    a personal AES-256-GCM encrypted Gemini credential, or disconnected state.
+    Disconnected users never inherit the environment credential implicitly.
+  - Personal candidates are tested once with fixed synthetic content before
+    credential persistence. Successful active-key replacement increments the
+    secret version and updates the active preference in the same transaction;
+    failed candidates leave the existing credential and routing state intact.
+  - Durable AI jobs use the existing immutable routing snapshot and the shared
+    execution-time credential resolver. Replaced or deleted versions fail
+    closed, while already authorized leases retain their existing lifecycle.
+  - The existing OpenRouter code and data contracts remain in the repository
+    but are unavailable through the G-5 API, Settings UI, snapshot compiler,
+    execution authorizer, and gateway registry. No provider fallback exists.
+- Rationale:
+  - Reusing the AI-3 routing, vault, preference, lease, and audit foundation is
+    the smallest design that gives Resume, Interview, and Learning the same
+    revocation and secret-handling guarantees.
+  - Explicit administrator-managed consent prevents a disconnected preference
+    from silently becoming a provider authorization.
+  - A fixed release provider/model keeps G-4 retry ownership and one
+    provider-attempt-per-worker-attempt behavior testable.
+- Consequences:
+  - The Settings page exposes one bounded Gemini section and no provider or
+    model selector.
+  - Plaintext personal keys exist only in transient authenticated request and
+    backend adapter memory and never enter responses, browser storage, URLs,
+    jobs, usage events, audit records, errors, or logs.
+  - OpenRouter can be reconsidered only through a separately approved release
+    boundary that restores its APIs and runtime registration deliberately.
+- Revisit conditions:
+  - A separately approved phase authorizes another provider or model and
+    re-verifies routing, privacy, cost, cancellation, and fallback policy.

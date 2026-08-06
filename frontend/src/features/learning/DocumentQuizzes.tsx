@@ -7,6 +7,12 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { JobResilienceActions } from "../jobs/JobResilienceActions";
+import {
+  cancelJob,
+  normalizeSafeJob,
+  retryJob,
+} from "../jobs/jobResilience";
 import {
   createQuizGeneration,
   fetchLearningQuizJob,
@@ -90,6 +96,7 @@ export function DocumentQuizzes({
   const [pendingJob, setPendingJob] = useState<
     AcceptedLearningQuizJob | LearningQuizJob
   >();
+  const [resilienceJob, setResilienceJob] = useState<LearningQuizJob>();
   const [pendingQuizId, setPendingQuizId] = useState<string>();
   const [generationState, setGenerationState] =
     useState<GenerationState>({ status: "idle" });
@@ -274,6 +281,7 @@ export function DocumentQuizzes({
               update.status === "processing")
           ) {
             setPendingJob(update);
+            setResilienceJob(update);
             setGenerationState({ status: update.status });
           }
         },
@@ -294,11 +302,11 @@ export function DocumentQuizzes({
             return;
           }
           if (result.reason !== "terminal") return;
+          setResilienceJob(result.job);
           if (result.job.status === "completed") {
             await refreshCanonicalCompletion(result.job, expectedIdentity);
           } else if (result.job.status === "failed") {
             setPendingJob(undefined);
-            setPendingQuizId(undefined);
             setGenerationState({
               status: "failed",
               error: {
@@ -309,7 +317,6 @@ export function DocumentQuizzes({
             setListVersion((current) => current + 1);
           } else {
             setPendingJob(undefined);
-            setPendingQuizId(undefined);
             setGenerationState({ status: "cancelled" });
             setListVersion((current) => current + 1);
           }
@@ -334,6 +341,44 @@ export function DocumentQuizzes({
     },
     [document.id, refreshCanonicalCompletion],
   );
+
+  async function cancelGeneration(signal: AbortSignal): Promise<void> {
+    if (!resilienceJob) return;
+    const cancelled = await cancelJob(resilienceJob.id, signal);
+    if (signal.aborted) return;
+    if (cancelled.id !== resilienceJob.id || cancelled.type !== "learning.quiz.generate") {
+      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    }
+    if (cancelled.status !== "cancelled") {
+      setResilienceJob({ ...resilienceJob, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt });
+      return;
+    }
+    pollController.current?.abort();
+    setPendingJob(undefined);
+    setResilienceJob({
+      ...resilienceJob,
+      status: "cancelled",
+      phase: cancelled.phase,
+      phaseSequence: cancelled.phaseSequence,
+      canRetry: cancelled.canRetry,
+      updatedAt: cancelled.updatedAt,
+    });
+    setGenerationState({ status: "cancelled" });
+  }
+
+  async function retryGeneration(signal: AbortSignal): Promise<void> {
+    if (!resilienceJob || !pendingQuizId) return;
+    const retried = await retryJob(resilienceJob.id, signal);
+    if (signal.aborted) return;
+    if (retried.type !== "learning.quiz.generate") {
+      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    }
+    runPolling(
+      { id: retried.id, type: "learning.quiz.generate", status: "queued" },
+      pendingQuizId,
+      identity,
+    );
+  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -529,6 +574,9 @@ export function DocumentQuizzes({
 
       <QuizGenerationStatus
         state={generationState}
+        job={resilienceJob}
+        onCancel={cancelGeneration}
+        onRetry={retryGeneration}
         requestId={acceptedRequestId}
         onResume={() => {
           if (pendingJob && pendingQuizId) {
@@ -657,10 +705,16 @@ export function DocumentQuizzes({
 
 function QuizGenerationStatus({
   state,
+  job,
+  onCancel,
+  onRetry,
   requestId,
   onResume,
 }: {
   state: GenerationState;
+  job?: LearningQuizJob;
+  onCancel(signal: AbortSignal): Promise<void>;
+  onRetry(signal: AbortSignal): Promise<void>;
   requestId?: string;
   onResume(): void;
 }) {
@@ -677,6 +731,13 @@ function QuizGenerationStatus({
           </p>
         }
         requestId={requestId}
+        actions={job ? (
+          <JobResilienceActions
+            job={normalizeSafeJob(job)}
+            onCancel={onCancel}
+            onRetry={onRetry}
+          />
+        ) : undefined}
       />
     );
   }
@@ -692,13 +753,22 @@ function QuizGenerationStatus({
         }
         requestId={requestId}
         actions={
-          <button
-            type="button"
-            className="learning-secondary-button"
-            onClick={onResume}
-          >
-            Resume generation checks
-          </button>
+          <>
+            <button
+              type="button"
+              className="learning-secondary-button"
+              onClick={onResume}
+            >
+              Resume generation checks
+            </button>
+            {job ? (
+              <JobResilienceActions
+                job={normalizeSafeJob(job)}
+                onCancel={onCancel}
+                onRetry={onRetry}
+              />
+            ) : null}
+          </>
         }
       />
     );
@@ -708,6 +778,13 @@ function QuizGenerationStatus({
       <LearningGenerationJobStatus
         status="cancelled"
         message="Quiz generation was cancelled. No completed quiz is claimed."
+        actions={job ? (
+          <JobResilienceActions
+            job={normalizeSafeJob(job)}
+            onCancel={onCancel}
+            onRetry={onRetry}
+          />
+        ) : undefined}
       />
     );
   }
@@ -725,6 +802,13 @@ function QuizGenerationStatus({
         status={state.status}
         message={<p>{state.error.message}</p>}
         requestId={state.error.requestId}
+        actions={job ? (
+          <JobResilienceActions
+            job={normalizeSafeJob(job)}
+            onCancel={onCancel}
+            onRetry={onRetry}
+          />
+        ) : undefined}
       />
     );
   }

@@ -46,7 +46,7 @@ export interface AcceptedLearningJob {
   status: "queued" | "processing";
 }
 
-export interface LearningJob {
+export interface LearningJob extends PartialJobResilienceMetadata {
   id: string;
   type: "learning.document.process";
   status: "queued" | "processing" | "completed" | "failed" | "cancelled";
@@ -77,7 +77,7 @@ export interface LearningDocumentDeletionResult {
   alreadyDeleted: boolean;
 }
 
-export interface LearningDocumentDeletionJob {
+export interface LearningDocumentDeletionJob extends PartialJobResilienceMetadata {
   id: string;
   type: "learning.document.delete";
   status: "queued" | "processing" | "completed" | "failed" | "cancelled";
@@ -127,7 +127,7 @@ export interface AcceptedLearningChatJob {
   status: "queued" | "processing";
 }
 
-export interface LearningChatJob {
+export interface LearningChatJob extends PartialJobResilienceMetadata {
   id: string;
   type: "learning.chat.respond";
   status: "queued" | "processing" | "completed" | "failed" | "cancelled";
@@ -168,7 +168,7 @@ export interface AcceptedLearningFlashcardJob {
   status: "queued" | "processing";
 }
 
-export interface LearningFlashcardJob {
+export interface LearningFlashcardJob extends PartialJobResilienceMetadata {
   id: string;
   type: "learning.flashcards.generate";
   status: "queued" | "processing" | "completed" | "failed" | "cancelled";
@@ -218,7 +218,7 @@ export interface AcceptedLearningQuizJob {
   status: "queued" | "processing";
 }
 
-export interface LearningQuizJob {
+export interface LearningQuizJob extends PartialJobResilienceMetadata {
   id: string;
   type: "learning.quiz.generate";
   status: "queued" | "processing" | "completed" | "failed" | "cancelled";
@@ -286,3 +286,4 @@ export interface QuizAttemptReview {
   attempt: QuizAttemptSummary;
   review: QuizQuestionReview[];
 }
+import type { PartialJobResilienceMetadata } from "../jobs/jobResilience";

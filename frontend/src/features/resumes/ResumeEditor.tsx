@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 
-import { createDraftEntity } from "./resumeDraft";
+import {
+  createDraftEntity,
+  resumeFieldId,
+  type ResumeDraftValidationError,
+} from "./resumeDraft";
 import type {
   DraftBullet,
   DraftLink,
@@ -11,6 +15,7 @@ interface ResumeEditorProps {
   draft: ResumeDraft;
   onChange(draft: ResumeDraft): void;
   disabled?: boolean;
+  validationErrors?: readonly ResumeDraftValidationError[];
 }
 
 const RESUME_EDITOR_SECTIONS = [
@@ -125,7 +130,32 @@ export function ResumeEditor({
   draft,
   onChange,
   disabled = false,
+  validationErrors = [],
 }: ResumeEditorProps) {
+  const errorByPath = new Map(
+    validationErrors.map((error) => [error.path, error.message]),
+  );
+  const fieldAttributes = (path: string) => {
+    const error = errorByPath.get(path);
+    return {
+      id: resumeFieldId(path),
+      "aria-invalid": error ? true : undefined,
+      "aria-describedby": error
+        ? `${resumeFieldId(path)}-error`
+        : undefined,
+    };
+  };
+  const fieldError = (path: string) => {
+    const error = errorByPath.get(path);
+    return error ? (
+      <span
+        className="resume-field-error"
+        id={`${resumeFieldId(path)}-error`}
+      >
+        {error}
+      </span>
+    ) : null;
+  };
   const mutate = (change: (next: ResumeDraft) => void) => {
     const next = structuredClone(draft);
     change(next);
@@ -206,6 +236,8 @@ export function ResumeEditor({
           <label>
             Email
             <input
+              {...fieldAttributes("basics.email")}
+              aria-label="Email"
               disabled={disabled}
               type="email"
               maxLength={320}
@@ -216,6 +248,7 @@ export function ResumeEditor({
                 })
               }
             />
+            {fieldError("basics.email")}
           </label>
           <label>
             Phone
@@ -282,6 +315,8 @@ export function ResumeEditor({
                 <label>
                   Link {index + 1} label
                   <input
+                    {...fieldAttributes(`links.${index}.label`)}
+                    aria-label={`Link ${index + 1} label`}
                     disabled={disabled}
                     maxLength={80}
                     value={link.label}
@@ -292,12 +327,18 @@ export function ResumeEditor({
                       })
                     }
                   />
+                  {fieldError(`links.${index}.label`)}
                 </label>
                 <label>
                   Link {index + 1} URL
                   <input
+                    {...fieldAttributes(`links.${index}.url`)}
+                    aria-label={`Link ${index + 1} URL`}
                     disabled={disabled}
-                    type="url"
+                    type="text"
+                    inputMode="url"
+                    autoCapitalize="none"
+                    spellCheck={false}
                     maxLength={2_000}
                     value={link.url}
                     onChange={(event) =>
@@ -307,6 +348,7 @@ export function ResumeEditor({
                       })
                     }
                   />
+                  {fieldError(`links.${index}.url`)}
                 </label>
               </div>
               <MoveButtons
@@ -372,6 +414,8 @@ export function ResumeEditor({
                   <label key={field}>
                     {label}
                     <input
+                      {...fieldAttributes(`experience.${index}.${field}`)}
+                      aria-label={label}
                       disabled={disabled}
                       maxLength={maximum}
                       value={entry[field] ?? ""}
@@ -382,6 +426,7 @@ export function ResumeEditor({
                         })
                       }
                     />
+                    {fieldError(`experience.${index}.${field}`)}
                   </label>
                 ))}
                 <label className="resume-checkbox-field">
@@ -405,6 +450,10 @@ export function ResumeEditor({
                     <label>
                       Bullet {bulletIndex + 1}
                       <textarea
+                        {...fieldAttributes(
+                          `experience.${index}.bullets.${bulletIndex}.text`,
+                        )}
+                        aria-label={`Bullet ${bulletIndex + 1}`}
                         disabled={disabled}
                         maxLength={2_000}
                         rows={2}
@@ -417,6 +466,9 @@ export function ResumeEditor({
                           })
                         }
                       />
+                      {fieldError(
+                        `experience.${index}.bullets.${bulletIndex}.text`,
+                      )}
                     </label>
                     <MoveButtons
                       label={`experience ${index + 1} bullet ${bulletIndex + 1}`}
@@ -516,6 +568,8 @@ export function ResumeEditor({
                   <label key={field}>
                     {label}
                     <input
+                      {...fieldAttributes(`education.${index}.${field}`)}
+                      aria-label={label}
                       disabled={disabled}
                       maxLength={maximum}
                       value={entry[field] ?? ""}
@@ -526,6 +580,7 @@ export function ResumeEditor({
                         })
                       }
                     />
+                    {fieldError(`education.${index}.${field}`)}
                   </label>
                 ))}
                 <label className="resume-checkbox-field">
@@ -548,6 +603,10 @@ export function ResumeEditor({
                   <label>
                     Education detail {detailIndex + 1}
                     <textarea
+                      {...fieldAttributes(
+                        `education.${index}.details.${detailIndex}.text`,
+                      )}
+                      aria-label={`Education detail ${detailIndex + 1}`}
                       disabled={disabled}
                       maxLength={2_000}
                       rows={2}
@@ -560,6 +619,9 @@ export function ResumeEditor({
                         })
                       }
                     />
+                    {fieldError(
+                      `education.${index}.details.${detailIndex}.text`,
+                    )}
                   </label>
                   <MoveButtons
                     label={`education ${index + 1} detail ${detailIndex + 1}`}
@@ -638,6 +700,8 @@ export function ResumeEditor({
                 <label>
                   Skill group {index + 1} name
                   <input
+                    {...fieldAttributes(`skills.${index}.name`)}
+                    aria-label={`Skill group ${index + 1} name`}
                     disabled={disabled}
                     maxLength={120}
                     value={entry.name}
@@ -647,6 +711,7 @@ export function ResumeEditor({
                       })
                     }
                   />
+                  {fieldError(`skills.${index}.name`)}
                 </label>
                 <label>
                   Keywords, comma separated
@@ -726,6 +791,8 @@ export function ResumeEditor({
                   <label key={field}>
                     {label}
                     <input
+                      {...fieldAttributes(`projects.${index}.${field}`)}
+                      aria-label={label}
                       disabled={disabled}
                       maxLength={maximum}
                       value={entry[field] ?? ""}
@@ -736,6 +803,7 @@ export function ResumeEditor({
                         })
                       }
                     />
+                    {fieldError(`projects.${index}.${field}`)}
                   </label>
                 ))}
                 <label className="resume-field-wide">
@@ -773,6 +841,10 @@ export function ResumeEditor({
                   <label>
                     Project link label
                     <input
+                      {...fieldAttributes(
+                        `projects.${index}.links.${linkIndex}.label`,
+                      )}
+                      aria-label="Project link label"
                       disabled={disabled}
                       maxLength={80}
                       value={link.label}
@@ -783,12 +855,22 @@ export function ResumeEditor({
                         })
                       }
                     />
+                    {fieldError(
+                      `projects.${index}.links.${linkIndex}.label`,
+                    )}
                   </label>
                   <label>
                     Project link URL
                     <input
+                      {...fieldAttributes(
+                        `projects.${index}.links.${linkIndex}.url`,
+                      )}
+                      aria-label="Project link URL"
                       disabled={disabled}
-                      type="url"
+                      type="text"
+                      inputMode="url"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       maxLength={2_000}
                       value={link.url}
                       onChange={(event) =>
@@ -798,6 +880,9 @@ export function ResumeEditor({
                         })
                       }
                     />
+                    {fieldError(
+                      `projects.${index}.links.${linkIndex}.url`,
+                    )}
                   </label>
                   <MoveButtons
                     label={`project ${index + 1} link ${linkIndex + 1}`}
@@ -831,6 +916,10 @@ export function ResumeEditor({
                   <label>
                     Project bullet {bulletIndex + 1}
                     <textarea
+                      {...fieldAttributes(
+                        `projects.${index}.bullets.${bulletIndex}.text`,
+                      )}
+                      aria-label={`Project bullet ${bulletIndex + 1}`}
                       disabled={disabled}
                       maxLength={2_000}
                       rows={2}
@@ -843,6 +932,9 @@ export function ResumeEditor({
                         })
                       }
                     />
+                    {fieldError(
+                      `projects.${index}.bullets.${bulletIndex}.text`,
+                    )}
                   </label>
                   <MoveButtons
                     label={`project ${index + 1} bullet ${bulletIndex + 1}`}
@@ -934,9 +1026,18 @@ export function ResumeEditor({
                   <label key={field}>
                     {label}
                     <input
+                      {...fieldAttributes(`certifications.${index}.${field}`)}
+                      aria-label={label}
                       disabled={disabled}
                       maxLength={maximum}
-                      type={field === "credentialUrl" ? "url" : "text"}
+                      type="text"
+                      {...(field === "credentialUrl"
+                        ? {
+                            inputMode: "url" as const,
+                            autoCapitalize: "none",
+                            spellCheck: false,
+                          }
+                        : {})}
                       value={entry[field] ?? ""}
                       onChange={(event) =>
                         mutate((next) => {
@@ -945,6 +1046,7 @@ export function ResumeEditor({
                         })
                       }
                     />
+                    {fieldError(`certifications.${index}.${field}`)}
                   </label>
                 ))}
               </div>
@@ -993,6 +1095,8 @@ export function ResumeEditor({
                 <label>
                   Language {index + 1}
                   <input
+                    {...fieldAttributes(`languages.${index}.name`)}
+                    aria-label={`Language ${index + 1}`}
                     disabled={disabled}
                     maxLength={120}
                     value={entry.name}
@@ -1002,6 +1106,7 @@ export function ResumeEditor({
                       })
                     }
                   />
+                  {fieldError(`languages.${index}.name`)}
                 </label>
                 <label>
                   Proficiency
@@ -1060,6 +1165,8 @@ export function ResumeEditor({
               <label>
                 Interest {index + 1}
                 <input
+                  {...fieldAttributes(`interests.${index}.value`)}
+                  aria-label={`Interest ${index + 1}`}
                   disabled={disabled}
                   maxLength={120}
                   value={entry.value}
@@ -1069,6 +1176,7 @@ export function ResumeEditor({
                     })
                   }
                 />
+                {fieldError(`interests.${index}.value`)}
               </label>
               <MoveButtons
                 label={`interest ${index + 1}`}

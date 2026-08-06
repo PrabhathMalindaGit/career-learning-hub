@@ -261,7 +261,7 @@ export interface ResumeAnalysis {
   updatedAt: string;
 }
 
-export interface ResumeJob {
+export interface ResumeJob extends PartialJobResilienceMetadata {
   id: string;
   type: "resume.import-pdf" | "resume.analyze";
   status: JobStatus;
@@ -289,3 +289,4 @@ export interface ResumeJob {
   createdAt: string;
   updatedAt: string;
 }
+import type { PartialJobResilienceMetadata } from "../jobs/jobResilience";

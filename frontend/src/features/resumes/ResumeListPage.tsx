@@ -14,6 +14,12 @@ import { ApiError } from "../../api/apiClient";
 import { PageHeader } from "../../components/PageHeader";
 import { Pager } from "../../components/Pager";
 import { StateSurface } from "../../components/StateSurface";
+import { JobResilienceActions } from "../jobs/JobResilienceActions";
+import {
+  cancelJob,
+  normalizeSafeJob,
+  retryJob,
+} from "../jobs/jobResilience";
 import {
   createResume,
   fetchJob,
@@ -259,6 +265,51 @@ export function ResumeListPage() {
         setImportBusy(false);
       }
     }
+  }
+
+  async function cancelImport(signal: AbortSignal): Promise<void> {
+    if (!importJob || !("progress" in importJob)) return;
+    const cancelled = await cancelJob(importJob.id, signal);
+    if (signal.aborted) return;
+    if (cancelled.id !== importJob.id || cancelled.type !== importJob.type) {
+      throw new ApiError(502, "INVALID_RESUME_JOB", "The server returned a mismatched resume job.");
+    }
+    if (cancelled.status !== "cancelled") {
+      setImportJob({ ...importJob, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt });
+      return;
+    }
+    importController.current?.abort();
+    setImportBusy(false);
+    setImportJob({
+      ...importJob,
+      status: "cancelled",
+      phase: cancelled.phase,
+      phaseSequence: cancelled.phaseSequence,
+      canRetry: cancelled.canRetry,
+      updatedAt: cancelled.updatedAt,
+    });
+  }
+
+  async function retryImport(signal: AbortSignal): Promise<void> {
+    if (!importJob || !("progress" in importJob)) return;
+    const retried = await retryJob(importJob.id, signal);
+    if (signal.aborted) return;
+    if (retried.type !== "resume.import-pdf") {
+      throw new ApiError(502, "INVALID_RESUME_JOB", "The server returned a mismatched resume job.");
+    }
+    importController.current?.abort();
+    const controller = new AbortController();
+    importController.current = controller;
+    const accepted = {
+      id: retried.id,
+      type: "resume.import-pdf" as const,
+      status: "queued" as const,
+    };
+    setImportJob(accepted);
+    setImportBusy(true);
+    await startPolling(accepted, controller).finally(() => {
+      if (importController.current === controller) setImportBusy(false);
+    });
   }
 
   return (
@@ -656,7 +707,7 @@ export function ResumeListPage() {
               </p>
             ) : null}
             {importJob ? (
-              <div className="resume-job-state" role="status">
+              <div className="resume-job-state">
                 <strong>Import {importJob.status}</strong>
                 {"progress" in importJob ? (
                   <span>{importJob.progress}% checked</span>
@@ -667,6 +718,13 @@ export function ResumeListPage() {
                   <small>
                     The import job failed without creating a resume.
                   </small>
+                ) : null}
+                {"progress" in importJob ? (
+                  <JobResilienceActions
+                    job={normalizeSafeJob(importJob)}
+                    onCancel={cancelImport}
+                    onRetry={retryImport}
+                  />
                 ) : null}
                 {pollPaused ? (
                   <button

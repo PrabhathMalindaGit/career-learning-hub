@@ -1,4 +1,5 @@
 import { Readable } from "node:stream";
+import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
@@ -11,6 +12,10 @@ import {
 } from "../../jobs/job.queue.js";
 import { JobRecordModel } from "../../jobs/job.model.js";
 import { AppError } from "../../shared/appError.js";
+import {
+  activateProvider,
+  ensureAiFoundation,
+} from "../../modules/ai/aiProvider.service.js";
 import { AssetModel } from "../../modules/assets/asset.model.js";
 import { createAsset } from "../../modules/assets/asset.service.js";
 import { getStorageForProvider } from "../../modules/assets/storage/storage.factory.js";
@@ -65,6 +70,18 @@ vi.mock("pdf-parse", () => ({
   },
 }));
 
+async function connectApplicationManagedGemini(userId: string) {
+  env.AI_ROUTING_FOUNDATION_ENABLED = true;
+  env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = true;
+  await ensureAiFoundation(userId);
+  await activateProvider({
+    userId,
+    provider: "gemini-direct",
+    credentialSource: "administrator-managed",
+    expectedRevision: 0,
+  });
+}
+
 const syntheticPdf = Buffer.from(
   "%PDF-1.4\n% Synthetic deletion concurrency PDF\n%%EOF\n",
 );
@@ -85,6 +102,21 @@ function deferred<T>(): Deferred<T> {
   return {
     promise,
     resolve: resolvePromise,
+  };
+}
+
+function jobContext(jobId: string, userId: string) {
+  return {
+    jobId,
+    executionId: randomUUID(),
+    userId,
+    attempt: 1,
+    signal: new AbortController().signal,
+    reportProgress: vi.fn(async () => undefined),
+    reportPhase: vi.fn(async () => undefined),
+    assertActive: vi.fn(async () => undefined),
+    beginPersistence: vi.fn(async () => undefined),
+    heartbeat: vi.fn(async () => undefined),
   };
 }
 
@@ -310,6 +342,7 @@ describe("Learning Document deletion concurrency fencing", () => {
       email: "learning-chat-acceptance@example.test",
       displayName: "Learning Chat Acceptance",
     });
+    await connectApplicationManagedGemini(owner.userId);
     const document = await createDocument({
       userId: new Types.ObjectId(owner.userId),
     });
@@ -1079,7 +1112,9 @@ describe("Learning Document deletion concurrency fencing", () => {
             documentId: document._id.toString(),
           },
           status: "processing",
+          phase: "persisting",
           attempts: 1,
+          executionId: randomUUID(),
           lockedBy: env.JOB_WORKER_ID,
           lockedAt: new Date(),
           lockExpiresAt: new Date(Date.now() + 60_000),
@@ -1131,7 +1166,11 @@ describe("Learning Document deletion concurrency fencing", () => {
       documentId: document._id.toString(),
       jobId: deletionJobId.toString(),
     });
-    await completeJob(deletionJobId.toString(), {
+    await completeJob({
+      jobId: deletionJobId.toString(),
+      executionId: deletionJob.executionId!,
+      attempt: deletionJob.attempts,
+    }, {
       documentId: document._id.toString(),
       alreadyDeleted: false,
     });
@@ -1173,7 +1212,9 @@ describe("Learning Document deletion concurrency fencing", () => {
         documentId: new Types.ObjectId().toString(),
       },
       status: "processing",
+      phase: "preparing",
       attempts: 1,
+      executionId: randomUUID(),
       maxAttempts: 3,
       lockedBy: "vitest-worker",
       lockedAt: new Date(),
@@ -1210,7 +1251,9 @@ describe("Learning Document deletion concurrency fencing", () => {
         documentId: document._id.toString(),
       },
       status: "processing",
+      phase: "preparing",
       attempts: 1,
+      executionId: randomUUID(),
       maxAttempts: 3,
       lockedBy: "vitest-worker",
       lockedAt: new Date(),
@@ -1239,13 +1282,10 @@ describe("Learning Document deletion concurrency fencing", () => {
       status: "deleting",
       deletionJobId,
     });
-    const context = {
-      jobId: deletionJobId.toString(),
-      userId: document.userId.toString(),
-      attempt: 1,
-      reportProgress: vi.fn(async () => undefined),
-      heartbeat: vi.fn(async () => undefined),
-    };
+    const context = jobContext(
+      deletionJobId.toString(),
+      document.userId.toString(),
+    );
 
     const chatHandler = getJobHandler("learning.chat.respond");
     await expectWorkInvalidated(
@@ -1302,13 +1342,10 @@ describe("Learning Document deletion concurrency fencing", () => {
           documentId: document._id.toString(),
           assetId: document.assetId.toString(),
         },
-        {
-          jobId: processingJobId.toString(),
-          userId: document.userId.toString(),
-          attempt: 1,
-          reportProgress: vi.fn(async () => undefined),
-          heartbeat: vi.fn(async () => undefined),
-        },
+        jobContext(
+          processingJobId.toString(),
+          document.userId.toString(),
+        ),
       ),
     ).resolves.toEqual({
       documentId: document._id.toString(),

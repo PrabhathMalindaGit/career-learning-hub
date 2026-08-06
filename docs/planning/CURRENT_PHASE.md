@@ -1,10 +1,63 @@
 # Current Execution Phase
 
-- Phase: 18
-- Name: Staging Deployment
-- Phase 18 status: ACTIVE
+- Phase: G-5
+- Name: Gemini-only Settings and Credential Integration
+- Prompt ID: `CLH-G-5-GEMINI-SETTINGS-CREDENTIAL-INTEGRATION`
+- Status: `COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED / PR #2 DRAFT / MERGE AND STAGING DEPLOYMENT PENDING`
+- Branch: `feature/multi-provider-ai-routing`
+- Starting commit: `8e6ba33de1aa6b49ac2cf78133c1b683823ff481`
+- Starting subject: `Harden Gemini job resilience and progress delivery`
+- G-5 boundary:
+  GEMINI DIRECT ONLY; FIXED `gemini-3.6-flash`; EXPLICIT
+  ADMINISTRATOR-MANAGED, PERSONAL ENCRYPTED, OR DISCONNECTED CREDENTIAL
+  SOURCE; TEST-BEFORE-WRITE; VERSIONED ROUTING SNAPSHOTS AND EXECUTION-TIME
+  RESOLUTION; ONE BOUNDED SETTINGS SECTION; OPENROUTER DORMANT WITH NO
+  ACTIVATION OR FALLBACK; G-4 RETRY, TIMEOUT, CANCELLATION, FENCING, POLLING,
+  AND ATOMIC PERSISTENCE PRESERVED; NO STREAMING, SSE, WEBSOCKETS, DEPLOYMENT,
+  PUSH, MERGE, OR PHASE 19 ACTION
+- G-5 phase record:
+  `docs/planning/PHASE_G_5_GEMINI_SETTINGS_CREDENTIAL_INTEGRATION.md`
+- G-5 implementation commit:
+  `c7b3a0979783e4a8dff3ba27f4ccb82627d7d0c7`
+- G-5 final automated verification:
+  `BACKEND 389/389; SECURITY 36/36; FRONTEND 758/758; TYPECHECKS AND BUILD PASSED`
+- G-5 human review:
+  `LOCAL GEMINI SETTINGS, PERSONAL CREDENTIAL SAVE/TEST, RESPONSIVE LAYOUT, AND SECRET-SAFETY REVIEW APPROVED`
+- G-5 release status:
+  `PR #2 DRAFT; NOT MERGED; RENDER AND VERCEL MAIN-BRANCH DEPLOYMENT PENDING`
+- Baseline report: `docs/planning/PHASE_AI_1_GEMINI_BASELINE.md`
+- AI-2 architecture:
+  `docs/architecture/MULTI_PROVIDER_AI_ARCHITECTURE.md`
+- AI-2 threat model: `docs/security/AI_PROVIDER_THREAT_MODEL.md`
+- AI-2 phase record:
+  `docs/planning/PHASE_AI_2_MULTI_PROVIDER_ARCHITECTURE_AND_THREAT_MODEL.md`
+- AI-3 phase record:
+  `docs/planning/PHASE_AI_3_VAULT_PREFERENCE_ROUTING_FOUNDATION.md`
+- AI-4 phase record:
+  `docs/planning/PHASE_AI_4_OPENROUTER_CATALOGUE_FREE_ADAPTER.md`
+- AI-1 / AI-1R status: COMPLETE / APPROVED / LOCALLY COMMITTED
+- AI-1 / AI-1R implementation commit:
+  `eea4de2c1c476362a184604b13446d78e68fce4c`
+- AI-2 status: COMPLETE / HUMAN-APPROVED / LOCALLY COMMITTED
+- AI-3 approval token required:
+  `PHASE_AI_3_VAULT_PREFERENCE_ROUTING_FOUNDATION_APPROVED`
+- AI-3 approval token accepted: `YES`
+- AI-3 local implementation commit:
+  `AUTHORIZED AS ONE EXACT 32-PATH LOCAL COMMIT`
+- AI-3 local commit status: `LOCALLY COMMITTED`
+- AI-4 approval token required:
+  `PHASE_AI_4_OPENROUTER_CATALOGUE_FREE_ADAPTER_APPROVED`
+- AI-4 approval token accepted: `YES`
+- AI-4 local implementation status: `LOCALLY COMMITTED`
+- AI-4 authorization: `ONE EXACT 25-PATH LOCAL COMMIT`
+- AI-4 live-provider/credential status:
+  `NO LIVE PROVIDER TEST OR REAL KEY USED`
+- AI-4 remote-action status: `NO PUSH, MERGE, OR DEPLOYMENT OCCURRED`
+- AI-5 status: `INACTIVE / REQUIRES SEPARATE AUTHORIZATION`
+- Previous merged phase: 18 — Staging Deployment
+- Phase 18 status at merge: ACTIVE
 - Phase 18A status: COMPLETED / APPROVED
-- Status:
+- Preserved Phase 18 status at merge:
   ACTIVE — INTERVIEW AND LEARNING COMPARATIVE AUDIT COMPLETED /
   HUMAN-APPROVED; UI-LA1 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;
   UI-LA2 COMPLETED / HUMAN-APPROVED / LOCALLY COMMITTED;

@@ -39,6 +39,7 @@ export function registerInterviewJobHandlers(): void {
       const result = await generateInterviewQuestions({
         ...payload,
         jobId: context.jobId,
+        execution: context,
       });
       await context.reportProgress(100);
       return result;
@@ -57,6 +58,7 @@ export function registerInterviewJobHandlers(): void {
       const result = await generateQuestionExplanation({
         ...payload,
         jobId: context.jobId,
+        execution: context,
       });
       await context.reportProgress(100);
       return result;
@@ -75,6 +77,7 @@ export function registerInterviewJobHandlers(): void {
       const result = await generateAttemptFeedback({
         ...payload,
         jobId: context.jobId,
+        execution: context,
       });
       await context.reportProgress(100);
       return result;

@@ -207,6 +207,18 @@
   color: var(--error);
 }
 
+.resume-field-error {
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.resume-editor input[aria-invalid="true"],
+.resume-editor textarea[aria-invalid="true"] {
+  border-color: var(--error);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--error) 14%, transparent);
+}
+
 .resume-action-form label,
 .resume-form-grid label,
 .resume-bullet-row label,
@@ -223,7 +235,7 @@
 .resume-form-grid textarea,
 .resume-bullet-row textarea,
 .resume-bullet-row input:not([type]),
-.resume-bullet-row input[type="url"],
+.resume-bullet-row input[inputmode="url"],
 .resume-entry-card > label > input:not([type]) {
   width: 100%;
   min-width: 0;
@@ -243,7 +255,7 @@
 .resume-form-grid textarea:focus,
 .resume-bullet-row textarea:focus,
 .resume-bullet-row input:not([type]):focus,
-.resume-bullet-row input[type="url"]:focus,
+.resume-bullet-row input[inputmode="url"]:focus,
 .resume-entry-card > label > input:not([type]):focus {
   border-color: var(--accent);
   background: #fff;

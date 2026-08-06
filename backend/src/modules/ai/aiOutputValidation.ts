@@ -7,6 +7,8 @@ export function extractStructuredJson(text: string): unknown {
       502,
       "AI_RESPONSE_TOO_LARGE",
       "The AI provider response exceeded the permitted size.",
+      undefined,
+      false,
     );
   }
 
@@ -35,6 +37,8 @@ export function extractStructuredJson(text: string): unknown {
         502,
         "AI_INVALID_JSON",
         "The AI provider did not return valid JSON.",
+        undefined,
+        false,
       );
     }
 
@@ -45,6 +49,8 @@ export function extractStructuredJson(text: string): unknown {
         502,
         "AI_INVALID_JSON",
         "The AI provider did not return valid JSON.",
+        undefined,
+        false,
       );
     }
   }
@@ -66,6 +72,7 @@ export function validateStructuredAiOutput<
       "AI_SCHEMA_VALIDATION_FAILED",
       "The AI response did not match the required structure.",
       parsed.error.flatten(),
+      false,
     );
   }
 

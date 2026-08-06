@@ -7,6 +7,12 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { JobResilienceActions } from "../jobs/JobResilienceActions";
+import {
+  cancelJob,
+  normalizeSafeJob,
+  retryJob,
+} from "../jobs/jobResilience";
 import {
   createFlashcardSet,
   fetchFlashcardSet,
@@ -91,6 +97,7 @@ export function DocumentFlashcards({
   const [pendingJob, setPendingJob] = useState<
     AcceptedLearningFlashcardJob | LearningFlashcardJob
   >();
+  const [resilienceJob, setResilienceJob] = useState<LearningFlashcardJob>();
   const [pendingSetId, setPendingSetId] = useState<string>();
   const [generationState, setGenerationState] =
     useState<GenerationState>({ status: "idle" });
@@ -298,6 +305,7 @@ export function DocumentFlashcards({
               update.status === "processing")
           ) {
             setPendingJob(update);
+            setResilienceJob(update);
             setGenerationState({ status: update.status });
           }
         },
@@ -321,6 +329,7 @@ export function DocumentFlashcards({
               return;
             }
             if (result.reason !== "terminal") return;
+            setResilienceJob(result.job);
             if (result.job.status === "completed") {
               await refreshCanonicalCompletion(
                 result.job,
@@ -328,7 +337,6 @@ export function DocumentFlashcards({
               );
             } else if (result.job.status === "failed") {
               setPendingJob(undefined);
-              setPendingSetId(undefined);
               setGenerationState({
                 status: "failed",
                 error: {
@@ -340,7 +348,6 @@ export function DocumentFlashcards({
               setListVersion((current) => current + 1);
             } else {
               setPendingJob(undefined);
-              setPendingSetId(undefined);
               setGenerationState({ status: "cancelled" });
               setListVersion((current) => current + 1);
             }
@@ -366,6 +373,48 @@ export function DocumentFlashcards({
     },
     [document.id, refreshCanonicalCompletion],
   );
+
+  async function cancelGeneration(signal: AbortSignal): Promise<void> {
+    if (!resilienceJob) return;
+    const cancelled = await cancelJob(resilienceJob.id, signal);
+    if (signal.aborted) return;
+    if (cancelled.id !== resilienceJob.id || cancelled.type !== "learning.flashcards.generate") {
+      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    }
+    if (cancelled.status !== "cancelled") {
+      setResilienceJob({ ...resilienceJob, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt });
+      return;
+    }
+    pollController.current?.abort();
+    setPendingJob(undefined);
+    setResilienceJob({
+      ...resilienceJob,
+      status: "cancelled",
+      phase: cancelled.phase,
+      phaseSequence: cancelled.phaseSequence,
+      canRetry: cancelled.canRetry,
+      updatedAt: cancelled.updatedAt,
+    });
+    setGenerationState({ status: "cancelled" });
+  }
+
+  async function retryGeneration(signal: AbortSignal): Promise<void> {
+    if (!resilienceJob || !pendingSetId) return;
+    const retried = await retryJob(resilienceJob.id, signal);
+    if (signal.aborted) return;
+    if (retried.type !== "learning.flashcards.generate") {
+      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    }
+    runPolling(
+      {
+        id: retried.id,
+        type: "learning.flashcards.generate",
+        status: "queued",
+      },
+      pendingSetId,
+      identity,
+    );
+  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -541,6 +590,9 @@ export function DocumentFlashcards({
 
       <GenerationStatus
         state={generationState}
+        job={resilienceJob}
+        onCancel={cancelGeneration}
+        onRetry={retryGeneration}
         requestId={acceptedRequestId}
         onResume={() => {
           if (pendingJob && pendingSetId) {
@@ -672,10 +724,16 @@ export function DocumentFlashcards({
 
 function GenerationStatus({
   state,
+  job,
+  onCancel,
+  onRetry,
   requestId,
   onResume,
 }: {
   state: GenerationState;
+  job?: LearningFlashcardJob;
+  onCancel(signal: AbortSignal): Promise<void>;
+  onRetry(signal: AbortSignal): Promise<void>;
   requestId?: string;
   onResume(): void;
 }) {
@@ -692,6 +750,13 @@ function GenerationStatus({
           </p>
         }
         requestId={requestId}
+        actions={job ? (
+          <JobResilienceActions
+            job={normalizeSafeJob(job)}
+            onCancel={onCancel}
+            onRetry={onRetry}
+          />
+        ) : undefined}
       />
     );
   }
@@ -707,13 +772,22 @@ function GenerationStatus({
         }
         requestId={requestId}
         actions={
-          <button
-            type="button"
-            className="learning-secondary-button"
-            onClick={onResume}
-          >
-            Resume generation checks
-          </button>
+          <>
+            <button
+              type="button"
+              className="learning-secondary-button"
+              onClick={onResume}
+            >
+              Resume generation checks
+            </button>
+            {job ? (
+              <JobResilienceActions
+                job={normalizeSafeJob(job)}
+                onCancel={onCancel}
+                onRetry={onRetry}
+              />
+            ) : null}
+          </>
         }
       />
     );
@@ -723,6 +797,13 @@ function GenerationStatus({
       <LearningGenerationJobStatus
         status="cancelled"
         message="Flashcard generation was cancelled. No completed set is claimed."
+        actions={job ? (
+          <JobResilienceActions
+            job={normalizeSafeJob(job)}
+            onCancel={onCancel}
+            onRetry={onRetry}
+          />
+        ) : undefined}
       />
     );
   }
@@ -740,6 +821,13 @@ function GenerationStatus({
         status={state.status}
         message={<p>{state.error.message}</p>}
         requestId={state.error.requestId}
+        actions={job ? (
+          <JobResilienceActions
+            job={normalizeSafeJob(job)}
+            onCancel={onCancel}
+            onRetry={onRetry}
+          />
+        ) : undefined}
       />
     );
   }

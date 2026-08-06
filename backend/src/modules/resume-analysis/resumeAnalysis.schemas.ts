@@ -1,11 +1,26 @@
 import { z } from "zod";
 
+const parsedOptionalText = (maximum: number) =>
+  z
+    .union([z.string().trim().max(maximum), z.null()])
+    .optional()
+    .transform((value) => value ?? undefined);
+
+const parsedOptionalNonEmptyText = (maximum: number) =>
+  parsedOptionalText(maximum).transform((value) =>
+    value?.trim() ? value : undefined,
+  );
+
 export const importPdfBodySchema = z
-  .object({ title: z.string().trim().min(1).max(120) })
+  .object({
+    requestId: z.string().uuid(),
+    title: z.string().trim().min(1).max(120),
+  })
   .strict();
 
 export const analyzeResumeBodySchema = z
   .object({
+    requestId: z.string().uuid(),
     versionId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
     targetRole: z.string().trim().min(2).max(200),
     company: z.string().trim().max(200).optional(),
@@ -36,7 +51,7 @@ export const analysisListQuerySchema = z.object({
 
 const parsedLinkSchema = z.object({
   label: z.string().trim().min(1).max(80),
-  url: z.string().trim().url().max(2_000),
+  url: z.string().trim().min(1).max(2_000),
 }).strict();
 
 const parsedBulletSchema = z.object({
@@ -46,29 +61,29 @@ const parsedBulletSchema = z.object({
 export const parsedResumeSchema = z.object({
   basics: z.object({
     fullName: z.string().trim().max(200).default(""),
-    email: z.string().trim().email().max(320).optional(),
-    phone: z.string().trim().max(80).optional(),
-    location: z.string().trim().max(200).optional(),
-    headline: z.string().trim().max(200).optional(),
-    summary: z.string().trim().max(5_000).optional(),
+    email: parsedOptionalNonEmptyText(320),
+    phone: parsedOptionalText(80),
+    location: parsedOptionalText(200),
+    headline: parsedOptionalText(200),
+    summary: parsedOptionalText(5_000),
     links: z.array(parsedLinkSchema).max(20).default([]),
   }).strict(),
   experience: z.array(z.object({
     employer: z.string().trim().min(1).max(200),
     jobTitle: z.string().trim().min(1).max(200),
-    location: z.string().trim().max(200).optional(),
-    startDate: z.string().trim().max(30).optional(),
-    endDate: z.string().trim().max(30).optional(),
+    location: parsedOptionalText(200),
+    startDate: parsedOptionalText(30),
+    endDate: parsedOptionalText(30),
     isCurrent: z.boolean().default(false),
     bullets: z.array(parsedBulletSchema).max(50).default([]),
   }).strict()).max(50).default([]),
   education: z.array(z.object({
     institution: z.string().trim().min(1).max(200),
     qualification: z.string().trim().min(1).max(200),
-    fieldOfStudy: z.string().trim().max(200).optional(),
-    location: z.string().trim().max(200).optional(),
-    startDate: z.string().trim().max(30).optional(),
-    endDate: z.string().trim().max(30).optional(),
+    fieldOfStudy: parsedOptionalText(200),
+    location: parsedOptionalText(200),
+    startDate: parsedOptionalText(30),
+    endDate: parsedOptionalText(30),
     isCurrent: z.boolean().default(false),
     details: z.array(parsedBulletSchema).max(30).default([]),
   }).strict()).max(30).default([]),
@@ -78,23 +93,23 @@ export const parsedResumeSchema = z.object({
   }).strict()).max(30).default([]),
   projects: z.array(z.object({
     name: z.string().trim().min(1).max(200),
-    role: z.string().trim().max(160).optional(),
-    description: z.string().trim().max(2_000).optional(),
-    startDate: z.string().trim().max(30).optional(),
-    endDate: z.string().trim().max(30).optional(),
+    role: parsedOptionalText(160),
+    description: parsedOptionalText(2_000),
+    startDate: parsedOptionalText(30),
+    endDate: parsedOptionalText(30),
     technologies: z.array(z.string().trim().min(1).max(120)).max(100).default([]),
     links: z.array(parsedLinkSchema).max(20).default([]),
     bullets: z.array(parsedBulletSchema).max(50).default([]),
   }).strict()).max(50).default([]),
   certifications: z.array(z.object({
     name: z.string().trim().min(1).max(200),
-    issuer: z.string().trim().max(200).optional(),
-    issuedDate: z.string().trim().max(30).optional(),
-    credentialUrl: z.string().trim().url().max(2_000).optional(),
+    issuer: parsedOptionalText(200),
+    issuedDate: parsedOptionalText(30),
+    credentialUrl: parsedOptionalNonEmptyText(2_000),
   }).strict()).max(50).default([]),
   languages: z.array(z.object({
     name: z.string().trim().min(1).max(120),
-    proficiency: z.string().trim().max(80).optional(),
+    proficiency: parsedOptionalText(80),
   }).strict()).max(30).default([]),
   interests: z.array(z.string().trim().min(1).max(120)).max(50).default([]),
 }).strict();

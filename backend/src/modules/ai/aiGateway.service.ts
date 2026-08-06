@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { createHash } from "node:crypto";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
 import { logger, serializeErrorForLog } from "../../shared/logger.js";
 import { UsageEventModel } from "./usageEvent.model.js";
 import { validateStructuredAiOutput } from "./aiOutputValidation.js";
+import { toProviderJsonSchema } from "./providerJsonSchema.js";
 import {
   estimateTokens,
   reconcileAiTokenUsage,
@@ -13,51 +15,13 @@ import { GeminiProviderAdapter } from "./providers/gemini.provider.js";
 import {
   AiProviderError,
   type AiProviderAdapter,
+  type ProviderProgressPhase,
 } from "./providers/provider.types.js";
+import { authorizeAiJobExecution } from "./aiRouting.service.js";
 
 const providers: Record<string, AiProviderAdapter> = {
   gemini: new GeminiProviderAdapter(),
 };
-
-async function delay(milliseconds: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
-async function executeWithRetry<T>(
-  operation: (signal: AbortSignal) => Promise<T>,
-): Promise<T> {
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt <= env.AI_MAX_RETRIES; attempt += 1) {
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      env.AI_REQUEST_TIMEOUT_MS,
-    );
-
-    try {
-      return await operation(controller.signal);
-    } catch (error) {
-      lastError = error;
-      const retryable =
-        error instanceof AiProviderError && error.retryable;
-
-      if (!retryable || attempt >= env.AI_MAX_RETRIES) {
-        throw error;
-      }
-
-      const backoff = Math.min(
-        5_000,
-        250 * 2 ** attempt + Math.floor(Math.random() * 200),
-      );
-      await delay(backoff);
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-
-  throw lastError;
-}
 
 export async function generateStructuredOutput<
   TSchema extends z.ZodTypeAny,
@@ -71,7 +35,17 @@ export async function generateStructuredOutput<
   model?: string;
   jobId?: string;
   metadata?: Record<string, unknown>;
+  signal?: AbortSignal;
+  reportPhase?(
+    phase: ProviderProgressPhase | "validating",
+  ): void | Promise<void>;
 }): Promise<z.output<TSchema>> {
+  const routingAuthorization =
+    input.jobId
+      ? await authorizeAiJobExecution({ jobId: input.jobId })
+      : undefined;
+
+  try {
   const providerName = input.provider ?? env.AI_DEFAULT_PROVIDER;
   const provider = providers[providerName];
 
@@ -86,25 +60,60 @@ export async function generateStructuredOutput<
   const estimatedTokens = estimateTokens(
     `${input.systemPrompt}\n${input.userPrompt}`,
   );
+  const responseJsonSchema = toProviderJsonSchema(input.schema);
   await reserveAiQuota({
     userId: input.userId,
     estimatedTokens,
   });
 
   const startedAt = Date.now();
-  let model = input.model ?? env.GEMINI_MODEL;
+  let model =
+    routingAuthorization?.snapshot.directModelId ??
+    routingAuthorization?.snapshot.freeModelIds?.[0] ??
+    input.model ??
+    env.GEMINI_MODEL;
+  let actualInputTokens = 0;
+  let actualOutputTokens = 0;
+  const providerAttempt = 1;
 
   try {
-    const result = await executeWithRetry((signal) =>
-      provider.generateStructured({
+    await input.reportPhase?.("contacting_provider");
+    const result = await provider.generateStructured({
         systemPrompt: input.systemPrompt,
         userPrompt: input.userPrompt,
-        model: input.model,
-        signal,
-      }),
-    );
+        responseJsonSchema,
+        model: routingAuthorization?.snapshot.directModelId ?? input.model,
+        models: routingAuthorization?.snapshot.freeModelIds,
+        maximumOutputTokens:
+          routingAuthorization?.snapshot.maximumOutputTokens,
+        timeoutMs:
+          routingAuthorization?.snapshot.totalMs ??
+          env.GEMINI_TOTAL_TIMEOUT_MS,
+        timeouts: {
+          connectMs: Math.min(
+            env.GEMINI_CONNECT_TIMEOUT_MS,
+            routingAuthorization?.snapshot.totalMs ??
+              env.GEMINI_TOTAL_TIMEOUT_MS,
+          ),
+          firstResponseMs:
+            routingAuthorization?.snapshot.ttftMs ??
+            env.GEMINI_FIRST_RESPONSE_TIMEOUT_MS,
+          idleMs:
+            routingAuthorization?.snapshot.streamIdleMs ??
+            env.GEMINI_IDLE_TIMEOUT_MS,
+          totalMs:
+            routingAuthorization?.snapshot.totalMs ??
+            env.GEMINI_TOTAL_TIMEOUT_MS,
+        },
+        signal: input.signal ?? new AbortController().signal,
+        onPhase: input.reportPhase,
+        credential: routingAuthorization?.credential,
+      });
 
     model = result.model;
+    actualInputTokens = result.usage.inputTokens;
+    actualOutputTokens = result.usage.outputTokens;
+    await input.reportPhase?.("validating");
     const parsed = validateStructuredAiOutput(
       result.text,
       input.schema,
@@ -128,7 +137,32 @@ export async function generateStructuredOutput<
         status: "success",
         latencyMs: Date.now() - startedAt,
         jobId: input.jobId,
-        metadata: input.metadata,
+        metadata: {
+          ...input.metadata,
+          providerAttempt,
+          ...(routingAuthorization?.snapshot.provider === "openrouter"
+            ? {
+                plannedModelListHash: createHash("sha256")
+                  .update(routingAuthorization.snapshot.freeModelIds!.join("\n"))
+                  .digest("hex"),
+                actualModel: result.model,
+                freeTier: true,
+                catalogueVersion: routingAuthorization.snapshot.catalogueVersion,
+                routingProfileVersion:
+                  routingAuthorization.snapshot.routingProfileVersion,
+                rankingPolicyVersion:
+                  routingAuthorization.snapshot.rankingPolicyVersion,
+                providerRequestId: result.providerRequestId,
+                finishReason: result.finishReason,
+                totalTokens:
+                  result.usage.totalTokens ??
+                  result.usage.inputTokens + result.usage.outputTokens,
+                workerAttempt: routingAuthorization.workerAttempt,
+                fallbackWithinFreeModels:
+                  routingAuthorization.snapshot.freeModelIds!.indexOf(result.model),
+              }
+            : {}),
+        },
       }),
     ]);
 
@@ -141,20 +175,54 @@ export async function generateStructuredOutput<
           ? error.code
           : "AI_UNKNOWN_ERROR";
 
-    await UsageEventModel.create({
-      userId: input.userId,
-      feature: input.feature,
-      provider: provider.name,
-      model,
-      requestCount: 1,
-      inputTokens: 0,
-      outputTokens: 0,
-      status: "failure",
-      latencyMs: Date.now() - startedAt,
-      errorCode,
-      jobId: input.jobId,
-      metadata: input.metadata,
-    }).catch((loggingError: unknown) => {
+    await Promise.all([
+      reconcileAiTokenUsage({
+        userId: input.userId,
+        estimatedTokens,
+        actualInputTokens,
+        actualOutputTokens,
+      }),
+      UsageEventModel.create({
+        userId: input.userId,
+        feature: input.feature,
+        provider: provider.name,
+        model,
+        requestCount: 1,
+        inputTokens: actualInputTokens,
+        outputTokens: actualOutputTokens,
+        status: "failure",
+        latencyMs: Date.now() - startedAt,
+        errorCode,
+        jobId: input.jobId,
+        metadata: {
+          ...input.metadata,
+          providerAttempt,
+          ...(error instanceof AiProviderError
+            ? {
+                classification: error.classification,
+                retryable: error.retryable,
+                ...(error.timeoutPhase
+                  ? { timeoutPhase: error.timeoutPhase }
+                  : {}),
+              }
+            : {}),
+          ...(routingAuthorization?.snapshot.provider === "openrouter"
+            ? {
+                plannedModelListHash: createHash("sha256")
+                  .update(routingAuthorization.snapshot.freeModelIds!.join("\n"))
+                  .digest("hex"),
+                freeTier: true,
+                catalogueVersion: routingAuthorization.snapshot.catalogueVersion,
+                routingProfileVersion:
+                  routingAuthorization.snapshot.routingProfileVersion,
+                rankingPolicyVersion:
+                  routingAuthorization.snapshot.rankingPolicyVersion,
+                workerAttempt: routingAuthorization.workerAttempt,
+              }
+            : {}),
+        },
+      }),
+    ]).catch((loggingError: unknown) => {
       logger.error("ai.usage-log.failed", {
         feature: input.feature,
         ...serializeErrorForLog(loggingError),
@@ -167,6 +235,10 @@ export async function generateStructuredOutput<
         error.statusCode ?? 502,
         error.code,
         error.message,
+        undefined,
+        error.retryable,
+        error.classification,
+        error.timeoutPhase,
       );
     }
 
@@ -175,5 +247,8 @@ export async function generateStructuredOutput<
       "AI_REQUEST_FAILED",
       "The AI request failed.",
     );
+  }
+  } finally {
+    await routingAuthorization?.release();
   }
 }

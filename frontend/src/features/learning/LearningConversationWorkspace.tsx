@@ -9,6 +9,12 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useAuth } from "../auth/AuthProvider";
+import { JobResilienceActions } from "../jobs/JobResilienceActions";
+import {
+  cancelJob,
+  normalizeSafeJob,
+  retryJob,
+} from "../jobs/jobResilience";
 import {
   fetchLearningChatJob,
   fetchLearningDocument,
@@ -116,6 +122,7 @@ export function LearningConversationWorkspace() {
   const [uncertain, setUncertain] = useState(false);
   const [pendingJob, setPendingJob] =
     useState<AcceptedLearningChatJob | LearningChatJob>();
+  const [resilienceJob, setResilienceJob] = useState<LearningChatJob>();
   const [responseState, setResponseState] =
     useState<ResponseState>({ status: "idle" });
   const [selectedSourcePage, setSelectedSourcePage] = useState<number>();
@@ -393,6 +400,7 @@ export function LearningConversationWorkspace() {
               update.status === "processing")
           ) {
             setPendingJob(update);
+            setResilienceJob(update);
             setResponseState({ status: update.status });
           }
         },
@@ -413,6 +421,7 @@ export function LearningConversationWorkspace() {
             return;
           }
           if (result.reason !== "terminal") return;
+          setResilienceJob(result.job);
           if (result.job.status === "completed") {
             await refreshCanonicalCompletion(
               result.job,
@@ -453,6 +462,48 @@ export function LearningConversationWorkspace() {
     },
     [document, documentId, refreshCanonicalCompletion],
   );
+
+  async function cancelResponse(signal: AbortSignal): Promise<void> {
+    if (!resilienceJob) return;
+    const cancelled = await cancelJob(resilienceJob.id, signal);
+    if (signal.aborted) return;
+    if (cancelled.id !== resilienceJob.id || cancelled.type !== "learning.chat.respond") {
+      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    }
+    if (cancelled.status !== "cancelled") {
+      setResilienceJob({ ...resilienceJob, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt });
+      return;
+    }
+    pollController.current?.abort();
+    setPendingJob(undefined);
+    setResilienceJob({
+      ...resilienceJob,
+      status: "cancelled",
+      phase: cancelled.phase,
+      phaseSequence: cancelled.phaseSequence,
+      canRetry: cancelled.canRetry,
+      updatedAt: cancelled.updatedAt,
+    });
+    setResponseState({ status: "cancelled" });
+    intent.current = undefined;
+  }
+
+  async function retryResponse(signal: AbortSignal): Promise<void> {
+    if (!resilienceJob) return;
+    const retried = await retryJob(resilienceJob.id, signal);
+    if (signal.aborted) return;
+    if (retried.type !== "learning.chat.respond") {
+      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    }
+    runPolling(
+      {
+        id: retried.id,
+        type: "learning.chat.respond",
+        status: "queued",
+      },
+      identity,
+    );
+  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -777,6 +828,9 @@ export function LearningConversationWorkspace() {
 
       <ResponseStatus
         state={responseState}
+        job={resilienceJob}
+        onCancel={cancelResponse}
+        onRetry={retryResponse}
         onResume={() => {
           if (pendingJob) runPolling(pendingJob, identity);
         }}
@@ -837,9 +891,15 @@ export function LearningConversationWorkspace() {
 
 function ResponseStatus({
   state,
+  job,
+  onCancel,
+  onRetry,
   onResume,
 }: {
   state: ResponseState;
+  job?: LearningChatJob;
+  onCancel(signal: AbortSignal): Promise<void>;
+  onRetry(signal: AbortSignal): Promise<void>;
   onResume(): void;
 }) {
   if (state.status === "idle") return null;
@@ -852,10 +912,20 @@ function ResponseStatus({
   }
   if (state.status === "queued" || state.status === "processing") {
     return (
-      <div className="learning-response-status" role="status">
-        {state.status === "queued"
-          ? "Response queued. Waiting for grounded processing."
-          : "Grounded response processing is in progress."}
+      <div className="learning-response-status">
+        {job ? (
+          <JobResilienceActions
+            job={normalizeSafeJob(job)}
+            onCancel={onCancel}
+            onRetry={onRetry}
+          />
+        ) : (
+          <p role="status">
+            {state.status === "queued"
+              ? "Response queued. Waiting for grounded processing."
+              : "Grounded response processing is in progress."}
+          </p>
+        )}
       </div>
     );
   }
@@ -873,13 +943,27 @@ function ResponseStatus({
         >
           Resume response checks
         </button>
+        {job ? (
+          <JobResilienceActions
+            job={normalizeSafeJob(job)}
+            onCancel={onCancel}
+            onRetry={onRetry}
+          />
+        ) : null}
       </div>
     );
   }
   if (state.status === "cancelled") {
     return (
-      <div className="learning-response-status" role="status">
-        Grounded response was cancelled. No assistant answer was created.
+      <div className="learning-response-status">
+        <p>Grounded response was cancelled. No assistant answer was created.</p>
+        {job ? (
+          <JobResilienceActions
+            job={normalizeSafeJob(job)}
+            onCancel={onCancel}
+            onRetry={onRetry}
+          />
+        ) : null}
       </div>
     );
   }
@@ -895,6 +979,13 @@ function ResponseStatus({
           : error?.message}
       </p>
       <RequestId value={error?.requestId} />
+      {job ? (
+        <JobResilienceActions
+          job={normalizeSafeJob(job)}
+          onCancel={onCancel}
+          onRetry={onRetry}
+        />
+      ) : null}
     </div>
   );
 }

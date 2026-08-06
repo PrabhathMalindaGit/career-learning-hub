@@ -110,11 +110,12 @@ Content-Type: multipart/form-data
 
 Fields:
 
+- `requestId` — client-generated UUID reused for the deliberate submission
 - `title`
 - `file`
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/resume-analyses/import-pdf       -H "Authorization: Bearer $ACCESS_TOKEN"       -F "title=Imported Resume"       -F "file=@resume.pdf;type=application/pdf"
+curl -X POST http://localhost:8000/api/v1/resume-analyses/import-pdf       -H "Authorization: Bearer $ACCESS_TOKEN"       -F "requestId=<UUID>"       -F "title=Imported Resume"       -F "file=@resume.pdf;type=application/pdf"
 ```
 
 The response is `202 Accepted`. Poll:
@@ -138,6 +139,7 @@ POST /api/v1/resume-analyses/resumes/:resumeId/analyze
 
 ```json
 {
+  "requestId": "<UUID>",
   "targetRole": "Senior Frontend Engineer",
   "company": "Example Company",
   "jobDescription": "Paste the target description here."

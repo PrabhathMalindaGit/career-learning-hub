@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { AiJobExecutionLifecycle } from "../../jobs/job.registry.js";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
 import { withMongoTransaction } from "../../shared/mongoTransaction.js";
@@ -17,7 +18,10 @@ import {
   getOwnedResumeVersion,
   requireOwnedResume,
 } from "../resumes/resume.service.js";
-import { ResumeVersionModel } from "../resumes/resumeVersion.model.js";
+import {
+  ResumeVersionModel,
+  type ResumeVersionDocument,
+} from "../resumes/resumeVersion.model.js";
 import type { ResumeContent } from "../resumes/resume.types.js";
 import { normalizeResumeContent } from "../resumes/resume.validation.js";
 import { extractPdfText } from "./pdf.service.js";
@@ -30,6 +34,26 @@ import { parseResumeText } from "./resumeParsing.service.js";
 
 const ANALYSIS_PROMPT_VERSION = "resume-analysis-prompt-v1";
 const SCORING_VERSION = "resume-readiness-v1";
+
+function isDuplicateKeyError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11_000
+  );
+}
+
+function importedVersionResult(
+  version: ResumeVersionDocument | null,
+) {
+  if (!version) return undefined;
+  return {
+    resumeId: version.resumeId.toString(),
+    versionId: version._id.toString(),
+    versionNumber: version.versionNumber,
+  };
+}
 
 function collectBulletText(content: ResumeContent): Map<string, string> {
   const bullets = new Map<string, string>();
@@ -52,6 +76,7 @@ export async function importResumePdf(input: {
   assetId: string;
   title: string;
   jobId?: string;
+  execution?: AiJobExecutionLifecycle;
 }) {
   const asset = await getOwnedAsset(input.userId, input.assetId);
 
@@ -94,16 +119,39 @@ export async function importResumePdf(input: {
     userId: input.userId,
     text: extracted.text,
     jobId: input.jobId,
+    execution: input.execution,
   });
 
-  const created = await createResume({
-    userId: input.userId,
-    title: input.title,
-    content,
-    source: "pdf-import",
-    sourceAssetId: input.assetId,
-    changeSummary: `Imported from PDF (${extracted.pageCount} pages)`,
-  });
+  let created: Awaited<ReturnType<typeof createResume>>;
+  try {
+    await input.execution?.beginPersistence();
+    created = await createResume({
+      userId: input.userId,
+      title: input.title,
+      content,
+      source: "pdf-import",
+      sourceAssetId: input.assetId,
+      changeSummary: `Imported from PDF (${extracted.pageCount} pages)`,
+      beforeWrites: input.execution?.assertActive,
+    });
+  } catch (error) {
+    if (!isDuplicateKeyError(error)) throw error;
+
+    const winningVersion = await ResumeVersionModel.findOne({
+      userId: input.userId,
+      sourceAssetId: input.assetId,
+      source: "pdf-import",
+    });
+    const winningResult = importedVersionResult(winningVersion);
+    if (!winningResult) throw error;
+
+    await promoteOwnedAsset(input.userId, input.assetId, {
+      resumeId: winningResult.resumeId,
+      pageCount: extracted.pageCount,
+      characterCount: extracted.characterCount,
+    });
+    return winningResult;
+  }
 
   await promoteOwnedAsset(input.userId, input.assetId, {
     resumeId: created.resume._id.toString(),
@@ -138,6 +186,7 @@ export async function analyzeResume(input: {
   company?: string;
   jobDescription?: string;
   jobId?: string;
+  execution?: AiJobExecutionLifecycle;
 }): Promise<ResumeAnalysisDocument> {
   if (input.jobId) {
     const existing = await ResumeAnalysisModel.findOne({
@@ -171,6 +220,8 @@ export async function analyzeResume(input: {
     userId: input.userId,
     feature: "resume.analysis",
     jobId: input.jobId,
+    signal: input.execution?.signal,
+    reportPhase: input.execution?.reportPhase,
     systemPrompt: [
       "You are a conservative resume-readiness reviewer.",
       "This is not an actual ATS result. Score only the supplied resume against the supplied target.",
@@ -241,27 +292,35 @@ export async function analyzeResume(input: {
   let analysis: ResumeAnalysisDocument;
 
   try {
-    analysis = await ResumeAnalysisModel.create({
-    userId: input.userId,
-    resumeId: input.resumeId,
-    resumeVersionId: versionId,
-    target: {
-      role: input.targetRole,
-      company: input.company,
-      jobDescription: input.jobDescription,
-    },
-    scoringVersion: SCORING_VERSION,
-    promptVersion: ANALYSIS_PROMPT_VERSION,
-    provider: env.AI_DEFAULT_PROVIDER,
-    model: env.GEMINI_MODEL,
-    scoreBreakdown,
-    totalScore,
-    issues: result.issues,
-    strengths: result.strengths,
-    missingKeywords: result.missingKeywords,
-    suggestions,
-    jobId: input.jobId,
-  });
+    await input.execution?.beginPersistence();
+    analysis = await withMongoTransaction(async (mongoSession) => {
+      await input.execution?.assertActive(mongoSession);
+      const [createdAnalysis] = await ResumeAnalysisModel.create(
+        [{
+          userId: input.userId,
+          resumeId: input.resumeId,
+          resumeVersionId: versionId,
+          target: {
+            role: input.targetRole,
+            company: input.company,
+            jobDescription: input.jobDescription,
+          },
+          scoringVersion: SCORING_VERSION,
+          promptVersion: ANALYSIS_PROMPT_VERSION,
+          provider: env.AI_DEFAULT_PROVIDER,
+          model: env.GEMINI_MODEL,
+          scoreBreakdown,
+          totalScore,
+          issues: result.issues,
+          strengths: result.strengths,
+          missingKeywords: result.missingKeywords,
+          suggestions,
+          jobId: input.jobId,
+        }],
+        { session: mongoSession },
+      );
+      return createdAnalysis;
+    });
   } catch (error) {
     if (
       input.jobId &&

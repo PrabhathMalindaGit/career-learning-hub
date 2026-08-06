@@ -129,7 +129,7 @@ export type InterviewJobResult =
       score: number;
     };
 
-export interface InterviewJob {
+export interface InterviewJob extends PartialJobResilienceMetadata {
   id: string;
   type: InterviewJobType;
   status: InterviewJobStatus;
@@ -187,3 +187,4 @@ export type FeedbackRequestResult =
       attemptId: string;
       job: AcceptedInterviewJob;
     };
+import type { PartialJobResilienceMetadata } from "../jobs/jobResilience";

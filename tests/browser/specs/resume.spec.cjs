@@ -556,14 +556,40 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   await expect(page.getByRole("alert")).toContainText(
     "Email needs a valid address.",
   );
-  await expect(saveVersion).toBeFocused();
+  await expect(email).toBeFocused();
+  await expect(email).toHaveAttribute("aria-invalid", "true");
+  await expect(email).toHaveAttribute(
+    "aria-describedby",
+    "resume-field-basics-email-error",
+  );
+  await expect(
+    page.locator("#resume-field-basics-email-error"),
+  ).toHaveText("Email needs a valid address.");
   await email.fill("");
 
   await page.getByLabel("Full name").fill("Phase Fourteen Candidate");
   await expect(
     page.getByText("Unsaved changes", { exact: true }),
   ).toBeVisible();
+  const versionSavePattern = "**/api/v1/resumes/*/versions";
+  await page.route(versionSavePattern, async (route) => {
+    if (route.request().method() === "POST") {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    await route.continue();
+  });
+  const saveVersionResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/versions") &&
+      response.request().method() === "POST" &&
+      response.ok(),
+  );
   await saveVersion.click();
+  await expect(
+    page.getByRole("button", { name: "Saving…" }),
+  ).toBeDisabled();
+  await saveVersionResponse;
+  await page.unroute(versionSavePattern);
   await expect(page.getByText("Version 2 saved", { exact: true })).toBeVisible();
   await expect(page.getByText("Version 1", { exact: true })).toBeVisible();
   const printControls = page.getByRole("region", {
@@ -848,16 +874,133 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
       name: "Review the highlighted resume content",
     }),
   ).toBeVisible();
-  await expect(page.getByText("Link 1 needs a label.")).toBeVisible();
-  await expect(page.getByText("Link 1 needs a URL.")).toBeVisible();
-  await page.getByLabel("Link 1 label").fill("Synthetic portfolio");
+  const linkLabel = page.getByLabel("Link 1 label");
+  const linkUrl = page.getByLabel("Link 1 URL");
+  await expect(linkLabel).toBeFocused();
+  await expect(linkLabel).toHaveAttribute("aria-invalid", "true");
+  await expect(linkLabel).toHaveAttribute(
+    "aria-describedby",
+    "resume-field-links-0-label-error",
+  );
+  await expect(
+    page.locator("#resume-field-links-0-label-error"),
+  ).toHaveText("Link 1 needs a label.");
+  await expect(linkUrl).toHaveAttribute("aria-invalid", "true");
+  await expect(linkUrl).toHaveAttribute(
+    "aria-describedby",
+    "resume-field-links-0-url-error",
+  );
+  await expect(
+    page.getByRole("link", { name: "Link 1 needs a URL." }),
+  ).toHaveAttribute("href", "#resume-field-links-0-url");
+  await linkLabel.fill("Synthetic portfolio");
+  await linkUrl.fill("example.test/synthetic-resume");
+  expect(
+    await linkUrl.evaluate((element) => ({
+      type: element.type,
+      inputMode: element.inputMode,
+      nativeValid: element.checkValidity(),
+      value: element.value,
+    })),
+  ).toEqual({
+    type: "text",
+    inputMode: "url",
+    nativeValid: true,
+    value: "example.test/synthetic-resume",
+  });
+  const factsBeforeServerValidation = await readStoredResumeFacts(user, title);
+  await page.evaluate(() => {
+    window.__resumeValidationScrollCalls = 0;
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = function (...args) {
+      window.__resumeValidationScrollCalls += 1;
+      return originalScrollIntoView.apply(this, args);
+    };
+  });
+  await page.route(
+    versionSavePattern,
+    async (route) => {
+      await route.fulfill({
+        status: 422,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Resume content validation failed.",
+            requestId: "resume-server-validation-request-0001",
+            details: {
+              issues: [
+                {
+                  path: "content.basics.links.0.url",
+                  message: "This Resume link requires review.",
+                },
+              ],
+            },
+          },
+        }),
+      });
+    },
+    { times: 1 },
+  );
+  const rejectedSaveResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/versions") &&
+      response.request().method() === "POST" &&
+      response.status() === 422,
+  );
   await page
-    .getByLabel("Link 1 URL")
-    .fill("https://example.test/synthetic-resume");
+    .getByRole("button", { name: "Save new version" })
+    .click();
+  await rejectedSaveResponse;
+  await expect(
+    page.getByText("The server rejected one or more resume fields."),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Request ID: resume-server-validation-request-0001"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Review the highlighted resume content",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "This Resume link requires review." }),
+  ).toHaveAttribute("href", "#resume-field-links-0-url");
+  await expect(linkUrl).toBeFocused();
+  await expect(linkUrl).toBeInViewport();
+  await expect(linkUrl).toHaveAttribute("aria-invalid", "true");
+  await expect(linkUrl).toHaveAttribute(
+    "aria-describedby",
+    "resume-field-links-0-url-error",
+  );
+  await expect(
+    page.locator("#resume-field-links-0-url-error"),
+  ).toHaveText("This Resume link requires review.");
+  await expect(linkUrl).toHaveValue("example.test/synthetic-resume");
+  await expect(page.getByLabel("Full name")).toHaveValue(
+    "Phase Fourteen Candidate",
+  );
+  await expect(
+    page.getByText("Unsaved changes", { exact: true }),
+  ).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => window.__resumeValidationScrollCalls))
+    .toBe(1);
+  const factsAfterServerValidation = await readStoredResumeFacts(user, title);
+  expect(factsAfterServerValidation.currentVersionId).toBe(
+    factsBeforeServerValidation.currentVersionId,
+  );
+  expect(factsAfterServerValidation.versionCount).toBe(
+    factsBeforeServerValidation.versionCount,
+  );
   await page
     .getByRole("button", { name: "Save new version" })
     .click();
   await expect(page.getByText("Version 3 saved", { exact: true })).toBeVisible();
+  await expect(linkUrl).toHaveValue(
+    "https://example.test/synthetic-resume",
+  );
   await expect(printControls).toContainText("Current saved version 3");
   const versionHistory = page.getByRole("region", {
     name: "Version history",

@@ -1,5 +1,6 @@
 import { PageHeader } from "../../components/PageHeader";
 import { useAuth } from "./AuthProvider";
+import { GeminiConnectionSettingsSection } from "./GeminiConnectionSettings";
 
 export function SettingsPage() {
   const { user, logout } = useAuth();
@@ -15,19 +16,20 @@ export function SettingsPage() {
         className="settings-heading"
         heading={
           <>
-            <p className="eyebrow">Account and session</p>
+            <p className="eyebrow">Account, AI, and session</p>
             <h1 id="settings-heading">Settings</h1>
           </>
         }
         description={
           <p>
-            Review the public account details associated with this
-            browser session.
+            Review your account, Gemini connection, and current browser session.
           </p>
         }
       />
 
       <div className="settings-content-grid">
+        <GeminiConnectionSettingsSection />
+
         <section
           className="settings-panel"
           aria-labelledby="account-information-heading"

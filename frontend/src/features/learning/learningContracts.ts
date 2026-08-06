@@ -1,4 +1,5 @@
 import { ApiError } from "../../api/apiClient";
+import { parseJobResilienceMetadata } from "../jobs/jobResilience";
 import type {
   AcceptedLearningFlashcardJob,
   AcceptedLearningChatJob,
@@ -472,8 +473,11 @@ function parseJobError(
   value: unknown,
 ): NonNullable<LearningChatJob["error"]> {
   const item = record(value);
-  exactKeys(item, ["code", "message"], ["stack"]);
-  if (item.stack !== undefined) text(item.stack, 8_000);
+  exactKeys(
+    item,
+    ["code", "message"],
+    ["classification", "retryable", "timeoutPhase"],
+  );
   return {
     code: text(item.code, 120, 1),
     message: text(item.message, 2_000, 1),
@@ -499,7 +503,15 @@ export function parseLearningChatJob(
       "createdAt",
       "updatedAt",
     ],
-    ["result", "error"],
+    [
+      "result",
+      "error",
+      "phase",
+      "phaseSequence",
+      "canRetry",
+      "retryOfJobId",
+      "rootJobId",
+    ],
   );
   if (
     item.type !== "learning.chat.respond" ||
@@ -520,6 +532,10 @@ export function parseLearningChatJob(
     id: jobId,
     type: "learning.chat.respond",
     status: item.status as LearningChatJob["status"],
+    ...parseJobResilienceMetadata(
+      item,
+      item.status as LearningChatJob["status"],
+    ),
     progress: integer(item.progress, 0, 100),
     attempts: integer(item.attempts, 0, 10),
     maxAttempts: integer(item.maxAttempts, 1, 10),
@@ -725,7 +741,15 @@ export function parseLearningFlashcardJob(
       "createdAt",
       "updatedAt",
     ],
-    ["result", "error"],
+    [
+      "result",
+      "error",
+      "phase",
+      "phaseSequence",
+      "canRetry",
+      "retryOfJobId",
+      "rootJobId",
+    ],
   );
   if (
     item.type !== "learning.flashcards.generate" ||
@@ -753,6 +777,10 @@ export function parseLearningFlashcardJob(
     id: jobId,
     type: "learning.flashcards.generate",
     status: item.status as LearningFlashcardJob["status"],
+    ...parseJobResilienceMetadata(
+      item,
+      item.status as LearningFlashcardJob["status"],
+    ),
     progress: integer(item.progress, 0, 100),
     attempts: integer(item.attempts, 0, 10),
     maxAttempts: integer(item.maxAttempts, 1, 10),
@@ -851,7 +879,15 @@ export function parseLearningJob(
       "createdAt",
       "updatedAt",
     ],
-    ["result", "error"],
+    [
+      "result",
+      "error",
+      "phase",
+      "phaseSequence",
+      "canRetry",
+      "retryOfJobId",
+      "rootJobId",
+    ],
   );
   if (item.type !== "learning.document.process") invalid();
   if (
@@ -878,6 +914,10 @@ export function parseLearningJob(
     id: parsedId,
     type: "learning.document.process",
     status: item.status as LearningJob["status"],
+    ...parseJobResilienceMetadata(
+      item,
+      item.status as LearningJob["status"],
+    ),
     progress: integer(item.progress, 0, 100),
     attempts: integer(item.attempts, 0, 10),
     maxAttempts: integer(item.maxAttempts, 1, 10),

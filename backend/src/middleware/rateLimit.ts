@@ -129,3 +129,38 @@ export const dashboardRateLimiter =
     identifier: "dashboard",
     keyGenerator: authenticatedUserKey,
   });
+
+export const aiProviderReadRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1_000,
+  limit: 120,
+  identifier: "ai-provider-read",
+  keyGenerator: authenticatedUserKey,
+});
+
+export const aiCredentialMutationRateLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1_000,
+  limit: 10,
+  identifier: "ai-credential-mutation",
+  keyGenerator: authenticatedUserKey,
+});
+
+export const aiCredentialTestRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1_000,
+  limit: 10,
+  identifier: "ai-credential-test",
+  keyGenerator: authenticatedUserKey,
+});
+
+export const aiActivationRateLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1_000,
+  limit: 20,
+  identifier: "ai-provider-activation",
+  keyGenerator: authenticatedUserKey,
+});
+
+export const aiCatalogueRefreshRateLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1_000,
+  limit: 6,
+  identifier: "ai-catalogue-refresh",
+  keyGenerator: authenticatedUserKey,
+});

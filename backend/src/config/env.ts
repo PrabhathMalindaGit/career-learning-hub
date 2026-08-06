@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { logger } from "../shared/logger.js";
+import { GEMINI_RELEASE_MODEL } from "../modules/ai/geminiPolicy.js";
+import { parseEncryptionKeyRing } from "../modules/ai/credentialVault.js";
 
 const optionalString = z.preprocess(
   (value) => (value === "" ? undefined : value),
@@ -146,7 +148,7 @@ const envSchema = z
 
     AI_DEFAULT_PROVIDER: z.enum(["gemini"]).default("gemini"),
     GEMINI_API_KEY: optionalString,
-    GEMINI_MODEL: z.string().min(1).default("gemini-2.5-flash"),
+    GEMINI_MODEL: z.literal(GEMINI_RELEASE_MODEL).default(GEMINI_RELEASE_MODEL),
     AI_REQUEST_TIMEOUT_MS: z.coerce
       .number()
       .int()
@@ -154,8 +156,48 @@ const envSchema = z
       .max(120_000)
       .default(30_000),
     AI_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
+    GEMINI_CONNECT_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(120_000)
+      .default(45_000),
+    GEMINI_FIRST_RESPONSE_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(120_000)
+      .default(8_000),
+    GEMINI_IDLE_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(120_000)
+      .default(15_000),
+    GEMINI_TOTAL_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(45_000),
+    AI_JOB_ATTEMPT_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(16_000)
+      .max(600_000)
+      .default(60_000),
     AI_DAILY_REQUEST_LIMIT: z.coerce.number().int().min(1).default(100),
     AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1_000).default(500_000),
+    BYOK_ENCRYPTION_KEY: optionalString,
+    BYOK_ENCRYPTION_KEY_PREVIOUS: optionalString,
+    AI_ROUTING_FOUNDATION_ENABLED: booleanFromEnv.default(true),
+    AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED: booleanFromEnv.default(false),
+    AI_ADMIN_GEMINI_POLICY_VERSION: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(1_000_000)
+      .default(1),
 
     JOB_WORKER_ENABLED: booleanFromEnv.default(true),
     JOB_WORKER_ID: z.string().min(1).max(120).default("api-local-worker"),
@@ -409,6 +451,57 @@ const envSchema = z
           });
         }
       }
+    }
+
+    try {
+      parseEncryptionKeyRing({
+        current: value.BYOK_ENCRYPTION_KEY,
+        previous: value.BYOK_ENCRYPTION_KEY_PREVIOUS,
+      });
+    } catch {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["BYOK_ENCRYPTION_KEY"],
+        message: "Invalid BYOK encryption key configuration.",
+      });
+    }
+
+    if (
+      value.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED &&
+      !value.AI_ROUTING_FOUNDATION_ENABLED
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED"],
+        message:
+          "Administrator Gemini compatibility requires the routing foundation.",
+      });
+    }
+
+    for (const field of [
+      "GEMINI_CONNECT_TIMEOUT_MS",
+      "GEMINI_FIRST_RESPONSE_TIMEOUT_MS",
+      "GEMINI_IDLE_TIMEOUT_MS",
+    ] as const) {
+      if (value[field] > value.GEMINI_TOTAL_TIMEOUT_MS) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: `${field} must not exceed GEMINI_TOTAL_TIMEOUT_MS.`,
+        });
+      }
+    }
+
+    if (
+      value.AI_JOB_ATTEMPT_TIMEOUT_MS <
+      value.GEMINI_TOTAL_TIMEOUT_MS + 15_000
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["AI_JOB_ATTEMPT_TIMEOUT_MS"],
+        message:
+          "AI_JOB_ATTEMPT_TIMEOUT_MS must allow 15000ms beyond the Gemini total timeout.",
+      });
     }
   });
 

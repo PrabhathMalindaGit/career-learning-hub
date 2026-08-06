@@ -312,6 +312,287 @@ describe("ResumeWorkspace", () => {
       await screen.findByText("Version 2 saved."),
     ).not.toBeNull();
     expect(screen.queryByText("Unsaved changes")).toBeNull();
+    await waitFor(() =>
+      expect(resumeApi.listResumeVersions).toHaveBeenCalledTimes(2),
+    );
+    expect(screen.getByText("Version 2 saved")).not.toBeNull();
+  });
+
+  it("prevents duplicate save submissions while the first request is pending", async () => {
+    let resolveSave:
+      | ((value: ResumeWorkspaceData) => void)
+      | undefined;
+    vi.mocked(resumeApi.saveResumeVersion).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+    const save = screen.getByRole("button", {
+      name: "Save new version",
+    });
+
+    await user.dblClick(save);
+
+    expect(resumeApi.saveResumeVersion).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("button", { name: "Saving…" }).getAttribute(
+        "aria-busy",
+      ),
+    ).toBe("true");
+
+    resolveSave?.(workspace(nextVersionId, "Synthetic Candidate changed"));
+    expect(await screen.findByText("Version 2 saved.")).not.toBeNull();
+  });
+
+  it.each([
+    [
+      "authorization",
+      new ApiError(403, "FORBIDDEN", "Forbidden.", "save-request-auth-1"),
+      "You are not authorized to save this resume.",
+    ],
+    [
+      "server validation",
+      new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Request validation failed.",
+        "save-request-validation-1",
+      ),
+      "The server rejected one or more resume fields.",
+    ],
+    [
+      "backend",
+      new ApiError(500, "SAVE_FAILED", "Failed.", "save-request-server-1"),
+      "The server could not save a new resume version.",
+    ],
+    [
+      "missing resume",
+      new ApiError(404, "RESUME_NOT_FOUND", "Not found.", "save-request-missing-1"),
+      "The resume is no longer available.",
+    ],
+    [
+      "rate limit",
+      new ApiError(429, "RATE_LIMITED", "Slow down.", "save-request-rate-1"),
+      "Too many save attempts. Wait a moment and try again.",
+    ],
+    [
+      "network",
+      new TypeError("Failed to fetch"),
+      "A network error prevented the resume from being saved.",
+    ],
+    [
+      "unexpected",
+      new Error("Synthetic unexpected failure"),
+      "An unexpected error prevented the resume from being saved.",
+    ],
+  ])("preserves the draft after a %s save failure", async (_kind, failure, message) => {
+    vi.mocked(resumeApi.saveResumeVersion).mockRejectedValue(failure);
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.clear(fullName);
+    await user.type(fullName, "Preserved Draft Candidate");
+
+    await user.click(
+      screen.getByRole("button", { name: "Save new version" }),
+    );
+
+    expect(await screen.findByText(message)).not.toBeNull();
+    expect((fullName as HTMLInputElement).value).toBe(
+      "Preserved Draft Candidate",
+    );
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    if (failure instanceof ApiError) {
+      expect(
+        screen.getByText(`Request ID: ${failure.requestId}`),
+      ).not.toBeNull();
+    }
+  });
+
+  it("maps one structured 400 issue inline and preserves focus, draft, and request ID", async () => {
+    const initial = workspace();
+    initial.version.content.basics.links = [
+      { id: stableId, label: "Portfolio", url: "https://example.test" },
+    ];
+    vi.mocked(resumeApi.fetchResume).mockResolvedValue(initial);
+    vi.mocked(resumeApi.saveResumeVersion).mockRejectedValue(
+      new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Request validation failed.",
+        "save-request-validation-400",
+        {
+          body: {
+            formErrors: [],
+            fieldErrors: { content: ["This URL cannot be saved."] },
+            issues: [
+              {
+                path: "content.basics.links.0.url",
+                message: "This URL cannot be saved.",
+              },
+            ],
+          },
+        },
+      ),
+    );
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.clear(fullName);
+    await user.type(fullName, "Server rejected draft");
+
+    await user.click(
+      screen.getByRole("button", { name: "Save new version" }),
+    );
+
+    const url = screen.getByLabelText("Link 1 URL");
+    await waitFor(() =>
+      expect(
+        document.getElementById("resume-field-links-0-url-error")
+          ?.textContent,
+      ).toBe("This URL cannot be saved."),
+    );
+    expect(url.getAttribute("aria-invalid")).toBe("true");
+    expect(url.getAttribute("aria-describedby")).toBe(
+      "resume-field-links-0-url-error",
+    );
+    await waitFor(() => expect(document.activeElement).toBe(url));
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect((fullName as HTMLInputElement).value).toBe("Server rejected draft");
+    expect((url as HTMLInputElement).value).toBe("https://example.test");
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    expect(
+      screen.getByText("Request ID: save-request-validation-400"),
+    ).not.toBeNull();
+    expect(screen.queryByText("Version 2 saved.")).toBeNull();
+    expect(resumeApi.listResumeVersions).toHaveBeenCalledTimes(1);
+  });
+
+  it("maps all usable structured 422 issues and focuses the first nested path", async () => {
+    const initial = workspace();
+    initial.version.content.basics.links = [
+      { id: stableId, label: "Portfolio", url: "https://example.test" },
+    ];
+    initial.version.content.projects = [
+      {
+        id: suggestionId,
+        name: "Synthetic project",
+        technologies: [],
+        links: [
+          {
+            id: "123e4567-e89b-42d3-a456-426614174002",
+            label: "Project",
+            url: "https://example.test/project",
+          },
+        ],
+        bullets: [],
+      },
+    ];
+    vi.mocked(resumeApi.fetchResume).mockResolvedValue(initial);
+    vi.mocked(resumeApi.saveResumeVersion).mockRejectedValue(
+      new ApiError(
+        422,
+        "VALIDATION_ERROR",
+        "Resume content validation failed.",
+        "save-request-validation-422",
+        {
+          issues: [
+            {
+              path: "content.projects.0.links.0.url",
+              message: "Project URL is not permitted.",
+            },
+            {
+              path: "content.basics.links.0.label",
+              message: "Link label is not permitted.",
+            },
+            { path: "content.unknown.0", message: "Ignored issue." },
+          ],
+        },
+      ),
+    );
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+
+    await user.click(
+      screen.getByRole("button", { name: "Save new version" }),
+    );
+
+    const projectUrl = screen.getByLabelText("Project link URL");
+    await waitFor(() => expect(document.activeElement).toBe(projectUrl));
+    expect(projectUrl.getAttribute("aria-invalid")).toBe("true");
+    expect(
+      screen.getByLabelText("Link 1 label").getAttribute("aria-invalid"),
+    ).toBe("true");
+    expect(
+      screen
+        .getByRole("link", { name: "Project URL is not permitted." })
+        .getAttribute("href"),
+    ).toBe("#resume-field-projects-0-links-0-url");
+    expect(
+      screen
+        .getByRole("link", { name: "Link label is not permitted." })
+        .getAttribute("href"),
+    ).toBe("#resume-field-links-0-label");
+    expect(screen.queryByText("Ignored issue.")).toBeNull();
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect((fullName as HTMLInputElement).value).toBe(
+      "Synthetic Candidate changed",
+    );
+    expect(
+      screen.getByText("Request ID: save-request-validation-422"),
+    ).not.toBeNull();
+  });
+
+  it("falls back safely when server validation details are malformed", async () => {
+    vi.mocked(resumeApi.saveResumeVersion).mockRejectedValue(
+      new ApiError(
+        422,
+        "VALIDATION_ERROR",
+        "Request validation failed.",
+        "save-request-validation-malformed",
+        { body: { issues: [{ path: 7, message: { unsafe: true } }] } },
+      ),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+
+    await user.click(
+      screen.getByRole("button", { name: "Save new version" }),
+    );
+
+    expect(
+      await screen.findByText("The server rejected one or more resume fields."),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("Request ID: save-request-validation-malformed"),
+    ).not.toBeNull();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Review the highlighted resume content",
+      }),
+    ).toBeNull();
+    expect((fullName as HTMLInputElement).value).toBe(
+      "Synthetic Candidate changed",
+    );
   });
 
   it("prints the canonical saved current version and blocks the mutable dirty draft", async () => {
@@ -1169,21 +1450,50 @@ describe("ResumeWorkspace", () => {
     expect(router.state.location.pathname).toBe(`/resumes/${resumeId}`);
   });
 
-  it("preserves dirty-state and validation-summary behavior with the section index", async () => {
+  it("maps indexed Link errors inline and scrolls and focuses the first invalid field", async () => {
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
     renderWorkspace();
     const user = userEvent.setup();
-    const email = await screen.findByLabelText("Email");
-    await user.type(email, "invalid-address");
+    await screen.findByLabelText("Email");
+    await user.click(screen.getByRole("button", { name: "Add link" }));
+    await user.click(screen.getByRole("button", { name: "Add link" }));
+    await user.type(screen.getByLabelText("Link 1 label"), "Portfolio");
+    await user.type(
+      screen.getByLabelText("Link 1 URL"),
+      "https://example.test/portfolio",
+    );
+    await user.type(screen.getByLabelText("Link 2 label"), "GitHub");
+    await user.type(screen.getByLabelText("Link 2 URL"), "not a url");
     const save = screen.getByRole("button", { name: "Save new version" });
 
     save.focus();
     await user.click(save);
 
     expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    const invalidUrl = screen.getByLabelText("Link 2 URL");
+    expect(invalidUrl.getAttribute("aria-invalid")).toBe("true");
+    expect(invalidUrl.getAttribute("aria-describedby")).toBe(
+      "resume-field-links-1-url-error",
+    );
     expect(
-      screen.getByRole("alert").textContent,
-    ).toContain("Email needs a valid address.");
-    expect(document.activeElement).toBe(save);
+      document.getElementById("resume-field-links-1-url-error")
+        ?.textContent,
+    ).toBe("Link 2 needs a valid URL.");
+    await waitFor(() => expect(document.activeElement).toBe(invalidUrl));
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    const summaryLink = screen.getByRole("link", {
+      name: "Link 2 needs a valid URL.",
+    });
+    expect(summaryLink.getAttribute("href")).toBe(
+      "#resume-field-links-1-url",
+    );
+    summaryLink.focus();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(document.activeElement).toBe(invalidUrl));
     expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
     expect(
       screen.getByRole("navigation", { name: "Resume sections" }),

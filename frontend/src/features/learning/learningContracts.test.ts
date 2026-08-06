@@ -601,8 +601,8 @@ describe("Grounded chat response contracts", () => {
     ).toThrow(/invalid learning response/i);
   });
 
-  it("strips development stack data from a safe failed chat job", () => {
-    const result = parseLearningChatJob(
+  it("rejects development stack data from a failed chat job", () => {
+    expect(() => parseLearningChatJob(
       {
         job: {
           id: jobId,
@@ -621,12 +621,7 @@ describe("Grounded chat response contracts", () => {
         },
       },
       { jobId, pageCount: 3 },
-    );
-
-    expect(result.error).toEqual({
-      code: "AI_PROVIDER_UNAVAILABLE",
-      message: "Grounded response generation is unavailable.",
-    });
+    )).toThrow(/invalid learning response/i);
   });
 });
 

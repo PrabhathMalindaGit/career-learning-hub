@@ -165,6 +165,7 @@ export async function importResumePdf(
   signal?: AbortSignal,
 ) {
   const form = new FormData();
+  form.set("requestId", crypto.randomUUID());
   form.set("title", title);
   form.set("file", file);
   const data = await apiRequest<unknown>(
@@ -190,6 +191,7 @@ export async function queueResumeAnalysis(
   signal?: AbortSignal,
 ) {
   const body = {
+    requestId: crypto.randomUUID(),
     versionId: payload.versionId,
     targetRole: payload.targetRole,
     ...(payload.company?.trim()

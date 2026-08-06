@@ -10,6 +10,12 @@ import { ApiError } from "../../api/apiClient";
 import { Pager } from "../../components/Pager";
 import { StateSurface } from "../../components/StateSurface";
 import { useAuth } from "../auth/AuthProvider";
+import { JobResilienceActions } from "../jobs/JobResilienceActions";
+import {
+  cancelJob,
+  normalizeSafeJob,
+  retryJob,
+} from "../jobs/jobResilience";
 import {
   fetchLearningJob,
   listLearningDocuments,
@@ -22,6 +28,7 @@ import {
 import type {
   AcceptedLearningJob,
   LearningDocument,
+  LearningJob,
   LearningDocumentStatus,
   LearningPagination,
 } from "./types";
@@ -84,15 +91,26 @@ type ProcessingCheck =
   | {
       state: "checking" | "paused";
       documentId: string;
-      job: AcceptedLearningJob;
+      job: AcceptedLearningJob | LearningJob;
       cause?: "timeout" | "transport-failure";
     }
   | {
       state: "stopped";
       documentId: string;
-      job: AcceptedLearningJob;
+      job: AcceptedLearningJob | LearningJob;
       error: SafeError;
+    }
+  | {
+      state: "terminal";
+      documentId: string;
+      job: LearningJob;
     };
+
+function isFullLearningJob(
+  job: AcceptedLearningJob | LearningJob,
+): job is LearningJob {
+  return "progress" in job;
+}
 
 export function LearningDashboard() {
   const { user } = useAuth();
@@ -249,7 +267,7 @@ export function LearningDashboard() {
   const runProcessingCheck = useCallback(
     (
       documentId: string,
-      job: AcceptedLearningJob,
+      job: AcceptedLearningJob | LearningJob,
     ) => {
       pollControllerRef.current?.abort();
       const controller = new AbortController();
@@ -261,6 +279,11 @@ export function LearningDashboard() {
         documentId,
         fetchJob: fetchLearningJob,
         signal: controller.signal,
+        onUpdate: (job) => {
+          if (!controller.signal.aborted) {
+            setProcessingCheck({ state: "checking", documentId, job });
+          }
+        },
       })
         .then((result: LearningPollResult) => {
           if (controller.signal.aborted) return;
@@ -269,12 +292,20 @@ export function LearningDashboard() {
               state: "paused",
               cause: result.cause,
               documentId,
-              job,
+              job: result.job ?? job,
             });
             return;
           }
           if (result.reason === "terminal") {
-            setProcessingCheck(undefined);
+            if (result.job.status === "completed") {
+              setProcessingCheck(undefined);
+            } else {
+              setProcessingCheck({
+                state: "terminal",
+                documentId,
+                job: result.job,
+              });
+            }
             refresh();
           }
         })
@@ -293,6 +324,49 @@ export function LearningDashboard() {
     },
     [refresh],
   );
+
+  async function cancelProcessing(signal: AbortSignal): Promise<void> {
+    if (!processingCheck || !isFullLearningJob(processingCheck.job)) return;
+    const current = processingCheck;
+    const currentJob = processingCheck.job;
+    const cancelled = await cancelJob(currentJob.id, signal);
+    if (signal.aborted) return;
+    if (cancelled.id !== currentJob.id || cancelled.type !== "learning.document.process") {
+      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    }
+    if (cancelled.status !== "cancelled") {
+      setProcessingCheck({ ...current, job: { ...currentJob, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt } });
+      return;
+    }
+    pollControllerRef.current?.abort();
+    setProcessingCheck({
+      state: "terminal",
+      documentId: current.documentId,
+      job: {
+        ...currentJob,
+        status: "cancelled",
+        phase: cancelled.phase,
+        phaseSequence: cancelled.phaseSequence,
+        canRetry: cancelled.canRetry,
+        updatedAt: cancelled.updatedAt,
+      },
+    });
+    refresh();
+  }
+
+  async function retryProcessing(signal: AbortSignal): Promise<void> {
+    if (!processingCheck || !isFullLearningJob(processingCheck.job)) return;
+    const retried = await retryJob(processingCheck.job.id, signal);
+    if (signal.aborted) return;
+    if (retried.type !== "learning.document.process") {
+      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    }
+    runProcessingCheck(processingCheck.documentId, {
+      id: retried.id,
+      type: "learning.document.process",
+      status: "queued",
+    });
+  }
 
   const closeUpload = useCallback(() => {
     if (uploading) return;
@@ -578,9 +652,15 @@ export function LearningDashboard() {
       {processingCheck ? (
         <div className="learning-processing-notice" aria-live="polite">
           {processingCheck.state === "checking" ? (
-            <p>
-              Upload accepted. Checking the canonical processing status.
-            </p>
+            isFullLearningJob(processingCheck.job) ? (
+              <JobResilienceActions
+                job={normalizeSafeJob(processingCheck.job)}
+                onCancel={cancelProcessing}
+                onRetry={retryProcessing}
+              />
+            ) : (
+              <p>Upload accepted. Checking the canonical processing status.</p>
+            )
           ) : null}
           {processingCheck.state === "paused" ? (
             <>
@@ -600,6 +680,13 @@ export function LearningDashboard() {
               >
                 Resume status checks
               </button>
+              {isFullLearningJob(processingCheck.job) ? (
+                <JobResilienceActions
+                  job={normalizeSafeJob(processingCheck.job)}
+                  onCancel={cancelProcessing}
+                  onRetry={retryProcessing}
+                />
+              ) : null}
             </>
           ) : null}
           {processingCheck.state === "stopped" ? (
@@ -611,6 +698,13 @@ export function LearningDashboard() {
                 </p>
               ) : null}
             </>
+          ) : null}
+          {processingCheck.state === "terminal" ? (
+            <JobResilienceActions
+              job={normalizeSafeJob(processingCheck.job)}
+              onCancel={cancelProcessing}
+              onRetry={retryProcessing}
+            />
           ) : null}
         </div>
       ) : null}

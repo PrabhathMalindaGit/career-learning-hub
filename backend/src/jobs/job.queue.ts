@@ -1,4 +1,6 @@
-import { Types } from "mongoose";
+import { randomUUID } from "node:crypto";
+import { Types, type ClientSession } from "mongoose";
+import { ZodError } from "zod";
 import { env } from "../config/env.js";
 import { AppError } from "../shared/appError.js";
 import { withMongoTransaction } from "../shared/mongoTransaction.js";
@@ -7,7 +9,78 @@ import {
   isLearningDocumentWorkInvalidated,
 } from "../modules/learning/learningDocumentWorkFence.js";
 import type { LearningDocumentStatus } from "../modules/learning/learningDocument.model.js";
-import { JobRecordModel, type JobRecord } from "./job.model.js";
+import { compileAiRoutingSnapshotForJob } from "../modules/ai/aiRouting.service.js";
+import { aiActionForJobType } from "../modules/ai/aiRoutingSnapshot.js";
+import { InterviewAttemptModel } from "../modules/interviews/interviewAttempt.model.js";
+import { InterviewQuestionModel } from "../modules/interviews/interviewQuestion.model.js";
+import { FlashcardSetModel } from "../modules/learning/flashcardSet.model.js";
+import { LearningDocumentModel } from "../modules/learning/learningDocument.model.js";
+import { MessageModel } from "../modules/learning/message.model.js";
+import { QuizModel } from "../modules/learning/quiz.model.js";
+import { abortActiveJobExecution } from "./job.execution.js";
+import {
+  JobRecordModel,
+  type JobExecutionIdentity,
+  type JobPhase,
+  type JobRecord,
+} from "./job.model.js";
+
+export type { JobExecutionIdentity } from "./job.model.js";
+
+const processingPhaseOrder: Readonly<Partial<Record<JobPhase, number>>> = {
+  preparing: 1,
+  contacting_provider: 2,
+  waiting_for_first_response: 3,
+  receiving_response: 4,
+  validating: 5,
+  persisting: 6,
+};
+
+function executionFenceError(): AppError {
+  return new AppError(
+    409,
+    "JOB_EXECUTION_FENCE_LOST",
+    "The worker no longer owns this job execution.",
+    undefined,
+    false,
+  );
+}
+
+function executionIdentity(job: JobRecord): JobExecutionIdentity {
+  if (!job.executionId) throw executionFenceError();
+  return {
+    jobId: job._id.toString(),
+    executionId: job.executionId,
+    attempt: job.attempts,
+  };
+}
+
+function executionFilter(execution: JobExecutionIdentity) {
+  return {
+    _id: execution.jobId,
+    status: "processing" as const,
+    lockedBy: env.JOB_WORKER_ID,
+    executionId: execution.executionId,
+    attempts: execution.attempt,
+  };
+}
+
+function safeJobError(error: unknown) {
+  const appError = error instanceof AppError ? error : undefined;
+  return {
+    code: appError?.code ?? "JOB_EXECUTION_FAILED",
+    message: appError?.message.slice(0, 2_000) ?? "The job could not be completed.",
+    ...(appError?.classification
+      ? { classification: appError.classification }
+      : {}),
+    ...(appError?.retryable === undefined
+      ? {}
+      : { retryable: appError.retryable }),
+    ...(appError?.timeoutPhase
+      ? { timeoutPhase: appError.timeoutPhase }
+      : {}),
+  };
+}
 
 const learningJobRetryStatuses: Readonly<
   Record<string, readonly LearningDocumentStatus[]>
@@ -59,7 +132,7 @@ async function cancelInvalidatedProcessingJob(
   jobId: string,
 ): Promise<void> {
   const cancelledAt = new Date();
-  await JobRecordModel.updateOne(
+  const cancelled = await JobRecordModel.findOneAndUpdate(
     {
       _id: jobId,
       status: "processing",
@@ -67,6 +140,9 @@ async function cancelInvalidatedProcessingJob(
     {
       $set: {
         status: "cancelled",
+        phase: "cancelled",
+        cancelledAt,
+        cancellationReason: "work_invalidated",
         expiresAt: new Date(
           cancelledAt.getTime() +
             env.JOB_RETENTION_DAYS * 24 * 60 * 60 * 1_000,
@@ -78,8 +154,20 @@ async function cancelInvalidatedProcessingJob(
         lockedBy: 1,
         error: 1,
       },
+      $inc: { phaseSequence: 1 },
     },
+    { new: true },
   );
+  if (cancelled?.executionId) {
+    abortActiveJobExecution(
+      {
+        jobId,
+        executionId: cancelled.executionId,
+        attempt: cancelled.attempts,
+      },
+      "user_cancelled",
+    );
+  }
 }
 
 export async function enqueueJob(input: {
@@ -90,21 +178,50 @@ export async function enqueueJob(input: {
   maxAttempts?: number;
   runAt?: Date;
   idempotencyKey?: string;
+  retryOfJobId?: string;
+  rootJobId?: string;
+  requireGeminiDirect?: boolean;
+  session?: ClientSession;
 }): Promise<JobRecord> {
   if (!/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/.test(input.type)) {
     throw new AppError(400, "INVALID_JOB_TYPE", "The job type is invalid.");
   }
 
   if (input.idempotencyKey) {
-    const existing = await JobRecordModel.findOne({
+    const existingQuery = JobRecordModel.findOne({
       idempotencyKey: input.idempotencyKey,
-    }).lean();
+    });
+    if (input.session) existingQuery.session(input.session);
+    const existing = await existingQuery.lean();
 
     if (existing) return existing;
   }
 
+  const aiRoutingSnapshot =
+    input.userId
+      ? await compileAiRoutingSnapshotForJob({
+          type: input.type,
+          userId: input.userId,
+        })
+      : undefined;
+
+  if (
+    input.requireGeminiDirect &&
+    aiRoutingSnapshot &&
+    aiRoutingSnapshot.provider !== "gemini-direct"
+  ) {
+    throw new AppError(
+      409,
+      "GEMINI_DIRECT_REQUIRED",
+      "This job can be retried only with Gemini Direct.",
+      undefined,
+      false,
+      "NON_RETRYABLE_CONFIGURATION",
+    );
+  }
+
   try {
-    return await JobRecordModel.create({
+    const values = {
       userId: input.userId,
       type: input.type,
       payload: input.payload,
@@ -112,7 +229,17 @@ export async function enqueueJob(input: {
       maxAttempts: input.maxAttempts ?? 3,
       runAt: input.runAt ?? new Date(),
       idempotencyKey: input.idempotencyKey,
-    });
+      retryOfJobId: input.retryOfJobId,
+      rootJobId: input.rootJobId,
+      ...(aiRoutingSnapshot ? { aiRoutingSnapshot } : {}),
+    };
+    if (input.session) {
+      const [created] = await JobRecordModel.create([values], {
+        session: input.session,
+      });
+      return created;
+    }
+    return await JobRecordModel.create(values);
   } catch (error) {
     if (
       input.idempotencyKey &&
@@ -121,9 +248,11 @@ export async function enqueueJob(input: {
       "code" in error &&
       error.code === 11000
     ) {
-      const existing = await JobRecordModel.findOne({
+      const existingQuery = JobRecordModel.findOne({
         idempotencyKey: input.idempotencyKey,
-      }).lean();
+      });
+      if (input.session) existingQuery.session(input.session);
+      const existing = await existingQuery.lean();
 
       if (existing) return existing;
     }
@@ -137,6 +266,7 @@ export async function claimNextJob(): Promise<JobRecord | null> {
   const lockExpiresAt = new Date(
     now.getTime() + env.JOB_LEASE_SECONDS * 1_000,
   );
+  const executionId = randomUUID();
 
   return JobRecordModel.findOneAndUpdate(
     {
@@ -160,9 +290,12 @@ export async function claimNextJob(): Promise<JobRecord | null> {
         lockedAt: now,
         lockExpiresAt,
         lockedBy: env.JOB_WORKER_ID,
+        executionId,
+        phase: "preparing",
       },
       $inc: {
         attempts: 1,
+        phaseSequence: 1,
       },
     },
     {
@@ -176,13 +309,11 @@ export async function claimNextJob(): Promise<JobRecord | null> {
   ).lean();
 }
 
-export async function heartbeatJob(jobId: string): Promise<void> {
+export async function heartbeatJob(
+  execution: JobExecutionIdentity,
+): Promise<void> {
   const result = await JobRecordModel.updateOne(
-    {
-      _id: jobId,
-      status: "processing",
-      lockedBy: env.JOB_WORKER_ID,
-    },
+    executionFilter(execution),
     {
       $set: {
         lockExpiresAt: new Date(
@@ -193,46 +324,115 @@ export async function heartbeatJob(jobId: string): Promise<void> {
   );
 
   if (result.matchedCount === 0) {
-    throw new AppError(
-      409,
-      "JOB_LEASE_LOST",
-      "The worker no longer owns this job lease.",
-    );
+    abortActiveJobExecution(execution, "lease_lost");
+    throw executionFenceError();
   }
 }
 
 export async function updateJobProgress(
-  jobId: string,
+  execution: JobExecutionIdentity,
   progress: number,
 ): Promise<void> {
-  await JobRecordModel.updateOne(
-    {
-      _id: jobId,
-      status: "processing",
-      lockedBy: env.JOB_WORKER_ID,
-    },
+  const result = await JobRecordModel.updateOne(
+    executionFilter(execution),
     {
       $set: {
         progress: Math.max(0, Math.min(100, progress)),
       },
     },
   );
+  if (result.matchedCount === 0) throw executionFenceError();
+}
+
+export async function assertJobExecutionActive(
+  execution: JobExecutionIdentity,
+  session?: ClientSession,
+): Promise<void> {
+  const result = await JobRecordModel.updateOne(
+    executionFilter(execution),
+    {
+      $set: {
+        lockExpiresAt: new Date(
+          Date.now() + env.JOB_LEASE_SECONDS * 1_000,
+        ),
+      },
+    },
+    session ? { session } : undefined,
+  );
+  if (result.matchedCount !== 1) throw executionFenceError();
+}
+
+export async function updateJobPhase(
+  execution: JobExecutionIdentity,
+  phase: Exclude<
+    JobPhase,
+    "queued" | "retry_scheduled" | "completed" | "failed" | "cancelled"
+  >,
+): Promise<void> {
+  const current = await JobRecordModel.findOne(executionFilter(execution))
+    .select("phase phaseSequence")
+    .lean();
+  if (!current) throw executionFenceError();
+
+  const currentOrder = processingPhaseOrder[current.phase] ?? 0;
+  const nextOrder = processingPhaseOrder[phase] ?? 0;
+  if (nextOrder <= currentOrder) return;
+
+  const result = await JobRecordModel.updateOne(
+    {
+      ...executionFilter(execution),
+      phaseSequence: current.phaseSequence,
+    },
+    {
+      $set: { phase },
+      $inc: { phaseSequence: 1 },
+    },
+  );
+  if (result.matchedCount === 0) {
+    const latest = await JobRecordModel.findOne(executionFilter(execution))
+      .select("phase")
+      .lean();
+    if (
+      latest &&
+      (processingPhaseOrder[latest.phase] ?? 0) >= nextOrder
+    ) {
+      return;
+    }
+    throw executionFenceError();
+  }
+}
+
+export async function beginJobPersistence(
+  execution: JobExecutionIdentity,
+): Promise<void> {
+  await updateJobPhase(execution, "persisting");
+  const result = await JobRecordModel.updateOne(
+    { ...executionFilter(execution), phase: "persisting" },
+    {
+      $set: {
+        lockExpiresAt: new Date(
+          Date.now() + env.AI_JOB_ATTEMPT_TIMEOUT_MS,
+        ),
+      },
+    },
+  );
+  if (result.matchedCount === 0) throw executionFenceError();
 }
 
 export async function completeJob(
-  jobId: string,
+  execution: JobExecutionIdentity,
   result: unknown,
 ): Promise<void> {
   const completedAt = new Date();
-  await JobRecordModel.updateOne(
+  const updated = await JobRecordModel.updateOne(
     {
-      _id: jobId,
-      status: "processing",
-      lockedBy: env.JOB_WORKER_ID,
+      ...executionFilter(execution),
+      phase: "persisting",
     },
     {
       $set: {
         status: "completed",
+        phase: "completed",
         result,
         progress: 100,
         completedAt,
@@ -246,9 +446,12 @@ export async function completeJob(
         lockExpiresAt: 1,
         lockedBy: 1,
         error: 1,
+        executionId: 1,
       },
+      $inc: { phaseSequence: 1 },
     },
   );
+  if (updated.matchedCount === 0) throw executionFenceError();
 }
 
 function retryDelay(attempt: number): number {
@@ -263,24 +466,49 @@ export async function failOrRetryJob(
   job: JobRecord,
   error: unknown,
 ): Promise<void> {
+  const execution = executionIdentity(job);
+  const classifiedError =
+    error instanceof ZodError
+      ? new AppError(
+          400,
+          "INVALID_APPLICATION_INPUT",
+          "The application input is invalid.",
+          undefined,
+          false,
+          "NON_RETRYABLE_REQUEST",
+        )
+      : error;
   if (
-    error instanceof AppError &&
-    error.code === "LEARNING_DOCUMENT_WORK_INVALIDATED"
+    classifiedError instanceof AppError &&
+    classifiedError.code === "LEARNING_DOCUMENT_WORK_INVALIDATED"
   ) {
     await cancelInvalidatedProcessingJob(job._id.toString());
     return;
   }
 
-  const message =
-    error instanceof Error ? error.message : "Unknown job failure.";
-  const code =
-    error instanceof AppError ? error.code : "JOB_EXECUTION_FAILED";
-  const stack =
-    !env.isProduction && error instanceof Error
-      ? error.stack?.slice(0, 8_000)
-      : undefined;
+  const persistedError = safeJobError(classifiedError);
+  const retryable =
+    classifiedError instanceof AppError && classifiedError.retryable === true;
+  const terminalLearningFence = learningJobRetryFence(job);
+  if (!retryable && terminalLearningFence) {
+    try {
+      await withMongoTransaction(async (mongoSession) => {
+        await fenceLearningDocumentWork({
+          ...terminalLearningFence,
+          session: mongoSession,
+        });
+        return true;
+      });
+    } catch (fenceError) {
+      if (isLearningDocumentWorkInvalidated(fenceError)) {
+        await cancelInvalidatedProcessingJob(job._id.toString());
+        return;
+      }
+      throw fenceError;
+    }
+  }
 
-  if (job.attempts < job.maxAttempts) {
+  if (retryable && job.attempts < job.maxAttempts) {
     const retryAt = new Date(Date.now() + retryDelay(job.attempts));
     const retryFence = learningJobRetryFence(job);
 
@@ -292,29 +520,29 @@ export async function failOrRetryJob(
             session: mongoSession,
           });
 
-          await JobRecordModel.updateOne(
+          const updated = await JobRecordModel.updateOne(
             {
-              _id: job._id,
-              status: "processing",
+              ...executionFilter(execution),
             },
             {
               $set: {
                 status: "queued",
+                phase: "retry_scheduled",
                 runAt: retryAt,
-                error: {
-                  code,
-                  message: message.slice(0, 2_000),
-                  stack,
-                },
+                error: { ...persistedError, retryable: true },
               },
               $unset: {
                 lockedAt: 1,
                 lockExpiresAt: 1,
                 lockedBy: 1,
+                executionId: 1,
               },
+              $inc: { phaseSequence: 1 },
             },
             { session: mongoSession },
           );
+
+          if (updated.matchedCount === 0) throw executionFenceError();
 
           return true;
         });
@@ -332,40 +560,43 @@ export async function failOrRetryJob(
       return;
     }
 
-    await JobRecordModel.updateOne(
-      { _id: job._id },
+    const updated = await JobRecordModel.updateOne(
+      executionFilter(execution),
       {
         $set: {
           status: "queued",
+          phase: "retry_scheduled",
           runAt: retryAt,
-          error: {
-            code,
-            message: message.slice(0, 2_000),
-            stack,
-          },
+          error: { ...persistedError, retryable: true },
         },
         $unset: {
           lockedAt: 1,
           lockExpiresAt: 1,
           lockedBy: 1,
+          executionId: 1,
         },
+        $inc: { phaseSequence: 1 },
       },
     );
+    if (updated.matchedCount === 0) {
+      const current = await JobRecordModel.findById(job._id)
+        .select("status")
+        .lean();
+      if (current?.status === "cancelled") return;
+      throw executionFenceError();
+    }
     return;
   }
 
   const failedAt = new Date();
-  await JobRecordModel.updateOne(
-    { _id: job._id },
+  const updated = await JobRecordModel.updateOne(
+    executionFilter(execution),
     {
       $set: {
         status: "failed",
+        phase: "failed",
         failedAt,
-        error: {
-          code,
-          message: message.slice(0, 2_000),
-          stack,
-        },
+        error: { ...persistedError, retryable },
         expiresAt: new Date(
           failedAt.getTime() +
             env.JOB_RETENTION_DAYS * 24 * 60 * 60 * 1_000,
@@ -375,9 +606,18 @@ export async function failOrRetryJob(
         lockedAt: 1,
         lockExpiresAt: 1,
         lockedBy: 1,
+        executionId: 1,
       },
+      $inc: { phaseSequence: 1 },
     },
   );
+  if (updated.matchedCount === 0) {
+    const current = await JobRecordModel.findById(job._id)
+      .select("status")
+      .lean();
+    if (current?.status === "cancelled") return;
+    throw executionFenceError();
+  }
 }
 
 export async function cancelQueuedLearningDocumentJobs(input: {
@@ -402,11 +642,15 @@ export async function cancelQueuedLearningDocumentJobs(input: {
     {
       $set: {
         status: "cancelled",
+        phase: "cancelled",
+        cancelledAt,
+        cancellationReason: "work_invalidated",
         expiresAt: new Date(
           cancelledAt.getTime() +
             env.JOB_RETENTION_DAYS * 24 * 60 * 60 * 1_000,
         ),
       },
+      $inc: { phaseSequence: 1 },
       $unset: {
         lockedAt: 1,
         lockExpiresAt: 1,
@@ -435,32 +679,252 @@ export async function getOwnedJob(
   return job;
 }
 
+export function canRetryJob(job: JobRecord): boolean {
+  if (!aiActionForJobType(job.type)) return false;
+  if (
+    job.aiRoutingSnapshot &&
+    job.aiRoutingSnapshot.provider !== "gemini-direct"
+  ) {
+    return false;
+  }
+  return (
+    job.status === "cancelled" ||
+    (job.status === "failed" && job.error?.retryable === true)
+  );
+}
+
+function retryPayloadId(
+  source: JobRecord,
+  key: string,
+): string {
+  const payload = source.payload;
+  const value =
+    typeof payload === "object" &&
+    payload !== null &&
+    !Array.isArray(payload)
+      ? (payload as Record<string, unknown>)[key]
+      : undefined;
+  if (typeof value !== "string" || !/^[a-f\d]{24}$/i.test(value)) {
+    throw new AppError(
+      409,
+      "JOB_RETRY_LINK_INVALID",
+      "The retry target is no longer valid.",
+      undefined,
+      false,
+    );
+  }
+  return value;
+}
+
+async function relinkRetriedJob(input: {
+  source: JobRecord;
+  retry: JobRecord;
+  userId: string;
+  session: ClientSession;
+}): Promise<void> {
+  const sourceId = input.source._id;
+  const retryId = input.retry._id;
+  const owned = { userId: input.userId };
+  let matchedCount: number | undefined;
+
+  switch (input.source.type) {
+    case "interview.question.explain":
+      matchedCount = (await InterviewQuestionModel.updateOne(
+        {
+          ...owned,
+          _id: retryPayloadId(input.source, "questionId"),
+          explanationJobId: { $in: [sourceId, retryId] },
+        },
+        { $set: { explanationJobId: retryId } },
+        { session: input.session },
+      )).matchedCount;
+      break;
+    case "interview.attempt.feedback":
+      matchedCount = (await InterviewAttemptModel.updateOne(
+        {
+          ...owned,
+          _id: retryPayloadId(input.source, "attemptId"),
+          feedbackJobId: { $in: [sourceId, retryId] },
+        },
+        {
+          $set: { feedbackJobId: retryId, status: "feedback-queued" },
+          $unset: { feedbackError: 1 },
+        },
+        { session: input.session },
+      )).matchedCount;
+      break;
+    case "learning.document.process":
+      matchedCount = (await LearningDocumentModel.updateOne(
+        {
+          ...owned,
+          _id: retryPayloadId(input.source, "documentId"),
+          processingJobId: { $in: [sourceId, retryId] },
+        },
+        {
+          $set: { processingJobId: retryId, status: "processing" },
+          $unset: { processingError: 1 },
+        },
+        { session: input.session },
+      )).matchedCount;
+      break;
+    case "learning.chat.respond":
+      matchedCount = (await MessageModel.updateOne(
+        {
+          ...owned,
+          _id: retryPayloadId(input.source, "userMessageId"),
+          responseJobId: { $in: [sourceId, retryId] },
+          role: "user",
+        },
+        { $set: { responseJobId: retryId } },
+        { session: input.session },
+      )).matchedCount;
+      break;
+    case "learning.flashcards.generate":
+      matchedCount = (await FlashcardSetModel.updateOne(
+        {
+          ...owned,
+          _id: retryPayloadId(input.source, "setId"),
+          generationJobId: { $in: [sourceId, retryId] },
+        },
+        {
+          $set: { generationJobId: retryId, status: "generating" },
+          $unset: { generationError: 1 },
+        },
+        { session: input.session },
+      )).matchedCount;
+      break;
+    case "learning.quiz.generate":
+      matchedCount = (await QuizModel.updateOne(
+        {
+          ...owned,
+          _id: retryPayloadId(input.source, "quizId"),
+          generationJobId: { $in: [sourceId, retryId] },
+        },
+        {
+          $set: { generationJobId: retryId, status: "generating" },
+          $unset: { generationError: 1 },
+        },
+        { session: input.session },
+      )).matchedCount;
+      break;
+    default:
+      return;
+  }
+
+  if (matchedCount !== 1) {
+    throw new AppError(
+      409,
+      "JOB_RETRY_LINK_CONFLICT",
+      "The retry target is no longer current.",
+      undefined,
+      false,
+    );
+  }
+}
+
+export async function retryOwnedJob(
+  userId: string,
+  jobId: string,
+): Promise<JobRecord> {
+  const source = await getOwnedJob(userId, jobId);
+  if (!canRetryJob(source)) {
+    throw new AppError(
+      409,
+      "JOB_NOT_RETRYABLE",
+      "This job cannot be retried.",
+      undefined,
+      false,
+    );
+  }
+
+  return withMongoTransaction(async (session) => {
+    const retry = await enqueueJob({
+      type: source.type,
+      payload: source.payload,
+      userId,
+      priority: source.priority,
+      maxAttempts: source.maxAttempts,
+      idempotencyKey: `job-retry:${userId}:${source._id.toString()}`,
+      retryOfJobId: source._id.toString(),
+      rootJobId: source.rootJobId?.toString() ?? source._id.toString(),
+      requireGeminiDirect: true,
+      session,
+    });
+    await relinkRetriedJob({ source, retry, userId, session });
+    return retry;
+  });
+}
+
 export async function cancelOwnedQueuedJob(
   userId: string,
   jobId: string,
 ): Promise<void> {
-  const result = await JobRecordModel.updateOne(
+  await cancelOwnedJobExecution(userId, jobId);
+}
+
+export async function cancelOwnedJobExecution(
+  userId: string,
+  jobId: string,
+): Promise<JobRecord> {
+  const cancelledAt = new Date();
+  const result = await JobRecordModel.findOneAndUpdate(
     {
       _id: jobId,
       userId,
-      status: "queued",
+      $or: [
+        { status: "queued" },
+        {
+          status: "processing",
+          phase: { $ne: "persisting" },
+        },
+      ],
     },
     {
       $set: {
         status: "cancelled",
+        phase: "cancelled",
+        cancelledAt,
+        cancellationReason: "user_requested",
         expiresAt: new Date(
-          Date.now() +
+          cancelledAt.getTime() +
             env.JOB_RETENTION_DAYS * 24 * 60 * 60 * 1_000,
         ),
       },
+      $unset: {
+        lockedAt: 1,
+        lockExpiresAt: 1,
+        lockedBy: 1,
+        error: 1,
+      },
+      $inc: { phaseSequence: 1 },
     },
+    { new: true },
   );
 
-  if (result.matchedCount === 0) {
-    throw new AppError(
-      409,
-      "JOB_NOT_CANCELLABLE",
-      "Only an owned queued job can be cancelled.",
-    );
+  if (result) {
+    if (result.executionId) {
+      abortActiveJobExecution(
+        {
+          jobId,
+          executionId: result.executionId,
+          attempt: result.attempts,
+        },
+        "user_cancelled",
+      );
+    }
+    return result.toObject();
   }
+
+  const owned = await JobRecordModel.findOne({ _id: jobId, userId }).lean();
+  if (!owned) {
+    throw new AppError(404, "JOB_NOT_FOUND", "Job not found.");
+  }
+  if (owned.status === "cancelled") return owned;
+  throw new AppError(
+    409,
+    "JOB_NOT_CANCELLABLE",
+    "This job can no longer be cancelled.",
+    undefined,
+    false,
+  );
 }
