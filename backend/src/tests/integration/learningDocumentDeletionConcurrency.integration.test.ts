@@ -12,6 +12,10 @@ import {
 } from "../../jobs/job.queue.js";
 import { JobRecordModel } from "../../jobs/job.model.js";
 import { AppError } from "../../shared/appError.js";
+import {
+  activateProvider,
+  ensureAiFoundation,
+} from "../../modules/ai/aiProvider.service.js";
 import { AssetModel } from "../../modules/assets/asset.model.js";
 import { createAsset } from "../../modules/assets/asset.service.js";
 import { getStorageForProvider } from "../../modules/assets/storage/storage.factory.js";
@@ -65,6 +69,18 @@ vi.mock("pdf-parse", () => ({
     async destroy() {}
   },
 }));
+
+async function connectApplicationManagedGemini(userId: string) {
+  env.AI_ROUTING_FOUNDATION_ENABLED = true;
+  env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = true;
+  await ensureAiFoundation(userId);
+  await activateProvider({
+    userId,
+    provider: "gemini-direct",
+    credentialSource: "administrator-managed",
+    expectedRevision: 0,
+  });
+}
 
 const syntheticPdf = Buffer.from(
   "%PDF-1.4\n% Synthetic deletion concurrency PDF\n%%EOF\n",
@@ -326,6 +342,7 @@ describe("Learning Document deletion concurrency fencing", () => {
       email: "learning-chat-acceptance@example.test",
       displayName: "Learning Chat Acceptance",
     });
+    await connectApplicationManagedGemini(owner.userId);
     const document = await createDocument({
       userId: new Types.ObjectId(owner.userId),
     });

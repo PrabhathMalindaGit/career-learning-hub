@@ -12,7 +12,6 @@ import {
   reserveAiQuota,
 } from "./aiQuota.service.js";
 import { GeminiProviderAdapter } from "./providers/gemini.provider.js";
-import { OpenRouterProviderAdapter } from "./providers/openRouter.provider.js";
 import {
   AiProviderError,
   type AiProviderAdapter,
@@ -22,7 +21,6 @@ import { authorizeAiJobExecution } from "./aiRouting.service.js";
 
 const providers: Record<string, AiProviderAdapter> = {
   gemini: new GeminiProviderAdapter(),
-  openrouter: new OpenRouterProviderAdapter(),
 };
 
 export async function generateStructuredOutput<
@@ -43,14 +41,12 @@ export async function generateStructuredOutput<
   ): void | Promise<void>;
 }): Promise<z.output<TSchema>> {
   const routingAuthorization =
-    env.AI_ROUTING_FOUNDATION_ENABLED && input.jobId
+    input.jobId
       ? await authorizeAiJobExecution({ jobId: input.jobId })
       : undefined;
 
   try {
-  const providerName = routingAuthorization?.snapshot.provider === "openrouter"
-    ? "openrouter"
-    : input.provider ?? env.AI_DEFAULT_PROVIDER;
+  const providerName = input.provider ?? env.AI_DEFAULT_PROVIDER;
   const provider = providers[providerName];
 
   if (!provider) {

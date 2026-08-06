@@ -1,4 +1,5 @@
 import { env } from "../../../config/env.js";
+import { GEMINI_RELEASE_MODEL } from "../geminiPolicy.js";
 import {
   AiProviderError,
   type AiProviderAdapter,
@@ -122,21 +123,25 @@ export class GeminiProviderAdapter implements AiProviderAdapter {
     }
 
     const model = request.model ?? env.GEMINI_MODEL;
+    if (model !== GEMINI_RELEASE_MODEL) {
+      throw new AiProviderError({
+        code: "GEMINI_MODEL_NOT_ALLOWED",
+        classification: "NON_RETRYABLE_CONFIGURATION",
+        retryable: false,
+        statusCode: 409,
+        safeMessage: "The configured Gemini model is not allowed.",
+      });
+    }
     const generationConfig: Record<string, unknown> = {
       responseMimeType: "application/json",
       responseJsonSchema: request.responseJsonSchema,
     };
-
-    if (!/^gemini-3(?:[.-]|$)/i.test(model)) {
-      generationConfig.temperature = 0.2;
-    }
 
     const endpoint = new URL(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
         model,
       )}:generateContent`,
     );
-    endpoint.searchParams.set("key", apiKey);
 
     const timeouts = request.timeouts ?? {
       connectMs: env.GEMINI_CONNECT_TIMEOUT_MS,
@@ -155,6 +160,7 @@ export class GeminiProviderAdapter implements AiProviderAdapter {
         signal: timeoutScope.signal,
         headers: {
           "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
         },
         body: JSON.stringify({
           systemInstruction: {

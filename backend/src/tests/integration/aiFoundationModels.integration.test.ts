@@ -49,7 +49,7 @@ function profileInput(userId: Types.ObjectId, version = 1) {
     activeMarker: "active",
     policyVersion: 1,
     geminiDirect: {
-      directModelId: "gemini-test-model",
+      directModelId: "gemini-3.6-flash",
       timeoutProfile: {
         ttftMs: 8_000,
         streamIdleMs: 15_000,
@@ -215,7 +215,7 @@ describe("AI-3 foundation persistence", () => {
 
     await expect(model.findById(profile._id).lean()).resolves.toHaveProperty(
       "geminiDirect.directModelId",
-      "gemini-test-model",
+      "gemini-3.6-flash",
     );
   });
 

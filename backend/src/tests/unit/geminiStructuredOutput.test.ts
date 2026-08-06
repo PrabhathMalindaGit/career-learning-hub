@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 import { z } from "zod";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { env } from "../../config/env.js";
 import { generateStructuredOutput } from "../../modules/ai/aiGateway.service.js";
 import { AiQuotaCounterModel } from "../../modules/ai/aiQuota.model.js";
 import { UsageEventModel } from "../../modules/ai/usageEvent.model.js";
@@ -114,12 +115,29 @@ describe("Gemini structured output", () => {
     const body = JSON.parse(String(init.body)) as {
       generationConfig: Record<string, unknown>;
     };
-    expect(url.searchParams.has("key")).toBe(true);
-    expect(init.headers).toEqual({ "Content-Type": "application/json" });
+    expect(url.searchParams.has("key")).toBe(false);
+    expect(init.headers).toEqual({
+      "Content-Type": "application/json",
+      "x-goog-api-key": env.GEMINI_API_KEY,
+    });
     expect(body.generationConfig).toEqual({
       responseMimeType: "application/json",
       responseJsonSchema: providerRequest().responseJsonSchema,
     });
+  });
+
+  it("rejects Gemini models outside the fixed G-5 release policy", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(new GeminiProviderAdapter().generateStructured(
+      providerRequest({ model: "gemini-2.5-flash" }),
+    )).rejects.toMatchObject({
+      code: "GEMINI_MODEL_NOT_ALLOWED",
+      classification: "NON_RETRYABLE_CONFIGURATION",
+      retryable: false,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("parses and returns a schema-valid response through the gateway", async () => {
@@ -143,6 +161,22 @@ describe("Gemini structured output", () => {
         schema,
       }),
     ).resolves.toEqual({ answer: "valid" });
+  });
+
+  it("keeps OpenRouter unavailable at the G-5 gateway boundary", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(generateStructuredOutput({
+      userId: new Types.ObjectId().toString(),
+      feature: "test.openrouter-release-boundary",
+      systemPrompt: "Return JSON.",
+      userPrompt: "Synthetic input.",
+      schema: z.object({ answer: z.string() }).strict(),
+      provider: "openrouter",
+      model: "openrouter/free",
+    })).rejects.toMatchObject({ code: "AI_PROVIDER_NOT_FOUND" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it.each([

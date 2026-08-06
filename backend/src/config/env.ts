@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { logger } from "../shared/logger.js";
+import { GEMINI_RELEASE_MODEL } from "../modules/ai/geminiPolicy.js";
 import { parseEncryptionKeyRing } from "../modules/ai/credentialVault.js";
 
 const optionalString = z.preprocess(
@@ -147,7 +148,7 @@ const envSchema = z
 
     AI_DEFAULT_PROVIDER: z.enum(["gemini"]).default("gemini"),
     GEMINI_API_KEY: optionalString,
-    GEMINI_MODEL: z.string().min(1).default("gemini-2.5-flash"),
+    GEMINI_MODEL: z.literal(GEMINI_RELEASE_MODEL).default(GEMINI_RELEASE_MODEL),
     AI_REQUEST_TIMEOUT_MS: z.coerce
       .number()
       .int()
@@ -189,7 +190,7 @@ const envSchema = z
     AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().min(1_000).default(500_000),
     BYOK_ENCRYPTION_KEY: optionalString,
     BYOK_ENCRYPTION_KEY_PREVIOUS: optionalString,
-    AI_ROUTING_FOUNDATION_ENABLED: booleanFromEnv.default(false),
+    AI_ROUTING_FOUNDATION_ENABLED: booleanFromEnv.default(true),
     AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED: booleanFromEnv.default(false),
     AI_ADMIN_GEMINI_POLICY_VERSION: z.coerce
       .number()

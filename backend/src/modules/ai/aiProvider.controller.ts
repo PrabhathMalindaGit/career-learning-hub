@@ -86,6 +86,7 @@ export async function testCredentialController(
       value: await testCredentialConnection({
         userId: request.auth!.userId,
         provider: request.params.provider,
+        credentialSource: request.body.credentialSource,
         credentialVersion: request.body.credentialVersion,
         audit: auditContext(request),
       }),

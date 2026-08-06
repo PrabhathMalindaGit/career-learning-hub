@@ -61,3 +61,26 @@ export type AuthenticationResponse = {
 export type CurrentUserResponse = {
   user: PublicUser;
 };
+
+export type GeminiConnectionMode =
+  | "application-managed"
+  | "personal"
+  | "disconnected";
+
+export type GeminiCredentialSummary = {
+  id: string;
+  maskedSuffix: string;
+  secretVersion: number;
+  revision: number;
+  connectionStatus: "valid" | "invalid" | "untested" | "unavailable";
+  lastValidatedAt?: string;
+};
+
+export type GeminiConnectionSettings = {
+  mode: GeminiConnectionMode;
+  model: "gemini-3.6-flash";
+  administratorManagedAvailable: boolean;
+  preferenceRevision: number;
+  credential?: GeminiCredentialSummary;
+  requestId?: string;
+};

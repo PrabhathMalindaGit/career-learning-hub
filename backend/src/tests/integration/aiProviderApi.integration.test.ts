@@ -21,6 +21,9 @@ const canaryCredential = "AIzaSyntheticCanaryCredential-123456789";
 
 const originalVaultKey = env.BYOK_ENCRYPTION_KEY;
 const originalFoundation = env.AI_ROUTING_FOUNDATION_ENABLED;
+const originalAdminCompatibility = env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED;
+const originalAdminPolicyVersion = env.AI_ADMIN_GEMINI_POLICY_VERSION;
+const originalGeminiApiKey = env.GEMINI_API_KEY;
 
 async function registerTestUser(_application: typeof app, input: {
   email: string;
@@ -62,7 +65,7 @@ function mutationHeaders(revision?: number) {
 }
 
 function mockSuccessfulGeminiConnection() {
-  const fetchMock = vi.fn().mockResolvedValue(
+  const fetchMock = vi.fn().mockImplementation(async () =>
     new Response(JSON.stringify({
       candidates: [{
         content: { parts: [{ text: '{"status":"ok"}' }] },
@@ -107,11 +110,15 @@ describe("AI-3 provider credential APIs", () => {
   beforeEach(() => {
     env.BYOK_ENCRYPTION_KEY = byokKey;
     env.AI_ROUTING_FOUNDATION_ENABLED = true;
+    mockSuccessfulGeminiConnection();
   });
 
   afterEach(() => {
     env.BYOK_ENCRYPTION_KEY = originalVaultKey;
     env.AI_ROUTING_FOUNDATION_ENABLED = originalFoundation;
+    env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = originalAdminCompatibility;
+    env.AI_ADMIN_GEMINI_POLICY_VERSION = originalAdminPolicyVersion;
+    env.GEMINI_API_KEY = originalGeminiApiKey;
     vi.unstubAllGlobals();
   });
 
@@ -130,6 +137,8 @@ describe("AI-3 provider credential APIs", () => {
       activeProvider: "disabled",
       preferenceRevision: 0,
       foundationEnabled: true,
+      geminiModel: "gemini-3.6-flash",
+      administratorManagedAvailable: false,
     });
     expect(response.body.data.providers).toEqual([
       expect.objectContaining({ id: "openrouter", available: false }),
@@ -139,6 +148,58 @@ describe("AI-3 provider credential APIs", () => {
       expect.objectContaining({ id: "deepseek-direct", available: false }),
     ]);
     expect(JSON.stringify(response.body)).not.toContain("GEMINI_API_KEY");
+  });
+
+  it("tests application-managed Gemini without exposing environment credential metadata", async () => {
+    const owner = await registerTestUser(app, {
+      email: "ai-application-managed@example.com",
+      displayName: "AI Application Managed",
+    });
+    const managedKey = "AIzaApplicationManagedCanary-1122334455";
+    env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = true;
+    env.AI_ADMIN_GEMINI_POLICY_VERSION = 4;
+    env.GEMINI_API_KEY = managedKey;
+    const fetchMock = mockSuccessfulGeminiConnection();
+
+    const response = await request(app)
+      .post("/api/v1/ai/providers/gemini-direct/test")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .set(mutationHeaders())
+      .send({ credentialSource: "administrator-managed" })
+      .expect(200);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(url.searchParams.has("key")).toBe(false);
+    expect(init.headers).toMatchObject({ "x-goog-api-key": managedKey });
+    expect(response.body.data).toMatchObject({
+      credentialSource: "administrator-managed",
+      connectionStatus: "valid",
+      model: "gemini-3.6-flash",
+    });
+    expect(response.body.data.lastValidatedAt).toEqual(expect.any(String));
+    expect(JSON.stringify(response.body)).not.toContain(managedKey);
+    expect(JSON.stringify(response.body)).not.toMatch(/maskedSuffix|credentialVersion/);
+    await expect(AiCredentialModel.countDocuments({
+      userId: owner.userId,
+    })).resolves.toBe(0);
+
+    await request(app)
+      .patch("/api/v1/ai/providers/gemini-direct/activate")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .set(mutationHeaders(0))
+      .send({ credentialSource: "administrator-managed" })
+      .expect(200);
+    const routing = await request(app)
+      .get("/api/v1/ai/routing")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .expect(200);
+    expect(routing.body.data).toMatchObject({
+      activeProvider: "gemini-direct",
+      credentialSource: "administrator-managed",
+      administratorCredentialPolicyVersion: 4,
+      preferenceRevision: 1,
+    });
   });
 
   it("keeps provider and routing GET requests read-only", async () => {
@@ -208,6 +269,64 @@ describe("AI-3 provider credential APIs", () => {
     await expect(AiCredentialModel.countDocuments()).resolves.toBe(0);
   });
 
+  it("tests a candidate exactly once before persisting a valid credential", async () => {
+    const owner = await registerTestUser(app, {
+      email: "ai-candidate-before-write@example.com",
+      displayName: "AI Candidate Before Write",
+    });
+    const fetchMock = vi.fn(async () => {
+      await expect(AiCredentialModel.countDocuments({
+        userId: owner.userId,
+      })).resolves.toBe(0);
+      return new Response(JSON.stringify({
+        candidates: [{
+          content: { parts: [{ text: '{"status":"ok"}' }] },
+        }],
+        usageMetadata: { promptTokenCount: 2, candidatesTokenCount: 1 },
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await createCredential({ accessToken: owner.accessToken });
+
+    expect(response.status).toBe(201);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(response.body.data.credential).toMatchObject({
+      state: "valid",
+      connectionStatus: "valid",
+      secretVersion: 1,
+      revision: 1,
+    });
+    expect(response.body.data.credential.lastValidatedAt).toEqual(
+      expect.any(String),
+    );
+    const [url] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.pathname).toContain("/models/gemini-3.6-flash:");
+  });
+
+  it("does not persist an invalid candidate credential", async () => {
+    const owner = await registerTestUser(app, {
+      email: "ai-invalid-candidate@example.com",
+      displayName: "AI Invalid Candidate",
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"error":{"message":"synthetic rejection"}}', {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await createCredential({ accessToken: owner.accessToken });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe("invalid_credentials");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await expect(AiCredentialModel.countDocuments({
+      userId: owner.userId,
+    })).resolves.toBe(0);
+  });
+
   it("saves encrypted Gemini metadata without returning or persisting plaintext", async () => {
     const owner = await registerTestUser(app, {
       email: "ai-save@example.com",
@@ -222,8 +341,8 @@ describe("AI-3 provider credential APIs", () => {
       label: "Synthetic Gemini",
       maskedSuffix: "••••6789",
       secretVersion: 1,
-      state: "configured",
-      connectionStatus: "untested",
+      state: "valid",
+      connectionStatus: "valid",
       revision: 1,
     });
     expect(JSON.stringify(response.body)).not.toContain(canaryCredential);
@@ -278,8 +397,8 @@ describe("AI-3 provider credential APIs", () => {
     expect(response.body.data.credential).toMatchObject({
       secretVersion: 2,
       revision: 2,
-      state: "configured",
-      connectionStatus: "untested",
+      state: "valid",
+      connectionStatus: "valid",
       maskedSuffix: "••••4321",
     });
     const after = await AiCredentialModel.collection.findOne({
@@ -297,6 +416,87 @@ describe("AI-3 provider credential APIs", () => {
       .expect(409);
     await expect(AiCredentialModel.findOne({ userId: owner.userId }).lean())
       .resolves.toMatchObject({ secretVersion: 2, revision: 2 });
+  });
+
+  it("atomically advances an active personal preference when replacing its key", async () => {
+    const owner = await registerTestUser(app, {
+      email: "ai-active-replacement@example.com",
+      displayName: "AI Active Replacement",
+    });
+    await createCredential({ accessToken: owner.accessToken });
+    await request(app)
+      .patch("/api/v1/ai/providers/gemini-direct/activate")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .set(mutationHeaders(0))
+      .send({ credentialSource: "user-managed", routingProfileVersion: 1 })
+      .expect(200);
+
+    const replacement = "AIzaAtomicReplacementCanary-246813579";
+    const response = await request(app)
+      .put("/api/v1/ai/providers/gemini-direct/credential")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .set(mutationHeaders(1))
+      .send({ apiKey: replacement })
+      .expect(200);
+
+    expect(response.body.data.credential).toMatchObject({
+      secretVersion: 2,
+      revision: 2,
+      state: "valid",
+      connectionStatus: "valid",
+    });
+    await expect(AiProviderPreferenceModel.findOne({
+      userId: owner.userId,
+    }).lean()).resolves.toMatchObject({
+      activeProvider: "gemini-direct",
+      credentialSource: "user-managed",
+      activeCredentialSecretVersion: 2,
+      revision: 2,
+    });
+  });
+
+  it("preserves an active personal key and routing state when replacement testing fails", async () => {
+    const owner = await registerTestUser(app, {
+      email: "ai-failed-replacement@example.com",
+      displayName: "AI Failed Replacement",
+    });
+    await createCredential({ accessToken: owner.accessToken });
+    await request(app)
+      .patch("/api/v1/ai/providers/gemini-direct/activate")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .set(mutationHeaders(0))
+      .send({ credentialSource: "user-managed", routingProfileVersion: 1 })
+      .expect(200);
+    const credentialBefore = await AiCredentialModel.collection.findOne({
+      userId: new Types.ObjectId(owner.userId),
+    });
+    const preferenceBefore = await AiProviderPreferenceModel.findOne({
+      userId: owner.userId,
+    }).lean();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response('{"error":{"message":"synthetic rejection"}}', {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    ));
+
+    await request(app)
+      .put("/api/v1/ai/providers/gemini-direct/credential")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .set(mutationHeaders(1))
+      .send({ apiKey: "AIzaRejectedReplacementCanary-135792468" })
+      .expect(409);
+
+    const credentialAfter = await AiCredentialModel.collection.findOne({
+      userId: new Types.ObjectId(owner.userId),
+    });
+    const preferenceAfter = await AiProviderPreferenceModel.findOne({
+      userId: owner.userId,
+    }).lean();
+    expect(credentialAfter?.secretVersion).toBe(credentialBefore?.secretVersion);
+    expect(credentialAfter?.revision).toBe(credentialBefore?.revision);
+    expect(credentialAfter?.encryptedSecret).toEqual(credentialBefore?.encryptedSecret);
+    expect(preferenceAfter).toEqual(preferenceBefore);
   });
 
   it("tests only the stored credential with fixed synthetic content", async () => {
@@ -319,7 +519,8 @@ describe("AI-3 provider credential APIs", () => {
     expect(JSON.stringify(response.body)).not.toContain(canaryCredential);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
-    expect(url.searchParams.get("key")).toBe(canaryCredential);
+    expect(url.searchParams.has("key")).toBe(false);
+    expect(init.headers).toMatchObject({ "x-goog-api-key": canaryCredential });
     const body = String(init.body);
     expect(body).toContain("credential connection check");
     expect(body).not.toMatch(/resume|interview|learning|document|job description/i);
@@ -427,7 +628,7 @@ describe("AI-3 provider credential APIs", () => {
         .expect(204);
     }
     await expect(AiCredentialModel.findOne({ userId: owner.userId }).lean())
-      .resolves.toMatchObject({ state: "configured", revision: 1 });
+      .resolves.toMatchObject({ state: "valid", revision: 1 });
   });
 
   it("rejects ownership override fields and provider path injection", async () => {
@@ -575,11 +776,16 @@ describe("AI-3 provider credential APIs", () => {
       email: "ai-secret-safety@example.com",
       displayName: "AI Secret Safety",
     });
+    const fetchMock = mockSuccessfulGeminiConnection();
     const save = await createCredential({ accessToken: owner.accessToken });
-    mockSuccessfulGeminiConnection();
     const tested = await validateCredential({ accessToken: owner.accessToken });
 
     expect(JSON.stringify([save.body, tested.body])).not.toContain(canaryCredential);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    for (const [url] of fetchMock.mock.calls as [URL, RequestInit][]) {
+      expect(url.toString()).not.toContain(canaryCredential);
+      expect(url.searchParams.has("key")).toBe(false);
+    }
     for (const collectionValue of [
       await JobRecordModel.find({ userId: owner.userId }).lean(),
       await UsageEventModel.find({ userId: owner.userId }).lean(),

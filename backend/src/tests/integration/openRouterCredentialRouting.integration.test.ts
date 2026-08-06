@@ -5,13 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { app } from "../../app.js";
 import { env } from "../../config/env.js";
-import { enqueueJob } from "../../jobs/job.queue.js";
+import { JobRecordModel } from "../../jobs/job.model.js";
 import { AiCredentialModel } from "../../modules/ai/aiCredential.model.js";
 import { generateStructuredOutput } from "../../modules/ai/aiGateway.service.js";
-import { hardDisableOpenRouterModel, refreshOpenRouterCatalogue } from "../../modules/ai/openRouterCatalogue.service.js";
+import { refreshOpenRouterCatalogue } from "../../modules/ai/openRouterCatalogue.service.js";
 import { AiProviderPreferenceModel } from "../../modules/ai/aiProviderPreference.model.js";
+import { ensureAiFoundation } from "../../modules/ai/aiProvider.service.js";
 import { authorizeAiJobExecution, compileAiRoutingSnapshot } from "../../modules/ai/aiRouting.service.js";
-import { AiRoutingProfileModel } from "../../modules/ai/aiRoutingProfile.model.js";
 import { UsageEventModel } from "../../modules/ai/usageEvent.model.js";
 import { AuthSessionModel } from "../../modules/auth/authSession.model.js";
 import { signAccessToken, signRefreshToken } from "../../modules/auth/token.service.js";
@@ -41,15 +41,6 @@ function catalogueResponse(pricing: Record<string, unknown> = {
     supported_parameters: ["max_tokens", "response_format", "structured_outputs"],
     pricing,
   }] }), { status: 200, headers: { "Content-Type": "application/json" } });
-}
-
-function completionResponse(content = '{"status":"ok"}') {
-  return new Response(JSON.stringify({
-    id: "gen-safe-123",
-    model: modelId,
-    choices: [{ message: { content }, finish_reason: "stop" }],
-    usage: { prompt_tokens: 3, completion_tokens: 2, total_tokens: 5 },
-  }), { status: 200, headers: { "Content-Type": "application/json" } });
 }
 
 async function testUser(email: string, roles: Array<"user" | "admin"> = ["user"]) {
@@ -92,30 +83,7 @@ async function seedCatalogue() {
   });
 }
 
-async function configureOpenRouter(accessToken: string) {
-  const saved = await request(app)
-    .put("/api/v1/ai/providers/openrouter/credential")
-    .set("Authorization", `Bearer ${accessToken}`)
-    .set(headers())
-    .send({ apiKey: canary, label: "Synthetic OpenRouter" })
-    .expect(201);
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(completionResponse()));
-  const tested = await request(app)
-    .post("/api/v1/ai/providers/openrouter/test")
-    .set("Authorization", `Bearer ${accessToken}`)
-    .set(headers())
-    .send({ credentialVersion: 1 })
-    .expect(200);
-  const activated = await request(app)
-    .patch("/api/v1/ai/providers/openrouter/activate")
-    .set("Authorization", `Bearer ${accessToken}`)
-    .set(headers(0))
-    .send({ credentialSource: "user-managed" })
-    .expect(200);
-  return { saved, tested, activated };
-}
-
-describe("OpenRouter credential, routing, and models APIs", () => {
+describe("OpenRouter dormant release boundary and catalogue isolation", () => {
   beforeEach(() => {
     env.BYOK_ENCRYPTION_KEY = vaultKey;
     env.AI_ROUTING_FOUNDATION_ENABLED = true;
@@ -127,23 +95,43 @@ describe("OpenRouter credential, routing, and models APIs", () => {
     vi.unstubAllGlobals();
   });
 
-  it("supports owner save/test/activate without returning the key or enabling direct providers", async () => {
+  it("rejects OpenRouter credential and activation mutations without provider calls", async () => {
     await seedCatalogue();
     const owner = await testUser("openrouter-owner@example.com");
-    const { saved, tested, activated } = await configureOpenRouter(owner.accessToken);
-
-    expect(JSON.stringify([saved.body, tested.body, activated.body])).not.toContain(canary);
-    expect(activated.body.data.routing).toMatchObject({
-      activeProvider: "openrouter",
-      credentialSource: "user-managed",
-      revision: 1,
-    });
+    const providerFetch = vi.fn();
+    vi.stubGlobal("fetch", providerFetch);
+    for (const mutation of [
+      request(app)
+        .put("/api/v1/ai/providers/openrouter/credential")
+        .set("Authorization", `Bearer ${owner.accessToken}`)
+        .set(headers())
+        .send({ apiKey: canary, label: "Synthetic OpenRouter" }),
+      request(app)
+        .post("/api/v1/ai/providers/openrouter/test")
+        .set("Authorization", `Bearer ${owner.accessToken}`)
+        .set(headers())
+        .send({ credentialVersion: 1 }),
+      request(app)
+        .patch("/api/v1/ai/providers/openrouter/activate")
+        .set("Authorization", `Bearer ${owner.accessToken}`)
+        .set(headers(0))
+        .send({ credentialSource: "user-managed" }),
+    ]) {
+      const response = await mutation;
+      expect(response.status).toBe(409);
+      expect(response.body.error.code).toBe("provider_not_available");
+      expect(JSON.stringify(response.body)).not.toContain(canary);
+    }
+    expect(providerFetch).not.toHaveBeenCalled();
+    await expect(AiCredentialModel.countDocuments({
+      userId: owner.userId,
+    })).resolves.toBe(0);
     const listed = await request(app)
       .get("/api/v1/ai/providers")
       .set("Authorization", `Bearer ${owner.accessToken}`)
       .expect(200);
     expect(listed.body.data.providers).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: "openrouter", available: true, configured: true }),
+      expect.objectContaining({ id: "openrouter", available: false, configured: false }),
       expect.objectContaining({ id: "gemini-direct", available: true }),
       expect.objectContaining({ id: "openai-direct", available: false }),
       expect.objectContaining({ id: "anthropic-direct", available: false }),
@@ -151,43 +139,31 @@ describe("OpenRouter credential, routing, and models APIs", () => {
     ]));
   });
 
-  it("freezes an OpenRouter action plan in an immutable secret-free snapshot", async () => {
-    await seedCatalogue();
+  it("refuses to compile an OpenRouter preference into a new job snapshot", async () => {
     const owner = await testUser("openrouter-snapshot@example.com");
-    await configureOpenRouter(owner.accessToken);
-    const snapshot = await compileAiRoutingSnapshot({
+    const { preference } = await ensureAiFoundation(owner.userId);
+    await AiProviderPreferenceModel.collection.updateOne(
+      { _id: preference._id },
+      { $set: {
+        activeProvider: "openrouter",
+        credentialSource: "user-managed",
+        activeCredentialId: new Types.ObjectId(),
+        activeCredentialSecretVersion: 1,
+      } },
+    );
+
+    await expect(compileAiRoutingSnapshot({
       userId: owner.userId,
       action: "resume-analysis",
-    });
-    expect(snapshot).toMatchObject({
-      provider: "openrouter",
-      mode: "openrouter",
-      rankingPolicyVersion: "openrouter-free-ranking-v2",
-      catalogueVersion: 1,
-      freeModelIds: [modelId],
-      paidFallbackAllowed: false,
-      maximumOutputTokens: 8_192,
-    });
-    expect(snapshot).not.toHaveProperty("paidModelId");
-    expect(JSON.stringify(snapshot)).not.toContain(canary);
-    expect(JSON.stringify(snapshot)).not.toContain("ciphertext");
-    const profile = await AiRoutingProfileModel.findOne({
+    })).rejects.toMatchObject({ code: "provider_not_available" });
+    await expect(JobRecordModel.countDocuments({
       userId: owner.userId,
-      status: "active",
-    }).lean();
-    expect(profile?.openRouterActions).toHaveLength(11);
+    })).resolves.toBe(0);
   });
 
-  it("routes an authorized job only to OpenRouter and records actual usage metadata", async () => {
-    await seedCatalogue();
+  it("rejects direct OpenRouter gateway selection before network I/O", async () => {
     const owner = await testUser("openrouter-gateway@example.com");
-    await configureOpenRouter(owner.accessToken);
-    const job = await enqueueJob({
-      type: "resume.analyze",
-      payload: { synthetic: true },
-      userId: owner.userId,
-    });
-    const fetchMock = vi.fn().mockResolvedValue(completionResponse('{"answer":"valid"}'));
+    const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(generateStructuredOutput({
@@ -196,70 +172,59 @@ describe("OpenRouter credential, routing, and models APIs", () => {
       systemPrompt: "Return JSON.",
       userPrompt: "Synthetic only.",
       schema: z.object({ answer: z.string() }).strict(),
-      jobId: job._id.toString(),
-    })).resolves.toEqual({ answer: "valid" });
-
-    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
-      "https://openrouter.ai/api/v1/chat/completions",
-    );
-    const usage = await UsageEventModel.findOne({ userId: owner.userId }).lean();
-    expect(usage).toMatchObject({
       provider: "openrouter",
-      model: modelId,
-      metadata: {
-        catalogueVersion: 1,
-        rankingPolicyVersion: "openrouter-free-ranking-v2",
-        actualModel: modelId,
-        freeTier: true,
-      },
-    });
+    })).rejects.toMatchObject({ code: "AI_PROVIDER_NOT_FOUND" });
+    expect(fetchMock).not.toHaveBeenCalled();
+    await expect(UsageEventModel.countDocuments({
+      userId: owner.userId,
+    })).resolves.toBe(0);
   });
 
-  it("rejects hard-disabled, provider-switched, and replaced-credential snapshots before fetch", async () => {
-    await seedCatalogue();
+  it("rejects an already queued OpenRouter snapshot before credential resolution", async () => {
     const owner = await testUser("openrouter-stale@example.com");
-    const configured = await configureOpenRouter(owner.accessToken);
-    const first = await enqueueJob({ type: "resume.analyze", payload: {}, userId: owner.userId });
-    await hardDisableOpenRouterModel({ modelId, reason: "security_policy" });
-    await expect(authorizeAiJobExecution({ jobId: first._id.toString() }))
-      .rejects.toMatchObject({ code: "stale_routing_snapshot" });
-
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    expect(fetchMock).not.toHaveBeenCalled();
-
-    const credentialRevision = configured.tested.body.data.credential.revision;
-    await request(app)
-      .put("/api/v1/ai/providers/openrouter/credential")
-      .set("Authorization", `Bearer ${owner.accessToken}`)
-      .set(headers(credentialRevision))
-      .send({ apiKey: `${canary}-replacement` })
-      .expect(200);
-    expect(await AiCredentialModel.findOne({ userId: owner.userId }).lean())
-      .toMatchObject({ secretVersion: 2 });
-
-    await AiProviderPreferenceModel.updateOne(
-      { userId: owner.userId },
-      {
-        $set: { activeProvider: "disabled", credentialSource: "none" },
-        $unset: { activeCredentialId: 1, activeCredentialSecretVersion: 1 },
-        $inc: { revision: 1 },
-      },
-    );
-    await expect(authorizeAiJobExecution({ jobId: first._id.toString() }))
-      .rejects.toMatchObject({ code: "stale_routing_snapshot" });
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects a queued model that gains an applicable paid override before provider execution", async () => {
-    await seedCatalogue();
-    const owner = await testUser("openrouter-override-stale@example.com");
-    await configureOpenRouter(owner.accessToken);
-    const job = await enqueueJob({
+    const job = await JobRecordModel.create({
+      userId: owner.userId,
       type: "resume.analyze",
       payload: {},
-      userId: owner.userId,
+      attempts: 1,
+      aiRoutingSnapshot: {
+        snapshotId: randomUUID(),
+        snapshotVersion: 1,
+        userId: owner.userId,
+        action: "resume-analysis",
+        provider: "openrouter",
+        mode: "openrouter",
+        preferenceRevision: 1,
+        routingProfileId: new Types.ObjectId().toString(),
+        routingProfileVersion: 1,
+        credentialSource: "user-managed",
+        credentialId: new Types.ObjectId().toString(),
+        credentialSecretVersion: 1,
+        rankingPolicyVersion: "openrouter-free-ranking-v2",
+        catalogueVersion: 1,
+        pricingObservedAt: new Date(),
+        freeModelIds: [modelId],
+        paidFallbackAllowed: false,
+        maximumInputTokens: 32_000,
+        maximumOutputTokens: 8_192,
+        ttftMs: 8_000,
+        streamIdleMs: 15_000,
+        totalMs: 45_000,
+        executeBefore: new Date(Date.now() + 60_000),
+        createdAt: new Date(),
+      },
     });
+
+    await expect(authorizeAiJobExecution({ jobId: job._id.toString() }))
+      .rejects.toMatchObject({ code: "provider_not_available" });
+    await expect(AiCredentialModel.countDocuments({
+      userId: owner.userId,
+    })).resolves.toBe(0);
+  });
+
+  it("keeps catalogue maintenance isolated from user routing state", async () => {
+    await seedCatalogue();
+    const owner = await testUser("openrouter-override-stale@example.com");
     await expect(refreshOpenRouterCatalogue({
       ownerId: "paid-override-refresh",
       now: new Date(Date.now() + 1_000),
@@ -270,12 +235,15 @@ describe("OpenRouter credential, routing, and models APIs", () => {
         overrides: [{ min_prompt_tokens: 1, prompt: "0.000001" }],
       })),
     })).resolves.toMatchObject({ status: "refreshed", catalogueVersion: 2 });
-
-    const providerFetch = vi.fn();
-    vi.stubGlobal("fetch", providerFetch);
-    await expect(authorizeAiJobExecution({ jobId: job._id.toString() }))
-      .rejects.toMatchObject({ code: "stale_routing_snapshot" });
-    expect(providerFetch).not.toHaveBeenCalled();
+    await expect(AiProviderPreferenceModel.countDocuments({
+      userId: owner.userId,
+    })).resolves.toBe(0);
+    await expect(AiCredentialModel.countDocuments({
+      userId: owner.userId,
+    })).resolves.toBe(0);
+    await expect(UsageEventModel.countDocuments({
+      userId: owner.userId,
+    })).resolves.toBe(0);
   });
 
   it("returns safe action models and restricts manual refresh to administrators", async () => {

@@ -1,9 +1,29 @@
 import { Types } from "mongoose";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../app.js";
+import { env } from "../../config/env.js";
 import { JobRecordModel } from "../../jobs/job.model.js";
+import {
+  activateProvider,
+  ensureAiFoundation,
+} from "../../modules/ai/aiProvider.service.js";
 import { registerTestUser } from "../helpers/auth.js";
+
+const originalFoundation = env.AI_ROUTING_FOUNDATION_ENABLED;
+const originalAdminCompatibility = env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED;
+
+async function connectApplicationManagedGemini(userId: string) {
+  env.AI_ROUTING_FOUNDATION_ENABLED = true;
+  env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = true;
+  await ensureAiFoundation(userId);
+  await activateProvider({
+    userId,
+    provider: "gemini-direct",
+    credentialSource: "administrator-managed",
+    expectedRevision: 0,
+  });
+}
 
 async function createOwnedJob(
   userId: string,
@@ -22,6 +42,11 @@ async function createOwnedJob(
 }
 
 describe("owned job response integration", () => {
+  afterEach(() => {
+    env.AI_ROUTING_FOUNDATION_ENABLED = originalFoundation;
+    env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = originalAdminCompatibility;
+  });
+
   it("allowlists failed-job error fields in the public response", async () => {
     const owner = await registerTestUser(app, {
       email: "job-error-owner@example.com",
@@ -263,6 +288,7 @@ describe("owned job response integration", () => {
         retryable: true,
       },
     });
+    await connectApplicationManagedGemini(owner.userId);
 
     const first = await request(app)
       .post(`/api/v1/jobs/${source._id.toString()}/retry`)

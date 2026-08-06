@@ -764,6 +764,200 @@ h2 {
   line-height: 1.6;
 }
 
+.settings-gemini-panel {
+  grid-column: 1 / -1;
+  overflow: hidden;
+}
+
+.settings-gemini-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.settings-panel__eyebrow {
+  margin: 0 0 6px !important;
+  color: var(--accent-strong) !important;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.gemini-status {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid #bedcca;
+  border-radius: 999px;
+  background: #eef8f2;
+  color: #245a3a;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.gemini-status::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3a9660;
+  content: "";
+}
+
+.gemini-status--disconnected {
+  border-color: #decfc4;
+  background: #faf5f1;
+  color: #74533d;
+}
+
+.gemini-status--disconnected::before {
+  background: #a97856;
+}
+
+.gemini-connection-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--border);
+}
+
+.gemini-connection-summary > div {
+  min-width: 0;
+  padding: 18px;
+  background: #fbfdfb;
+}
+
+.gemini-connection-summary span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gemini-connection-summary strong {
+  display: block;
+  margin-top: 7px;
+  color: #233128;
+  overflow-wrap: anywhere;
+}
+
+.gemini-connection-summary p,
+.gemini-state-copy {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.gemini-model {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+.gemini-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.gemini-action-row button {
+  min-height: var(--minimum-interactive-target);
+}
+
+.gemini-key-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 20px;
+  border: 1px solid #cfe0d5;
+  border-radius: 14px;
+  background: #f7fbf8;
+}
+
+.gemini-key-form label {
+  color: #233128;
+  font-weight: 800;
+}
+
+.gemini-key-form > p {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.gemini-key-form input {
+  width: 100%;
+  min-height: var(--minimum-interactive-target);
+  padding: 11px 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.gemini-key-form input:focus-visible {
+  outline: 3px solid rgba(45, 116, 73, 0.2);
+  outline-offset: 2px;
+}
+
+.gemini-message {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+.gemini-message--error {
+  border: 1px solid #e1c4bd;
+  background: #fff5f3;
+  color: #7c3328;
+}
+
+.gemini-message--success {
+  border: 1px solid #bfdbc9;
+  background: #f0f8f3;
+  color: #245a3a;
+}
+
+.settings-dialog {
+  width: min(520px, calc(100% - 32px));
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.settings-dialog::backdrop {
+  background: rgba(20, 34, 25, 0.45);
+}
+
+.settings-dialog p {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.settings-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
 .settings-list {
   display: grid;
   margin: 24px 0 0;
@@ -907,6 +1101,28 @@ h2 {
   .settings-list > div {
     grid-template-columns: 1fr;
     gap: 5px;
+  }
+
+  .settings-gemini-header {
+    display: grid;
+  }
+
+  .gemini-status {
+    justify-self: start;
+  }
+
+  .gemini-connection-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .gemini-action-row,
+  .settings-dialog__actions {
+    display: grid;
+  }
+
+  .gemini-action-row button,
+  .settings-dialog__actions button {
+    width: 100%;
   }
 }
 

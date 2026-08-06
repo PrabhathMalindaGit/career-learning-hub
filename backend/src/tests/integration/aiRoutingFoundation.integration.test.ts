@@ -322,6 +322,10 @@ describe("AI routing foundation", () => {
     const { userId } = await setupActiveUser();
     const snapshot = await routing.compileAiRoutingSnapshot({ userId, action: "resume-analysis" });
     const job = await createSnapshottedJob(snapshot);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: '{"status":"ok"}' }] } }],
+      usageMetadata: { promptTokenCount: 2, candidatesTokenCount: 1 },
+    }), { status: 200, headers: { "Content-Type": "application/json" } })));
     await saveCredential({
       userId,
       provider: "gemini-direct",
@@ -530,6 +534,52 @@ describe("AI routing foundation", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("does not use the environment key for a durable job when the foundation is disabled", async () => {
+    env.AI_ROUTING_FOUNDATION_ENABLED = false;
+    const userId = new Types.ObjectId();
+    const job = await JobRecordModel.create({
+      userId,
+      type: "resume.analyze",
+      payload: {},
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(generateStructuredOutput({
+      userId: userId.toString(),
+      feature: "test.no-durable-fallback",
+      systemPrompt: "Return JSON.",
+      userPrompt: "Synthetic input.",
+      schema: z.object({ status: z.literal("ok") }).strict(),
+      jobId: job._id.toString(),
+    })).rejects.toMatchObject({ code: "stale_routing_snapshot" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses to enqueue a routed AI job while the authoritative foundation is disabled", async () => {
+    env.AI_ROUTING_FOUNDATION_ENABLED = false;
+    const userId = new Types.ObjectId().toString();
+
+    await expect(enqueueJob({
+      userId,
+      type: "resume.analyze",
+      payload: {},
+    })).rejects.toMatchObject({ code: "routing_configuration_invalid" });
+    await expect(JobRecordModel.countDocuments({ userId })).resolves.toBe(0);
+  });
+
+  it("rejects a new AI job at enqueue when the user is disconnected", async () => {
+    const userId = new Types.ObjectId().toString();
+    await ensureAiFoundation(userId);
+
+    await expect(enqueueJob({
+      userId,
+      type: "resume.analyze",
+      payload: {},
+    })).rejects.toMatchObject({ code: "provider_not_configured" });
+    await expect(JobRecordModel.countDocuments({ userId })).resolves.toBe(0);
+  });
+
   it("gates a snapshotted user credential before the provider call and releases its lease", async () => {
     if (!routing.compileAiRoutingSnapshot) return;
     const { userId } = await setupActiveUser();
@@ -549,8 +599,9 @@ describe("AI routing foundation", () => {
       jobId: job._id.toString(),
     })).resolves.toEqual({ status: "ok" });
 
-    const [url] = fetchMock.mock.calls[0] as [URL];
-    expect(url.searchParams.get("key")).toBe(userCredential);
+    const [url, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(url.searchParams.has("key")).toBe(false);
+    expect(init.headers).toMatchObject({ "x-goog-api-key": userCredential });
     await expect(AiCredentialExecutionLeaseModel.findOne({ jobId: job._id }).lean())
       .resolves.toMatchObject({ state: "released" });
   });

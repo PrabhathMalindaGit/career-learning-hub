@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { Types } from "mongoose";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { failOrRetryJob, retryOwnedJob } from "../../jobs/job.queue.js";
+import { env } from "../../config/env.js";
+import { enqueueJob, failOrRetryJob, retryOwnedJob } from "../../jobs/job.queue.js";
 import { JobRecordModel } from "../../jobs/job.model.js";
 import {
   attachFlashcardJob,
@@ -21,20 +22,46 @@ import { analyzeResume } from "../../modules/resume-analysis/resumeAnalysis.serv
 import { ResumeAnalysisModel } from "../../modules/resume-analysis/resumeAnalysis.model.js";
 import { createResume } from "../../modules/resumes/resume.service.js";
 import { AppError } from "../../shared/appError.js";
+import {
+  activateProvider,
+  ensureAiFoundation,
+} from "../../modules/ai/aiProvider.service.js";
+
+const originalFoundation = env.AI_ROUTING_FOUNDATION_ENABLED;
+const originalAdminCompatibility = env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED;
+
+async function connectApplicationManagedGemini(userId: string) {
+  env.AI_ROUTING_FOUNDATION_ENABLED = true;
+  env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = true;
+  await ensureAiFoundation(userId);
+  await activateProvider({
+    userId,
+    provider: "gemini-direct",
+    credentialSource: "administrator-managed",
+    expectedRevision: 0,
+  });
+}
+
+async function routedJob(userId: string, type: string) {
+  await connectApplicationManagedGemini(userId);
+  return enqueueJob({ userId, type, payload: {} });
+}
 
 function mockGemini(value: unknown) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(value) }] } }],
-          usageMetadata: { promptTokenCount: 7, candidatesTokenCount: 5 },
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+  const fetchMock = vi.fn().mockImplementation(async () =>
+    new Response(
+      JSON.stringify({
+        candidates: [{ content: { parts: [{ text: JSON.stringify(value) }] } }],
+        usageMetadata: { promptTokenCount: 7, candidatesTokenCount: 5 },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
     ),
   );
+  vi.stubGlobal(
+    "fetch",
+    fetchMock,
+  );
+  return fetchMock;
 }
 
 function executionLifecycle() {
@@ -48,6 +75,8 @@ function executionLifecycle() {
 
 describe("AI retry classification and provider-to-persistence", () => {
   afterEach(() => {
+    env.AI_ROUTING_FOUNDATION_ENABLED = originalFoundation;
+    env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = originalAdminCompatibility;
     vi.unstubAllGlobals();
   });
 
@@ -176,17 +205,18 @@ describe("AI retry classification and provider-to-persistence", () => {
         certifications: [], languages: [], interests: [],
       },
     });
-    mockGemini({
+    const fetchMock = mockGemini({
       scoreBreakdown: { keywordMatch: 10, clarity: 10, evidence: 10, formatting: 10 },
       issues: [], strengths: [], missingKeywords: [], suggestions: [],
     });
+    const job = await routedJob(userId, "resume.analyze");
 
     const execution = executionLifecycle();
     const analysis = await analyzeResume({
       userId,
       resumeId: created.resume._id.toString(),
       targetRole: "Synthetic Engineer",
-      jobId: new Types.ObjectId().toString(),
+      jobId: job._id.toString(),
       execution,
     });
 
@@ -194,6 +224,8 @@ describe("AI retry classification and provider-to-persistence", () => {
     expect(execution.reportPhase).toHaveBeenCalledWith("validating");
     expect(execution.beginPersistence).toHaveBeenCalledTimes(1);
     expect(execution.assertActive).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).not.toMatch(/openrouter|[?&]key=/i);
     await expect(ResumeAnalysisModel.countDocuments({ userId })).resolves.toBe(1);
   });
 
@@ -212,6 +244,7 @@ describe("AI retry classification and provider-to-persistence", () => {
       scoreBreakdown: { keywordMatch: 10, clarity: 10, evidence: 10, formatting: 10 },
       issues: [], strengths: [], missingKeywords: [], suggestions: [],
     });
+    const job = await routedJob(userId, "resume.analyze");
     const execution = executionLifecycle();
     execution.beginPersistence.mockRejectedValueOnce(
       new AppError(409, "JOB_EXECUTION_FENCE_LOST", "Synthetic cancellation."),
@@ -221,7 +254,7 @@ describe("AI retry classification and provider-to-persistence", () => {
       userId,
       resumeId: created.resume._id.toString(),
       targetRole: "Synthetic Engineer",
-      jobId: new Types.ObjectId().toString(),
+      jobId: job._id.toString(),
       execution,
     })).rejects.toMatchObject({ code: "JOB_EXECUTION_FENCE_LOST" });
     await expect(ResumeAnalysisModel.countDocuments({ userId })).resolves.toBe(0);
@@ -258,13 +291,14 @@ describe("AI retry classification and provider-to-persistence", () => {
         verificationRequired: true,
       }],
     });
+    const job = await routedJob(userId, "resume.analyze");
 
     await expect(
       analyzeResume({
         userId,
         resumeId: created.resume._id.toString(),
         targetRole: "Synthetic Engineer",
-        jobId: new Types.ObjectId().toString(),
+        jobId: job._id.toString(),
       }),
     ).rejects.toMatchObject({ code: "AI_UNKNOWN_BULLET_ID" });
     await expect(ResumeAnalysisModel.countDocuments({ userId })).resolves.toBe(0);
@@ -281,7 +315,7 @@ describe("AI retry classification and provider-to-persistence", () => {
       skillGaps: [],
       mode: "study",
     });
-    mockGemini({
+    const fetchMock = mockGemini({
       questions: [{
         category: "Technical",
         difficulty: "easy",
@@ -289,6 +323,7 @@ describe("AI retry classification and provider-to-persistence", () => {
         modelAnswer: "Describe inputs, outputs, edge cases, and assertions.",
       }],
     });
+    const job = await routedJob(userId.toString(), "interview.questions.generate");
 
     const execution = executionLifecycle();
     const result = await generateInterviewQuestions({
@@ -297,13 +332,15 @@ describe("AI retry classification and provider-to-persistence", () => {
       count: 1,
       categories: ["Technical"],
       difficultyMix: { easy: 1, medium: 0, hard: 0 },
-      jobId: new Types.ObjectId().toString(),
+      jobId: job._id.toString(),
       execution,
     });
 
     expect(result.insertedCount).toBe(1);
     expect(execution.beginPersistence).toHaveBeenCalledTimes(1);
     expect(execution.assertActive).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).not.toMatch(/openrouter|[?&]key=/i);
     await expect(InterviewQuestionModel.countDocuments({ userId })).resolves.toBe(1);
   });
 
@@ -328,16 +365,21 @@ describe("AI retry classification and provider-to-persistence", () => {
       text: "Synthetic testing verifies expected behavior.",
       wordCount: 5,
     });
-    const jobId = new Types.ObjectId();
+    await connectApplicationManagedGemini(userId.toString());
+    const job = await enqueueJob({
+      userId: userId.toString(),
+      type: "learning.flashcards.generate",
+      payload: {},
+    });
     const set = await FlashcardSetModel.create({
       userId,
       documentId: document._id,
       requestId: randomUUID(),
       title: "Synthetic cards",
       status: "generating",
-      generationJobId: jobId,
+      generationJobId: job._id,
     });
-    mockGemini({
+    const fetchMock = mockGemini({
       cards: [{
         cardIndex: 0,
         front: "What does synthetic testing verify?",
@@ -352,13 +394,15 @@ describe("AI retry classification and provider-to-persistence", () => {
       documentId: document._id.toString(),
       setId: set._id.toString(),
       count: 1,
-      jobId: jobId.toString(),
+      jobId: job._id.toString(),
       execution,
     });
 
     expect(result.cardCount).toBe(1);
     expect(execution.beginPersistence).toHaveBeenCalledTimes(1);
     expect(execution.assertActive).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).not.toMatch(/openrouter|[?&]key=/i);
     await expect(FlashcardModel.countDocuments({ userId })).resolves.toBe(1);
   });
 
@@ -447,6 +491,8 @@ describe("AI retry classification and provider-to-persistence", () => {
       generationJobId: source._id,
     });
 
+    await connectApplicationManagedGemini(userId.toString());
+
     const retry = await retryOwnedJob(userId.toString(), source._id.toString());
 
     expect(retry._id.toString()).not.toBe(source._id.toString());
@@ -477,6 +523,7 @@ describe("AI retry classification and provider-to-persistence", () => {
         retryable: true,
       },
     });
+    await connectApplicationManagedGemini(userId.toString());
 
     const [first, second] = await Promise.all([
       retryOwnedJob(userId.toString(), source._id.toString()),

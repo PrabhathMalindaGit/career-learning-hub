@@ -5,6 +5,7 @@ describe("structured log redaction", () => {
   it("redacts secrets and highly personal resume fields", () => {
     const sanitized = sanitizeForLog({
       authorization: "Bearer secret-token",
+      "x-goog-api-key": "AIzaLoggerCanaryCredential-123456789",
       password: "Password123",
       resumeContent: {
         basics: {
@@ -22,6 +23,7 @@ describe("structured log redaction", () => {
     }) as Record<string, unknown>;
 
     expect(sanitized.authorization).toBe("[REDACTED]");
+    expect(sanitized["x-goog-api-key"]).toBe("[REDACTED]");
     expect(sanitized.password).toBe("[REDACTED]");
     expect(sanitized.resumeContent).toBe("[REDACTED]");
     expect(String(sanitized.message)).not.toContain(

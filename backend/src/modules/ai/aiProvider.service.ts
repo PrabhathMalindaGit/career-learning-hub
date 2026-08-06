@@ -28,7 +28,7 @@ import {
 } from "./aiProviderPreference.model.js";
 import {
   aiProviderIds,
-  isAi4CallableProvider,
+  isAi3CallableProvider,
   type AiExecutionState,
   type AiProviderId,
 } from "./aiProvider.types.js";
@@ -38,13 +38,8 @@ import {
   type SecurityAuditEvent,
 } from "./securityAuditEvent.model.js";
 import { GeminiProviderAdapter } from "./providers/gemini.provider.js";
-import { OpenRouterProviderAdapter } from "./providers/openRouter.provider.js";
 import { AiProviderError } from "./providers/provider.types.js";
-import {
-  compileOpenRouterActionProfiles,
-  getOpenRouterActionPlan,
-  getOpenRouterCatalogueStatus,
-} from "./openRouterCatalogue.service.js";
+import { GEMINI_RELEASE_MODEL } from "./geminiPolicy.js";
 
 const connectionResultSchema = z.object({
   status: z.literal("ok"),
@@ -107,10 +102,32 @@ function providerNotAvailable(): never {
 
 function requireCredentialProvider(
   provider: AiExecutionState,
-): asserts provider is "gemini-direct" | "openrouter" {
-  if (provider !== "gemini-direct" && provider !== "openrouter") {
+): asserts provider is "gemini-direct" {
+  if (provider !== "gemini-direct") {
     providerNotAvailable();
   }
+}
+
+async function runGeminiConnectionCheck(credential: {
+  read(): string;
+}): Promise<Date> {
+  const result = await new GeminiProviderAdapter().generateStructured({
+    systemPrompt: "This is a credential connection check.",
+    userPrompt: 'Return exactly {"status":"ok"}.',
+    responseJsonSchema: {
+      type: "object",
+      properties: { status: { type: "string", enum: ["ok"] } },
+      required: ["status"],
+      additionalProperties: false,
+    },
+    model: GEMINI_RELEASE_MODEL,
+    maximumOutputTokens: 32,
+    timeoutMs: 15_000,
+    signal: new AbortController().signal,
+    credential,
+  });
+  connectionResultSchema.parse(JSON.parse(result.text));
+  return new Date();
 }
 
 function serializeCredential(
@@ -324,10 +341,9 @@ export async function withAiIdempotency<T>(input: {
 }
 
 export async function listProviderSettings(userId: string) {
-  const [preference, credentials, openRouterStatus] = await Promise.all([
+  const [preference, credentials] = await Promise.all([
     AiProviderPreferenceModel.findOne({ userId }).lean(),
     AiCredentialModel.find({ userId, deletedAt: null }).lean(),
-    getOpenRouterCatalogueStatus(),
   ]);
   const byProvider = new Map(
     credentials.map((credential) => [credential.provider, credential]),
@@ -337,13 +353,17 @@ export async function listProviderSettings(userId: string) {
     activeProvider: preference?.activeProvider ?? "disabled",
     preferenceRevision: preference?.revision ?? 0,
     foundationEnabled: env.AI_ROUTING_FOUNDATION_ENABLED,
+    geminiModel: GEMINI_RELEASE_MODEL,
+    administratorManagedAvailable: Boolean(
+      env.AI_ROUTING_FOUNDATION_ENABLED &&
+      env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED &&
+      env.GEMINI_API_KEY
+    ),
     providers: aiProviderIds.map((id) => {
       const credential = byProvider.get(id);
       return {
         id,
-        available:
-          id === "gemini-direct" ||
-          (id === "openrouter" && openRouterStatus.available),
+        available: id === "gemini-direct",
         configured: Boolean(credential),
         ...(credential
           ? {
@@ -404,6 +424,19 @@ export async function saveCredential(input: {
   audit?: AiAuditContext;
 }): Promise<{ created: boolean; credential: CredentialMetadata }> {
   requireCredentialProvider(input.provider);
+  let keyRing: ReturnType<typeof parseEncryptionKeyRing>;
+  try {
+    keyRing = vaultKeyRing();
+  } catch (error) {
+    if (error instanceof CredentialVaultUnavailableError) {
+      throw new AppError(
+        409,
+        "provider_not_configured",
+        "Credential storage is not configured.",
+      );
+    }
+    throw error;
+  }
   const existing = await AiCredentialModel.findOne({
     userId: input.userId,
     provider: input.provider,
@@ -427,6 +460,23 @@ export async function saveCredential(input: {
 
   const credentialId = existing?._id ?? new Types.ObjectId();
   const secretVersion = existing ? existing.secretVersion + 1 : 1;
+  let validatedAt: Date;
+  try {
+    validatedAt = await runGeminiConnectionCheck({
+      read: () => input.apiKey,
+    });
+  } catch (error) {
+    const normalized = normalizeConnectionError(error);
+    await recordAudit({
+      userId: input.userId,
+      action: "credential.tested",
+      provider: input.provider,
+      outcome: "failure",
+      normalizedReason: normalized.code,
+      context: input.audit,
+    });
+    throw normalized;
+  }
   const plaintext = Buffer.from(input.apiKey, "utf8");
   let encryptedSecret;
   try {
@@ -436,7 +486,7 @@ export async function saveCredential(input: {
       userId: input.userId,
       provider: input.provider,
       secretVersion,
-      keyRing: vaultKeyRing(),
+      keyRing,
     });
   } catch (error) {
     if (error instanceof CredentialVaultUnavailableError) {
@@ -457,13 +507,12 @@ export async function saveCredential(input: {
         _id: credentialId,
         userId: input.userId,
         provider: input.provider,
-        label:
-          input.label ??
-          (input.provider === "openrouter" ? "OpenRouter" : "Gemini Direct"),
+        label: input.label ?? "Gemini Direct",
         maskedSuffix: maskCredentialSuffix(input.apiKey),
         secretVersion,
-        state: "configured",
-        connectionStatus: "untested",
+        state: "valid",
+        connectionStatus: "valid",
+        lastValidatedAt: validatedAt,
         encryptedSecret,
         revision: 1,
       }], { session });
@@ -497,13 +546,13 @@ export async function saveCredential(input: {
           label: input.label ?? existing.label,
           maskedSuffix: maskCredentialSuffix(input.apiKey),
           secretVersion,
-          state: "configured",
-          connectionStatus: "untested",
+          state: "valid",
+          connectionStatus: "valid",
           encryptedSecret,
+          lastValidatedAt: validatedAt,
           replacedAt,
         },
         $unset: {
-          lastValidatedAt: 1,
           lastValidationError: 1,
         },
         $inc: { revision: 1, leaseEpoch: 1 },
@@ -517,6 +566,20 @@ export async function saveCredential(input: {
         "The credential changed before this request completed.",
       );
     }
+    await AiProviderPreferenceModel.updateOne(
+      {
+        userId: input.userId,
+        activeProvider: "gemini-direct",
+        credentialSource: "user-managed",
+        activeCredentialId: existing._id,
+        activeCredentialSecretVersion: existing.secretVersion,
+      },
+      {
+        $set: { activeCredentialSecretVersion: secretVersion },
+        $inc: { revision: 1 },
+      },
+      { session },
+    );
     await recordAudit({
       userId: input.userId,
       action: "credential.replaced",
@@ -552,10 +615,66 @@ function normalizeConnectionError(error: unknown): AppError {
 export async function testCredentialConnection(input: {
   userId: string;
   provider: AiExecutionState;
-  credentialVersion: number;
+  credentialSource?: AiCredentialSource;
+  credentialVersion?: number;
   audit?: AiAuditContext;
-}): Promise<{ credential: CredentialMetadata }> {
+}): Promise<{
+  credentialSource: "user-managed" | "administrator-managed";
+  credential?: CredentialMetadata;
+  connectionStatus?: "valid";
+  lastValidatedAt?: Date;
+  model?: typeof GEMINI_RELEASE_MODEL;
+}> {
   requireCredentialProvider(input.provider);
+  if (input.credentialSource === "administrator-managed") {
+    if (
+      !env.AI_ROUTING_FOUNDATION_ENABLED ||
+      !env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED ||
+      !env.GEMINI_API_KEY
+    ) {
+      throw new AppError(
+        409,
+        "provider_not_configured",
+        "The selected AI provider credential source is unavailable.",
+      );
+    }
+    try {
+      const lastValidatedAt = await runGeminiConnectionCheck({
+        read: () => env.GEMINI_API_KEY!,
+      });
+      await recordAudit({
+        userId: input.userId,
+        action: "credential.tested",
+        provider: input.provider,
+        outcome: "success",
+        context: input.audit,
+      });
+      return {
+        credentialSource: "administrator-managed",
+        connectionStatus: "valid",
+        lastValidatedAt,
+        model: GEMINI_RELEASE_MODEL,
+      };
+    } catch (error) {
+      const normalized = normalizeConnectionError(error);
+      await recordAudit({
+        userId: input.userId,
+        action: "credential.tested",
+        provider: input.provider,
+        outcome: "failure",
+        normalizedReason: normalized.code,
+        context: input.audit,
+      });
+      throw normalized;
+    }
+  }
+  if (!input.credentialVersion) {
+    throw new AppError(
+      409,
+      "provider_not_configured",
+      "The selected AI provider is not configured.",
+    );
+  }
   const credential = await AiCredentialModel.findOne({
     userId: input.userId,
     provider: input.provider,
@@ -605,35 +724,9 @@ export async function testCredentialConnection(input: {
   }
 
   try {
-    const openRouterPlan = input.provider === "openrouter"
-      ? await getOpenRouterActionPlan({
-          action: "interview-question-explanation",
-          now: new Date(),
-        })
-      : undefined;
-    const adapter = input.provider === "openrouter"
-      ? new OpenRouterProviderAdapter()
-      : new GeminiProviderAdapter();
-    const result = await adapter.generateStructured({
-      systemPrompt: "This is a credential connection check.",
-      userPrompt: 'Return exactly {"status":"ok"}.',
-      responseJsonSchema: {
-        type: "object",
-        properties: { status: { type: "string", enum: ["ok"] } },
-        required: ["status"],
-        additionalProperties: false,
-      },
-      ...(input.provider === "openrouter"
-        ? {
-            models: openRouterPlan!.modelIds,
-            maximumOutputTokens: 32,
-            timeoutMs: 15_000,
-          }
-        : { model: env.GEMINI_MODEL }),
-      signal: new AbortController().signal,
-      credential: { read: () => secret.toString("utf8") },
+    const lastValidatedAt = await runGeminiConnectionCheck({
+      read: () => secret.toString("utf8"),
     });
-    connectionResultSchema.parse(JSON.parse(result.text));
 
     const updated = await AiCredentialModel.findOneAndUpdate(
       {
@@ -646,7 +739,7 @@ export async function testCredentialConnection(input: {
         $set: {
           state: "valid",
           connectionStatus: "valid",
-          lastValidatedAt: new Date(),
+          lastValidatedAt,
         },
         $unset: { lastValidationError: 1 },
         $inc: { revision: 1 },
@@ -668,7 +761,10 @@ export async function testCredentialConnection(input: {
       outcome: "success",
       context: input.audit,
     });
-    return { credential: serializeCredential(updated) };
+    return {
+      credentialSource: "user-managed",
+      credential: serializeCredential(updated),
+    };
   } catch (error) {
     if (error instanceof AppError) throw error;
     const normalized = normalizeConnectionError(error);
@@ -712,7 +808,7 @@ export async function activateProvider(input: {
   expectedRevision: number;
   audit?: AiAuditContext;
 }) {
-  if (!isAi4CallableProvider(input.provider)) providerNotAvailable();
+  if (!isAi3CallableProvider(input.provider)) providerNotAvailable();
   if (!env.AI_ROUTING_FOUNDATION_ENABLED) {
     throw new AppError(
       409,
@@ -721,19 +817,6 @@ export async function activateProvider(input: {
     );
   }
   await ensureAiFoundation(input.userId);
-  let compiledOpenRouterActions:
-    Awaited<ReturnType<typeof compileOpenRouterActionProfiles>> | undefined;
-  if (input.provider === "openrouter") {
-    try {
-      compiledOpenRouterActions = await compileOpenRouterActionProfiles();
-    } catch {
-      throw new AppError(
-        409,
-        "provider_not_available",
-        "The selected AI provider is not available.",
-      );
-    }
-  }
 
   try {
     return await withMongoTransaction(async (session) => {
@@ -749,7 +832,7 @@ export async function activateProvider(input: {
         );
       }
 
-      let profile = await AiRoutingProfileModel.findOne({
+      const profile = await AiRoutingProfileModel.findOne({
         userId: input.userId,
         version: input.routingProfileVersion ?? preference.routingProfileVersion,
         status: "active",
@@ -761,48 +844,6 @@ export async function activateProvider(input: {
           "routing_configuration_invalid",
           "The selected AI routing profile is unavailable.",
         );
-      }
-
-      if (input.provider === "openrouter") {
-        const expectedCatalogueVersion = compiledOpenRouterActions?.[0]?.catalogueVersion;
-        const currentActions = profile.openRouterActions;
-        const canReuse = Boolean(
-          currentActions &&
-          compiledOpenRouterActions &&
-          currentActions.length === compiledOpenRouterActions.length &&
-          currentActions.every(
-            (entry, index) => {
-              const compiled = compiledOpenRouterActions[index];
-              return (
-                entry.action === compiled.action &&
-                entry.catalogueVersion === expectedCatalogueVersion &&
-                entry.rankingPolicyVersion === compiled.rankingPolicyVersion &&
-                entry.freeModelIds.length === compiled.freeModelIds.length &&
-                entry.freeModelIds.every(
-                  (modelId, modelIndex) =>
-                    modelId === compiled.freeModelIds[modelIndex],
-                )
-              );
-            },
-          ),
-        );
-        if (!canReuse) {
-          await AiRoutingProfileModel.updateOne(
-            { _id: profile._id, status: "active", activeMarker: "active" },
-            { $set: { status: "retired" }, $unset: { activeMarker: 1 } },
-            { session },
-          );
-          const [replacement] = await AiRoutingProfileModel.create([{
-            userId: profile.userId,
-            version: profile.version + 1,
-            status: "active",
-            activeMarker: "active",
-            policyVersion: profile.policyVersion,
-            geminiDirect: profile.toObject().geminiDirect,
-            openRouterActions: compiledOpenRouterActions,
-          }], { session });
-          profile = replacement;
-        }
       }
 
       let set: Record<string, unknown>;

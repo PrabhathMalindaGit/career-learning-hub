@@ -198,7 +198,7 @@ export async function enqueueJob(input: {
   }
 
   const aiRoutingSnapshot =
-    env.AI_ROUTING_FOUNDATION_ENABLED && input.userId
+    input.userId
       ? await compileAiRoutingSnapshotForJob({
           type: input.type,
           userId: input.userId,

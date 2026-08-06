@@ -6,6 +6,7 @@ const controlledKeys = [
   "AI_ROUTING_FOUNDATION_ENABLED",
   "AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED",
   "AI_ADMIN_GEMINI_POLICY_VERSION",
+  "GEMINI_MODEL",
 ] as const;
 
 const originalEnvironment = Object.fromEntries(
@@ -21,10 +22,13 @@ function restoreEnvironment(): void {
 }
 
 async function loadEnvironment(
-  overrides: Partial<Record<(typeof controlledKeys)[number], string>> = {},
+  overrides: Partial<Record<(typeof controlledKeys)[number], string | null>> = {},
 ) {
   restoreEnvironment();
-  Object.assign(process.env, overrides);
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === null) delete process.env[key];
+    else process.env[key] = value;
+  }
   vi.resetModules();
   return import("../../config/env.js");
 }
@@ -36,15 +40,25 @@ describe("AI vault environment configuration", () => {
   });
 
   it("keeps BYOK and routing foundation configuration optional", async () => {
-    const { env } = await loadEnvironment();
+    const { env } = await loadEnvironment({
+      GEMINI_MODEL: null,
+      AI_ROUTING_FOUNDATION_ENABLED: null,
+    });
 
     expect(env).toMatchObject({
-      AI_ROUTING_FOUNDATION_ENABLED: false,
+      AI_ROUTING_FOUNDATION_ENABLED: true,
       AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED: false,
       AI_ADMIN_GEMINI_POLICY_VERSION: 1,
     });
     expect(env.BYOK_ENCRYPTION_KEY).toBeUndefined();
     expect(env.BYOK_ENCRYPTION_KEY_PREVIOUS).toBeUndefined();
+    expect(env.GEMINI_MODEL).toBe("gemini-3.6-flash");
+  });
+
+  it("rejects Gemini models outside the G-5 release policy", async () => {
+    await expect(loadEnvironment({
+      GEMINI_MODEL: "gemini-2.5-flash",
+    })).rejects.toThrow("Environment validation failed.");
   });
 
   it("accepts a valid current and previous BYOK key ring", async () => {

@@ -9,8 +9,6 @@ import { AiCredentialExecutionLeaseModel } from "./aiCredentialExecutionLease.mo
 import { AiProviderPreferenceModel } from "./aiProviderPreference.model.js";
 import { ensureAiFoundation, recordAudit } from "./aiProvider.service.js";
 import { AiRoutingProfileModel } from "./aiRoutingProfile.model.js";
-import { OPENROUTER_RANKING_POLICY_VERSION } from "./openRouterCatalogue.js";
-import { isOpenRouterPlanSecure } from "./openRouterCatalogue.service.js";
 import {
   aiActionForJobType,
   aiRoutingSnapshotSchema,
@@ -107,38 +105,7 @@ function snapshotFromState(input: {
     });
   }
   if (preference.activeProvider === "openrouter") {
-    const openRouter = profile.openRouterActions?.find(
-      (entry) => entry.action === action,
-    );
-    if (
-      !openRouter ||
-      preference.credentialSource !== "user-managed" ||
-      !preference.activeCredentialId ||
-      !preference.activeCredentialSecretVersion
-    ) {
-      throw routingError("routing_configuration_invalid");
-    }
-    return aiRoutingSnapshotSchema.parse({
-      ...identity,
-      provider: "openrouter",
-      mode: "openrouter",
-      credentialSource: "user-managed",
-      credentialId: preference.activeCredentialId.toString(),
-      credentialSecretVersion: preference.activeCredentialSecretVersion,
-      rankingPolicyVersion: openRouter.rankingPolicyVersion,
-      catalogueVersion: openRouter.catalogueVersion,
-      pricingObservedAt: openRouter.pricingObservedAt,
-      freeModelIds: openRouter.freeModelIds,
-      paidFallbackAllowed: false,
-      maximumInputTokens: openRouter.maximumInputTokens,
-      maximumOutputTokens: openRouter.maximumOutputTokens,
-      ttftMs: openRouter.timeoutProfile.ttftMs,
-      streamIdleMs: openRouter.timeoutProfile.streamIdleMs,
-      totalMs: openRouter.timeoutProfile.totalMs,
-      executeBefore: new Date(
-        now.getTime() + openRouter.executionDeadlineSeconds * 1_000,
-      ),
-    });
+    throw routingError("provider_not_available");
   }
   if (preference.activeProvider !== "gemini-direct") {
     throw routingError("provider_not_available");
@@ -229,11 +196,22 @@ export async function compileAiRoutingSnapshotForJob(input: {
 }): Promise<AiRoutingSnapshot | undefined> {
   const action = aiActionForJobType(input.type);
   if (!action) return undefined;
-  return compileAiRoutingSnapshot({
+  const snapshot = await compileAiRoutingSnapshot({
     userId: input.userId,
     action,
     now: input.now,
   });
+  if (snapshot.provider === "disabled") {
+    throw new AppError(
+      409,
+      "provider_not_configured",
+      "Gemini is disconnected.",
+      undefined,
+      false,
+      "NON_RETRYABLE_CONFIGURATION",
+    );
+  }
+  return snapshot;
 }
 
 export async function publishAiRoutingProfile(input: {
@@ -386,10 +364,7 @@ export async function authorizeAiJobExecution(input: {
   if (snapshot.provider === "disabled") {
     return rejectStaleSnapshot(snapshot, userId, "ai_disabled");
   }
-  if (
-    snapshot.provider !== "gemini-direct" &&
-    snapshot.provider !== "openrouter"
-  ) {
+  if (snapshot.provider !== "gemini-direct") {
       await recordAudit({
         userId,
         action: "routing.stale-rejected",
@@ -407,18 +382,6 @@ export async function authorizeAiJobExecution(input: {
     (snapshot.directModelId && input.hardDisabledModelIds?.has(snapshot.directModelId))
   ) {
     return rejectStaleSnapshot(snapshot, userId, "execution_policy_stale");
-  }
-  if (snapshot.provider === "openrouter") {
-    if (
-      snapshot.rankingPolicyVersion !== OPENROUTER_RANKING_POLICY_VERSION ||
-      !await isOpenRouterPlanSecure({
-        action: snapshot.action,
-        modelIds: snapshot.freeModelIds ?? [],
-        now,
-      })
-    ) {
-      return rejectStaleSnapshot(snapshot, userId, "openrouter_model_plan_stale");
-    }
   }
 
   const preference = await AiProviderPreferenceModel.findOne({
@@ -447,22 +410,6 @@ export async function authorizeAiJobExecution(input: {
     profile.geminiDirect.directModelId !== snapshot.directModelId
   ) {
     return rejectStaleSnapshot(snapshot, userId, "routing_profile_changed");
-  }
-  if (snapshot.provider === "openrouter") {
-    const planned = profile.openRouterActions?.find(
-      (entry) => entry.action === snapshot.action,
-    );
-    if (
-      !planned ||
-      planned.catalogueVersion !== snapshot.catalogueVersion ||
-      planned.rankingPolicyVersion !== snapshot.rankingPolicyVersion ||
-      planned.freeModelIds.length !== snapshot.freeModelIds?.length ||
-      planned.freeModelIds.some(
-        (modelId, index) => modelId !== snapshot.freeModelIds?.[index],
-      )
-    ) {
-      return rejectStaleSnapshot(snapshot, userId, "routing_profile_changed");
-    }
   }
 
   if (snapshot.credentialSource === "administrator-managed") {

@@ -15,9 +15,15 @@ export const credentialBodySchema = z.object({
   label: z.string().trim().min(1).max(80).optional(),
 }).strict();
 
-export const credentialTestBodySchema = z.object({
-  credentialVersion: z.number().int().positive(),
-}).strict();
+export const credentialTestBodySchema = z.union([
+  z.object({
+    credentialSource: z.literal("user-managed").optional(),
+    credentialVersion: z.number().int().positive(),
+  }).strict(),
+  z.object({
+    credentialSource: z.literal("administrator-managed"),
+  }).strict(),
+]);
 
 export const activationBodySchema = z.object({
   credentialSource: z

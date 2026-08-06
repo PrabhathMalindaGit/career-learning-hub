@@ -3,10 +3,27 @@ import { readFile } from "node:fs/promises";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { app } from "../../app.js";
+import { env } from "../../config/env.js";
 import { JobRecordModel } from "../../jobs/job.model.js";
+import {
+  activateProvider,
+  ensureAiFoundation,
+} from "../../modules/ai/aiProvider.service.js";
 import { AssetModel } from "../../modules/assets/asset.model.js";
 import { createResume } from "../../modules/resumes/resume.service.js";
 import { registerTestUser } from "../helpers/auth.js";
+
+async function connectApplicationManagedGemini(userId: string) {
+  env.AI_ROUTING_FOUNDATION_ENABLED = true;
+  env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = true;
+  await ensureAiFoundation(userId);
+  await activateProvider({
+    userId,
+    provider: "gemini-direct",
+    credentialSource: "administrator-managed",
+    expectedRevision: 0,
+  });
+}
 
 describe("Resume AI job submission idempotency", () => {
   it("creates one owned analysis job for repeated use of one request ID", async () => {
@@ -14,6 +31,7 @@ describe("Resume AI job submission idempotency", () => {
       email: "resume-job-owner@example.com",
       displayName: "Resume Job Owner",
     });
+    await connectApplicationManagedGemini(owner.userId);
     const created = await createResume({
       userId: owner.userId,
       title: "Synthetic Resume",
@@ -75,6 +93,7 @@ describe("Resume AI job submission idempotency", () => {
       email: "resume-import-concurrent@example.com",
       displayName: "Resume Import Concurrent",
     });
+    await connectApplicationManagedGemini(owner.userId);
     const pdf = await readFile("../tests/browser/fixtures/synthetic-learning.pdf");
     const requestId = randomUUID();
     const submit = () => request(app)

@@ -57,7 +57,7 @@ export default async function globalSetup() {
     AWS_S3_FORCE_PATH_STYLE: "false",
     AI_DEFAULT_PROVIDER: "gemini",
     GEMINI_API_KEY: "synthetic-gemini-test-key",
-    GEMINI_MODEL: "gemini-test-model",
+    GEMINI_MODEL: "gemini-3.6-flash",
     AI_REQUEST_TIMEOUT_MS: "5000",
     AI_MAX_RETRIES: "2",
     GEMINI_CONNECT_TIMEOUT_MS: "45000",

@@ -608,3 +608,44 @@
   - A separately approved design proves citation-safe incremental validation,
     durable cancellation linearization, duplicate suppression, privacy, and
     browser cleanup without weakening atomic final-result guarantees.
+
+## DEC-020: Release Gemini-only credential settings on the routing foundation
+
+- Decision ID: `DEC-020`
+- Date: 2026-08-06
+- Status: ACCEPTED
+- Decision:
+  - Gemini Direct is the only provider available to G-5 Settings and runtime
+    execution, with fixed model `gemini-3.6-flash`.
+  - Each user explicitly selects an administrator-managed Gemini credential,
+    a personal AES-256-GCM encrypted Gemini credential, or disconnected state.
+    Disconnected users never inherit the environment credential implicitly.
+  - Personal candidates are tested once with fixed synthetic content before
+    credential persistence. Successful active-key replacement increments the
+    secret version and updates the active preference in the same transaction;
+    failed candidates leave the existing credential and routing state intact.
+  - Durable AI jobs use the existing immutable routing snapshot and the shared
+    execution-time credential resolver. Replaced or deleted versions fail
+    closed, while already authorized leases retain their existing lifecycle.
+  - The existing OpenRouter code and data contracts remain in the repository
+    but are unavailable through the G-5 API, Settings UI, snapshot compiler,
+    execution authorizer, and gateway registry. No provider fallback exists.
+- Rationale:
+  - Reusing the AI-3 routing, vault, preference, lease, and audit foundation is
+    the smallest design that gives Resume, Interview, and Learning the same
+    revocation and secret-handling guarantees.
+  - Explicit administrator-managed consent prevents a disconnected preference
+    from silently becoming a provider authorization.
+  - A fixed release provider/model keeps G-4 retry ownership and one
+    provider-attempt-per-worker-attempt behavior testable.
+- Consequences:
+  - The Settings page exposes one bounded Gemini section and no provider or
+    model selector.
+  - Plaintext personal keys exist only in transient authenticated request and
+    backend adapter memory and never enter responses, browser storage, URLs,
+    jobs, usage events, audit records, errors, or logs.
+  - OpenRouter can be reconsidered only through a separately approved release
+    boundary that restores its APIs and runtime registration deliberately.
+- Revisit conditions:
+  - A separately approved phase authorizes another provider or model and
+    re-verifies routing, privacy, cost, cancellation, and fallback policy.
