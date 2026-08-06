@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   createDraftEntity,
   draftToInput,
+  normalizeResumeUrlInput,
+  parseResumeValidationDetails,
   resumeContentToDraft,
   validateResumeDraft,
 } from "./resumeDraft";
@@ -99,8 +101,14 @@ describe("resume draft identity", () => {
 
     expect(validateResumeDraft(draft)).toEqual(
       expect.arrayContaining([
-        "Experience 2 needs an employer.",
-        "Experience 2 needs a job title.",
+        {
+          path: "experience.1.employer",
+          message: "Experience 2 needs an employer.",
+        },
+        {
+          path: "experience.1.jobTitle",
+          message: "Experience 2 needs a job title.",
+        },
       ]),
     );
   });
@@ -109,9 +117,10 @@ describe("resume draft identity", () => {
     const draft = resumeContentToDraft(content());
     draft.basics.email = "invalid-email";
 
-    expect(validateResumeDraft(draft)).toContain(
-      "Email needs a valid address.",
-    );
+    expect(validateResumeDraft(draft)).toContainEqual({
+      path: "basics.email",
+      message: "Email needs a valid address.",
+    });
   });
 
   it("rejects invalid project and credential URLs before save", () => {
@@ -138,9 +147,137 @@ describe("resume draft identity", () => {
 
     expect(validateResumeDraft(draft)).toEqual(
       expect.arrayContaining([
-        "Project 1, link 1 needs a valid URL.",
-        "Certification 1 needs a valid credential URL.",
+        {
+          path: "projects.0.links.0.url",
+          message: "Project 1, link 1 needs a valid URL.",
+        },
+        {
+          path: "certifications.0.credentialUrl",
+          message: "Certification 1 needs a valid credential URL.",
+        },
       ]),
+    );
+  });
+
+  it.each([
+    ["https://github.com/example", "https://github.com/example"],
+    ["http://example.test/profile", "http://example.test/profile"],
+    [" github.com/example ", "https://github.com/example"],
+  ])("normalizes a safe public URL %s", (value, expected) => {
+    expect(normalizeResumeUrlInput(value)).toBe(expected);
+  });
+
+  it.each([
+    "not a url",
+    "localhost/profile",
+    "javascript:alert(1)",
+    "data:text/html,unsafe",
+    "ftp://example.test/profile",
+    "http:example.test/profile",
+    "//example.test/profile",
+  ])("rejects an ambiguous or unsupported URL %s", (value) => {
+    expect(normalizeResumeUrlInput(value)).toBeUndefined();
+  });
+
+  it("normalizes every safe Resume URL before save", () => {
+    const draft = resumeContentToDraft(content());
+    draft.basics.links[0]!.url = " github.com/example ";
+    draft.projects.push(
+      createDraftEntity({
+        name: "Synthetic Project",
+        technologies: [],
+        links: [
+          createDraftEntity({
+            label: "Project",
+            url: "example.test/project",
+          }),
+        ],
+        bullets: [],
+      }),
+    );
+    draft.certifications.push(
+      createDraftEntity({
+        name: "Synthetic Credential",
+        credentialUrl: " credentials.example.test/verified ",
+      }),
+    );
+
+    const input = draftToInput(draft);
+
+    expect(input.basics.links[0]!.url).toBe("https://github.com/example");
+    expect(input.projects[0]!.links[0]!.url).toBe(
+      "https://example.test/project",
+    );
+    expect(input.certifications[0]!.credentialUrl).toBe(
+      "https://credentials.example.test/verified",
+    );
+  });
+
+  it("maps safe server issue paths to existing Resume editor fields", () => {
+    expect(
+      parseResumeValidationDetails({
+        body: {
+          formErrors: [],
+          fieldErrors: {
+            content: ["Basic link failed.", "Project link failed."],
+          },
+          issues: [
+            {
+              path: "content.basics.links.0.url",
+              message: "Basic link failed.",
+            },
+            {
+              path: "content.projects.0.links.0.url",
+              message: "Project link failed.",
+            },
+            {
+              path: "content.interests.1",
+              message: "Interest failed.",
+            },
+          ],
+        },
+      }),
+    ).toEqual([
+      { path: "links.0.url", message: "Basic link failed." },
+      {
+        path: "projects.0.links.0.url",
+        message: "Project link failed.",
+      },
+      { path: "interests.1.value", message: "Interest failed." },
+    ]);
+  });
+
+  it("accepts root-level 422 issues and rejects malformed or unusable details", () => {
+    expect(
+      parseResumeValidationDetails({
+        issues: [
+          {
+            path: "basics.email",
+            message: "Email is unavailable.",
+          },
+          {
+            path: "content.basics.links.2.label",
+            message: "Link label is unavailable.",
+          },
+          {
+            path: "content.unknown.0.value",
+            message: "Unknown field.",
+          },
+          { path: ["content", "basics", "email"], message: "Wrong path type." },
+          { path: "content.basics.email", message: 42 },
+          null,
+        ],
+      }),
+    ).toEqual([
+      { path: "basics.email", message: "Email is unavailable." },
+      {
+        path: "links.2.label",
+        message: "Link label is unavailable.",
+      },
+    ]);
+    expect(parseResumeValidationDetails(undefined)).toEqual([]);
+    expect(parseResumeValidationDetails({ body: { issues: "invalid" } })).toEqual(
+      [],
     );
   });
 });

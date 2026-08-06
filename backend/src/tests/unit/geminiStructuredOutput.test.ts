@@ -11,6 +11,7 @@ import {
   aiAnalysisResultSchema,
   parsedResumeSchema,
 } from "../../modules/resume-analysis/resumeAnalysis.schemas.js";
+import { parseResumeText } from "../../modules/resume-analysis/resumeParsing.service.js";
 import {
   attemptFeedbackResultSchema,
   generatedQuestionSetSchema,
@@ -338,5 +339,98 @@ describe("Gemini structured output", () => {
         schema: quizGenerationResultSchema,
       }),
     ).rejects.toMatchObject({ code: "AI_SCHEMA_VALIDATION_FAILED" });
+  });
+
+  it("normalizes absent Gemini Resume scalar fields without weakening the canonical contract", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        geminiResponse({
+          candidates: [{
+            content: {
+              parts: [{
+                text: JSON.stringify({
+                  basics: {
+                    fullName: "Synthetic Candidate",
+                    email: null,
+                    phone: null,
+                    location: null,
+                    headline: null,
+                    summary: null,
+                    links: [],
+                  },
+                  experience: [],
+                  education: [],
+                  skills: [],
+                  projects: [],
+                  certifications: [{
+                    name: "Synthetic Credential",
+                    issuer: null,
+                    issuedDate: null,
+                    credentialUrl: "",
+                  }],
+                  languages: [],
+                  interests: [],
+                }),
+              }],
+            },
+          }],
+        }),
+      ),
+    );
+
+    const parsed = await parseResumeText({
+      userId: new Types.ObjectId().toString(),
+      text: "Synthetic Resume text long enough to represent a safe private PDF fixture.",
+    });
+
+    expect(parsed.basics).toEqual({
+      fullName: "Synthetic Candidate",
+      links: [],
+    });
+    expect(parsed.certifications[0]).toMatchObject({
+      name: "Synthetic Credential",
+    });
+    expect(parsed.certifications[0]?.credentialUrl).toBeUndefined();
+  });
+
+  it("reports safe field paths when Gemini Resume output fails semantic validation", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        geminiResponse({
+          candidates: [{
+            content: {
+              parts: [{
+                text: JSON.stringify({
+                  basics: {
+                    fullName: "Synthetic Candidate",
+                    links: [{ label: "Portfolio", url: "not a URL" }],
+                  },
+                  experience: [],
+                  education: [],
+                  skills: [],
+                  projects: [],
+                  certifications: [],
+                  languages: [],
+                  interests: [],
+                }),
+              }],
+            },
+          }],
+        }),
+      ),
+    );
+
+    await expect(
+      parseResumeText({
+        userId: new Types.ObjectId().toString(),
+        text: "Synthetic Resume text long enough to represent a safe private PDF fixture.",
+      }),
+    ).rejects.toMatchObject({
+      code: "AI_SCHEMA_VALIDATION_FAILED",
+      message: expect.stringContaining("basics.links.0.url"),
+      retryable: false,
+    });
   });
 });

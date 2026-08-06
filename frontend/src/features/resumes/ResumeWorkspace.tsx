@@ -34,7 +34,10 @@ import {
 import {
   draftFingerprint,
   draftToInput,
+  parseResumeValidationDetails,
+  resumeFieldId,
   resumeContentToDraft,
+  type ResumeDraftValidationError,
   validateResumeDraft,
 } from "./resumeDraft";
 import { pollResumeJob } from "./resumePolling";
@@ -87,6 +90,79 @@ function isAbort(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
+function saveFailure(error: unknown): Notice {
+  if (error instanceof ApiError) {
+    if (error.status === 409) {
+      return {
+        tone: "warning",
+        message:
+          "A newer version exists. Reload and review before saving again.",
+        requestId: error.requestId,
+        action: "reload",
+      };
+    }
+    if (error.status === 400 || error.status === 422) {
+      return {
+        tone: "error",
+        message: "The server rejected one or more resume fields.",
+        requestId: error.requestId,
+      };
+    }
+    if (error.status === 401 || error.status === 403) {
+      return {
+        tone: "error",
+        message: "You are not authorized to save this resume.",
+        requestId: error.requestId,
+      };
+    }
+    if (error.status === 404) {
+      return {
+        tone: "error",
+        message: "The resume is no longer available.",
+        requestId: error.requestId,
+      };
+    }
+    if (error.status === 429) {
+      return {
+        tone: "warning",
+        message: "Too many save attempts. Wait a moment and try again.",
+        requestId: error.requestId,
+      };
+    }
+    if (error.status >= 500) {
+      return {
+        tone: "error",
+        message: "The server could not save a new resume version.",
+        requestId: error.requestId,
+      };
+    }
+    return {
+      tone: "error",
+      message: "The resume could not be saved.",
+      requestId: error.requestId,
+    };
+  }
+  if (error instanceof TypeError) {
+    return {
+      tone: "error",
+      message: "A network error prevented the resume from being saved.",
+    };
+  }
+  return {
+    tone: "error",
+    message: "An unexpected error prevented the resume from being saved.",
+  };
+}
+
+function focusResumeField(path: string) {
+  window.requestAnimationFrame(() => {
+    const field = document.getElementById(resumeFieldId(path));
+    if (!field) return;
+    field.scrollIntoView?.({ block: "center" });
+    field.focus({ preventScroll: true });
+  });
+}
+
 export function ResumeWorkspace() {
   const { resumeId } = useParams<{ resumeId: string }>();
   const [workspace, setWorkspace] = useState<ResumeWorkspaceData>();
@@ -105,7 +181,9 @@ export function ResumeWorkspace() {
   const [loadFailure, setLoadFailure] = useState<Notice>();
   const [reloadSequence, setReloadSequence] = useState(0);
   const [notice, setNotice] = useState<Notice>();
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [validationErrors, setValidationErrors] = useState<
+    ResumeDraftValidationError[]
+  >([]);
   const [saving, setSaving] = useState(false);
   const [designMutationSaving, setDesignMutationSaving] = useState(false);
   const [designStatus, setDesignStatus] =
@@ -130,6 +208,7 @@ export function ResumeWorkspace() {
     undefined,
   );
   const designMutationRef = useRef(false);
+  const saveMutationRef = useRef(false);
   const keepEditingButtonRef = useRef<HTMLButtonElement>(null);
 
   const dirty =
@@ -166,6 +245,7 @@ export function ResumeWorkspace() {
     snapshotControllerRef.current?.abort();
     snapshotControllerRef.current = undefined;
     setSaving(false);
+    saveMutationRef.current = false;
     setAnalysisBusy(false);
     setApplying(false);
     designMutationRef.current = false;
@@ -282,12 +362,16 @@ export function ResumeWorkspace() {
   );
 
   async function handleSave() {
-    if (!resumeId || !workspace || !draft || saving) return;
+    if (!resumeId || !workspace || !draft || saveMutationRef.current) return;
     const errors = validateResumeDraft(draft);
     setValidationErrors(errors);
     setNotice(undefined);
-    if (errors.length > 0) return;
+    if (errors.length > 0) {
+      focusResumeField(errors[0]!.path);
+      return;
+    }
 
+    saveMutationRef.current = true;
     const controller = beginOperation();
     setSaving(true);
     try {
@@ -310,16 +394,21 @@ export function ResumeWorkspace() {
       });
     } catch (error) {
       if (!isAbort(error)) {
-        setNotice(
-          safeFailure(
-            error,
-            "We could not save a new resume version.",
-            "A newer version exists. Reload and review before saving again.",
-          ),
-        );
+        setNotice(saveFailure(error));
+        if (
+          error instanceof ApiError &&
+          (error.status === 400 || error.status === 422)
+        ) {
+          const serverErrors = parseResumeValidationDetails(error.details);
+          if (serverErrors.length > 0) {
+            setValidationErrors(serverErrors);
+            focusResumeField(serverErrors[0]!.path);
+          }
+        }
       }
     } finally {
       finishOperation(controller);
+      saveMutationRef.current = false;
       setSaving(false);
     }
   }
@@ -788,7 +877,14 @@ export function ResumeWorkspace() {
           <h2>Review the highlighted resume content</h2>
           <ul>
             {validationErrors.map((error) => (
-              <li key={error}>{error}</li>
+              <li key={`${error.path}:${error.message}`}>
+                <a
+                  href={`#${resumeFieldId(error.path)}`}
+                  onClick={() => focusResumeField(error.path)}
+                >
+                  {error.message}
+                </a>
+              </li>
             ))}
           </ul>
         </div>
@@ -837,7 +933,13 @@ export function ResumeWorkspace() {
         <ResumeEditor
           draft={draft}
           disabled={saving || applying}
-          onChange={setDraft}
+          validationErrors={validationErrors}
+          onChange={(nextDraft) => {
+            setDraft(nextDraft);
+            if (validationErrors.length > 0) {
+              setValidationErrors(validateResumeDraft(nextDraft));
+            }
+          }}
         />
         <ResumePreview
           draft={draft}

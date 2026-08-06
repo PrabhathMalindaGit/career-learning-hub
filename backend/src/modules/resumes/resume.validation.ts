@@ -3,16 +3,67 @@ import { z } from "zod";
 import { AppError } from "../../shared/appError.js";
 import type { ResumeContent } from "./resume.types.js";
 
+const DOMAIN_STYLE_URL =
+  /^(?=.{1,253}(?:[/:?#]|$))(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(?::\d{1,5})?(?:[/?#][^\s]*)?$/i;
+
+export function normalizeResumeUrlInput(
+  value: string,
+): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const hasScheme = /^[a-z][a-z\d+.-]*:/i.test(trimmed);
+  const hasSupportedScheme = /^https?:\/\//i.test(trimmed);
+  if (
+    (hasScheme && !hasSupportedScheme) ||
+    (!hasScheme && !DOMAIN_STYLE_URL.test(trimmed))
+  ) {
+    return undefined;
+  }
+
+  const candidate = hasSupportedScheme ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(candidate);
+    if (
+      (parsed.protocol !== "http:" && parsed.protocol !== "https:") ||
+      parsed.username ||
+      parsed.password ||
+      !parsed.hostname
+    ) {
+      return undefined;
+    }
+  } catch {
+    return undefined;
+  }
+
+  return candidate;
+}
+
 const optionalText = (maximum: number) =>
   z.string().trim().max(maximum).optional();
 
-const optionalUrl = z.string().trim().url().max(2_000).optional();
+const resumeUrlSchema = z
+  .string()
+  .trim()
+  .max(2_000)
+  .transform((value, context) => {
+    const normalized = normalizeResumeUrlInput(value);
+    if (!normalized) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A valid HTTP or HTTPS URL is required.",
+      });
+      return z.NEVER;
+    }
+    return normalized;
+  });
+const optionalUrl = resumeUrlSchema.optional();
 const optionalId = z.string().uuid().optional();
 
 const linkInputSchema = z.object({
   id: optionalId,
   label: z.string().trim().min(1).max(80),
-  url: z.string().trim().url().max(2_000),
+  url: resumeUrlSchema,
 }).strict();
 
 const bulletInputSchema = z.object({

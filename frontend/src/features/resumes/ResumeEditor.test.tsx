@@ -147,10 +147,50 @@ describe("ResumeEditor section navigation", () => {
       /\.resume-bullet-row label,\s*\.resume-entry-card > label \{/,
     );
     expect(resumeWorkspaceCss).toMatch(
-      /\.resume-bullet-row input:not\(\[type\]\),\s*\.resume-bullet-row input\[type="url"\],\s*\.resume-entry-card > label > input:not\(\[type\]\) \{/,
+      /\.resume-bullet-row input:not\(\[type\]\),\s*\.resume-bullet-row input\[inputmode="url"\],\s*\.resume-entry-card > label > input:not\(\[type\]\) \{/,
     );
     expect(resumeWorkspaceCss).toMatch(
-      /\.resume-bullet-row input:not\(\[type\]\):focus,\s*\.resume-bullet-row input\[type="url"\]:focus,\s*\.resume-entry-card > label > input:not\(\[type\]\):focus \{/,
+      /\.resume-bullet-row input:not\(\[type\]\):focus,\s*\.resume-bullet-row input\[inputmode="url"\]:focus,\s*\.resume-entry-card > label > input:not\(\[type\]\):focus \{/,
     );
+  });
+
+  it("uses text URL controls without conflicting native type validation", () => {
+    const draft = emptyDraft();
+    draft.basics.links.push({
+      clientKey: "basic-link-1",
+      label: "Profile",
+      url: "github.com/example",
+    });
+    draft.projects.push({
+      clientKey: "project-1",
+      name: "Synthetic project",
+      technologies: [],
+      links: [
+        {
+          clientKey: "project-link-1",
+          label: "Project",
+          url: "example.test/project",
+        },
+      ],
+      bullets: [],
+    });
+    draft.certifications.push({
+      clientKey: "certification-1",
+      name: "Synthetic credential",
+      credentialUrl: "credentials.example.test/verified",
+    });
+    renderEditor(draft);
+
+    for (const input of [
+      screen.getByLabelText("Link 1 URL"),
+      screen.getByLabelText("Project link URL"),
+      screen.getByLabelText("Credential URL"),
+    ]) {
+      expect(input.getAttribute("type")).toBe("text");
+      expect(input.getAttribute("inputmode")).toBe("url");
+      expect(input.getAttribute("autocapitalize")).toBe("none");
+      expect(input.getAttribute("spellcheck")).toBe("false");
+      expect((input as HTMLInputElement).validity.typeMismatch).toBe(false);
+    }
   });
 });

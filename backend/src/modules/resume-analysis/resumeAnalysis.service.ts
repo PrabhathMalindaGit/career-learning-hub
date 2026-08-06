@@ -17,7 +17,10 @@ import {
   getOwnedResumeVersion,
   requireOwnedResume,
 } from "../resumes/resume.service.js";
-import { ResumeVersionModel } from "../resumes/resumeVersion.model.js";
+import {
+  ResumeVersionModel,
+  type ResumeVersionDocument,
+} from "../resumes/resumeVersion.model.js";
 import type { ResumeContent } from "../resumes/resume.types.js";
 import { normalizeResumeContent } from "../resumes/resume.validation.js";
 import { extractPdfText } from "./pdf.service.js";
@@ -30,6 +33,26 @@ import { parseResumeText } from "./resumeParsing.service.js";
 
 const ANALYSIS_PROMPT_VERSION = "resume-analysis-prompt-v1";
 const SCORING_VERSION = "resume-readiness-v1";
+
+function isDuplicateKeyError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11_000
+  );
+}
+
+function importedVersionResult(
+  version: ResumeVersionDocument | null,
+) {
+  if (!version) return undefined;
+  return {
+    resumeId: version.resumeId.toString(),
+    versionId: version._id.toString(),
+    versionNumber: version.versionNumber,
+  };
+}
 
 function collectBulletText(content: ResumeContent): Map<string, string> {
   const bullets = new Map<string, string>();
@@ -96,14 +119,34 @@ export async function importResumePdf(input: {
     jobId: input.jobId,
   });
 
-  const created = await createResume({
-    userId: input.userId,
-    title: input.title,
-    content,
-    source: "pdf-import",
-    sourceAssetId: input.assetId,
-    changeSummary: `Imported from PDF (${extracted.pageCount} pages)`,
-  });
+  let created: Awaited<ReturnType<typeof createResume>>;
+  try {
+    created = await createResume({
+      userId: input.userId,
+      title: input.title,
+      content,
+      source: "pdf-import",
+      sourceAssetId: input.assetId,
+      changeSummary: `Imported from PDF (${extracted.pageCount} pages)`,
+    });
+  } catch (error) {
+    if (!isDuplicateKeyError(error)) throw error;
+
+    const winningVersion = await ResumeVersionModel.findOne({
+      userId: input.userId,
+      sourceAssetId: input.assetId,
+      source: "pdf-import",
+    });
+    const winningResult = importedVersionResult(winningVersion);
+    if (!winningResult) throw error;
+
+    await promoteOwnedAsset(input.userId, input.assetId, {
+      resumeId: winningResult.resumeId,
+      pageCount: extracted.pageCount,
+      characterCount: extracted.characterCount,
+    });
+    return winningResult;
+  }
 
   await promoteOwnedAsset(input.userId, input.assetId, {
     resumeId: created.resume._id.toString(),

@@ -106,6 +106,47 @@ describe("request validation middleware", () => {
     expect(next).toHaveBeenCalledWith();
   });
 
+  it("preserves safe nested issue paths alongside flattened body errors", () => {
+    const request = requestWithGetterOnlyQuery({});
+    request.body = {
+      content: {
+        links: [{ url: "not-a-url" }],
+      },
+    };
+    const next = vi.fn();
+
+    validate({
+      body: z.object({
+        content: z.object({
+          links: z.array(
+            z.object({
+              url: z.string().url("A valid URL is required."),
+            }),
+          ),
+        }),
+      }),
+    })(request, response, next);
+
+    expect(next.mock.calls[0]?.[0]).toMatchObject({
+      statusCode: 400,
+      code: "VALIDATION_ERROR",
+      details: {
+        body: {
+          formErrors: [],
+          fieldErrors: {
+            content: ["A valid URL is required."],
+          },
+          issues: [
+            {
+              path: "content.links.0.url",
+              message: "A valid URL is required.",
+            },
+          ],
+        },
+      },
+    });
+  });
+
   it("preserves successful parameter validation assignment", () => {
     const request = requestWithGetterOnlyQuery({});
     request.params = { version: "6" };

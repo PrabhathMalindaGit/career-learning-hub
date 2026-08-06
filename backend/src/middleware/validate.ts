@@ -18,7 +18,13 @@ export function validate(schemas: RequestSchemas): RequestHandler {
 
       const result = schema.safeParse(request[key]);
       if (!result.success) {
-        errors[key] = result.error.flatten();
+        errors[key] = {
+          ...result.error.flatten(),
+          issues: result.error.issues.map((issue) => ({
+            path: issue.path.map(String).join("."),
+            message: issue.message,
+          })),
+        };
       } else if (key === "query") {
         Object.defineProperty(request, "query", {
           value: result.data,
