@@ -218,7 +218,7 @@ describe("ResumeWorkspace", () => {
     expect(resumeApi.updateResumeDesign).not.toHaveBeenCalled();
   });
 
-  it("stacks the editor, preview, assessments, and history without a sticky live preview", async () => {
+  it("bounds only the wide live preview while preserving ordinary responsive flow", async () => {
     renderWorkspace();
     await screen.findByLabelText("Full name");
 
@@ -240,14 +240,21 @@ describe("ResumeWorkspace", () => {
     const applySuggestions = screen.getByRole("button", {
       name: "Apply selected suggestions",
     });
-    const workspaceGrid = editor.parentElement;
+    const editorPreviewGrid = editor.parentElement;
+    const workspaceGrid = editorPreviewGrid?.parentElement;
 
+    expect(
+      editorPreviewGrid?.classList.contains("resume-editor-preview-grid"),
+    ).toBe(true);
     expect(workspaceGrid?.classList.contains("resume-workspace-grid")).toBe(
       true,
     );
-    expect(Array.from(workspaceGrid?.children ?? [])).toEqual([
+    expect(Array.from(editorPreviewGrid?.children ?? [])).toEqual([
       editor,
       preview,
+    ]);
+    expect(Array.from(workspaceGrid?.children ?? [])).toEqual([
+      editorPreviewGrid,
       roleAwareAssessment,
       aiAssessment,
     ]);
@@ -257,23 +264,42 @@ describe("ResumeWorkspace", () => {
     ).not.toBe(0);
     expect(aiAssessment.contains(applySuggestions)).toBe(true);
 
-    const workspaceGridRule = resumeWorkspaceCss.match(
-      /\.resume-workspace-grid\s*\{([^}]*)\}/,
+    const defaultEditorPreviewGridRule = resumeWorkspaceCss.match(
+      /\.resume-editor-preview-grid\s*\{([^}]*)\}/,
     )?.[1];
-    const previewPanelRule = resumeWorkspaceCss.match(
+    const defaultPreviewRule = resumeWorkspaceCss.match(
       /\.resume-preview-panel\s*\{([^}]*)\}/,
     )?.[1];
     const livePaperRule = resumeWorkspaceCss.match(
-      /\.resume-workspace-grid > \.resume-preview-panel \.resume-paper\s*\{([^}]*)\}/,
+      /\.resume-editor-preview-grid > \.resume-preview-panel \.resume-paper\s*\{([^}]*)\}/,
     )?.[1];
+    const wideEditorPreviewGridRule = resumeWorkspaceCss.match(
+      /@media \(min-width: 1280px\)[\s\S]*?\.resume-editor-preview-grid\s*\{([^}]*)\}/,
+    )?.[1];
+    const widePreviewRule = resumeWorkspaceCss.match(
+      /@media \(min-width: 1280px\)[\s\S]*?\.resume-editor-preview-grid > \.resume-preview-panel\s*\{([^}]*)\}/,
+    )?.[1];
+    const stickyNavigationRule = resumeWorkspaceCss.match(
+      /\.resume-section-navigation\s*\{[^}]*position:\s*sticky;/,
+    );
 
-    expect(workspaceGridRule).toContain(
+    expect(defaultEditorPreviewGridRule).toContain(
       "grid-template-columns: minmax(0, 1fr);",
     );
-    expect(previewPanelRule).toContain("position: static;");
-    expect(previewPanelRule).not.toContain("position: sticky;");
+    expect(defaultPreviewRule).toContain("position: static;");
+    expect(defaultPreviewRule).toContain("max-height: none;");
+    expect(defaultPreviewRule).toContain("overflow: visible;");
+    expect(preview.getAttribute("tabindex")).toBe("0");
     expect(livePaperRule).toContain("max-width: 860px;");
     expect(livePaperRule).toContain("margin-inline: auto;");
+    expect(wideEditorPreviewGridRule).toContain("grid-template-columns:");
+    expect(wideEditorPreviewGridRule).toContain("minmax(390px, 0.88fr)");
+    expect(widePreviewRule).toContain("position: sticky;");
+    expect(widePreviewRule).toMatch(/top:\s*\d+px;/);
+    expect(widePreviewRule).toContain("max-height: calc(100vh -");
+    expect(widePreviewRule).toContain("overflow-x: hidden;");
+    expect(widePreviewRule).toContain("overflow-y: auto;");
+    expect(stickyNavigationRule).toBeNull();
   });
 
   it("edits with stable identity, previews live, and adopts the canonical save response", async () => {
@@ -467,6 +493,11 @@ describe("ResumeWorkspace", () => {
       "resume-field-links-0-url-error",
     );
     await waitFor(() => expect(document.activeElement).toBe(url));
+    expect(
+      screen.getByRole("button", { name: "Links" }).getAttribute(
+        "aria-expanded",
+      ),
+    ).toBe("true");
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     expect((fullName as HTMLInputElement).value).toBe("Server rejected draft");
     expect((url as HTMLInputElement).value).toBe("https://example.test");
@@ -536,6 +567,16 @@ describe("ResumeWorkspace", () => {
 
     const projectUrl = screen.getByLabelText("Project link URL");
     await waitFor(() => expect(document.activeElement).toBe(projectUrl));
+    expect(
+      screen.getByRole("button", { name: "Projects" }).getAttribute(
+        "aria-expanded",
+      ),
+    ).toBe("true");
+    expect(
+      screen.getByRole("button", { name: "Links" }).getAttribute(
+        "aria-expanded",
+      ),
+    ).toBe("true");
     expect(projectUrl.getAttribute("aria-invalid")).toBe("true");
     expect(
       screen.getByLabelText("Link 1 label").getAttribute("aria-invalid"),
@@ -726,6 +767,7 @@ describe("ResumeWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     const fullName = await screen.findByLabelText("Full name");
+    await user.click(screen.getByRole("button", { name: "Customize" }));
 
     await user.click(
       screen.getByRole("radio", { name: /Modern Professional/i }),
@@ -792,6 +834,7 @@ describe("ResumeWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     await screen.findByLabelText("Full name");
+    await user.click(screen.getByRole("button", { name: "Customize" }));
 
     await user.click(
       screen.getByRole("radio", { name: /Compact Technical/i }),
@@ -829,6 +872,7 @@ describe("ResumeWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     await screen.findByLabelText("Full name");
+    await user.click(screen.getByRole("button", { name: "Customize" }));
     await user.click(
       screen.getByRole("radio", { name: /Forest/i }),
     );
@@ -976,9 +1020,7 @@ describe("ResumeWorkspace", () => {
       screen.getByLabelText("Printable historical saved version 1")
         .textContent,
     ).toContain("Historical Candidate");
-    expect(
-      screen.getByText(/historical saved content uses this current design/i),
-    ).not.toBeNull();
+    expect(screen.getByText(/snapshot uses the current resume design/i)).not.toBeNull();
     await user.click(
       screen.getByRole("button", { name: "Return to current draft" }),
     );
@@ -1459,6 +1501,7 @@ describe("ResumeWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     await screen.findByLabelText("Email");
+    await user.click(screen.getByRole("button", { name: "Links" }));
     await user.click(screen.getByRole("button", { name: "Add link" }));
     await user.click(screen.getByRole("button", { name: "Add link" }));
     await user.type(screen.getByLabelText("Link 1 label"), "Portfolio");
@@ -1468,6 +1511,12 @@ describe("ResumeWorkspace", () => {
     );
     await user.type(screen.getByLabelText("Link 2 label"), "GitHub");
     await user.type(screen.getByLabelText("Link 2 URL"), "not a url");
+    await user.click(screen.getByRole("button", { name: "Links" }));
+    expect(
+      screen.getByRole("button", { name: "Links" }).getAttribute(
+        "aria-expanded",
+      ),
+    ).toBe("false");
     const save = screen.getByRole("button", { name: "Save new version" });
 
     save.focus();
@@ -1484,6 +1533,11 @@ describe("ResumeWorkspace", () => {
         ?.textContent,
     ).toBe("Link 2 needs a valid URL.");
     await waitFor(() => expect(document.activeElement).toBe(invalidUrl));
+    expect(
+      screen.getByRole("button", { name: "Links" }).getAttribute(
+        "aria-expanded",
+      ),
+    ).toBe("true");
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     const summaryLink = screen.getByRole("link", {
       name: "Link 2 needs a valid URL.",

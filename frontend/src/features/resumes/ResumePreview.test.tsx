@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { resumeContentToDraft } from "./resumeDraft";
@@ -6,6 +9,10 @@ import type { ResumeContent, ResumeDesign } from "./types";
 
 const id = "123e4567-e89b-42d3-a456-426614174000";
 const secondId = "123e4567-e89b-42d3-a456-426614174001";
+const resumeWorkspaceCss = readFileSync(
+  resolve(process.cwd(), "src/features/resumes/resumeWorkspace.css"),
+  "utf8",
+);
 
 function content(): ResumeContent {
   return {
@@ -233,5 +240,88 @@ describe("ResumePreview", () => {
     expect(screen.getByText("Experience")).not.toBeNull();
     expect(screen.getByText("Education")).not.toBeNull();
     expect(screen.getByText("Skills")).not.toBeNull();
+  });
+
+  it("uses a naturally growing screen paper for long shared previews", () => {
+    const longResume = content();
+    longResume.experience[0].bullets = Array.from(
+      { length: 24 },
+      (_, index) => ({
+        id: `${id.slice(0, -2)}${String(index).padStart(2, "0")}`,
+        text: `Synthetic long Resume evidence bullet ${index + 1}.`,
+      }),
+    );
+    longResume.certifications = [
+      ...longResume.certifications,
+      {
+        id: secondId,
+        name: "Last visible synthetic credential",
+      },
+    ];
+
+    render(
+      <ResumePreview
+        draft={resumeContentToDraft(longResume)}
+        design={design("ats-classic", "Inter", "slate")}
+      />,
+    );
+
+    const paper = screen.getByLabelText("Resume preview");
+    const lastContent = screen.getByText(
+      "Last visible synthetic credential",
+    );
+    const screenPaperRule = resumeWorkspaceCss.match(
+      /^\.resume-paper\s*\{([^}]*)\}/m,
+    )?.[1];
+
+    expect(paper.contains(lastContent)).toBe(true);
+    expect(screenPaperRule).toContain("min-height: 620px;");
+    expect(screenPaperRule).not.toContain("aspect-ratio:");
+    expect(screenPaperRule).not.toMatch(/(^|\n)\s*height\s*:/);
+    expect(screenPaperRule).toContain("overflow: visible;");
+    expect(screenPaperRule).toContain("background: var(--resume-background);");
+    expect(screenPaperRule).toContain("box-shadow:");
+  });
+
+  it("keeps Modern Professional skill items atomic while wrapping the list", () => {
+    const resume = content();
+    resume.skills = [
+      "TypeScript",
+      "JavaScript",
+      "Playwright",
+      "Communication",
+      "Problem Solving",
+      "REST APIs",
+      "MongoDB",
+      "Cloud Infrastructure Automation",
+    ].map((name, index) => ({
+      id: `${id.slice(0, -1)}${index}`,
+      name,
+      keywords: [],
+    }));
+    const { container } = render(
+      <ResumePreview
+        draft={resumeContentToDraft(resume)}
+        design={design("modern-professional", "Arial", "forest")}
+      />,
+    );
+
+    const skills = container.querySelector(".resume-paper-skills");
+    expect(skills).not.toBeNull();
+    expect(skills?.children).toHaveLength(8);
+    expect(skills?.textContent).toContain("Cloud Infrastructure Automation");
+    const skillsRule = resumeWorkspaceCss.match(
+      /\.resume-paper-skills\s*\{([^}]*)\}/,
+    )?.[1];
+    const skillNameRule = resumeWorkspaceCss.match(
+      /\.resume-paper-skills dt\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(skillsRule).toContain("display: flex;");
+    expect(skillsRule).toContain("flex-wrap: wrap;");
+    expect(skillNameRule).toContain("overflow-wrap: normal;");
+    expect(skillNameRule).toContain("word-break: normal;");
+    expect(resumeWorkspaceCss).not.toMatch(
+      /\.resume-paper-skills dt::after/,
+    );
   });
 });

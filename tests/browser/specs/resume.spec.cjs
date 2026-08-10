@@ -17,6 +17,49 @@ function pdfPageCount(buffer) {
     .length;
 }
 
+async function expectScreenPaperContainsVisibleContent(paper) {
+  const facts = await paper.evaluate((element) => {
+    const paperRect = element.getBoundingClientRect();
+    const visibleDescendants = Array.from(element.querySelectorAll("*")).filter(
+      (descendant) => {
+        const style = getComputedStyle(descendant);
+        const rect = descendant.getBoundingClientRect();
+        return (
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          rect.width > 0 &&
+          rect.height > 0
+        );
+      },
+    );
+    const lastVisibleContentBottom = Math.max(
+      paperRect.top,
+      ...visibleDescendants.map(
+        (descendant) => descendant.getBoundingClientRect().bottom,
+      ),
+    );
+    const style = getComputedStyle(element);
+    return {
+      paperBottom: paperRect.bottom,
+      lastVisibleContentBottom,
+      horizontalOverflow: element.scrollWidth - element.clientWidth,
+      verticalOverflow: element.scrollHeight - element.clientHeight,
+      overflowX: style.overflowX,
+      overflowY: style.overflowY,
+    };
+  });
+
+  expect(facts.paperBottom + 2).toBeGreaterThanOrEqual(
+    facts.lastVisibleContentBottom,
+  );
+  expect(facts.horizontalOverflow).toBeLessThanOrEqual(1);
+  expect(facts.verticalOverflow).toBeLessThanOrEqual(1);
+  expect(facts.overflowX).not.toBe("auto");
+  expect(facts.overflowX).not.toBe("scroll");
+  expect(facts.overflowY).not.toBe("auto");
+  expect(facts.overflowY).not.toBe("scroll");
+}
+
 async function seedStoredResumeAnalysis(user, title) {
   const { mongoUri } = JSON.parse(await readFile(runtimeFile, "utf8"));
   const db = await mongoose.createConnection(mongoUri).asPromise();
@@ -411,6 +454,30 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   const livePreviewPanel = page.getByRole("region", {
     name: "Live preview",
   });
+  const editorPanel = page.getByRole("region", {
+    name: "Resume editor",
+  });
+  const sectionToggle = (name) =>
+    editorPanel.getByRole("button", { name, exact: true });
+  await expect(sectionToggle("Basics")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  for (const sectionName of [
+    "Links",
+    "Experience",
+    "Education",
+    "Skills",
+    "Projects",
+    "Certifications",
+    "Languages",
+    "Interests",
+  ]) {
+    await expect(sectionToggle(sectionName)).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  }
   const aiAssessmentPanel = page.getByRole("complementary", {
     name: "AI-assisted assessment",
   });
@@ -422,14 +489,18 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   });
   const workspaceOrder = await workspaceLayout.evaluate((element) => {
     const children = Array.from(element.children);
-    const aiPanel = children.at(3);
+    const editorPreview = children.at(0);
+    const aiPanel = children.at(2);
     const history = document.querySelector(
       '[aria-labelledby="resume-version-history-title"]',
     );
     const applyButton = aiPanel?.querySelector("button");
     return {
-      labels: children.map((child) =>
+      outerLabels: children.map((child) =>
         child.getAttribute("aria-labelledby"),
+      ),
+      editorPreviewLabels: Array.from(editorPreview?.children ?? []).map(
+        (child) => child.getAttribute("aria-labelledby"),
       ),
       historyFollows:
         aiPanel !== undefined &&
@@ -444,29 +515,64 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
         aiPanel?.contains(applyButton),
     };
   });
-  expect(workspaceOrder.labels).toEqual([
-    "resume-editor-title",
-    "resume-preview-title",
+  expect(workspaceOrder.outerLabels).toEqual([
+    null,
     "resume-analysis-runner-title",
     "resume-ai-title",
+  ]);
+  expect(workspaceOrder.editorPreviewLabels).toEqual([
+    "resume-editor-title",
+    "resume-preview-title",
   ]);
   expect(workspaceOrder.historyFollows).toBe(true);
   expect(workspaceOrder.applyContained).toBe(true);
   await expect(versionHistoryPanel).toBeVisible();
   await expect(applySuggestionsButton).toBeVisible();
-  expect(
-    await workspaceLayout.evaluate(
-      (element) =>
-        getComputedStyle(element).gridTemplateColumns.split(" ").length,
-    ),
-  ).toBe(1);
-  await expect
-    .poll(() =>
-      livePreviewPanel.evaluate(
-        (element) => getComputedStyle(element).position,
-      ),
-    )
-    .toBe("static");
+  const layoutFacts = await page.locator(".resume-editor-preview-grid").evaluate((element) => {
+    const editor = element.children.item(0);
+    const preview = element.children.item(1);
+    if (!(editor instanceof HTMLElement) || !(preview instanceof HTMLElement)) {
+      throw new Error("Resume editor workspace children are unavailable.");
+    }
+    const editorRect = editor.getBoundingClientRect();
+    const previewRect = preview.getBoundingClientRect();
+    const previewStyle = getComputedStyle(preview);
+    return {
+      columnCount: getComputedStyle(element).gridTemplateColumns.split(" ")
+        .length,
+      editorTop: editorRect.top,
+      editorRight: editorRect.right,
+      previewTop: previewRect.top,
+      previewLeft: previewRect.left,
+      previewPosition: previewStyle.position,
+      previewMaxHeight: previewStyle.maxHeight,
+      previewOverflowX: previewStyle.overflowX,
+      previewOverflowY: previewStyle.overflowY,
+      editorHeight: editorRect.height,
+      previewHeight: previewRect.height,
+      rootOverflow:
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    };
+  });
+  if (testInfo.project.name === "desktop") {
+    expect(layoutFacts.columnCount).toBe(2);
+    expect(layoutFacts.previewLeft).toBeGreaterThanOrEqual(
+      layoutFacts.editorRight - 1,
+    );
+    expect(layoutFacts.previewPosition).toBe("sticky");
+    expect(layoutFacts.previewMaxHeight).not.toBe("none");
+    expect(layoutFacts.previewOverflowX).toBe("hidden");
+    expect(layoutFacts.previewOverflowY).toBe("auto");
+  } else {
+    expect(layoutFacts.columnCount).toBe(1);
+    expect(layoutFacts.previewTop).toBeGreaterThan(layoutFacts.editorTop);
+    expect(layoutFacts.previewPosition).toBe("static");
+    expect(layoutFacts.previewMaxHeight).toBe("none");
+    expect(layoutFacts.previewOverflowX).toBe("visible");
+    expect(layoutFacts.previewOverflowY).toBe("visible");
+  }
+  expect(layoutFacts.rootOverflow).toBeLessThanOrEqual(1);
   const livePaperSizing = await livePreviewPanel
     .locator(".resume-paper")
     .evaluate((element) => {
@@ -483,9 +589,34 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     Math.abs(livePaperSizing.leftGap - livePaperSizing.rightGap),
   ).toBeLessThan(2);
 
+  for (const proseControl of [
+    page.getByLabel("Full name"),
+    page.getByLabel("Professional summary"),
+    page.getByRole("textbox", { name: "Target role" }),
+    page.getByRole("textbox", { name: "Job description (optional)" }),
+  ]) {
+    await expect(proseControl).not.toHaveAttribute("spellcheck", "false");
+  }
+  await sectionToggle("Links").click();
+  await page.getByRole("button", { name: "Add link" }).click();
+  await expect(page.getByLabel("Link 1 label")).not.toHaveAttribute(
+    "spellcheck",
+    "false",
+  );
+  await expect(page.getByLabel("Link 1 URL")).toHaveAttribute(
+    "spellcheck",
+    "false",
+  );
+  await page.getByRole("button", { name: "Remove link 1" }).click();
+
   const sectionNavigation = page.getByRole("navigation", {
     name: "Resume sections",
   });
+  await expect
+    .poll(() =>
+      sectionNavigation.evaluate((element) => getComputedStyle(element).position),
+    )
+    .toBe("static");
   const resumeSections = [
     ["Basics", "resume-section-basics"],
     ["Links", "resume-section-links"],
@@ -517,12 +648,12 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     await expect.poll(() => page.evaluate(() => location.hash)).toBe(
       `#${sectionId}`,
     );
-    await expect(
-      page.locator(`#${sectionId}`).getByRole("heading", {
-        name: sectionName,
-        exact: true,
-      }),
-    ).toBeInViewport();
+    await expect(sectionToggle(sectionName)).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(sectionToggle(sectionName)).toBeFocused();
+    await expect(sectionToggle(sectionName)).toBeInViewport();
   }
   await sectionNavigation
     .getByRole("link", { name: "Basics", exact: true })
@@ -551,12 +682,21 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     name: "Save new version",
   });
   await email.fill("invalid-address");
+  await sectionToggle("Basics").click();
+  await expect(sectionToggle("Basics")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
   await saveVersion.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("alert")).toContainText(
     "Email needs a valid address.",
   );
   await expect(email).toBeFocused();
+  await expect(sectionToggle("Basics")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
   await expect(email).toHaveAttribute("aria-invalid", "true");
   await expect(email).toHaveAttribute(
     "aria-describedby",
@@ -566,6 +706,60 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
     page.locator("#resume-field-basics-email-error"),
   ).toHaveText("Email needs a valid address.");
   await email.fill("");
+
+  for (const [sectionName] of resumeSections.slice(1)) {
+    if (
+      (await sectionToggle(sectionName).getAttribute("aria-expanded")) ===
+      "true"
+    ) {
+      await sectionToggle(sectionName).click();
+    }
+  }
+  await sectionToggle("Skills").click();
+  const syntheticSkillNames = [
+    "TypeScript",
+    "JavaScript",
+    "Playwright",
+    "Communication",
+    "Problem Solving",
+    "REST APIs",
+    "MongoDB",
+    "React",
+    "Node.js",
+    "Accessibility",
+    "Testing Strategy",
+    "System Design",
+    "Cloud Infrastructure Automation",
+    "Git",
+    "CI/CD",
+    "Technical Writing",
+  ];
+  for (const [index, skillName] of syntheticSkillNames.entries()) {
+    await page.getByRole("button", { name: "Add skill group" }).click();
+    await page
+      .getByRole("textbox", { name: `Skill group ${index + 1} name` })
+      .fill(skillName);
+  }
+  const compactSkillRows = page.locator(".resume-skill-editor-row");
+  await expect(compactSkillRows).toHaveCount(16);
+  const compactSkillGeometry = await page
+    .locator(".resume-skill-editor-list")
+    .evaluate((list) => {
+      const rows = Array.from(list.children);
+      const listRect = list.getBoundingClientRect();
+      return {
+        averageRowHeight: listRect.height / rows.length,
+        horizontalOverflow: list.scrollWidth - list.clientWidth,
+      };
+    });
+  expect(compactSkillGeometry.averageRowHeight).toBeLessThan(190);
+  expect(compactSkillGeometry.horizontalOverflow).toBeLessThanOrEqual(1);
+  await expect(
+    page.getByRole("button", { name: "Move skill group 2 up" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Remove skill group 16" }),
+  ).toBeVisible();
 
   await page.getByLabel("Full name").fill("Phase Fourteen Candidate");
   await expect(
@@ -609,6 +803,18 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   const designControls = page.getByRole("region", {
     name: "Resume design controls",
   });
+  await expect(designControls).toContainText(
+    "ATS Classic • Inter • Slate • A4",
+  );
+  const customizeDesign = designControls.getByRole("button", {
+    name: "Customize",
+  });
+  await expect(customizeDesign).toHaveAttribute("aria-expanded", "false");
+  await expect(designControls.getByRole("radio")).toHaveCount(0);
+  await customizeDesign.click();
+  await expect(
+    designControls.getByRole("button", { name: "Close customization" }),
+  ).toHaveAttribute("aria-expanded", "true");
   const templateChoice = (templateId) =>
     designControls.locator(
       `input[name="resume-template"][value="${templateId}"]`,
@@ -672,6 +878,43 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   );
   await expect(livePreview).toHaveClass(/resume-font-arial/);
   await expect(livePreview).toHaveClass(/resume-palette-forest/);
+  const previewSkills = livePreview.locator(".resume-paper-skills");
+  await expect(previewSkills.locator(":scope > div")).toHaveCount(16);
+  const previewSkillFacts = await previewSkills
+    .locator(":scope > div")
+    .evaluateAll((items) =>
+      items.map((item) => {
+        const name = item.querySelector("dt");
+        if (!(name instanceof HTMLElement)) {
+          throw new Error("Preview skill name is unavailable.");
+        }
+        const range = document.createRange();
+        range.selectNodeContents(name);
+        const lineTops = new Set(
+          Array.from(range.getClientRects()).map((rect) =>
+            Math.round(rect.top),
+          ),
+        );
+        const style = getComputedStyle(name);
+        return {
+          text: name.textContent?.replace(/:$/, "") ?? "",
+          lineCount: lineTops.size,
+          overflow: item.scrollWidth - item.clientWidth,
+          overflowWrap: style.overflowWrap,
+          wordBreak: style.wordBreak,
+        };
+      }),
+    );
+  expect(previewSkillFacts.map((fact) => fact.text)).toEqual(
+    syntheticSkillNames,
+  );
+  for (const fact of previewSkillFacts) {
+    expect(fact.overflow).toBeLessThanOrEqual(1);
+    expect(fact.overflowWrap).toBe("normal");
+    expect(fact.wordBreak).toBe("normal");
+    if (!fact.text.includes(" ")) expect(fact.lineCount).toBe(1);
+  }
+  await expectScreenPaperContainsVisibleContent(livePreview);
   await expect(page.getByText("Unsaved changes", { exact: true })).toHaveCount(0);
   if (testInfo.project.name === "desktop") {
     await designControls.screenshot({
@@ -1117,6 +1360,7 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
       140,
     )}`;
   await page.getByLabel("Professional summary").fill(longSummary);
+  await expectScreenPaperContainsVisibleContent(livePreview);
   const blockedPrint = printControls.getByRole("button", {
     name: "Open print dialog for saved version 3",
   });
@@ -1161,6 +1405,18 @@ test("@smoke creates, edits, versions, validates, and guards a Resume", async ({
   });
   expect(pdfPageCount(multiPageA4)).toBeGreaterThan(1);
   await page.emulateMedia({ media: "screen" });
+
+  await page
+    .getByRole("button", { name: "View current saved version 4" })
+    .click();
+  const longHistoricalPaper = page.getByLabel(
+    "Resume version 4 preview",
+  );
+  await expect(longHistoricalPaper).toBeVisible();
+  await expectScreenPaperContainsVisibleContent(longHistoricalPaper);
+  await page
+    .getByRole("button", { name: "Return to current draft" })
+    .click();
 
   await Promise.all([
     page.waitForResponse(

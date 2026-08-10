@@ -93,6 +93,7 @@ export function ResumePreview({
       {...(printOnly
         ? { "aria-label": label }
         : { "aria-labelledby": headingId })}
+      tabIndex={printOnly ? undefined : 0}
       data-page-size={effectivePageSize}
     >
       {printOnly ? (
@@ -230,11 +231,16 @@ export function ResumePreview({
         {draft.skills.length > 0 ? (
           <section>
             <h4>Skills</h4>
-            <dl className="resume-paper-definition-list">
+            <dl className="resume-paper-definition-list resume-paper-skills">
               {draft.skills.map((group) => (
                 <div key={group.clientKey}>
-                  <dt>{group.name || "Skill group"}</dt>
-                  <dd>{group.keywords.join(", ")}</dd>
+                  <dt>
+                    {group.name || "Skill group"}
+                    {group.keywords.length > 0 ? ":" : ""}
+                  </dt>
+                  {group.keywords.length > 0 ? (
+                    <dd>{group.keywords.join(", ")}</dd>
+                  ) : null}
                 </div>
               ))}
             </dl>

@@ -19,7 +19,10 @@ import {
   ResumeDesignControls,
   type ResumeDesignStatus,
 } from "./ResumeDesignControls";
-import { ResumeEditor } from "./ResumeEditor";
+import {
+  ResumeEditor,
+  type ResumeEditorFocusRequest,
+} from "./ResumeEditor";
 import { ResumePrintControls } from "./ResumePrintControls";
 import { ResumePreview } from "./ResumePreview";
 import {
@@ -160,15 +163,6 @@ function saveFailure(error: unknown): Notice {
   };
 }
 
-function focusResumeField(path: string) {
-  window.requestAnimationFrame(() => {
-    const field = document.getElementById(resumeFieldId(path));
-    if (!field) return;
-    field.scrollIntoView?.({ block: "center" });
-    field.focus({ preventScroll: true });
-  });
-}
-
 export function ResumeWorkspace() {
   const { resumeId } = useParams<{ resumeId: string }>();
   const [workspace, setWorkspace] = useState<ResumeWorkspaceData>();
@@ -190,6 +184,8 @@ export function ResumeWorkspace() {
   const [validationErrors, setValidationErrors] = useState<
     ResumeDraftValidationError[]
   >([]);
+  const [editorFocusRequest, setEditorFocusRequest] =
+    useState<ResumeEditorFocusRequest>();
   const [saving, setSaving] = useState(false);
   const [designMutationSaving, setDesignMutationSaving] = useState(false);
   const [designStatus, setDesignStatus] =
@@ -219,6 +215,7 @@ export function ResumeWorkspace() {
   const designMutationRef = useRef(false);
   const saveMutationRef = useRef(false);
   const keepEditingButtonRef = useRef<HTMLButtonElement>(null);
+  const editorFocusRequestIdRef = useRef(0);
 
   const dirty =
     draft !== undefined &&
@@ -238,6 +235,14 @@ export function ResumeWorkspace() {
 
   function finishOperation(controller: AbortController) {
     activeControllers.current.delete(controller);
+  }
+
+  function focusResumeField(path: string) {
+    editorFocusRequestIdRef.current += 1;
+    setEditorFocusRequest({
+      id: editorFocusRequestIdRef.current,
+      path,
+    });
   }
 
   function adoptCanonical(next: ResumeWorkspaceData) {
@@ -980,22 +985,25 @@ export function ResumeWorkspace() {
       />
 
       <div className="resume-workspace-grid">
-        <ResumeEditor
-          draft={draft}
-          disabled={saving || applying}
-          validationErrors={validationErrors}
-          onChange={(nextDraft) => {
-            setDraft(nextDraft);
-            if (validationErrors.length > 0) {
-              setValidationErrors(validateResumeDraft(nextDraft));
-            }
-          }}
-        />
-        <ResumePreview
-          draft={draft}
-          pageSize={workspace.resume.design.pageSize}
-          design={previewDesign ?? workspace.resume.design}
-        />
+        <div className="resume-editor-preview-grid">
+          <ResumeEditor
+            draft={draft}
+            disabled={saving || applying}
+            validationErrors={validationErrors}
+            focusRequest={editorFocusRequest}
+            onChange={(nextDraft) => {
+              setDraft(nextDraft);
+              if (validationErrors.length > 0) {
+                setValidationErrors(validateResumeDraft(nextDraft));
+              }
+            }}
+          />
+          <ResumePreview
+            draft={draft}
+            pageSize={workspace.resume.design.pageSize}
+            design={previewDesign ?? workspace.resume.design}
+          />
+        </div>
 
         <aside
           className="resume-panel resume-analysis-runner"

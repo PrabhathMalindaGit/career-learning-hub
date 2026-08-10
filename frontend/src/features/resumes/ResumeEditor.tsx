@@ -1,3 +1,4 @@
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -16,6 +17,12 @@ interface ResumeEditorProps {
   onChange(draft: ResumeDraft): void;
   disabled?: boolean;
   validationErrors?: readonly ResumeDraftValidationError[];
+  focusRequest?: ResumeEditorFocusRequest;
+}
+
+export interface ResumeEditorFocusRequest {
+  id: number;
+  path: string;
 }
 
 const RESUME_EDITOR_SECTIONS = [
@@ -30,14 +37,36 @@ const RESUME_EDITOR_SECTIONS = [
   { id: "resume-section-interests", label: "Interests" },
 ] as const;
 
-function focusResumeSection(sectionId: string) {
+type ResumeEditorSectionId = (typeof RESUME_EDITOR_SECTIONS)[number]["id"];
+
+const SECTION_BY_FIELD_ROOT: Readonly<Record<string, ResumeEditorSectionId>> = {
+  basics: "resume-section-basics",
+  links: "resume-section-links",
+  experience: "resume-section-experience",
+  education: "resume-section-education",
+  skills: "resume-section-skills",
+  projects: "resume-section-projects",
+  certifications: "resume-section-certifications",
+  languages: "resume-section-languages",
+  interests: "resume-section-interests",
+};
+
+function sectionForFieldPath(path: string): ResumeEditorSectionId | undefined {
+  return SECTION_BY_FIELD_ROOT[path.split(".")[0] ?? ""];
+}
+
+function focusResumeSection(
+  sectionId: ResumeEditorSectionId,
+  openSection: () => void,
+) {
+  openSection();
   window.requestAnimationFrame(() => {
     const section = document.getElementById(sectionId);
     if (typeof section?.scrollIntoView === "function") {
       section.scrollIntoView({ block: "start" });
     }
     document
-      .getElementById(`${sectionId}-heading`)
+      .getElementById(`${sectionId}-toggle`)
       ?.focus({ preventScroll: true });
   });
 }
@@ -56,6 +85,7 @@ function MoveButtons({
   onMove,
   onRemove,
   disabled,
+  compact = false,
 }: {
   label: string;
   index: number;
@@ -63,16 +93,19 @@ function MoveButtons({
   onMove(from: number, to: number): void;
   onRemove(): void;
   disabled: boolean;
+  compact?: boolean;
 }) {
   return (
-    <div className="resume-entry-controls">
+    <div
+      className={`resume-entry-controls${compact ? " resume-entry-controls--compact" : ""}`}
+    >
       <button
         type="button"
         disabled={disabled || index === 0}
         onClick={() => onMove(index, index - 1)}
         aria-label={`Move ${label} up`}
       >
-        Up
+        {compact ? "↑" : "Up"}
       </button>
       <button
         type="button"
@@ -80,7 +113,7 @@ function MoveButtons({
         onClick={() => onMove(index, index + 1)}
         aria-label={`Move ${label} down`}
       >
-        Down
+        {compact ? "↓" : "Down"}
       </button>
       <button
         type="button"
@@ -88,37 +121,72 @@ function MoveButtons({
         onClick={onRemove}
         aria-label={`Remove ${label}`}
       >
-        Remove
+        {compact ? "×" : "Remove"}
       </button>
     </div>
   );
 }
 
-function SectionHeading({
-  headingId,
+function EditorSection({
+  sectionId,
   title,
   description,
   addLabel,
   onAdd,
   disabled,
+  open,
+  onToggle,
+  children,
 }: {
-  headingId: string;
+  sectionId: ResumeEditorSectionId;
   title: string;
   description: string;
-  addLabel: string;
-  onAdd(): void;
+  addLabel?: string;
+  onAdd?(): void;
   disabled: boolean;
+  open: boolean;
+  onToggle(): void;
+  children: ReactNode;
 }) {
+  const headingId = `${sectionId}-heading`;
+  const contentId = `${sectionId}-content`;
   return (
-    <header className="resume-editor-section-heading">
-      <div>
-        <h3 id={headingId} tabIndex={-1}>{title}</h3>
-        <p>{description}</p>
+    <section
+      id={sectionId}
+      className={`resume-editor-section${open ? " resume-editor-section--open" : ""}`}
+      aria-labelledby={headingId}
+    >
+      <header className="resume-editor-section-disclosure">
+        <div className="resume-editor-section-copy">
+          <h3 id={headingId}>
+            <button
+              id={`${sectionId}-toggle`}
+              className="resume-editor-section-toggle"
+              type="button"
+              aria-expanded={open}
+              aria-controls={contentId}
+              onClick={onToggle}
+            >
+              <span>{title}</span>
+              <span aria-hidden="true">{open ? "−" : "+"}</span>
+            </button>
+          </h3>
+          <p>{description}</p>
+        </div>
+        {open && addLabel && onAdd ? (
+          <button type="button" disabled={disabled} onClick={onAdd}>
+            {addLabel}
+          </button>
+        ) : null}
+      </header>
+      <div
+        id={contentId}
+        className="resume-editor-section-body"
+        hidden={!open}
+      >
+        {children}
       </div>
-      <button type="button" disabled={disabled} onClick={onAdd}>
-        {addLabel}
-      </button>
-    </header>
+    </section>
   );
 }
 
@@ -131,7 +199,54 @@ export function ResumeEditor({
   onChange,
   disabled = false,
   validationErrors = [],
+  focusRequest,
 }: ResumeEditorProps) {
+  const [openSections, setOpenSections] = useState<Set<ResumeEditorSectionId>>(
+    () => new Set(["resume-section-basics"]),
+  );
+  const setSectionOpen = (
+    sectionId: ResumeEditorSectionId,
+    open = true,
+  ) => {
+    setOpenSections((current) => {
+      if (current.has(sectionId) === open) return current;
+      const next = new Set(current);
+      if (open) next.add(sectionId);
+      else next.delete(sectionId);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const errorSections = validationErrors
+      .map((error) => sectionForFieldPath(error.path))
+      .filter((section): section is ResumeEditorSectionId =>
+        section !== undefined,
+      );
+    if (errorSections.length === 0) return;
+    setOpenSections((current) => {
+      const next = new Set(current);
+      for (const section of errorSections) next.add(section);
+      return next;
+    });
+  }, [validationErrors]);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    const sectionId = sectionForFieldPath(focusRequest.path);
+    if (sectionId) setSectionOpen(sectionId);
+    const revealFrame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const field = document.getElementById(
+          resumeFieldId(focusRequest.path),
+        );
+        if (!field) return;
+        field.scrollIntoView?.({ block: "center" });
+        field.focus({ preventScroll: true });
+      });
+    });
+    return () => window.cancelAnimationFrame(revealFrame);
+  }, [focusRequest]);
   const errorByPath = new Map(
     validationErrors.map((error) => [error.path, error.message]),
   );
@@ -189,7 +304,11 @@ export function ResumeEditor({
             <li key={section.id}>
               <Link
                 to={`#${section.id}`}
-                onClick={() => focusResumeSection(section.id)}
+                onClick={() =>
+                  focusResumeSection(section.id, () =>
+                    setSectionOpen(section.id),
+                  )
+                }
               >
                 {section.label}
               </Link>
@@ -198,14 +317,19 @@ export function ResumeEditor({
         </ul>
       </nav>
 
-      <section
-        id="resume-section-basics"
-        className="resume-editor-section"
-        aria-labelledby="resume-section-basics-heading"
+      <EditorSection
+        sectionId="resume-section-basics"
+        title="Basics"
+        description="Keep your contact details and professional summary current."
+        disabled={disabled}
+        open={openSections.has("resume-section-basics")}
+        onToggle={() =>
+          setSectionOpen(
+            "resume-section-basics",
+            !openSections.has("resume-section-basics"),
+          )
+        }
       >
-        <h3 id="resume-section-basics-heading" tabIndex={-1}>
-          Basics
-        </h3>
         <div className="resume-form-grid">
           <label>
             Full name
@@ -291,21 +415,23 @@ export function ResumeEditor({
             />
           </label>
         </div>
-      </section>
+      </EditorSection>
 
-      <section
-        id="resume-section-links"
-        className="resume-editor-section"
-        aria-labelledby="resume-section-links-heading"
+      <EditorSection
+        sectionId="resume-section-links"
+        title="Links"
+        description="Add labelled public links that belong on the resume."
+        addLabel="Add link"
+        disabled={disabled || draft.basics.links.length >= 20}
+        onAdd={() => mutate((next) => addLink(next.basics.links))}
+        open={openSections.has("resume-section-links")}
+        onToggle={() =>
+          setSectionOpen(
+            "resume-section-links",
+            !openSections.has("resume-section-links"),
+          )
+        }
       >
-        <SectionHeading
-          headingId="resume-section-links-heading"
-          title="Links"
-          description="Add labelled public links that belong on the resume."
-          addLabel="Add link"
-          disabled={disabled || draft.basics.links.length >= 20}
-          onAdd={() => mutate((next) => addLink(next.basics.links))}
-        />
         {draft.basics.links.length === 0 ? (
           <EmptySection>No links added.</EmptySection>
         ) : (
@@ -366,35 +492,37 @@ export function ResumeEditor({
             </div>
           ))
         )}
-      </section>
+      </EditorSection>
 
-      <section
-        id="resume-section-experience"
-        className="resume-editor-section"
-        aria-labelledby="resume-section-experience-heading"
+      <EditorSection
+        sectionId="resume-section-experience"
+        title="Experience"
+        description="Keep each role and its evidence-bearing bullets separate."
+        addLabel="Add experience"
+        disabled={disabled || draft.experience.length >= 50}
+        onAdd={() =>
+          mutate((next) =>
+            next.experience.push(
+              createDraftEntity({
+                employer: "",
+                jobTitle: "",
+                location: "",
+                startDate: "",
+                endDate: "",
+                isCurrent: false,
+                bullets: [],
+              }),
+            ),
+          )
+        }
+        open={openSections.has("resume-section-experience")}
+        onToggle={() =>
+          setSectionOpen(
+            "resume-section-experience",
+            !openSections.has("resume-section-experience"),
+          )
+        }
       >
-        <SectionHeading
-          headingId="resume-section-experience-heading"
-          title="Experience"
-          description="Keep each role and its evidence-bearing bullets separate."
-          addLabel="Add experience"
-          disabled={disabled || draft.experience.length >= 50}
-          onAdd={() =>
-            mutate((next) =>
-              next.experience.push(
-                createDraftEntity({
-                  employer: "",
-                  jobTitle: "",
-                  location: "",
-                  startDate: "",
-                  endDate: "",
-                  isCurrent: false,
-                  bullets: [],
-                }),
-              ),
-            )
-          }
-        />
         {draft.experience.length === 0 ? (
           <EmptySection>No experience entries added.</EmptySection>
         ) : (
@@ -518,36 +646,38 @@ export function ResumeEditor({
             </article>
           ))
         )}
-      </section>
+      </EditorSection>
 
-      <section
-        id="resume-section-education"
-        className="resume-editor-section"
-        aria-labelledby="resume-section-education-heading"
+      <EditorSection
+        sectionId="resume-section-education"
+        title="Education"
+        description="Record qualifications and supporting details."
+        addLabel="Add education"
+        disabled={disabled || draft.education.length >= 30}
+        onAdd={() =>
+          mutate((next) =>
+            next.education.push(
+              createDraftEntity({
+                institution: "",
+                qualification: "",
+                fieldOfStudy: "",
+                location: "",
+                startDate: "",
+                endDate: "",
+                isCurrent: false,
+                details: [],
+              }),
+            ),
+          )
+        }
+        open={openSections.has("resume-section-education")}
+        onToggle={() =>
+          setSectionOpen(
+            "resume-section-education",
+            !openSections.has("resume-section-education"),
+          )
+        }
       >
-        <SectionHeading
-          headingId="resume-section-education-heading"
-          title="Education"
-          description="Record qualifications and supporting details."
-          addLabel="Add education"
-          disabled={disabled || draft.education.length >= 30}
-          onAdd={() =>
-            mutate((next) =>
-              next.education.push(
-                createDraftEntity({
-                  institution: "",
-                  qualification: "",
-                  fieldOfStudy: "",
-                  location: "",
-                  startDate: "",
-                  endDate: "",
-                  isCurrent: false,
-                  details: [],
-                }),
-              ),
-            )
-          }
-        />
         {draft.education.length === 0 ? (
           <EmptySection>No education entries added.</EmptySection>
         ) : (
@@ -670,33 +800,39 @@ export function ResumeEditor({
             </article>
           ))
         )}
-      </section>
+      </EditorSection>
 
-      <section
-        id="resume-section-skills"
-        className="resume-editor-section"
-        aria-labelledby="resume-section-skills-heading"
+      <EditorSection
+        sectionId="resume-section-skills"
+        title="Skills"
+        description="Group related keywords for scanning."
+        addLabel="Add skill group"
+        disabled={disabled || draft.skills.length >= 30}
+        onAdd={() =>
+          mutate((next) =>
+            next.skills.push(
+              createDraftEntity({ name: "", keywords: [] }),
+            ),
+          )
+        }
+        open={openSections.has("resume-section-skills")}
+        onToggle={() =>
+          setSectionOpen(
+            "resume-section-skills",
+            !openSections.has("resume-section-skills"),
+          )
+        }
       >
-        <SectionHeading
-          headingId="resume-section-skills-heading"
-          title="Skills"
-          description="Group related keywords for scanning."
-          addLabel="Add skill group"
-          disabled={disabled || draft.skills.length >= 30}
-          onAdd={() =>
-            mutate((next) =>
-              next.skills.push(
-                createDraftEntity({ name: "", keywords: [] }),
-              ),
-            )
-          }
-        />
         {draft.skills.length === 0 ? (
           <EmptySection>No skill groups added.</EmptySection>
         ) : (
-          draft.skills.map((entry, index) => (
-            <div className="resume-entry-card" key={entry.clientKey}>
-              <div className="resume-form-grid">
+          <div className="resume-skill-editor-list">
+            {draft.skills.map((entry, index) => (
+            <div
+              className="resume-entry-card resume-skill-editor-row"
+              key={entry.clientKey}
+            >
+              <div className="resume-form-grid resume-skill-editor-fields">
                 <label>
                   Skill group {index + 1} name
                   <input
@@ -739,40 +875,44 @@ export function ResumeEditor({
                 onRemove={() =>
                   mutate((next) => next.skills.splice(index, 1))
                 }
+                compact
               />
             </div>
-          ))
+            ))}
+          </div>
         )}
-      </section>
+      </EditorSection>
 
-      <section
-        id="resume-section-projects"
-        className="resume-editor-section"
-        aria-labelledby="resume-section-projects-heading"
+      <EditorSection
+        sectionId="resume-section-projects"
+        title="Projects"
+        description="Describe selected work, technologies, links, and evidence."
+        addLabel="Add project"
+        disabled={disabled || draft.projects.length >= 50}
+        onAdd={() =>
+          mutate((next) =>
+            next.projects.push(
+              createDraftEntity({
+                name: "",
+                role: "",
+                description: "",
+                startDate: "",
+                endDate: "",
+                technologies: [],
+                links: [],
+                bullets: [],
+              }),
+            ),
+          )
+        }
+        open={openSections.has("resume-section-projects")}
+        onToggle={() =>
+          setSectionOpen(
+            "resume-section-projects",
+            !openSections.has("resume-section-projects"),
+          )
+        }
       >
-        <SectionHeading
-          headingId="resume-section-projects-heading"
-          title="Projects"
-          description="Describe selected work, technologies, links, and evidence."
-          addLabel="Add project"
-          disabled={disabled || draft.projects.length >= 50}
-          onAdd={() =>
-            mutate((next) =>
-              next.projects.push(
-                createDraftEntity({
-                  name: "",
-                  role: "",
-                  description: "",
-                  startDate: "",
-                  endDate: "",
-                  technologies: [],
-                  links: [],
-                  bullets: [],
-                }),
-              ),
-            )
-          }
-        />
         {draft.projects.length === 0 ? (
           <EmptySection>No projects added.</EmptySection>
         ) : (
@@ -983,32 +1123,34 @@ export function ResumeEditor({
             </article>
           ))
         )}
-      </section>
+      </EditorSection>
 
-      <section
-        id="resume-section-certifications"
-        className="resume-editor-section"
-        aria-labelledby="resume-section-certifications-heading"
+      <EditorSection
+        sectionId="resume-section-certifications"
+        title="Certifications"
+        description="Record verified credentials and optional public URLs."
+        addLabel="Add certification"
+        disabled={disabled || draft.certifications.length >= 50}
+        onAdd={() =>
+          mutate((next) =>
+            next.certifications.push(
+              createDraftEntity({
+                name: "",
+                issuer: "",
+                issuedDate: "",
+                credentialUrl: "",
+              }),
+            ),
+          )
+        }
+        open={openSections.has("resume-section-certifications")}
+        onToggle={() =>
+          setSectionOpen(
+            "resume-section-certifications",
+            !openSections.has("resume-section-certifications"),
+          )
+        }
       >
-        <SectionHeading
-          headingId="resume-section-certifications-heading"
-          title="Certifications"
-          description="Record verified credentials and optional public URLs."
-          addLabel="Add certification"
-          disabled={disabled || draft.certifications.length >= 50}
-          onAdd={() =>
-            mutate((next) =>
-              next.certifications.push(
-                createDraftEntity({
-                  name: "",
-                  issuer: "",
-                  issuedDate: "",
-                  credentialUrl: "",
-                }),
-              ),
-            )
-          }
-        />
         {draft.certifications.length === 0 ? (
           <EmptySection>No certifications added.</EmptySection>
         ) : (
@@ -1065,27 +1207,29 @@ export function ResumeEditor({
             </div>
           ))
         )}
-      </section>
+      </EditorSection>
 
-      <section
-        id="resume-section-languages"
-        className="resume-editor-section"
-        aria-labelledby="resume-section-languages-heading"
+      <EditorSection
+        sectionId="resume-section-languages"
+        title="Languages"
+        description="Add languages and optional proficiency wording."
+        addLabel="Add language"
+        disabled={disabled || draft.languages.length >= 30}
+        onAdd={() =>
+          mutate((next) =>
+            next.languages.push(
+              createDraftEntity({ name: "", proficiency: "" }),
+            ),
+          )
+        }
+        open={openSections.has("resume-section-languages")}
+        onToggle={() =>
+          setSectionOpen(
+            "resume-section-languages",
+            !openSections.has("resume-section-languages"),
+          )
+        }
       >
-        <SectionHeading
-          headingId="resume-section-languages-heading"
-          title="Languages"
-          description="Add languages and optional proficiency wording."
-          addLabel="Add language"
-          disabled={disabled || draft.languages.length >= 30}
-          onAdd={() =>
-            mutate((next) =>
-              next.languages.push(
-                createDraftEntity({ name: "", proficiency: "" }),
-              ),
-            )
-          }
-        />
         {draft.languages.length === 0 ? (
           <EmptySection>No languages added.</EmptySection>
         ) : (
@@ -1138,25 +1282,27 @@ export function ResumeEditor({
             </div>
           ))
         )}
-      </section>
+      </EditorSection>
 
-      <section
-        id="resume-section-interests"
-        className="resume-editor-section"
-        aria-labelledby="resume-section-interests-heading"
+      <EditorSection
+        sectionId="resume-section-interests"
+        title="Interests"
+        description="Use short, factual interests where they add context."
+        addLabel="Add interest"
+        disabled={disabled || draft.interests.length >= 50}
+        onAdd={() =>
+          mutate((next) =>
+            next.interests.push(createDraftEntity({ value: "" })),
+          )
+        }
+        open={openSections.has("resume-section-interests")}
+        onToggle={() =>
+          setSectionOpen(
+            "resume-section-interests",
+            !openSections.has("resume-section-interests"),
+          )
+        }
       >
-        <SectionHeading
-          headingId="resume-section-interests-heading"
-          title="Interests"
-          description="Use short, factual interests where they add context."
-          addLabel="Add interest"
-          disabled={disabled || draft.interests.length >= 50}
-          onAdd={() =>
-            mutate((next) =>
-              next.interests.push(createDraftEntity({ value: "" })),
-            )
-          }
-        />
         {draft.interests.length === 0 ? (
           <EmptySection>No interests added.</EmptySection>
         ) : (
@@ -1193,7 +1339,7 @@ export function ResumeEditor({
             </div>
           ))
         )}
-      </section>
+      </EditorSection>
     </section>
   );
 }

@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
+import type { ResumeDraftValidationError } from "./resumeDraft";
 import { ResumeEditor } from "./ResumeEditor";
 import type { ResumeDraft } from "./types";
 
@@ -39,11 +40,18 @@ function emptyDraft(): ResumeDraft {
   };
 }
 
-function renderEditor(draft = emptyDraft()) {
+function renderEditor(
+  draft = emptyDraft(),
+  validationErrors: readonly ResumeDraftValidationError[] = [],
+) {
   window.history.replaceState({}, "", "/");
   render(
     <BrowserRouter>
-      <ResumeEditor draft={draft} onChange={vi.fn()} />
+      <ResumeEditor
+        draft={draft}
+        onChange={vi.fn()}
+        validationErrors={validationErrors}
+      />
     </BrowserRouter>,
   );
 }
@@ -93,15 +101,76 @@ describe("ResumeEditor section navigation", () => {
     expect(window.location.hash).toBe("#resume-section-certifications");
     await waitFor(() =>
       expect(document.activeElement).toBe(
-        screen.getByRole("heading", {
-          level: 3,
-          name: "Certifications",
-        }),
+        screen.getByRole("button", { name: "Certifications" }),
       ),
     );
+    expect(
+      screen
+        .getByRole("button", { name: "Certifications" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
   });
 
-  it("uses the established full-width form styling for project links and interests", () => {
+  it("starts with Basics open and exposes keyboard-operable section disclosures", async () => {
+    renderEditor();
+    const user = userEvent.setup();
+
+    expect(
+      screen.getByRole("button", { name: "Basics" }).getAttribute(
+        "aria-expanded",
+      ),
+    ).toBe("true");
+    for (const [name] of SECTION_TARGETS.slice(1)) {
+      const toggle = screen.getByRole("button", { name });
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      expect(toggle.getAttribute("aria-controls")).toBe(
+        `resume-section-${name.toLowerCase()}-content`,
+      );
+    }
+    expect(screen.getByRole("textbox", { name: "Full name" })).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Add link" }),
+    ).toBeNull();
+
+    const linksToggle = screen.getByRole("button", { name: "Links" });
+    linksToggle.focus();
+    await user.keyboard("{Enter}");
+    expect(linksToggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: "Add link" })).not.toBeNull();
+    await user.keyboard(" ");
+    expect(linksToggle.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("opens sections containing validation errors without changing draft content", async () => {
+    const draft = emptyDraft();
+    draft.skills.push({
+      clientKey: "skill-1",
+      name: "",
+      keywords: ["TypeScript"],
+    });
+    renderEditor(draft, [
+      {
+        path: "skills.0.name",
+        message: "Skill group 1 needs a name.",
+      },
+    ]);
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Skills" }).getAttribute(
+          "aria-expanded",
+        ),
+      ).toBe("true"),
+    );
+    expect(
+      (screen.getByRole("textbox", {
+        name: "Skill group 1 name",
+      }) as HTMLInputElement).value,
+    ).toBe("");
+    expect(screen.getByText("Skill group 1 needs a name.")).not.toBeNull();
+  });
+
+  it("uses the established full-width form styling for project links and interests", async () => {
     const draft = emptyDraft();
     draft.projects.push({
       clientKey: "project-1",
@@ -125,6 +194,9 @@ describe("ResumeEditor section navigation", () => {
       value: "Accessible interface design",
     });
     renderEditor(draft);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Projects" }));
+    await user.click(screen.getByRole("button", { name: "Interests" }));
 
     const referenceInput = screen.getByRole("textbox", { name: "Full name" });
     const projectLinkLabel = screen.getByRole("textbox", {
@@ -192,5 +264,100 @@ describe("ResumeEditor section navigation", () => {
       expect(input.getAttribute("spellcheck")).toBe("false");
       expect((input as HTMLInputElement).validity.typeMismatch).toBe(false);
     }
+  });
+
+  it("preserves native browser spellcheck for editable resume prose", async () => {
+    const draft = emptyDraft();
+    draft.basics.headline = "Platform engineer";
+    draft.basics.summary = "Builds reliable services for product teams.";
+    draft.experience.push({
+      clientKey: "experience-1",
+      employer: "Synthetic Employer",
+      jobTitle: "Engineer",
+      isCurrent: true,
+      bullets: [
+        {
+          clientKey: "experience-bullet-1",
+          text: "Improved a synthetic delivery workflow.",
+        },
+      ],
+    });
+    draft.projects.push({
+      clientKey: "project-1",
+      name: "Synthetic project",
+      description: "A local verification project.",
+      technologies: [],
+      links: [],
+      bullets: [
+        {
+          clientKey: "project-bullet-1",
+          text: "Documented synthetic results.",
+        },
+      ],
+    });
+    renderEditor(draft);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Experience" }));
+    await user.click(screen.getByRole("button", { name: "Projects" }));
+
+    for (const control of [
+      screen.getByRole("textbox", { name: "Full name" }),
+      screen.getByRole("textbox", { name: "Headline" }),
+      screen.getByRole("textbox", { name: "Professional summary" }),
+      screen.getByRole("textbox", { name: "Bullet 1" }),
+      screen.getByRole("textbox", { name: "Description" }),
+      screen.getByRole("textbox", { name: "Project bullet 1" }),
+    ]) {
+      expect(control.getAttribute("spellcheck")).not.toBe("false");
+    }
+  });
+
+  it("keeps sixteen skill groups compact without changing identity or ordering", async () => {
+    const draft = emptyDraft();
+    draft.skills = Array.from({ length: 16 }, (_, index) => ({
+      clientKey: `skill-${index + 1}`,
+      name: `Skill group ${index + 1}`,
+      keywords: [index === 0 ? "TypeScript" : `Keyword ${index + 1}`],
+    }));
+    const onChange = vi.fn();
+    window.history.replaceState({}, "", "/");
+    render(
+      <BrowserRouter>
+        <ResumeEditor draft={draft} onChange={onChange} />
+      </BrowserRouter>,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Skills" }));
+
+    const rows = document.querySelectorAll(".resume-skill-editor-row");
+    expect(rows).toHaveLength(16);
+    expect(
+      screen.getByRole("textbox", { name: "Skill group 1 name" }),
+    ).not.toBeNull();
+    expect(
+      screen.getAllByText("Keywords, comma separated"),
+    ).toHaveLength(16);
+    expect(
+      screen.getByRole("button", { name: "Move skill group 2 up" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Remove skill group 16" }),
+    ).not.toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: "Move skill group 2 up" }),
+    );
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skills: expect.arrayContaining([
+          expect.objectContaining({ clientKey: "skill-1" }),
+          expect.objectContaining({ clientKey: "skill-2" }),
+        ]),
+      }),
+    );
+    expect(onChange.mock.calls.at(-1)?.[0].skills.slice(0, 2)).toEqual([
+      expect.objectContaining({ clientKey: "skill-2" }),
+      expect.objectContaining({ clientKey: "skill-1" }),
+    ]);
   });
 });
