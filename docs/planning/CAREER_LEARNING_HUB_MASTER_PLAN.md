@@ -4,7 +4,7 @@
 - Document purpose: Govern the complete implementation through bounded, reviewable Codex execution phases.
 - Status: ACTIVE MASTER PLAN
 - Created date: 2026-07-24
-- Last updated date: 2026-07-24
+- Last updated date: 2026-08-10
 - Active editable repository: Career Learning Hub
 - Legacy-reference location: `../career-learning-hub-legacy/`
 - Legacy-reference policy: The sibling folder is an external read-only legacy reference. Access is deferred to approved legacy-inspection phases.
@@ -2522,7 +2522,8 @@ repair attempt. The repair verification record below controls current status.
   recursively inserted into this same commit.
 - Provider provisioning, staging deployment, and DNS configuration remain
   `NOT STARTED / INACTIVE`.
-- Phase 19 remains `PLANNED / INACTIVE`.
+- At this historical Phase 18B closeout, Phase 19 remained
+  `PLANNED / INACTIVE`; the reconciled Phase 19 definition below now controls.
 - The next activity requires separate explicit provisioning authorization.
 - No provider, environment-value, secret, DNS, deployment, push, or merge
   action occurred.
@@ -2622,58 +2623,104 @@ repair attempt. The repair verification record below controls current status.
 - The current Phase 18B activation authorizes no provisioning, provider
   resource, environment value, secret generation, DNS change, deployment,
   push, merge, or commit.
-- Phase 19 remains `PLANNED / INACTIVE`.
+- Phase 19-0 is active only for post-staging roadmap reconciliation. Phase 19A
+  through Phase 19H implementation remains `PLANNED / INACTIVE`.
 
-### Execution Phase 19: Legacy Data Migration Preparation
+### Execution Phase 19: Post-Staging Product Refinement, Verification, and Legacy Migration Preparation
 
 #### Status
 
-- Status: PLANNED
+- Phase 19-0: `COMPLETED / HUMAN-APPROVED`.
+- Approval token: `PHASE_19_0_ROADMAP_RECONCILIATION_APPROVED`.
+- Approval token accepted: `YES`.
+- Phase 19A through Phase 19H: `PLANNED / INACTIVE`.
+- Authoritative reconciliation record:
+  `docs/planning/PHASE_19_POST_STAGING_ROADMAP_RECONCILIATION.md`.
 
 #### Purpose
 
-- Use sanitized fixtures for AI-assisted schema work.
-- Never expose raw production exports to Codex.
-- Remove or replace PII, tokens, sessions, plaintext passwords, and password hashes from fixtures.
-- Validate, dry-run, review, and execute only against staging first.
+- Resolve the Phase 19 naming conflict without losing the original migration
+  requirements.
+- Complete the bounded post-staging product-refinement backlog, run integrated
+  verification, and then prepare legacy data migration safely.
+- Keep every implementation subphase inactive until separately authorized.
 
-#### Required skills
+#### Authoritative subphase order
 
-- `karpathy-guidelines`
-- `systematic-debugging`
-- `technical-writing`
-- `test-driven-development`
-- `security-best-practices`
-- `privacy`
+1. **Phase 19A — Resume Studio refinements:** editor workspace, supported
+   desktop editor/live-preview layout, mobile single-column behavior, browser
+   spellcheck, collection/card hierarchy, creation/import, conditional
+   pagination, disabled-state guidance, and accessible upload interaction.
+   The completed urgent PDF-import and Resume-version/persistence repairs are
+   excluded from reimplementation.
+2. **Phase 19B — Interview Coach refinements:** session list and creation,
+   conditional pagination, structured focus topics/skill gaps, session-card
+   hierarchy, reduced visual noise, and user-friendly attempt-history terms.
+   Question-type expansion requires a separate schema and Gemini-contract
+   audit and is not pre-authorized.
+3. **Phase 19C — Learning Workspace refinements:** library/upload workflow,
+   document navigation/tabs, source-link affordances, grounded-chat
+   presentation, Flashcard stability, Quiz experience, attempt history, and
+   terminology. Preserve grounding, answer-key secrecy, ownership, deletion
+   fencing, durable Gemini jobs, cancellation/retry, and background processing.
+4. **Phase 19D — Dashboard refinements:** reduce page length, improve hierarchy,
+   derive contextual Quick Start only from real owned data, improve empty and
+   Recent Activity states, relocate/remove developer-facing AI diagnostics,
+   and compact responsive layouts. Do not invent metrics or recommendations.
+5. **Phase 19E — Authentication refinements:** login/registration balance,
+   duplicate-brand cleanup, password visibility, real-time password-rule
+   feedback, required labels, button states, and typography. OAuth remains
+   optional, separately gated, and unauthorized.
+6. **Phase 19F — Application shell and shared patterns:** include only
+   duplication proven across features, such as create intent, account/sidebar
+   accessibility, conditional pagination, justified upload presentation,
+   field/error presentation, job-state language, responsive shell details,
+   and destructive confirmations. Do not add a design system, global-state
+   rewrite, generic form framework, command palette, global search, dark mode,
+   router replacement, or speculative broad refactor.
+7. **Phase 19G — Integrated post-refinement verification:** run the complete
+   approved automated, responsive, zoom, keyboard, ownership, account,
+   product-workflow, Gemini, and OpenRouter-zero-execution gates. This is a
+   verification phase; each discovered defect requires a separate bounded
+   repair.
+8. **Phase 19H — Legacy Data Migration Preparation:** preserve the original
+   migration phase under the reconciled name and requirements below.
 
-#### In scope
+#### Phase 19H migration requirements
 
-- Sanitized representative fixtures.
-- Migration validation and dry runs.
-- Reviewed staging-only execution preparation.
+- Use sanitized representative fixtures only; never expose raw production
+  exports to Codex.
+- Remove or replace PII. Include no plaintext passwords, password hashes,
+  sessions, tokens, secrets, or private production content.
+- Produce a migration inventory and source-to-destination mapping.
+- Provide validation, dry-run support, idempotency, and a staging-only
+  migration rehearsal.
+- Require human privacy review before staging execution and separate approval
+  before any production migration.
 
-#### Out of scope
+#### Cross-phase boundaries
 
-- Raw production exports in Codex context.
-- Unsanitized PII, secrets, sessions, plaintext passwords, or password hashes.
-- Production migration execution.
+- Gemini Direct with fixed `gemini-3.6-flash` remains the only active release
+  provider. OpenRouter remains dormant; other providers, selection, fallback,
+  or routing expansion are outside Phase 19.
+- The custom Resume ML track remains separate. Phase 19 authorizes no model
+  training, inference integration, FastAPI integration, or ML deployment.
+- Phase 19-0 authorizes documentation reconciliation only. It does not
+  authorize Phase 19A-19H implementation, migration execution, production
+  release, or post-release work.
 
-#### Deliverables
+#### Verification and human gates
 
-- Sanitized fixture set.
-- Validated migration plan and checks.
-- Reviewed staging dry-run evidence.
-
-#### Verification
-
-- Scan fixtures for prohibited personal and secret material.
-- Validate fixture representativeness without re-identification.
-- Run migration validation and dry-run checks.
-- Review staging-only execution results before any later production approval.
-
-#### Human approval gate
-
-- Human privacy and migration review is required before staging execution and again before any production migration.
+- Each subphase requires its own bounded prompt, relevant automated checks,
+  human review, and Git authorization.
+- Phase 19A-1 — Resume Editor Workspace is the next proposed task, but it
+  remains inactive and begins with audit/implementation preparation.
+- Phase 19G does not silently repair defects found during integrated
+  verification.
+- Human review supplied the authoritative external/handoff 50-item product
+  register after the repository search found no canonical copy. All 50 items
+  are reconciled exactly once in the Phase 19 record; the external register
+  remains provenance evidence rather than executable repository code.
 
 ### Execution Phase 20: Production Release
 
@@ -2683,7 +2730,9 @@ repair attempt. The repair verification record below controls current status.
 
 #### Purpose
 
-- Confirm tests, staging, backups, secrets, HTTPS, private storage, health checks, monitoring, and rollback.
+- Confirm staging, tests, persistent private storage, backups, production
+  secrets, HTTPS/domain, exact CORS, worker configuration, health checks,
+  monitoring, rollback, and all binding security restrictions.
 - Merge, tag, and deploy.
 - Run smoke tests.
 - Execute production migration only after explicit approval.
@@ -2699,7 +2748,8 @@ repair attempt. The repair verification record below controls current status.
 
 #### In scope
 
-- Approved merge, tag, production deployment, and smoke tests.
+- Approved release candidate, merge, tag, production deployment, monitoring,
+  rollback readiness, and production smoke tests.
 - Production migration only under separate explicit approval.
 
 #### Out of scope
@@ -2716,7 +2766,9 @@ repair attempt. The repair verification record below controls current status.
 
 #### Verification
 
-- Confirm tests, staging, backups, secrets management, HTTPS, private storage, health checks, monitoring, and rollback.
+- Confirm staging verification, persistent S3-compatible private storage,
+  backup readiness, production secrets, HTTPS/domain, exact CORS, worker
+  configuration, health checks, monitoring, and rollback.
 - Run the approved deep security scan.
 - Run production smoke tests after deployment.
 - Verify rollback readiness.
@@ -2734,7 +2786,8 @@ repair attempt. The repair verification record below controls current status.
 
 #### Purpose
 
-- Monitor runtime errors, jobs, authentication, health, database behavior, AI quota, and uploads.
+- Monitor API/runtime errors, jobs, authentication, database health, Gemini
+  quota/errors, uploads, and storage.
 - Apply small reviewed hotfixes.
 - Maintain incident and release records.
 
