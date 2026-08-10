@@ -123,13 +123,42 @@ describe("resumeApi", () => {
       ),
     );
 
-    await createResume("Synthetic Resume");
+    await createResume({ title: "Synthetic Resume" });
 
     expect(requestAt()[0]).toBe("https://api.example.test/api/v1/resumes");
     expect(requestAt()[1].method).toBe("POST");
     expect(JSON.parse(String(requestAt()[1].body))).toEqual({
       title: "Synthetic Resume",
     });
+  });
+
+  it("creates a guided resume with optional canonical content and forwards AbortSignal", async () => {
+    const { createResume } = await loadApi();
+    const controller = new AbortController();
+    const content = {
+      ...contentFixture(),
+      skills: [{ name: "Frontend", keywords: ["React"] }],
+    };
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        {
+          success: true,
+          data: { resume: resumeFixture(), version: versionFixture() },
+        },
+        201,
+      ),
+    );
+
+    await createResume(
+      { title: "Guided Resume", content },
+      controller.signal,
+    );
+
+    expect(JSON.parse(String(requestAt()[1].body))).toEqual({
+      title: "Guided Resume",
+      content,
+    });
+    expect(requestAt()[1].signal).toBe(controller.signal);
   });
 
   it("loads a workspace and forwards AbortSignal", async () => {
@@ -345,6 +374,29 @@ describe("resumeApi", () => {
     expect(body.get("title")).toBe("Imported Resume");
     expect(body.get("file")).toBe(file);
     expect(new Headers(requestAt()[1].headers).has("Content-Type")).toBe(false);
+  });
+
+  it("confirms an owned import job with no candidate body and validates the workspace", async () => {
+    const { confirmResumePdfImport } = await loadApi();
+    const controller = new AbortController();
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({
+        success: true,
+        data: { resume: resumeFixture(), version: versionFixture() },
+      }),
+    );
+
+    const result = await confirmResumePdfImport(jobId, controller.signal);
+
+    expect(result.resume.id).toBe(resumeId);
+    expect(requestAt()[0]).toBe(
+      `https://api.example.test/api/v1/resume-analyses/import-pdf/${jobId}/confirm`,
+    );
+    expect(requestAt()[1]).toMatchObject({
+      method: "POST",
+      signal: controller.signal,
+    });
+    expect(requestAt()[1].body).toBeUndefined();
   });
 
   it("queues analysis for the current saved version with non-empty optional fields only", async () => {

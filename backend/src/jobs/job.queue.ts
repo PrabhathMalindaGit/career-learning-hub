@@ -180,6 +180,7 @@ export async function enqueueJob(input: {
   idempotencyKey?: string;
   retryOfJobId?: string;
   rootJobId?: string;
+  expiresAt?: Date;
   requireGeminiDirect?: boolean;
   session?: ClientSession;
 }): Promise<JobRecord> {
@@ -231,6 +232,7 @@ export async function enqueueJob(input: {
       idempotencyKey: input.idempotencyKey,
       retryOfJobId: input.retryOfJobId,
       rootJobId: input.rootJobId,
+      expiresAt: input.expiresAt,
       ...(aiRoutingSnapshot ? { aiRoutingSnapshot } : {}),
     };
     if (input.session) {
@@ -422,8 +424,13 @@ export async function beginJobPersistence(
 export async function completeJob(
   execution: JobExecutionIdentity,
   result: unknown,
+  expiresAt?: Date,
 ): Promise<void> {
   const completedAt = new Date();
+  const terminalExpiresAt = expiresAt ?? new Date(
+    completedAt.getTime() +
+      env.JOB_RETENTION_DAYS * 24 * 60 * 60 * 1_000,
+  );
   const updated = await JobRecordModel.updateOne(
     {
       ...executionFilter(execution),
@@ -436,10 +443,7 @@ export async function completeJob(
         result,
         progress: 100,
         completedAt,
-        expiresAt: new Date(
-          completedAt.getTime() +
-            env.JOB_RETENTION_DAYS * 24 * 60 * 60 * 1_000,
-        ),
+        expiresAt: terminalExpiresAt,
       },
       $unset: {
         lockedAt: 1,
@@ -670,6 +674,10 @@ export async function getOwnedJob(
   const job = await JobRecordModel.findOne({
     _id: new Types.ObjectId(jobId),
     userId: new Types.ObjectId(userId),
+    $or: [
+      { expiresAt: { $exists: false } },
+      { expiresAt: { $gt: new Date() } },
+    ],
   }).lean();
 
   if (!job) {
@@ -847,6 +855,10 @@ export async function retryOwnedJob(
       idempotencyKey: `job-retry:${userId}:${source._id.toString()}`,
       retryOfJobId: source._id.toString(),
       rootJobId: source.rootJobId?.toString() ?? source._id.toString(),
+      expiresAt:
+        source.type === "resume.import-pdf"
+          ? source.expiresAt
+          : undefined,
       requireGeminiDirect: true,
       session,
     });

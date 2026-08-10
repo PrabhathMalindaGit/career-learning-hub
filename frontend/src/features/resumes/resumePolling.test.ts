@@ -26,7 +26,7 @@ function job(
     ...(status === "completed"
       ? {
           result: {
-            kind: "import" as const,
+            kind: "import-adopted" as const,
             resumeId,
             versionId,
             versionNumber: 1,

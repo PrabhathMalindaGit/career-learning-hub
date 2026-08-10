@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { AiJobExecutionLifecycle } from "../../jobs/job.registry.js";
+import { JobRecordModel } from "../../jobs/job.model.js";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
 import { withMongoTransaction } from "../../shared/mongoTransaction.js";
@@ -71,32 +72,113 @@ function collectBulletText(content: ResumeContent): Map<string, string> {
   return bullets;
 }
 
-export async function importResumePdf(input: {
-  userId: string;
-  assetId: string;
-  title: string;
-  jobId?: string;
-  execution?: AiJobExecutionLifecycle;
-}) {
-  const asset = await getOwnedAsset(input.userId, input.assetId);
+function internalIdentifierLabels(content: ResumeContent): Map<string, string> {
+  const labels = new Map<string, string>();
+  const contextual = (
+    value: string | undefined,
+    fallback: string,
+  ) => value?.trim() ? `${value.trim()} — ${fallback}` : fallback;
 
-  const existingVersion = await ResumeVersionModel.findOne({
-    userId: input.userId,
-    sourceAssetId: input.assetId,
-    source: "pdf-import",
+  content.basics.links.forEach((link, index) => {
+    labels.set(link.id, contextual(link.label, `link ${index + 1}`));
+  });
+  content.experience.forEach((entry, index) => {
+    labels.set(
+      entry.id,
+      contextual(entry.employer, `experience entry ${index + 1}`),
+    );
+    entry.bullets.forEach((bullet, bulletIndex) => {
+      labels.set(
+        bullet.id,
+        contextual(entry.employer, `bullet ${bulletIndex + 1}`),
+      );
+    });
+  });
+  content.education.forEach((entry, index) => {
+    labels.set(
+      entry.id,
+      contextual(entry.institution, `education entry ${index + 1}`),
+    );
+    entry.details.forEach((detail, detailIndex) => {
+      labels.set(
+        detail.id,
+        contextual(entry.institution, `detail ${detailIndex + 1}`),
+      );
+    });
+  });
+  content.skills.forEach((group, index) => {
+    labels.set(
+      group.id,
+      contextual(group.name, `skill group ${index + 1}`),
+    );
+  });
+  content.projects.forEach((project, index) => {
+    labels.set(
+      project.id,
+      contextual(project.name, `project ${index + 1}`),
+    );
+    project.links.forEach((link, linkIndex) => {
+      labels.set(
+        link.id,
+        contextual(project.name, `link ${linkIndex + 1}`),
+      );
+    });
+    project.bullets.forEach((bullet, bulletIndex) => {
+      labels.set(
+        bullet.id,
+        contextual(project.name, `bullet ${bulletIndex + 1}`),
+      );
+    });
+  });
+  content.certifications.forEach((certification, index) => {
+    labels.set(
+      certification.id,
+      contextual(certification.name, `certification ${index + 1}`),
+    );
+  });
+  content.languages.forEach((language, index) => {
+    labels.set(
+      language.id,
+      contextual(language.name, `language ${index + 1}`),
+    );
   });
 
-  if (existingVersion) {
-    await promoteOwnedAsset(input.userId, input.assetId, {
-      resumeId: existingVersion.resumeId.toString(),
-    });
+  return labels;
+}
 
-    return {
-      resumeId: existingVersion.resumeId.toString(),
-      versionId: existingVersion._id.toString(),
-      versionNumber: existingVersion.versionNumber,
-    };
+function sanitizeInternalIdentifierProse(
+  value: string,
+  labels: ReadonlyMap<string, string>,
+): string {
+  let sanitized = value;
+  for (const [identifier, label] of labels) {
+    const knownReference = new RegExp(
+      `\\b(?:(?:bullet|entity|link)(?:\\s+id)?|id)\\s+${identifier}\\b|\\b${identifier}\\b`,
+      "gi",
+    );
+    sanitized = sanitized.replace(knownReference, label);
   }
+  return sanitized;
+}
+
+export interface ImportReviewResult {
+  kind: "import-review";
+  content: ResumeContent;
+}
+
+export interface ConfirmedResumeImportIdentity {
+  resumeId: string;
+  versionId: string;
+  versionNumber: number;
+}
+
+export async function prepareResumePdfImport(input: {
+  userId: string;
+  assetId: string;
+  jobId?: string;
+  execution?: AiJobExecutionLifecycle;
+}): Promise<ImportReviewResult> {
+  const asset = await getOwnedAsset(input.userId, input.assetId);
 
   if (
     asset.purpose !== "resume-import" ||
@@ -122,60 +204,157 @@ export async function importResumePdf(input: {
     execution: input.execution,
   });
 
-  let created: Awaited<ReturnType<typeof createResume>>;
-  try {
-    await input.execution?.beginPersistence();
-    created = await createResume({
-      userId: input.userId,
-      title: input.title,
-      content,
-      source: "pdf-import",
-      sourceAssetId: input.assetId,
-      changeSummary: `Imported from PDF (${extracted.pageCount} pages)`,
-      beforeWrites: input.execution?.assertActive,
-    });
-  } catch (error) {
-    if (!isDuplicateKeyError(error)) throw error;
+  return { kind: "import-review", content };
+}
 
-    const winningVersion = await ResumeVersionModel.findOne({
-      userId: input.userId,
-      sourceAssetId: input.assetId,
-      source: "pdf-import",
-    });
-    const winningResult = importedVersionResult(winningVersion);
-    if (!winningResult) throw error;
+function importConfirmationError(): AppError {
+  return new AppError(
+    409,
+    "RESUME_IMPORT_NOT_CONFIRMABLE",
+    "The Resume import is not ready for confirmation.",
+    undefined,
+    false,
+  );
+}
 
-    await promoteOwnedAsset(input.userId, input.assetId, {
-      resumeId: winningResult.resumeId,
-      pageCount: extracted.pageCount,
-      characterCount: extracted.characterCount,
-    });
-    return winningResult;
+function recordValue(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function adoptedIdentity(value: unknown): ConfirmedResumeImportIdentity | undefined {
+  const result = recordValue(value);
+  if (result?.kind !== "import-adopted") return undefined;
+  if (
+    typeof result.resumeId !== "string" ||
+    !/^[a-f\d]{24}$/i.test(result.resumeId) ||
+    typeof result.versionId !== "string" ||
+    !/^[a-f\d]{24}$/i.test(result.versionId) ||
+    result.versionNumber !== 1
+  ) {
+    throw importConfirmationError();
+  }
+  return {
+    resumeId: result.resumeId,
+    versionId: result.versionId,
+    versionNumber: result.versionNumber,
+  };
+}
+
+export async function confirmResumePdfImport(input: {
+  userId: string;
+  jobId: string;
+}): Promise<ConfirmedResumeImportIdentity> {
+  const job = await JobRecordModel.findOne({
+    _id: input.jobId,
+    userId: input.userId,
+    type: "resume.import-pdf",
+    status: "completed",
+    expiresAt: { $gt: new Date() },
+  }).lean();
+
+  if (!job) {
+    throw new AppError(404, "JOB_NOT_FOUND", "Job not found.");
   }
 
-  await promoteOwnedAsset(input.userId, input.assetId, {
-    resumeId: created.resume._id.toString(),
-    pageCount: extracted.pageCount,
-    characterCount: extracted.characterCount,
+  const alreadyAdopted = adoptedIdentity(job.result);
+  if (alreadyAdopted) return alreadyAdopted;
+
+  const payload = recordValue(job.payload);
+  const result = recordValue(job.result);
+  const assetId = payload?.assetId;
+  const title = payload?.title;
+  if (
+    result?.kind !== "import-review" ||
+    typeof assetId !== "string" ||
+    !/^[a-f\d]{24}$/i.test(assetId) ||
+    typeof title !== "string" ||
+    !title.trim() ||
+    title.length > 120
+  ) {
+    throw importConfirmationError();
+  }
+
+  let content: ResumeContent;
+  try {
+    content = normalizeResumeContent(result.content);
+  } catch {
+    throw importConfirmationError();
+  }
+
+  const asset = await getOwnedAsset(input.userId, assetId);
+  if (
+    asset.purpose !== "resume-import" ||
+    asset.mimeType !== "application/pdf"
+  ) {
+    throw importConfirmationError();
+  }
+
+  let winning = importedVersionResult(
+    await ResumeVersionModel.findOne({
+      userId: input.userId,
+      sourceAssetId: assetId,
+      source: "pdf-import",
+    }),
+  );
+
+  if (!winning) {
+    try {
+      const created = await createResume({
+        userId: input.userId,
+        title: title.trim(),
+        content,
+        source: "pdf-import",
+        sourceAssetId: assetId,
+        changeSummary: "Imported from PDF",
+      });
+      winning = {
+        resumeId: created.resume._id.toString(),
+        versionId: created.version._id.toString(),
+        versionNumber: created.version.versionNumber,
+      };
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) throw error;
+      winning = importedVersionResult(
+        await ResumeVersionModel.findOne({
+          userId: input.userId,
+          sourceAssetId: assetId,
+          source: "pdf-import",
+        }),
+      );
+      if (!winning) throw error;
+    }
+  }
+
+  await promoteOwnedAsset(input.userId, assetId, {
+    resumeId: winning.resumeId,
   });
 
-  await recordActivitySafely({
-    userId: input.userId,
-    type: "resume.pdf.imported",
-    resourceType: "resume",
-    resourceId: created.resume._id.toString(),
-    origin: "worker",
-    metadata: {
-      assetId: input.assetId,
-      pageCount: extracted.pageCount,
+  const adoptedResult = { kind: "import-adopted" as const, ...winning };
+  const scrubbed = await JobRecordModel.updateOne(
+    {
+      _id: job._id,
+      userId: input.userId,
+      type: "resume.import-pdf",
+      status: "completed",
+      "result.kind": "import-review",
     },
-  });
+    { $set: { result: adoptedResult } },
+  );
 
-  return {
-    resumeId: created.resume._id.toString(),
-    versionId: created.version._id.toString(),
-    versionNumber: created.version.versionNumber,
-  };
+  if (scrubbed.modifiedCount === 1) {
+    await recordActivitySafely({
+      userId: input.userId,
+      type: "resume.pdf.imported",
+      resourceType: "resume",
+      resourceId: winning.resumeId,
+      origin: "api",
+      metadata: { assetId },
+    });
+  }
+
+  return winning;
 }
 
 export async function analyzeResume(input: {
@@ -215,6 +394,7 @@ export async function analyzeResume(input: {
     versionId,
   );
   const bulletMap = collectBulletText(version.content);
+  const identifierLabels = internalIdentifierLabels(version.content);
 
   const result = await generateStructuredOutput({
     userId: input.userId,
@@ -254,6 +434,17 @@ export async function analyzeResume(input: {
     },
   });
 
+  const sanitizeVisibleProse = (value: string) =>
+    sanitizeInternalIdentifierProse(value, identifierLabels);
+  const issues = result.issues.map((issue) => ({
+    ...issue,
+    message: sanitizeVisibleProse(issue.message),
+  }));
+  const strengths = result.strengths.map((strength) => ({
+    title: sanitizeVisibleProse(strength.title),
+    detail: sanitizeVisibleProse(strength.detail),
+  }));
+  const missingKeywords = result.missingKeywords.map(sanitizeVisibleProse);
   const seenBulletIds = new Set<string>();
   const suggestions = result.suggestions.map((suggestion) => {
     const originalText = bulletMap.get(suggestion.bulletId);
@@ -280,7 +471,7 @@ export async function analyzeResume(input: {
       bulletId: suggestion.bulletId,
       originalText,
       rewrittenText: suggestion.rewrittenText,
-      rationale: suggestion.rationale,
+      rationale: sanitizeVisibleProse(suggestion.rationale),
       verificationRequired: suggestion.verificationRequired,
     };
   });
@@ -311,9 +502,9 @@ export async function analyzeResume(input: {
           model: env.GEMINI_MODEL,
           scoreBreakdown,
           totalScore,
-          issues: result.issues,
-          strengths: result.strengths,
-          missingKeywords: result.missingKeywords,
+          issues,
+          strengths,
+          missingKeywords,
           suggestions,
           jobId: input.jobId,
         }],

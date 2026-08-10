@@ -11,9 +11,11 @@ import {
   parseVersionList,
 } from "./resumeContracts";
 import type {
+  CreateResumeInput,
   ResumeContentInput,
   ResumeDesign,
   ResumeJob,
+  ResumeWorkspaceData,
 } from "./types";
 
 function boundedInteger(
@@ -59,12 +61,15 @@ export async function listResumes(
 }
 
 export async function createResume(
-  title: string,
+  input: CreateResumeInput,
   signal?: AbortSignal,
 ) {
   const data = await apiRequest<unknown>("/resumes", {
     method: "POST",
-    body: { title },
+    body: {
+      title: input.title,
+      ...(input.content === undefined ? {} : { content: input.content }),
+    },
     authentication: "required",
     signal,
   });
@@ -178,6 +183,21 @@ export async function importResumePdf(
     },
   );
   return parseAcceptedJob(data, "resume.import-pdf");
+}
+
+export async function confirmResumePdfImport(
+  jobId: string,
+  signal?: AbortSignal,
+): Promise<ResumeWorkspaceData> {
+  const data = await apiRequest<unknown>(
+    `/resume-analyses/import-pdf/${jobId}/confirm`,
+    {
+      method: "POST",
+      authentication: "required",
+      signal,
+    },
+  );
+  return parseResumeWorkspace(data);
 }
 
 export async function queueResumeAnalysis(

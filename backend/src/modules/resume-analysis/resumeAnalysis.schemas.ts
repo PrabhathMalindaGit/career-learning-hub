@@ -18,6 +18,10 @@ export const importPdfBodySchema = z
   })
   .strict();
 
+export const importJobIdParamsSchema = z.object({
+  jobId: z.string().regex(/^[a-f\d]{24}$/i),
+});
+
 export const analyzeResumeBodySchema = z
   .object({
     requestId: z.string().uuid(),

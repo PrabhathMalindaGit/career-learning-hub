@@ -128,6 +128,11 @@ export type ResumeContentInput = {
   interests: string[];
 };
 
+export interface CreateResumeInput {
+  title: string;
+  content?: ResumeContentInput;
+}
+
 export type DraftLink = Omit<ResumeLink, "id"> & ClientEntity;
 export type DraftBullet = Omit<ResumeBullet, "id"> & ClientEntity;
 export type DraftExperience = Omit<
@@ -261,6 +266,18 @@ export interface ResumeAnalysis {
   updatedAt: string;
 }
 
+export type ResumeImportResult =
+  | {
+      kind: "import-review";
+      content: ResumeContent;
+    }
+  | {
+      kind: "import-adopted";
+      resumeId: string;
+      versionId: string;
+      versionNumber: number;
+    };
+
 export interface ResumeJob extends PartialJobResilienceMetadata {
   id: string;
   type: "resume.import-pdf" | "resume.analyze";
@@ -269,12 +286,7 @@ export interface ResumeJob extends PartialJobResilienceMetadata {
   attempts: number;
   maxAttempts: number;
   result?:
-    | {
-        kind: "import";
-        resumeId: string;
-        versionId: string;
-        versionNumber: number;
-      }
+    | ResumeImportResult
     | {
         kind: "analysis";
         analysisId: string;

@@ -213,6 +213,9 @@ describe("ResumeWorkspace", () => {
     ).toBe("ats-classic");
     expect(screen.queryByText("unknown-persisted-template")).toBeNull();
     expect(
+      screen.getByLabelText("Target role").getAttribute("list"),
+    ).toBe("resume-job-title-suggestions");
+    expect(
       screen.getByText(/saved design choices are no longer available/i),
     ).not.toBeNull();
     expect(resumeApi.updateResumeDesign).not.toHaveBeenCalled();
@@ -996,6 +999,26 @@ describe("ResumeWorkspace", () => {
           ...historical.content.basics,
           fullName: "Historical Candidate",
         },
+        experience: [
+          {
+            ...historical.content.experience[0]!,
+            bullets: [
+              {
+                id: suggestionId,
+                text: "Preserved historical experience evidence.",
+              },
+            ],
+          },
+        ],
+        education: [
+          {
+            id: "123e4567-e89b-42d3-a456-426614174002",
+            institution: "Example University",
+            qualification: "BSc",
+            isCurrent: false,
+            details: [],
+          },
+        ],
       },
     });
     renderWorkspace();
@@ -1016,10 +1039,17 @@ describe("ResumeWorkspace", () => {
     ).not.toBeNull();
     expect(screen.getAllByText("Historical Candidate")).toHaveLength(2);
     expect(screen.getByText("Historical saved version 1")).not.toBeNull();
+    const historicalPreview = screen.getByLabelText("Resume version 1 preview");
+    expect(historicalPreview.textContent).toContain("Experience");
+    expect(historicalPreview.textContent).toContain(
+      "Preserved historical experience evidence.",
+    );
+    expect(historicalPreview.textContent).toContain("Education");
+    expect(historicalPreview.textContent).toContain("Example University");
     expect(
       screen.getByLabelText("Printable historical saved version 1")
         .textContent,
-    ).toContain("Historical Candidate");
+    ).toContain("Example University");
     expect(screen.getByText(/snapshot uses the current resume design/i)).not.toBeNull();
     await user.click(
       screen.getByRole("button", { name: "Return to current draft" }),
@@ -1122,7 +1152,7 @@ describe("ResumeWorkspace", () => {
     const user = userEvent.setup();
     await screen.findByLabelText("Full name");
     await user.type(
-      screen.getByRole("textbox", { name: "Target role" }),
+      screen.getByRole("combobox", { name: "Target role" }),
       "Private role context",
     );
     await user.type(
@@ -1167,7 +1197,7 @@ describe("ResumeWorkspace", () => {
     });
     expect(
       (
-        screen.getByRole("textbox", {
+        screen.getByRole("combobox", {
           name: "Target role",
         }) as HTMLInputElement
       ).value,
@@ -1231,7 +1261,7 @@ describe("ResumeWorkspace", () => {
     const user = userEvent.setup();
     await screen.findByLabelText("Full name");
     await user.type(
-      screen.getByRole("textbox", { name: "Target role" }),
+      screen.getByRole("combobox", { name: "Target role" }),
       "Platform Engineer",
     );
     await user.type(screen.getByLabelText("Full name"), " changed");
@@ -1262,6 +1292,8 @@ describe("ResumeWorkspace", () => {
         name: "AI-assisted assessment",
       }),
     ).not.toBeNull();
+    expect(screen.getByText("Completed result")).not.toBeNull();
+    expect(screen.queryByText("100% checked")).toBeNull();
     expect(screen.getByText("86")).not.toBeNull();
     expect(screen.getByText("observability")).not.toBeNull();
     expect(document.body.textContent).not.toContain("ATS certification");
@@ -1304,7 +1336,7 @@ describe("ResumeWorkspace", () => {
     const user = userEvent.setup();
     await screen.findByLabelText("Full name");
     await user.type(
-      screen.getByRole("textbox", { name: "Target role" }),
+      screen.getByRole("combobox", { name: "Target role" }),
       "Platform Engineer",
     );
     await user.click(
@@ -1411,7 +1443,7 @@ describe("ResumeWorkspace", () => {
     const user = userEvent.setup();
     await screen.findByLabelText("Full name");
     await user.type(
-      screen.getByRole("textbox", { name: "Target role" }),
+      screen.getByRole("combobox", { name: "Target role" }),
       "Platform Engineer",
     );
     await user.click(

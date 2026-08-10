@@ -6,11 +6,13 @@ import { JobRecordModel } from "../../jobs/job.model.js";
 import { AppError } from "../../shared/appError.js";
 import { createAsset, deleteOwnedAsset } from "../assets/asset.service.js";
 import {
+  getResumeWorkspace,
   getOwnedResumeVersion,
   requireOwnedResume,
 } from "../resumes/resume.service.js";
 import {
   applyAnalysisSuggestions,
+  confirmResumePdfImport,
   getOwnedAnalysis,
   listResumeAnalyses,
 } from "./resumeAnalysis.service.js";
@@ -21,6 +23,10 @@ type ResumeIdParams = {
 
 type AnalysisIdParams = {
   analysisId: string;
+};
+
+type ImportJobIdParams = {
+  jobId: string;
 };
 
 export async function importPdfController(
@@ -69,6 +75,13 @@ export async function importPdfController(
     temporary: true,
     expiresInSeconds: 24 * 60 * 60,
   });
+  if (!asset.expiresAt) {
+    throw new AppError(
+      500,
+      "RESUME_IMPORT_EXPIRY_MISSING",
+      "The temporary import expiry could not be established.",
+    );
+  }
 
   const job = await enqueueJob({
     type: "resume.import-pdf",
@@ -80,6 +93,7 @@ export async function importPdfController(
     },
     maxAttempts: env.RESUME_ANALYSIS_JOB_MAX_ATTEMPTS,
     idempotencyKey,
+    expiresAt: asset.expiresAt,
   });
 
   const winningPayload = job.payload as { assetId?: unknown };
@@ -102,6 +116,22 @@ export async function importPdfController(
       },
     },
   });
+}
+
+export async function confirmImportPdfController(
+  request: Request<ImportJobIdParams>,
+  response: Response,
+): Promise<void> {
+  const imported = await confirmResumePdfImport({
+    userId: request.auth!.userId,
+    jobId: request.params.jobId,
+  });
+  const workspace = await getResumeWorkspace(
+    request.auth!.userId,
+    imported.resumeId,
+  );
+
+  response.status(200).json({ success: true, data: workspace });
 }
 
 export async function queueAnalysisController(

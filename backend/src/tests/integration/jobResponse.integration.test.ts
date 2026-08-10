@@ -175,6 +175,21 @@ describe("owned job response integration", () => {
       displayName: "Job Ownership Other",
     });
     const job = await createOwnedJob(owner.userId);
+    const expired = await createOwnedJob(owner.userId, {
+      type: "resume.import-pdf",
+      status: "completed",
+      phase: "completed",
+      progress: 100,
+      result: {
+        kind: "import-review",
+        content: {
+          basics: { fullName: "Synthetic Candidate", links: [] },
+          experience: [], education: [], skills: [], projects: [],
+          certifications: [], languages: [], interests: [],
+        },
+      },
+      expiresAt: new Date(Date.now() - 60_000),
+    });
 
     const foreign = await request(app)
       .get(`/api/v1/jobs/${job._id.toString()}`)
@@ -184,12 +199,20 @@ describe("owned job response integration", () => {
       .get(`/api/v1/jobs/${new Types.ObjectId().toString()}`)
       .set("Authorization", `Bearer ${owner.accessToken}`)
       .expect(404);
+    const expiredResponse = await request(app)
+      .get(`/api/v1/jobs/${expired._id.toString()}`)
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .expect(404);
 
     expect(foreign.body.error).toMatchObject({
       code: "JOB_NOT_FOUND",
       message: "Job not found.",
     });
     expect(missing.body.error).toMatchObject({
+      code: "JOB_NOT_FOUND",
+      message: "Job not found.",
+    });
+    expect(expiredResponse.body.error).toMatchObject({
       code: "JOB_NOT_FOUND",
       message: "Job not found.",
     });
@@ -203,6 +226,13 @@ describe("owned job response integration", () => {
       "message",
       "requestId",
     ]);
+    await expect(JobRecordModel.findById(expired._id).lean()).resolves.not.toBeNull();
+    const indexes = await JobRecordModel.collection.indexes();
+    expect(indexes).toContainEqual(expect.objectContaining({
+      name: "jobs_retention_ttl",
+      key: { expiresAt: 1 },
+      expireAfterSeconds: 0,
+    }));
   });
 
   it("cancels owned queued and processing jobs idempotently", async () => {

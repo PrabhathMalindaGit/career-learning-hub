@@ -2,7 +2,7 @@ import { z } from "zod";
 import { registerJobHandler } from "../../jobs/job.registry.js";
 import {
   analyzeResume,
-  importResumePdf,
+  prepareResumePdfImport,
 } from "./resumeAnalysis.service.js";
 
 let registered = false;
@@ -20,7 +20,7 @@ export function registerResumeAnalysisJobHandlers(): void {
     }),
     async (payload, context) => {
       await context.reportProgress(10);
-      const result = await importResumePdf({
+      const result = await prepareResumePdfImport({
         ...payload,
         jobId: context.jobId,
         execution: context,

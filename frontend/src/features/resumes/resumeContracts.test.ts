@@ -3,6 +3,7 @@ import {
   parseAnalysis,
   parseJob,
   parseResumeEnvelope,
+  parseResumeContent,
   parseResumeList,
   parseResumeWorkspace,
   parseVersionList,
@@ -77,6 +78,31 @@ function versionFixture() {
 }
 
 describe("resume contract validators", () => {
+  it("validates canonical Resume content as a standalone trust boundary", () => {
+    expect(parseResumeContent(contentFixture())).toEqual(contentFixture());
+    expect(() =>
+      parseResumeContent({ ...contentFixture(), unexpected: true }),
+    ).toThrowError(/invalid resume response/i);
+    expect(() =>
+      parseResumeContent({
+        ...contentFixture(),
+        basics: { ...contentFixture().basics, email: "invalid" },
+      }),
+    ).toThrowError(/invalid resume response/i);
+    expect(() =>
+      parseResumeContent({
+        ...contentFixture(),
+        skills: [{ id: "not-a-uuid", name: "Tools", keywords: ["Git"] }],
+      }),
+    ).toThrowError(/invalid resume response/i);
+    expect(() =>
+      parseResumeContent({
+        ...contentFixture(),
+        interests: Array.from({ length: 51 }, (_, index) => `Interest ${index}`),
+      }),
+    ).toThrowError(/invalid resume response/i);
+  });
+
   it("narrows workspace persistence objects to allowlisted fields", () => {
     const result = parseResumeWorkspace({
       resume: resumeFixture(),
@@ -294,6 +320,57 @@ describe("resume contract validators", () => {
         },
       }),
     ).toThrowError(/invalid resume response/i);
+  });
+
+  it("parses only exact canonical import-review and import-adopted results", () => {
+    const baseJob = {
+      id: jobId,
+      type: "resume.import-pdf",
+      status: "completed",
+      progress: 100,
+      attempts: 1,
+      maxAttempts: 3,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const review = parseJob({
+      job: {
+        ...baseJob,
+        result: { kind: "import-review", content: contentFixture() },
+      },
+    });
+    expect(review.result).toEqual({
+      kind: "import-review",
+      content: contentFixture(),
+    });
+    const adopted = parseJob({
+      job: {
+        ...baseJob,
+        result: {
+          kind: "import-adopted",
+          resumeId: objectId,
+          versionId,
+          versionNumber: 1,
+        },
+      },
+    });
+    expect(adopted.result).toEqual({
+      kind: "import-adopted",
+      resumeId: objectId,
+      versionId,
+      versionNumber: 1,
+    });
+
+    for (const result of [
+      { kind: "import-review", content: { ...contentFixture(), private: true } },
+      { kind: "import-review", content: contentFixture(), extra: true },
+      { kind: "import-adopted", resumeId: objectId, versionId, versionNumber: 1, content: contentFixture() },
+      { kind: "import", resumeId: objectId, versionId, versionNumber: 1 },
+    ]) {
+      expect(() => parseJob({ job: { ...baseJob, result } })).toThrowError(
+        /invalid resume response/i,
+      );
+    }
   });
 
   it("validates analysis categories and strips provider metadata and job context", () => {

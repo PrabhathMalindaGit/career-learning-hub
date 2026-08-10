@@ -35,6 +35,22 @@ function record(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function exactKeys(
+  value: unknown,
+  required: readonly string[],
+  optional: readonly string[] = [],
+): Record<string, unknown> {
+  const item = record(value);
+  const allowed = new Set([...required, ...optional]);
+  if (
+    required.some((key) => !(key in item)) ||
+    Object.keys(item).some((key) => !allowed.has(key))
+  ) {
+    invalid();
+  }
+  return item;
+}
+
 function array<T>(
   value: unknown,
   maximum: number,
@@ -308,6 +324,65 @@ function parseContent(value: unknown): ResumeContent {
   };
 }
 
+function assertExactContentKeys(value: unknown): void {
+  const item = exactKeys(value, [
+    "basics", "experience", "education", "skills", "projects",
+    "certifications", "languages", "interests",
+  ]);
+  const basics = exactKeys(
+    item.basics,
+    ["fullName", "links"],
+    ["email", "phone", "location", "headline", "summary"],
+  );
+  array(basics.links, 20, (link) =>
+    exactKeys(link, ["id", "label", "url"]));
+  const bullet = (value: unknown) => exactKeys(value, ["id", "text"]);
+  array(item.experience, 50, (value) => {
+    const entry = exactKeys(
+      value,
+      ["id", "employer", "jobTitle", "isCurrent", "bullets"],
+      ["location", "startDate", "endDate"],
+    );
+    array(entry.bullets, 50, bullet);
+    return entry;
+  });
+  array(item.education, 30, (value) => {
+    const entry = exactKeys(
+      value,
+      ["id", "institution", "qualification", "isCurrent", "details"],
+      ["fieldOfStudy", "location", "startDate", "endDate"],
+    );
+    array(entry.details, 30, bullet);
+    return entry;
+  });
+  array(item.skills, 30, (value) =>
+    exactKeys(value, ["id", "name", "keywords"]));
+  array(item.projects, 50, (value) => {
+    const entry = exactKeys(
+      value,
+      ["id", "name", "technologies", "links", "bullets"],
+      ["role", "description", "startDate", "endDate"],
+    );
+    array(entry.links, 20, (link) =>
+      exactKeys(link, ["id", "label", "url"]));
+    array(entry.bullets, 50, bullet);
+    return entry;
+  });
+  array(item.certifications, 50, (value) =>
+    exactKeys(
+      value,
+      ["id", "name"],
+      ["issuer", "issuedDate", "credentialUrl"],
+    ));
+  array(item.languages, 30, (value) =>
+    exactKeys(value, ["id", "name"], ["proficiency"]));
+}
+
+export function parseResumeContent(value: unknown): ResumeContent {
+  assertExactContentKeys(value);
+  return parseContent(value);
+}
+
 function parseResume(value: unknown): ResumeRecord {
   const item = record(value);
   return {
@@ -429,12 +504,28 @@ function parseCompletedResult(
 ): ResumeJob["result"] {
   const item = record(value);
   if (type === "resume.import-pdf") {
-    return {
-      kind: "import",
-      resumeId: id(item.resumeId),
-      versionId: id(item.versionId),
-      versionNumber: integer(item.versionNumber, 1),
-    };
+    if (item.kind === "import-review") {
+      const review = exactKeys(item, ["kind", "content"]);
+      return {
+        kind: "import-review",
+        content: parseResumeContent(review.content),
+      };
+    }
+    if (item.kind === "import-adopted") {
+      const adopted = exactKeys(item, [
+        "kind",
+        "resumeId",
+        "versionId",
+        "versionNumber",
+      ]);
+      return {
+        kind: "import-adopted",
+        resumeId: id(adopted.resumeId),
+        versionId: id(adopted.versionId),
+        versionNumber: integer(adopted.versionNumber, 1),
+      };
+    }
+    invalid();
   }
   return {
     kind: "analysis",

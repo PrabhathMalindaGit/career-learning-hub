@@ -8,6 +8,7 @@ import { validate } from "../../middleware/validate.js";
 import { asyncHandler } from "../../shared/asyncHandler.js";
 import {
   applyRewritesController,
+  confirmImportPdfController,
   getAnalysisController,
   importPdfController,
   listAnalysesController,
@@ -21,6 +22,7 @@ import {
   analyzeResumeBodySchema,
   applyRewriteBodySchema,
   importPdfBodySchema,
+  importJobIdParamsSchema,
 } from "./resumeAnalysis.schemas.js";
 
 export const resumeAnalysisRouter = Router();
@@ -33,6 +35,13 @@ resumeAnalysisRouter.post(
   resumePdfUpload,
   validate({ body: importPdfBodySchema }),
   asyncHandler(importPdfController),
+);
+
+resumeAnalysisRouter.post(
+  "/import-pdf/:jobId/confirm",
+  resumeImportRateLimiter,
+  validate({ params: importJobIdParamsSchema }),
+  asyncHandler(confirmImportPdfController),
 );
 
 resumeAnalysisRouter.post(

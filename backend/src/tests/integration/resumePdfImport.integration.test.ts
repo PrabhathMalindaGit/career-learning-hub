@@ -1,11 +1,17 @@
 import { Readable } from "node:stream";
 import { Types } from "mongoose";
+import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { app } from "../../app.js";
 import { createAsset } from "../../modules/assets/asset.service.js";
 import { AssetModel } from "../../modules/assets/asset.model.js";
 import { ResumeModel } from "../../modules/resumes/resume.model.js";
+import { createResume } from "../../modules/resumes/resume.service.js";
 import { ResumeVersionModel } from "../../modules/resumes/resumeVersion.model.js";
+import { normalizeResumeContent } from "../../modules/resumes/resume.validation.js";
 import { AppError } from "../../shared/appError.js";
+import { JobRecordModel } from "../../jobs/job.model.js";
+import { registerTestUser } from "../helpers/auth.js";
 
 const { extractPdfTextMock } = vi.hoisted(() => ({
   extractPdfTextMock: vi.fn(),
@@ -15,7 +21,10 @@ vi.mock("../../modules/resume-analysis/pdf.service.js", () => ({
   extractPdfText: extractPdfTextMock,
 }));
 
-import { importResumePdf } from "../../modules/resume-analysis/resumeAnalysis.service.js";
+import {
+  confirmResumePdfImport,
+  prepareResumePdfImport,
+} from "../../modules/resume-analysis/resumeAnalysis.service.js";
 
 const syntheticPdf = Buffer.from(
   "%PDF-1.4\n% Synthetic privacy-safe Resume PDF fixture\n%%EOF\n",
@@ -57,6 +66,35 @@ async function createImportAsset(userId: string) {
   });
 }
 
+async function createReviewJob(userId: string, title = "Reviewed Resume") {
+  const asset = await createImportAsset(userId);
+  const job = await JobRecordModel.create({
+    userId,
+    type: "resume.import-pdf",
+    payload: { userId, assetId: asset._id.toString(), title },
+    status: "completed",
+    phase: "completed",
+    progress: 100,
+    attempts: 1,
+    maxAttempts: 3,
+    result: {
+      kind: "import-review",
+      content: normalizeResumeContent({
+        basics: { fullName: "Synthetic Candidate", links: [] },
+        experience: [],
+        education: [],
+        skills: [],
+        projects: [],
+        certifications: [],
+        languages: [],
+        interests: [],
+      }),
+    },
+    expiresAt: new Date(Date.now() + 60_000),
+  });
+  return { asset, job };
+}
+
 function minimalResume() {
   return {
     basics: {
@@ -78,13 +116,13 @@ function minimalResume() {
   };
 }
 
-describe("Resume PDF import persistence", () => {
+describe("Resume PDF staged import", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     extractPdfTextMock.mockReset();
   });
 
-  it("creates exactly one owned Resume for a representative multi-section import", async () => {
+  it("stages canonical multi-section content without creating a Resume or Version", async () => {
     const userId = new Types.ObjectId().toString();
     const asset = await createImportAsset(userId);
     extractPdfTextMock.mockResolvedValue({
@@ -131,19 +169,13 @@ describe("Resume PDF import persistence", () => {
       }],
     });
 
-    const result = await importResumePdf({
+    const result = await prepareResumePdfImport({
       userId,
       assetId: asset._id.toString(),
-      title: "Synthetic imported Resume",
     });
 
-    expect(result.versionNumber).toBe(1);
-    await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(1);
-    await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(1);
-    await expect(ResumeVersionModel.findById(result.versionId).lean()).resolves.toMatchObject({
-      userId: new Types.ObjectId(userId),
-      source: "pdf-import",
-      sourceAssetId: asset._id,
+    expect(result).toMatchObject({
+      kind: "import-review",
       content: {
         basics: {
           links: [{ label: "Portfolio", url: "https://portfolio.example/path" }],
@@ -151,9 +183,11 @@ describe("Resume PDF import persistence", () => {
         experience: [{ employer: "Example Company" }],
       },
     });
+    expect(result.content.experience[0]?.id).toMatch(/^[0-9a-f-]{36}$/i);
+    await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(0);
+    await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(0);
     await expect(AssetModel.findById(asset._id).lean()).resolves.toMatchObject({
-      status: "active",
-      metadata: { resumeId: result.resumeId, pageCount: 2 },
+      status: "temporary",
     });
   });
 
@@ -169,13 +203,13 @@ describe("Resume PDF import persistence", () => {
       basics: { fullName: "Minimal Candidate", links: [] },
     });
 
-    const result = await importResumePdf({
+    const result = await prepareResumePdfImport({
       userId,
       assetId: asset._id.toString(),
-      title: "Minimal imported Resume",
     });
 
-    await expect(ResumeVersionModel.findById(result.versionId).lean()).resolves.toMatchObject({
+    expect(result).toMatchObject({
+      kind: "import-review",
       content: {
         basics: { fullName: "Minimal Candidate", links: [] },
         experience: [],
@@ -214,10 +248,9 @@ describe("Resume PDF import persistence", () => {
     mockGemini(response);
 
     await expect(
-      importResumePdf({
+      prepareResumePdfImport({
         userId,
         assetId: asset._id.toString(),
-        title: "Failed imported Resume",
       }),
     ).rejects.toMatchObject({ code });
     await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(0);
@@ -243,10 +276,9 @@ describe("Resume PDF import persistence", () => {
       },
     });
 
-    const error = await importResumePdf({
+    const error = await prepareResumePdfImport({
       userId,
       assetId: asset._id.toString(),
-      title: "Semantic failure",
     }).catch((caught: unknown) => caught);
 
     expect(error).toMatchObject({
@@ -268,10 +300,9 @@ describe("Resume PDF import persistence", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
-      importResumePdf({
+      prepareResumePdfImport({
         userId,
         assetId: asset._id.toString(),
-        title: "Unreadable imported Resume",
       }),
     ).rejects.toMatchObject({ code: "PDF_EXTRACTION_FAILED" });
     expect(fetchMock).not.toHaveBeenCalled();
@@ -296,10 +327,9 @@ describe("Resume PDF import persistence", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
-      importResumePdf({
+      prepareResumePdfImport({
         userId,
         assetId: asset._id.toString(),
-        title: "Transient failure",
       }),
     ).rejects.toMatchObject({ code: "UNAVAILABLE", retryable: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -307,67 +337,181 @@ describe("Resume PDF import persistence", () => {
     await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(0);
   });
 
-  it("returns the same result without a second provider call when the import is observed twice", async () => {
+  it("confirms once, creates Version 1, promotes the Asset, and scrubs candidate content", async () => {
     const userId = new Types.ObjectId().toString();
-    const asset = await createImportAsset(userId);
-    extractPdfTextMock.mockResolvedValue({
-      text: "Synthetic candidate resume text long enough for idempotency verification.",
-      pageCount: 1,
-      characterCount: 75,
+    const { asset, job } = await createReviewJob(userId);
+
+    const result = await confirmResumePdfImport({
+      userId,
+      jobId: job._id.toString(),
     });
-    const fetchMock = mockGemini(minimalResume());
+
+    expect(result.versionNumber).toBe(1);
+    await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(1);
+    await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(1);
+    await expect(ResumeVersionModel.findById(result.versionId).lean()).resolves.toMatchObject({
+      userId: new Types.ObjectId(userId),
+      source: "pdf-import",
+      sourceAssetId: asset._id,
+      versionNumber: 1,
+    });
+    await expect(AssetModel.findById(asset._id).lean()).resolves.toMatchObject({
+      status: "active",
+      metadata: { resumeId: result.resumeId },
+    });
+    const storedJob = await JobRecordModel.findById(job._id).lean();
+    expect(storedJob?.result).toEqual({
+      kind: "import-adopted",
+      resumeId: result.resumeId,
+      versionId: result.versionId,
+      versionNumber: 1,
+    });
+    expect(storedJob?.result).not.toHaveProperty("content");
+  });
+
+  it("returns the existing Resume workspace envelope from the public confirm route", async () => {
+    const owner = await registerTestUser(app, {
+      email: "resume-import-confirm@example.com",
+      displayName: "Resume Import Confirm",
+    });
+    const { job } = await createReviewJob(owner.userId, "Confirmed Resume");
+
+    const response = await request(app)
+      .post(`/api/v1/resume-analyses/import-pdf/${job._id.toString()}/confirm`)
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      success: true,
+      data: {
+        resume: { title: "Confirmed Resume", latestVersionNumber: 1 },
+        version: { versionNumber: 1, source: "pdf-import" },
+      },
+    });
+  });
+
+  it("returns one winner for repeated and concurrent confirmation", async () => {
+    await ResumeVersionModel.init();
+    const userId = new Types.ObjectId().toString();
+    const { job } = await createReviewJob(userId, "Concurrent reviewed Resume");
     const input = {
       userId,
-      assetId: asset._id.toString(),
-      title: "Idempotent imported Resume",
+      jobId: job._id.toString(),
     };
 
-    const first = await importResumePdf(input);
-    const second = await importResumePdf(input);
+    const [first, second] = await Promise.all([
+      confirmResumePdfImport(input),
+      confirmResumePdfImport(input),
+    ]);
+    const repeated = await confirmResumePdfImport(input);
 
     expect(second).toEqual(first);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(extractPdfTextMock).toHaveBeenCalledTimes(1);
+    expect(repeated).toEqual(first);
     await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(1);
     await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(1);
   });
 
-  it("returns the winning version for simultaneous same-asset execution", async () => {
-    await ResumeVersionModel.init();
+  it("rejects malformed candidate content before any Resume write", async () => {
     const userId = new Types.ObjectId().toString();
-    const asset = await createImportAsset(userId);
-    extractPdfTextMock.mockResolvedValue({
-      text: "Synthetic candidate resume text long enough for a concurrent replay.",
-      pageCount: 1,
-      characterCount: 69,
-    });
-    const pendingResponses: Array<(response: Response) => void> = [];
-    const fetchMock = vi.fn().mockImplementation(
-      () =>
-        new Promise<Response>((resolve) => {
-          pendingResponses.push(resolve);
-          if (pendingResponses.length === 2) {
-            pendingResponses.forEach((release) =>
-              release(geminiResponse(minimalResume())),
-            );
-          }
-        }),
+    const { job } = await createReviewJob(userId);
+    await JobRecordModel.updateOne(
+      { _id: job._id },
+      { $set: { result: { kind: "import-review", content: { basics: 42 } } } },
     );
-    vi.stubGlobal("fetch", fetchMock);
-    const input = {
+
+    await expect(confirmResumePdfImport({
       userId,
-      assetId: asset._id.toString(),
-      title: "Concurrent imported Resume",
-    };
+      jobId: job._id.toString(),
+    })).rejects.toBeTruthy();
+    await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(0);
+    await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(0);
+  });
 
-    const [first, second] = await Promise.all([
-      importResumePdf(input),
-      importResumePdf(input),
-    ]);
+  it("rejects an import review without its required bounded expiry", async () => {
+    const userId = new Types.ObjectId().toString();
+    const { job } = await createReviewJob(userId);
+    await JobRecordModel.updateOne(
+      { _id: job._id },
+      { $unset: { expiresAt: 1 } },
+    );
 
-    expect(second).toEqual(first);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await expect(confirmResumePdfImport({
+      userId,
+      jobId: job._id.toString(),
+    })).rejects.toMatchObject({ code: "JOB_NOT_FOUND" });
+    await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(0);
+    await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(0);
+  });
+
+  it.each([
+    ["queued", { status: "queued", phase: "queued" }],
+    ["processing", { status: "processing", phase: "validating" }],
+    ["failed", { status: "failed", phase: "failed" }],
+    ["cancelled", { status: "cancelled", phase: "cancelled" }],
+    ["wrong type", { type: "resume.analyze" }],
+    ["expired", { expiresAt: new Date(0) }],
+  ])("rejects a %s import job before any Resume write", async (_label, update) => {
+    const userId = new Types.ObjectId().toString();
+    const { job } = await createReviewJob(userId);
+    await JobRecordModel.updateOne({ _id: job._id }, { $set: update });
+
+    await expect(confirmResumePdfImport({
+      userId,
+      jobId: job._id.toString(),
+    })).rejects.toMatchObject({ code: "JOB_NOT_FOUND" });
+    await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(0);
+    await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(0);
+  });
+
+  it("rejects a missing source Asset before any Resume write", async () => {
+    const userId = new Types.ObjectId().toString();
+    const { asset, job } = await createReviewJob(userId);
+    await AssetModel.updateOne(
+      { _id: asset._id },
+      { $set: { status: "deleted", deletedAt: new Date() } },
+    );
+
+    await expect(confirmResumePdfImport({
+      userId,
+      jobId: job._id.toString(),
+    })).rejects.toMatchObject({ code: "ASSET_NOT_FOUND" });
+    await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(0);
+    await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(0);
+  });
+
+  it("recovers an existing source-Asset winner, promotes it, and scrubs the review", async () => {
+    const userId = new Types.ObjectId().toString();
+    const { asset, job } = await createReviewJob(userId, "Recovered Resume");
+    const winner = await createResume({
+      userId,
+      title: "Recovered Resume",
+      content: normalizeResumeContent({
+        basics: { fullName: "Synthetic Candidate", links: [] },
+        experience: [], education: [], skills: [], projects: [],
+        certifications: [], languages: [], interests: [],
+      }),
+      source: "pdf-import",
+      sourceAssetId: asset._id.toString(),
+    });
+
+    const result = await confirmResumePdfImport({
+      userId,
+      jobId: job._id.toString(),
+    });
+
+    expect(result).toEqual({
+      resumeId: winner.resume._id.toString(),
+      versionId: winner.version._id.toString(),
+      versionNumber: 1,
+    });
     await expect(ResumeModel.countDocuments({ userId })).resolves.toBe(1);
     await expect(ResumeVersionModel.countDocuments({ userId })).resolves.toBe(1);
+    await expect(AssetModel.findById(asset._id).lean()).resolves.toMatchObject({
+      status: "active",
+      metadata: { resumeId: winner.resume._id.toString() },
+    });
+    await expect(JobRecordModel.findById(job._id).lean()).resolves.toMatchObject({
+      result: { kind: "import-adopted", resumeId: winner.resume._id.toString() },
+    });
   });
 });
