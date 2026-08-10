@@ -1,23 +1,52 @@
 # Current Execution Phase
 
-- Phase: 19-0
-- Name: Post-Staging Roadmap Reconciliation and Activation
-- Prompt ID: `CLH-PHASE-19-0-50-ITEM-REGISTER-RECONCILIATION-02`
-- Original activation prompt:
-  `CLH-PHASE-19-0-POST-STAGING-ROADMAP-RECONCILIATION-01`
-- Status: `COMPLETED / HUMAN-APPROVED`
-- Approval token: `PHASE_19_0_ROADMAP_RECONCILIATION_APPROVED`
-- Approval token accepted: `YES`
-- Baseline branch: `main`
-- Baseline commit: `00eb481af7495208af379dc0b0550e387c710cf7`
+- Phase: 19A-1
+- Name: Resume Editor Workspace Refinement
+- Prompt ID: `CLH-PHASE-19A-1-RESUME-EDITOR-WORKSPACE-01`
+- Status: `PHASE 19A-1 COMPLETED / HUMAN-APPROVED / AWAITING OPERATOR GIT ACTION`
+- Approved design:
+  `docs/superpowers/specs/2026-08-10-resume-editor-workspace-refinement-design.md`
+- Design approval token:
+  `PHASE_19A1_RESUME_EDITOR_WORKSPACE_DESIGN_APPROVED`
+- Design approval token accepted: `YES`
+- Human visual rejection token:
+  `PHASE_19A1_VISUAL_REVIEW_REJECTED_REPAIR_REQUIRED`
+- Second human Chrome review rejection token:
+  `PHASE_19A1_PREVIEW_PAPER_CONTAINMENT_REPAIR_REQUIRED`
+- Third human Chrome review rejection token:
+  `PHASE_19A1_WORKSPACE_POLISH_REPAIR_REQUIRED`
+- Human visual repair status:
+  `FINAL WORKSPACE POLISH IMPLEMENTED / AUTOMATED AND BUILT-IN-BROWSER VERIFIED / HUMAN CHROME REVIEW APPROVED`
+- Baseline branch: `phase-19a-1-resume-editor-workspace`
+- Baseline commit: `4645ccb9ff610df1005481375a7d3c373703fdbd`
 - Baseline subject:
-  `Merge pull request #3 from PrabhathMalindaGit/docs/g5-staging-closeout`
+  `Merge pull request #4 from PrabhathMalindaGit/docs/phase-19-0-roadmap-closeout`
 - Authority:
-  `docs/planning/PHASE_19_POST_STAGING_ROADMAP_RECONCILIATION.md`
+  `docs/planning/PHASE_19A1_RESUME_EDITOR_WORKSPACE_REFINEMENT.md`
 - Active boundary:
-  ROADMAP RECONCILIATION ONLY; NO PRODUCT, TEST, CONFIGURATION, ENVIRONMENT,
-  MIGRATION, PROVIDER, CLOUD, SERVICE, DEPLOYMENT, OR PHASE 19A-19H
-  IMPLEMENTATION ACTION
+  `CLH-UX-RESUME-EDITOR-004` AND `CLH-UX-RESUME-EDITOR-005` ONLY; FINDINGS
+  013-018 REMAIN INACTIVE; COMPLETED FINDINGS 001-003 ARE PRESERVED; NO
+  BACKEND, SHARED-CONTRACT, SCHEMA, DEPENDENCY, PROVIDER, ENVIRONMENT, OR
+  DEPLOYMENT CHANGE
+- Finding status:
+  `CLH-UX-RESUME-EDITOR-004 COMPLETED; CLH-UX-RESUME-EDITOR-005 COMPLETED`
+- Implementation state:
+  WIDE 1280PX EDITOR-LEFT / LIVE-PREVIEW-RIGHT GRID; ASSESSMENTS FULL-WIDTH
+  BELOW; LIVE PREVIEW USES A NESTED-GRID-BOUNDED, KEYBOARD-FOCUSABLE, STICKY
+  SCROLL PANEL ONLY AT 1280PX AND ABOVE WHILE THE RESUME PAPER RETAINS NATURAL
+  HEIGHT; SINGLE COLUMN WITH STATIC, UNBOUNDED PREVIEW BELOW 1280PX; SECTION
+  NAVIGATION IS NON-STICKY; COMPACT RESUME APPEARANCE SUMMARY AND ACCESSIBLE
+  CUSTOMIZE DISCLOSURE PRESERVE ALL NINE CHOICES AND EXPLICIT SAVE; NINE
+  ACCESSIBLE DISCLOSURE SECTIONS WITH BASICS INITIALLY OPEN;
+  SECTION NAVIGATION AND CLIENT/SERVER VALIDATION REVEAL TARGETS BEFORE FOCUS;
+  COMPACT SKILL-GROUP ROWS; SKILLS-ONLY ATOMIC PREVIEW WRAPPING; NATIVE PROSE
+  SPELLCHECK PRESERVED AND URL OPT-OUTS RETAINED; SHARED SCREEN RESUME PAPER
+  USES NATURAL CONTENT HEIGHT WITH ITS RESPONSIVE WIDTH, MINIMUM HEIGHT, WHITE
+  BACKGROUND, BORDER, SHADOW, AND PRINT PAGINATION CONTRACT PRESERVED;
+  CANDIDATE PHOTO IS RECORDED ONLY AS AN INACTIVE FUTURE PHASE 19A-4 PROPOSAL
+- Human visual approval required:
+  `PHASE_19A1_RESUME_EDITOR_WORKSPACE_VISUAL_APPROVED`
+- Human visual approval accepted: `YES / 2026-08-10`
 - Reconciled roadmap:
   `19A RESUME; 19B INTERVIEW; 19C LEARNING; 19D DASHBOARD; 19E AUTHENTICATION;
   19F APPLICATION SHELL/SHARED PATTERNS; 19G INTEGRATED VERIFICATION;
@@ -37,15 +66,25 @@
 - Staging storage limitation:
   `ASSET_STORAGE_DRIVER=local IS ACCEPTED FOR STAGING ONLY; PERSISTENT
   S3-COMPATIBLE PRIVATE STORAGE IS A PHASE 20 PRODUCTION-READINESS BLOCKER`
-- Phase 19A through Phase 19H status: `PLANNED / INACTIVE`
+- Phase 19A status: `ACTIVE`; Phase 19A-1 is `COMPLETED / HUMAN-APPROVED`.
+  Phase 19A as a whole remains incomplete. Phase 19A-2, Phase 19A-3, and Phase
+  19A-4 remain planned and inactive until separately authorized.
+- Phase 19B through Phase 19H status: `PLANNED / INACTIVE`
 - Phase 20 and Phase 21 status: `PLANNED / INACTIVE`
-- Next proposed task:
-  `PHASE 19A-1 — RESUME EDITOR WORKSPACE`; audit/implementation preparation
-  remains inactive and requires a separate operator-approved prompt.
+- Next proposed task after Phase 19A-1 visual approval:
+  `PHASE 19A-2 — RESUME COLLECTION AND CREATION WORKFLOW`; findings 013-018
+  remain inactive until separately authorized.
+- Future inactive Resume Studio refinements:
+  `PHASE 19A-3 — RESUME SAVE & EXPORT WORKFLOW` to audit Save new version,
+  design persistence, Print / Save as PDF, exported-version clarity, and
+  immutable-version semantics; `PHASE 19A-4 — CANDIDATE PHOTO SUPPORT` to
+  establish an owned private image-asset flow covering upload validation,
+  replace/remove, template presentation, preview, export, and cleanup without
+  treating `showProfilePhoto` as an image source.
 - Git publication status:
   `NO STAGE / NO COMMIT / NO PUSH / NO MERGE / NO PR / NO DEPLOYMENT`
 - Historical Phase 19 `PLANNED / INACTIVE` statements below describe earlier
-  execution snapshots and do not override this Phase 19-0 authority block.
+  execution snapshots and do not override this Phase 19A-1 authority block.
 
 ## Completed predecessor: G-5 and staging closeout
 

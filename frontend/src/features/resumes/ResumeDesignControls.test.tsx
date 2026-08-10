@@ -33,10 +33,27 @@ afterEach(() => {
 });
 
 describe("ResumeDesignControls", () => {
-  it("renders registry-backed visual radio cards for every bounded design choice", () => {
+  it("summarizes the current appearance and reveals every bounded design choice", async () => {
     renderControls();
+    const user = userEvent.setup();
 
-    expect(screen.getByRole("group", { name: "Resume design" })).not.toBeNull();
+    expect(
+      screen.getByRole("group", { name: "Resume appearance" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("ATS Classic • Inter • Slate • A4"),
+    ).not.toBeNull();
+    const customize = screen.getByRole("button", { name: "Customize" });
+    expect(customize.getAttribute("aria-expanded")).toBe("false");
+    expect(customize.getAttribute("aria-controls")).toBe(
+      "resume-design-customization",
+    );
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(document.querySelectorAll("[data-template-preview]")).toHaveLength(0);
+
+    await user.click(customize);
+
+    expect(customize.getAttribute("aria-expanded")).toBe("true");
     const templateChoices = document.querySelectorAll(
       'input[name="resume-template"]',
     );
@@ -77,7 +94,7 @@ describe("ResumeDesignControls", () => {
     expect(document.querySelectorAll("[data-template-preview]")).toHaveLength(3);
     expect(document.querySelectorAll("[data-font-preview]")).toHaveLength(3);
     expect(document.querySelectorAll("[data-palette-preview]")).toHaveLength(3);
-    expect(screen.getAllByText("Selected")).toHaveLength(3);
+    expect(screen.queryAllByText("Selected")).toHaveLength(0);
     expect(
       (screen.getByRole("radio", { name: /Inter/i }) as HTMLInputElement)
         .checked,
@@ -109,7 +126,7 @@ describe("ResumeDesignControls", () => {
     );
   });
 
-  it("falls back safely for unknown saved values without patching on render", () => {
+  it("falls back safely for unknown saved values without patching on render", async () => {
     const onSave = vi.fn();
     const onPreviewChange = vi.fn();
     renderControls({
@@ -130,6 +147,8 @@ describe("ResumeDesignControls", () => {
     expect(document.body.textContent).not.toContain("unknown-font");
     expect(onSave).not.toHaveBeenCalled();
     expect(onPreviewChange).not.toHaveBeenCalled();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Customize" }));
     expect(screen.getAllByRole("radio").every((choice) =>
       !(choice as HTMLInputElement).checked
     )).toBe(true);
@@ -154,6 +173,7 @@ describe("ResumeDesignControls", () => {
       onPreviewChange,
     });
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Customize" }));
 
     await user.click(
       screen.getByRole("radio", { name: /Modern Professional/i }),
@@ -170,6 +190,9 @@ describe("ResumeDesignControls", () => {
       fontFamily: "Georgia",
       colorPaletteId: "navy",
     });
+    expect(
+      screen.getByText("Modern Professional • Georgia • Navy • A4"),
+    ).not.toBeNull();
     expect(screen.getByText("Design changes not saved")).not.toBeNull();
     await user.click(screen.getByRole("button", { name: "Save design" }));
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -184,6 +207,7 @@ describe("ResumeDesignControls", () => {
     const onPreviewChange = vi.fn();
     const { props } = renderControls({ onPreviewChange });
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Customize" }));
 
     await user.click(
       screen.getByRole("radio", { name: /Compact Technical/i }),
@@ -211,8 +235,19 @@ describe("ResumeDesignControls", () => {
     expect(props.onSave).not.toHaveBeenCalled();
   });
 
-  it("shows saving, success, and safe request-ID failure states", () => {
+  it("shows saving, success, and safe request-ID failure states", async () => {
     const { rerender } = render(
+      <ResumeDesignControls
+        design={approvedDesign}
+        saving={false}
+        onPreviewChange={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Customize" }));
+
+    rerender(
       <ResumeDesignControls
         design={approvedDesign}
         saving
@@ -249,8 +284,10 @@ describe("ResumeDesignControls", () => {
     expect(screen.queryByText("Resume design saved.")).toBeNull();
   });
 
-  it("states the current-design behavior for historical saved content", () => {
+  it("states the current-design behavior for historical saved content", async () => {
     renderControls();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Customize" }));
     expect(
       screen.getByText(/historical saved content uses this current design/i),
     ).not.toBeNull();
@@ -262,6 +299,7 @@ describe("ResumeDesignControls", () => {
     const onPreviewChange = vi.fn();
     renderControls({ onPreviewChange });
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Customize" }));
     const atsClassic = screen.getByRole("radio", { name: /ATS Classic/i });
 
     atsClassic.focus();
