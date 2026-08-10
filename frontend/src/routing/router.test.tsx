@@ -612,6 +612,23 @@ describe("application routing", () => {
     ).toBeNull();
   });
 
+  it("opens and consumes the canonical Resume create intent without creating", async () => {
+    vi.mocked(authApi.refreshSession).mockResolvedValue(
+      authenticatedSession,
+    );
+    const router = renderRoute("/resumes?origin=shell&action=create");
+
+    expect(
+      await screen.findByRole("dialog", { name: "Create Resume" }),
+    ).not.toBeNull();
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("?origin=shell");
+    });
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Guided setup" }),
+    );
+  });
+
   it("renders a safe not-found page for an unknown path", async () => {
     vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
 
@@ -1039,13 +1056,13 @@ describe("authentication forms and shell interaction", () => {
       }),
     );
 
-    const title = await screen.findByRole("textbox", {
-      name: "New resume title",
+    const guidedSetup = await screen.findByRole("button", {
+      name: "Guided setup",
     });
     await waitFor(() => {
       expect(router.state.location.pathname).toBe("/resumes");
       expect(router.state.location.search).toBe("");
-      expect(document.activeElement).toBe(title);
+      expect(document.activeElement).toBe(guidedSetup);
     });
   });
 

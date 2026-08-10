@@ -18,9 +18,15 @@ import { QuizModel } from "../../modules/learning/quiz.model.js";
 import { generateInterviewQuestions } from "../../modules/interviews/interviewAi.service.js";
 import { InterviewQuestionModel } from "../../modules/interviews/interviewQuestion.model.js";
 import { InterviewSessionModel } from "../../modules/interviews/interviewSession.model.js";
-import { analyzeResume } from "../../modules/resume-analysis/resumeAnalysis.service.js";
+import {
+  analyzeResume,
+  applyAnalysisSuggestions,
+} from "../../modules/resume-analysis/resumeAnalysis.service.js";
 import { ResumeAnalysisModel } from "../../modules/resume-analysis/resumeAnalysis.model.js";
-import { createResume } from "../../modules/resumes/resume.service.js";
+import {
+  createResume,
+  createResumeVersion,
+} from "../../modules/resumes/resume.service.js";
 import { AppError } from "../../shared/appError.js";
 import {
   activateProvider,
@@ -227,6 +233,220 @@ describe("AI retry classification and provider-to-persistence", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0]?.[0])).not.toMatch(/openrouter|[?&]key=/i);
     await expect(ResumeAnalysisModel.countDocuments({ userId })).resolves.toBe(1);
+  });
+
+  it("sends the explicitly selected current saved version with Experience and Education to assessment", async () => {
+    const userId = new Types.ObjectId().toString();
+    const created = await createResume({
+      userId,
+      title: "Synthetic assessment source",
+      content: {
+        basics: { fullName: "Earlier Saved Candidate", links: [] },
+        experience: [
+          {
+            employer: "Example Systems",
+            jobTitle: "Engineer",
+            isCurrent: true,
+            bullets: [{ text: "Built the current saved service." }],
+          },
+        ],
+        education: [
+          {
+            institution: "Example University",
+            qualification: "BSc",
+            isCurrent: false,
+            details: [{ text: "Completed the current saved project." }],
+          },
+        ],
+        skills: [],
+        projects: [],
+        certifications: [],
+        languages: [],
+        interests: [],
+      },
+    });
+    const currentContent = JSON.parse(
+      JSON.stringify(created.version.content),
+    ) as Record<string, unknown> & {
+      basics: Record<string, unknown>;
+    };
+    currentContent.basics.fullName = "Current Saved Candidate";
+    const current = await createResumeVersion({
+      userId,
+      resumeId: created.resume._id.toString(),
+      expectedCurrentVersionId: created.version._id.toString(),
+      content: currentContent,
+    });
+    const fetchMock = mockGemini({
+      scoreBreakdown: {
+        keywordMatch: 10,
+        clarity: 10,
+        evidence: 10,
+        formatting: 10,
+      },
+      issues: [],
+      strengths: [],
+      missingKeywords: [],
+      suggestions: [],
+    });
+    const job = await routedJob(userId, "resume.analyze");
+
+    const analysis = await analyzeResume({
+      userId,
+      resumeId: created.resume._id.toString(),
+      versionId: current.version._id.toString(),
+      targetRole: "Synthetic Engineer",
+      jobId: job._id.toString(),
+    });
+
+    const providerCall = fetchMock.mock.calls[0] as unknown as [
+      RequestInfo | URL,
+      RequestInit,
+    ];
+    const providerBody = JSON.parse(String(providerCall[1].body)) as {
+      contents: Array<{ parts: Array<{ text: string }> }>;
+    };
+    const providerPrompt = providerBody.contents[0]?.parts[0]?.text ?? "";
+    expect(analysis.resumeVersionId.toString()).toBe(
+      current.version._id.toString(),
+    );
+    expect(providerPrompt).toContain("Current Saved Candidate");
+    expect(providerPrompt).not.toContain("Earlier Saved Candidate");
+    expect(providerPrompt).toContain("Example Systems");
+    expect(providerPrompt).toContain("Built the current saved service.");
+    expect(providerPrompt).toContain("Example University");
+    expect(providerPrompt).toContain("Completed the current saved project.");
+  });
+
+  it("keeps rewrite targeting IDs internal while replacing their visible provider echoes with Resume context", async () => {
+    const userId = new Types.ObjectId().toString();
+    const projectId = randomUUID();
+    const projectBulletId = randomUUID();
+    const linkId = randomUUID();
+    const unrelatedUuid = randomUUID();
+    const created = await createResume({
+      userId,
+      title: "Synthetic identifier-safety Resume",
+      content: {
+        basics: {
+          fullName: "Synthetic Candidate",
+          links: [
+            {
+              id: linkId,
+              label: "Portfolio",
+              url: "https://example.test/portfolio",
+            },
+          ],
+        },
+        experience: [],
+        education: [],
+        skills: [],
+        projects: [
+          {
+            id: projectId,
+            name: "StudyShare",
+            technologies: ["React"],
+            links: [],
+            bullets: [
+              {
+                id: projectBulletId,
+                text: "Built a project dashboard.",
+              },
+            ],
+          },
+        ],
+        certifications: [],
+        languages: [],
+        interests: [],
+      },
+    });
+    const fetchMock = mockGemini({
+      scoreBreakdown: {
+        keywordMatch: 10,
+        clarity: 10,
+        evidence: 10,
+        formatting: 10,
+      },
+      issues: [
+        {
+          code: "UNFILLED_PLACEHOLDER",
+          severity: "medium",
+          message: `Bullet ${projectBulletId} contains an unfilled [X] placeholder.`,
+        },
+        {
+          code: "GENERIC_LINK_REVIEW",
+          severity: "low",
+          message: `Link ${linkId} needs review; factual reference ${unrelatedUuid} must remain.`,
+        },
+      ],
+      strengths: [
+        {
+          title: `Clear project ${projectId}`,
+          detail: `Bullet ${projectBulletId} has a concise action.`,
+        },
+      ],
+      missingKeywords: [],
+      suggestions: [
+        {
+          bulletId: projectBulletId,
+          rewrittenText: "Built a clearer project dashboard.",
+          rationale: `Bullet ${projectBulletId} can be clearer.`,
+          verificationRequired: true,
+        },
+      ],
+    });
+    const job = await routedJob(userId, "resume.analyze");
+
+    const analysis = await analyzeResume({
+      userId,
+      resumeId: created.resume._id.toString(),
+      versionId: created.version._id.toString(),
+      targetRole: "Synthetic Engineer",
+      jobId: job._id.toString(),
+    });
+
+    const providerCall = fetchMock.mock.calls[0] as unknown as [
+      RequestInfo | URL,
+      RequestInit,
+    ];
+    const providerBody = JSON.parse(String(providerCall[1].body)) as {
+      contents: Array<{ parts: Array<{ text: string }> }>;
+    };
+    expect(providerBody.contents[0]?.parts[0]?.text).toContain(projectBulletId);
+    expect(analysis.suggestions[0]?.bulletId).toBe(projectBulletId);
+    expect(analysis.issues[0]?.message).toBe(
+      "StudyShare — bullet 1 contains an unfilled [X] placeholder.",
+    );
+    expect(analysis.issues[1]?.message).toBe(
+      `Portfolio — link 1 needs review; factual reference ${unrelatedUuid} must remain.`,
+    );
+    expect(analysis.strengths[0]).toMatchObject({
+      title: "Clear project StudyShare — project 1",
+      detail: "StudyShare — bullet 1 has a concise action.",
+    });
+    expect(analysis.suggestions[0]?.rationale).toBe(
+      "StudyShare — bullet 1 can be clearer.",
+    );
+    const visibleGuidance = JSON.stringify({
+      issues: analysis.issues,
+      strengths: analysis.strengths,
+      rationale: analysis.suggestions.map((suggestion) => suggestion.rationale),
+    });
+    expect(visibleGuidance).not.toContain(projectId);
+    expect(visibleGuidance).not.toContain(projectBulletId);
+    expect(visibleGuidance).not.toContain(linkId);
+    expect(visibleGuidance).toContain(unrelatedUuid);
+
+    const applied = await applyAnalysisSuggestions({
+      userId,
+      resumeId: created.resume._id.toString(),
+      analysisId: analysis._id.toString(),
+      suggestionIds: [analysis.suggestions[0]!.id],
+    });
+    expect(applied.version.content.projects[0]?.bullets[0]).toMatchObject({
+      id: projectBulletId,
+      text: "Built a clearer project dashboard.",
+    });
   });
 
   it("does not persist a Resume result when cancellation wins before persistence", async () => {

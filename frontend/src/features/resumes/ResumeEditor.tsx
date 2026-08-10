@@ -1,6 +1,15 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
+import { ResumeAchievementBuilder } from "./ResumeAchievementBuilder";
+import { ResumeSkillPicker } from "./ResumeSkillPicker";
+import {
+  EXPERIENCE_ACTION_STARTERS,
+  INTEREST_SUGGESTIONS,
+  JOB_TITLE_SUGGESTIONS,
+  PROFICIENCY_SUGGESTIONS,
+  QUALIFICATION_SUGGESTIONS,
+} from "./resumeGuidance";
 import {
   createDraftEntity,
   resumeFieldId,
@@ -36,6 +45,11 @@ const RESUME_EDITOR_SECTIONS = [
   { id: "resume-section-languages", label: "Languages" },
   { id: "resume-section-interests", label: "Interests" },
 ] as const;
+
+export const RESUME_JOB_TITLE_DATALIST_ID = "resume-job-title-suggestions";
+const RESUME_QUALIFICATION_DATALIST_ID = "resume-qualification-suggestions";
+const RESUME_PROFICIENCY_DATALIST_ID = "resume-proficiency-suggestions";
+const RESUME_INTEREST_DATALIST_ID = "resume-interest-suggestions";
 
 type ResumeEditorSectionId = (typeof RESUME_EDITOR_SECTIONS)[number]["id"];
 
@@ -317,6 +331,27 @@ export function ResumeEditor({
         </ul>
       </nav>
 
+      <datalist id={RESUME_JOB_TITLE_DATALIST_ID}>
+        {JOB_TITLE_SUGGESTIONS.map((suggestion) => (
+          <option key={suggestion} value={suggestion} />
+        ))}
+      </datalist>
+      <datalist id={RESUME_QUALIFICATION_DATALIST_ID}>
+        {QUALIFICATION_SUGGESTIONS.map((suggestion) => (
+          <option key={suggestion} value={suggestion} />
+        ))}
+      </datalist>
+      <datalist id={RESUME_PROFICIENCY_DATALIST_ID}>
+        {PROFICIENCY_SUGGESTIONS.map((suggestion) => (
+          <option key={suggestion} value={suggestion} />
+        ))}
+      </datalist>
+      <datalist id={RESUME_INTEREST_DATALIST_ID}>
+        {INTEREST_SUGGESTIONS.map((suggestion) => (
+          <option key={suggestion} value={suggestion} />
+        ))}
+      </datalist>
+
       <EditorSection
         sectionId="resume-section-basics"
         title="Basics"
@@ -545,6 +580,11 @@ export function ResumeEditor({
                       {...fieldAttributes(`experience.${index}.${field}`)}
                       aria-label={label}
                       disabled={disabled}
+                      list={
+                        field === "jobTitle"
+                          ? RESUME_JOB_TITLE_DATALIST_ID
+                          : undefined
+                      }
                       maxLength={maximum}
                       value={entry[field] ?? ""}
                       onChange={(event) =>
@@ -575,6 +615,40 @@ export function ResumeEditor({
               <div className="resume-bullet-list">
                 {entry.bullets.map((bullet, bulletIndex) => (
                   <div className="resume-bullet-row" key={bullet.clientKey}>
+                    {bullet.text === "" ? (
+                      <div
+                        className="resume-action-starters"
+                        aria-label={`Bullet ${bulletIndex + 1} action starters`}
+                      >
+                        <span>Start with</span>
+                        {EXPERIENCE_ACTION_STARTERS.map((starter) => (
+                          <button
+                            key={starter}
+                            type="button"
+                            disabled={disabled}
+                            aria-label={`Start bullet ${bulletIndex + 1} with ${starter}`}
+                            onClick={() => {
+                              mutate((next) => {
+                                next.experience[index]!.bullets[
+                                  bulletIndex
+                                ]!.text = `${starter} `;
+                              });
+                              window.requestAnimationFrame(() => {
+                                document
+                                  .getElementById(
+                                    resumeFieldId(
+                                      `experience.${index}.bullets.${bulletIndex}.text`,
+                                    ),
+                                  )
+                                  ?.focus();
+                              });
+                            }}
+                          >
+                            {starter}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                     <label>
                       Bullet {bulletIndex + 1}
                       <textarea
@@ -630,6 +704,16 @@ export function ResumeEditor({
                 >
                   Add experience bullet
                 </button>
+                <ResumeAchievementBuilder
+                  disabled={disabled || entry.bullets.length >= 50}
+                  onAdd={(text) =>
+                    mutate((next) => {
+                      next.experience[index]!.bullets.push(
+                        createDraftEntity({ text }),
+                      );
+                    })
+                  }
+                />
               </div>
               <MoveButtons
                 label={`experience ${index + 1}`}
@@ -701,6 +785,11 @@ export function ResumeEditor({
                       {...fieldAttributes(`education.${index}.${field}`)}
                       aria-label={label}
                       disabled={disabled}
+                      list={
+                        field === "qualification"
+                          ? RESUME_QUALIFICATION_DATALIST_ID
+                          : undefined
+                      }
                       maxLength={maximum}
                       value={entry[field] ?? ""}
                       onChange={(event) =>
@@ -881,6 +970,18 @@ export function ResumeEditor({
             ))}
           </div>
         )}
+        <details className="resume-editor-helper">
+          <summary>Add skills from catalogue</summary>
+          <ResumeSkillPicker
+            value={draft.skills}
+            disabled={disabled}
+            onChange={(skills) =>
+              mutate((next) => {
+                next.skills = skills;
+              })
+            }
+          />
+        </details>
       </EditorSection>
 
       <EditorSection
@@ -1255,7 +1356,9 @@ export function ResumeEditor({
                 <label>
                   Proficiency
                   <input
+                    aria-label="Proficiency"
                     disabled={disabled}
+                    list={RESUME_PROFICIENCY_DATALIST_ID}
                     maxLength={80}
                     value={entry.proficiency ?? ""}
                     onChange={(event) =>
@@ -1314,6 +1417,7 @@ export function ResumeEditor({
                   {...fieldAttributes(`interests.${index}.value`)}
                   aria-label={`Interest ${index + 1}`}
                   disabled={disabled}
+                  list={RESUME_INTEREST_DATALIST_ID}
                   maxLength={120}
                   value={entry.value}
                   onChange={(event) =>

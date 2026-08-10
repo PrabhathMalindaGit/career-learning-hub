@@ -3,6 +3,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
@@ -13,7 +14,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiClient";
 import * as resumeApi from "./resumeApi";
 import { ResumeListPage } from "./ResumeListPage";
-import * as polling from "./resumePolling";
 
 vi.mock("./resumeApi", () => ({
   createResume: vi.fn(),
@@ -22,20 +22,8 @@ vi.mock("./resumeApi", () => ({
   listResumes: vi.fn(),
 }));
 
-vi.mock("./resumePolling", async () => {
-  const actual =
-    await vi.importActual<typeof import("./resumePolling")>(
-      "./resumePolling",
-    );
-  return {
-    ...actual,
-    pollResumeJob: vi.fn(),
-  };
-});
-
 const resumeId = "507f1f77bcf86cd799439011";
 const versionId = "507f1f77bcf86cd799439012";
-const jobId = "507f1f77bcf86cd799439014";
 const timestamp = "2026-07-24T10:00:00.000Z";
 
 function resumeRecord() {
@@ -105,15 +93,16 @@ describe("ResumeListPage", () => {
     });
   });
 
-  it("consumes the recognized create intent and focuses the title", async () => {
-    const router = renderPage("/resumes?action=create");
+  it("consumes only the recognized create intent and opens the chooser", async () => {
+    const router = renderPage("/resumes?source=dashboard&action=create&view=compact");
 
-    const title = await screen.findByRole("textbox", {
-      name: "New resume title",
-    });
-    await waitFor(() => expect(document.activeElement).toBe(title));
-    expect(router.state.location.search).toBe("");
+    const dialog = await screen.findByRole("dialog", { name: "Create Resume" });
+    expect(within(dialog).getByRole("button", { name: "Guided setup" })).toBe(
+      document.activeElement,
+    );
+    expect(router.state.location.search).toBe("?source=dashboard&view=compact");
     expect(resumeApi.createResume).not.toHaveBeenCalled();
+    expect(resumeApi.importResumePdf).not.toHaveBeenCalled();
   });
 
   it("ignores unknown intents without changing the URL", async () => {
@@ -121,13 +110,12 @@ describe("ResumeListPage", () => {
 
     await screen.findByRole("heading", { name: "Resume Studio" });
     expect(router.state.location.search).toBe("?action=unknown");
-    expect(document.activeElement).not.toBe(
-      screen.getByRole("textbox", { name: "New resume title" }),
-    );
+    expect(screen.queryByRole("dialog", { name: "Create Resume" })).toBeNull();
   });
 
-  it("preserves the page heading, supporting copy, and list actions", () => {
+  it("preserves the page heading and opens one chooser from heading or empty state", async () => {
     renderPage();
+    const user = userEvent.setup();
 
     expect(
       screen.getByRole("heading", {
@@ -140,16 +128,19 @@ describe("ResumeListPage", () => {
         "Create, import, and open your private resume records. Only validated server data is shown.",
       ),
     ).not.toBeNull();
-    expect(
-      screen.getByRole("button", {
-        name: "Create blank resume",
-      }),
-    ).not.toBeNull();
-    expect(
-      screen.getByRole("button", {
-        name: "Import private PDF",
-      }),
-    ).not.toBeNull();
+    const headingCreate = screen.getByRole("button", {
+      name: "Create Resume",
+    });
+    await user.click(headingCreate);
+    expect(screen.getAllByRole("dialog", { name: "Create Resume" })).toHaveLength(1);
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(document.activeElement).toBe(headingCreate);
+
+    const emptyCreate = await screen.findByRole("button", {
+      name: "Create your first resume",
+    });
+    await user.click(emptyCreate);
+    expect(screen.getAllByRole("dialog", { name: "Create Resume" })).toHaveLength(1);
   });
 
   it("shows factual loading and empty states", async () => {
@@ -178,9 +169,11 @@ describe("ResumeListPage", () => {
         "No resumes yet. Create a blank resume or import a private PDF.",
       ),
     ).not.toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Resume pages" })).toBeNull();
+    expect(document.querySelector(".resume-entry-actions")).toBeNull();
   });
 
-  it("renders only safe resume summary fields and opens a resume", async () => {
+  it("renders a bounded card hierarchy with an unobstructed schematic", async () => {
     vi.mocked(resumeApi.listResumes).mockResolvedValue({
       resumes: [resumeRecord()],
       pagination: { page: 1, limit: 20, total: 1, pages: 1 },
@@ -192,9 +185,13 @@ describe("ResumeListPage", () => {
     expect(screen.getByText("Slate palette")).not.toBeNull();
     expect(screen.getByText("Version 1")).not.toBeNull();
     expect(screen.getByText("Draft")).not.toBeNull();
-    expect(
-      document.querySelector('[data-resume-card-preview="ats-classic"]'),
-    ).not.toBeNull();
+    const schematic = document.querySelector(
+      '[data-resume-card-preview="ats-classic"]',
+    );
+    const preview = schematic?.closest(".resume-record-card-preview");
+    expect(schematic).not.toBeNull();
+    expect(preview?.getAttribute("aria-hidden")).toBe("true");
+    expect(preview?.children).toHaveLength(1);
     expect(screen.queryByText("Synthetic Candidate")).toBeNull();
     expect(document.body.textContent).not.toContain(resumeId);
     expect(document.body.textContent).not.toContain(versionId);
@@ -204,12 +201,33 @@ describe("ResumeListPage", () => {
     expect(document.body.textContent).not.toMatch(
       /ai resume analyser|resume builder/i,
     );
-    await userEvent.click(
-      screen.getByRole("link", { name: /open synthetic platform resume/i }),
-    );
+    expect(screen.queryByRole("navigation", { name: "Resume pages" })).toBeNull();
+    expect(resumeApi.listResumes).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole("link", {
+      name: "Open Resume: Synthetic Platform Resume",
+    }));
     await waitFor(() => {
       expect(router.state.location.pathname).toBe(`/resumes/${resumeId}`);
     });
+  });
+
+  it("keeps one, two, and several cards start-aligned in the same grid", async () => {
+    vi.mocked(resumeApi.listResumes).mockResolvedValue({
+      resumes: [
+        resumeRecord(),
+        { ...resumeRecord(), id: "507f1f77bcf86cd799439021", title: "Second Resume" },
+        { ...resumeRecord(), id: "507f1f77bcf86cd799439031", title: "Third Resume" },
+        { ...resumeRecord(), id: "507f1f77bcf86cd799439041", title: "Fourth Resume" },
+      ],
+      pagination: { page: 1, limit: 20, total: 4, pages: 1 },
+    });
+    renderPage();
+
+    await screen.findByText("Fourth Resume");
+    const grid = document.querySelector(".resume-record-grid");
+    expect(grid).not.toBeNull();
+    expect(grid?.children).toHaveLength(4);
+    expect(document.querySelector(".resume-entry-actions")).toBeNull();
   });
 
   it("shows a safe structured error and retries the current page", async () => {
@@ -273,123 +291,6 @@ describe("ResumeListPage", () => {
     });
   });
 
-  it("validates title and prevents duplicate create submissions", async () => {
-    vi.mocked(resumeApi.createResume).mockReturnValue(
-      new Promise(() => undefined),
-    );
-    renderPage();
-    await screen.findByText(
-      "No resumes yet. Create a blank resume or import a private PDF.",
-    );
-    const user = userEvent.setup();
-
-    await user.click(
-      screen.getByRole("button", { name: "Create blank resume" }),
-    );
-    const createTitle = screen.getByRole("textbox", {
-      name: "New resume title",
-    });
-    const createTitleError = screen.getByText(
-      "Enter a title with 1–120 characters.",
-    );
-    expect(createTitle.getAttribute("aria-describedby")).toContain(
-      createTitleError.id,
-    );
-    expect(document.activeElement).toBe(createTitle);
-    await user.type(
-      createTitle,
-      "Synthetic Resume",
-    );
-    const submit = screen.getByRole("button", {
-      name: "Create blank resume",
-    });
-    await user.click(submit);
-    await user.click(submit);
-
-    expect(resumeApi.createResume).toHaveBeenCalledTimes(1);
-    expect((submit as HTMLButtonElement).disabled).toBe(true);
-    expect(submit.getAttribute("aria-busy")).toBe("true");
-    expect(submit.textContent).toBe("Creating…");
-  });
-
-  it("associates import errors and focuses a summary for multiple failures", async () => {
-    renderPage();
-    const user = userEvent.setup();
-    await screen.findByText(
-      "No resumes yet. Create a blank resume or import a private PDF.",
-    );
-
-    await user.click(
-      screen.getByRole("button", { name: "Import private PDF" }),
-    );
-
-    const title = screen.getByRole("textbox", {
-      name: "Imported resume title",
-    });
-    const file = screen.getByLabelText("Private PDF");
-    const titleError = screen.getByText(
-      "Enter a title with 1–120 characters.",
-    );
-    const fileError = screen.getByText(
-      "Choose one PDF no larger than 15 MB.",
-    );
-    const summary = screen.getByRole("alert");
-
-    expect(title.getAttribute("aria-describedby")).toContain(titleError.id);
-    expect(file.getAttribute("aria-describedby")).toContain(fileError.id);
-    expect(document.activeElement).toBe(summary);
-    expect(resumeApi.importResumePdf).not.toHaveBeenCalled();
-  });
-
-  it("offers a keyboard-operable private PDF dropzone", async () => {
-    renderPage();
-    const user = userEvent.setup();
-    await screen.findByText(
-      "No resumes yet. Create a blank resume or import a private PDF.",
-    );
-    const input = screen.getByLabelText("Private PDF");
-    const openPicker = screen.getByRole("button", {
-      name: "Choose a private PDF",
-    });
-    const click = vi.spyOn(input as HTMLInputElement, "click");
-
-    openPicker.focus();
-    await user.keyboard("{Enter}");
-
-    expect(openPicker).toBe(document.activeElement);
-    expect(click).toHaveBeenCalledTimes(1);
-    expect(
-      screen.getByRole("group", { name: "Private PDF dropzone" }),
-    ).not.toBeNull();
-    expect(screen.getByText(/PDF only · maximum 15 MB/i)).not.toBeNull();
-    expect(screen.getByText(/processed privately/i)).not.toBeNull();
-  });
-
-  it("shows drag-over feedback and accepts a dropped PDF selection", async () => {
-    renderPage();
-    await screen.findByText(
-      "No resumes yet. Create a blank resume or import a private PDF.",
-    );
-    const dropzone = screen.getByRole("group", {
-      name: "Private PDF dropzone",
-    });
-    const file = new File(["%PDF-synthetic"], "dropped-synthetic.pdf", {
-      type: "application/pdf",
-    });
-
-    fireEvent.dragEnter(dropzone, {
-      dataTransfer: { files: [file], types: ["Files"] },
-    });
-    expect(dropzone.getAttribute("data-drag-active")).toBe("true");
-
-    fireEvent.drop(dropzone, {
-      dataTransfer: { files: [file], types: ["Files"] },
-    });
-    expect(dropzone.getAttribute("data-drag-active")).toBe("false");
-    expect(screen.getByText("dropped-synthetic.pdf")).not.toBeNull();
-    expect(screen.getByText("14 B")).not.toBeNull();
-  });
-
   it("navigates only after a validated create response", async () => {
     vi.mocked(resumeApi.createResume).mockResolvedValue(workspace());
     const router = renderPage();
@@ -397,10 +298,9 @@ describe("ResumeListPage", () => {
     await screen.findByText(
       "No resumes yet. Create a blank resume or import a private PDF.",
     );
-    await user.type(
-      screen.getByRole("textbox", { name: "New resume title" }),
-      "Synthetic Resume",
-    );
+    await user.click(screen.getByRole("button", { name: "Create Resume" }));
+    await user.click(screen.getByRole("button", { name: "Start blank" }));
+    await user.type(screen.getByRole("textbox", { name: "Resume title" }), "Synthetic Resume");
     await user.click(
       screen.getByRole("button", { name: "Create blank resume" }),
     );
@@ -410,142 +310,4 @@ describe("ResumeListPage", () => {
     });
   });
 
-  it("accepts one bounded PDF and navigates after validated job completion", async () => {
-    vi.mocked(resumeApi.importResumePdf).mockResolvedValue({
-      id: jobId,
-      type: "resume.import-pdf",
-      status: "queued",
-    });
-    vi.mocked(polling.pollResumeJob).mockResolvedValue({
-      reason: "terminal",
-      job: {
-        id: jobId,
-        type: "resume.import-pdf",
-        status: "completed",
-        progress: 100,
-        attempts: 1,
-        maxAttempts: 3,
-        result: {
-          kind: "import",
-          resumeId,
-          versionId,
-          versionNumber: 1,
-        },
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      },
-    });
-    const router = renderPage();
-    const user = userEvent.setup();
-    await screen.findByText(
-      "No resumes yet. Create a blank resume or import a private PDF.",
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: "Imported resume title" }),
-      "Imported Resume",
-    );
-    const file = new File(["%PDF-synthetic"], "synthetic.pdf", {
-      type: "application/pdf",
-    });
-    await user.upload(
-      screen.getByLabelText("Private PDF"),
-      file,
-    );
-    expect(screen.getByText("synthetic.pdf")).not.toBeNull();
-    await user.click(
-      screen.getByRole("button", { name: "Import private PDF" }),
-    );
-
-    expect(resumeApi.importResumePdf).toHaveBeenCalledWith(
-      "Imported Resume",
-      file,
-      expect.any(AbortSignal),
-    );
-    await waitFor(() => {
-      expect(router.state.location.pathname).toBe(`/resumes/${resumeId}`);
-    });
-  });
-
-  it("shows a provider-neutral message when PDF import fails", async () => {
-    vi.mocked(resumeApi.importResumePdf).mockResolvedValue({
-      id: jobId,
-      type: "resume.import-pdf",
-      status: "queued",
-    });
-    vi.mocked(polling.pollResumeJob).mockResolvedValue({
-      reason: "terminal",
-      job: {
-        id: jobId,
-        type: "resume.import-pdf",
-        status: "failed",
-        progress: 100,
-        attempts: 1,
-        maxAttempts: 3,
-        error: {
-          code: "AI_PROVIDER_NOT_CONFIGURED",
-          message: "Gemini is not configured.",
-        },
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      },
-    });
-    renderPage();
-    const user = userEvent.setup();
-    await screen.findByText(
-      "No resumes yet. Create a blank resume or import a private PDF.",
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: "Imported resume title" }),
-      "Imported Resume",
-    );
-    await user.upload(
-      screen.getByLabelText("Private PDF"),
-      new File(["%PDF-synthetic"], "synthetic.pdf", {
-        type: "application/pdf",
-      }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: "Import private PDF" }),
-    );
-
-    expect(
-      await screen.findByText(
-        "The import job failed without creating a resume.",
-      ),
-    ).not.toBeNull();
-    expect(screen.queryByText("Gemini is not configured.")).toBeNull();
-  });
-
-  it("rejects a non-PDF before enqueue", async () => {
-    renderPage();
-    const user = userEvent.setup();
-    await screen.findByText(
-      "No resumes yet. Create a blank resume or import a private PDF.",
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: "Imported resume title" }),
-      "Imported Resume",
-    );
-    fireEvent.change(screen.getByLabelText("Private PDF"), {
-      target: {
-        files: [
-          new File(["text"], "notes.txt", { type: "text/plain" }),
-        ],
-      },
-    });
-    await user.click(
-      screen.getByRole("button", { name: "Import private PDF" }),
-    );
-
-    expect(
-      screen.getByText("Choose one PDF no larger than 15 MB."),
-    ).not.toBeNull();
-    const file = screen.getByLabelText("Private PDF");
-    const fileError = screen.getByText(
-      "Choose one PDF no larger than 15 MB.",
-    );
-    expect(file.getAttribute("aria-describedby")).toContain(fileError.id);
-    expect(document.activeElement).toBe(file);
-    expect(resumeApi.importResumePdf).not.toHaveBeenCalled();
-  });
 });

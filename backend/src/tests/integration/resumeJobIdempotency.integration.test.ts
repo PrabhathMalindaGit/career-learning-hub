@@ -113,5 +113,11 @@ describe("Resume AI job submission idempotency", () => {
       purpose: "resume-import",
       status: { $ne: "deleted" },
     })).resolves.toBe(1);
+    const [asset, job] = await Promise.all([
+      AssetModel.findById(first.body.data.assetId).lean(),
+      JobRecordModel.findById(first.body.data.job.id).lean(),
+    ]);
+    expect(asset?.expiresAt).toBeInstanceOf(Date);
+    expect(job?.expiresAt?.getTime()).toBe(asset?.expiresAt?.getTime());
   });
 });

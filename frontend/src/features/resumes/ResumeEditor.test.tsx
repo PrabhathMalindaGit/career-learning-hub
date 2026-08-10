@@ -56,6 +56,51 @@ function renderEditor(
   );
 }
 
+function helperDraft(): ResumeDraft {
+  const draft = emptyDraft();
+  draft.experience.push({
+    clientKey: "experience-helper",
+    employer: "",
+    jobTitle: "Custom Existing Role",
+    startDate: "2025-01",
+    endDate: "",
+    isCurrent: true,
+    bullets: [
+      { clientKey: "bullet-empty", text: "" },
+      { clientKey: "bullet-existing", text: "Existing factual bullet." },
+    ],
+  });
+  draft.education.push({
+    clientKey: "education-helper",
+    institution: "",
+    qualification: "Custom Qualification",
+    startDate: "2020",
+    endDate: "2024",
+    isCurrent: false,
+    details: [],
+  });
+  draft.skills.push({
+    clientKey: "skill-helper",
+    name: "Existing",
+    keywords: ["Custom Skill"],
+  });
+  draft.certifications.push({
+    clientKey: "certification-helper",
+    name: "Manual Credential",
+    issuedDate: "2025",
+  });
+  draft.languages.push({
+    clientKey: "language-helper",
+    name: "Custom Language",
+    proficiency: "Community working level",
+  });
+  draft.interests.push({
+    clientKey: "interest-helper",
+    value: "Custom factual interest",
+  });
+  return draft;
+}
+
 describe("ResumeEditor section navigation", () => {
   it("links every approved section name to a real stable section target", () => {
     renderEditor();
@@ -85,6 +130,15 @@ describe("ResumeEditor section navigation", () => {
     expect(
       screen.queryByRole("button", { name: /next|previous/i }),
     ).toBeNull();
+    expect(resumeWorkspaceCss).toMatch(
+      /\.resume-section-navigation ul\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(auto-fit,/s,
+    );
+    expect(resumeWorkspaceCss).not.toMatch(
+      /\.resume-section-navigation\s*\{[^}]*overflow-x:\s*auto;/s,
+    );
+    expect(resumeWorkspaceCss).toMatch(
+      /\.resume-entry-controls button\s*\{[^}]*min-height:\s*var\(--minimum-interactive-target\);/s,
+    );
   });
 
   it("uses native keyboard-operable fragment links for direct navigation", async () => {
@@ -205,7 +259,7 @@ describe("ResumeEditor section navigation", () => {
     const projectLinkUrl = screen.getByRole("textbox", {
       name: "Project link URL",
     });
-    const interest = screen.getByRole("textbox", { name: "Interest 1" });
+    const interest = screen.getByRole("combobox", { name: "Interest 1" });
 
     for (const input of [
       referenceInput,
@@ -359,5 +413,79 @@ describe("ResumeEditor section navigation", () => {
       expect.objectContaining({ clientKey: "skill-2" }),
       expect.objectContaining({ clientKey: "skill-1" }),
     ]);
+  });
+
+  it("adds deterministic helpers without replacing editable contracts", async () => {
+    const onChange = vi.fn();
+    const draft = helperDraft();
+    window.history.replaceState({}, "", "/");
+    render(
+      <BrowserRouter>
+        <ResumeEditor draft={draft} onChange={onChange} />
+      </BrowserRouter>,
+    );
+    const user = userEvent.setup();
+    for (const section of ["Experience", "Education", "Skills", "Certifications", "Languages", "Interests"]) {
+      await user.click(screen.getByRole("button", { name: section }));
+    }
+
+    expect(screen.getByRole("combobox", { name: "Job title" }).getAttribute("list")).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "Qualification" }).getAttribute("list")).toBeTruthy();
+    expect((screen.getByRole("combobox", { name: "Proficiency" }) as HTMLInputElement).value).toBe("Community working level");
+    expect(screen.getByRole("combobox", { name: "Interest 1" }).getAttribute("list")).toBeTruthy();
+    expect(screen.getByRole("textbox", { name: "Certification name" }).getAttribute("list")).toBeNull();
+    for (const startDate of screen.getAllByRole("textbox", { name: "Start date" })) {
+      expect(startDate.getAttribute("list")).toBeNull();
+    }
+
+    await user.click(screen.getByRole("button", { name: "Start bullet 1 with Built" }));
+    expect(onChange.mock.calls.at(-1)?.[0].experience[0].bullets[0].text).toBe("Built ");
+    expect(onChange.mock.calls.at(-1)?.[0].experience[0].bullets[1].text).toBe("Existing factual bullet.");
+    expect(screen.queryByRole("button", { name: "Start bullet 2 with Built" })).toBeNull();
+
+    expect(screen.getByRole("textbox", { name: "Skill group 1 name" })).not.toBeNull();
+    await user.click(screen.getByText("Add skills from catalogue"));
+    await user.click(screen.getByRole("checkbox", { name: "TypeScript" }));
+    await user.click(screen.getByRole("button", { name: "Add selected skills" }));
+    expect(onChange.mock.calls.at(-1)?.[0].skills[0]).toMatchObject({
+      clientKey: "skill-helper",
+      name: "Existing",
+      keywords: ["Custom Skill"],
+    });
+  });
+
+  it("appends Achievement Builder output as one normal DraftBullet", async () => {
+    const onChange = vi.fn();
+    const draft = helperDraft();
+    window.history.replaceState({}, "", "/");
+    render(
+      <BrowserRouter>
+        <ResumeEditor draft={draft} onChange={onChange} />
+      </BrowserRouter>,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Experience" }));
+    await user.click(screen.getByText("Build an achievement"));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Action" }), "Built");
+    await user.type(screen.getByRole("textbox", { name: "What did you do?" }), "a factual dashboard");
+    await user.click(screen.getByRole("button", { name: "Add achievement bullet" }));
+
+    const bullets = onChange.mock.calls.at(-1)?.[0].experience[0].bullets;
+    expect(bullets).toHaveLength(3);
+    expect(bullets[2]).toMatchObject({ text: "Built a factual dashboard." });
+    expect(bullets[2].clientKey).toBeTruthy();
+  });
+
+  it("keeps deterministic helper mutations disabled in read-only mode", async () => {
+    const onChange = vi.fn();
+    window.history.replaceState({}, "", "/");
+    render(
+      <BrowserRouter>
+        <ResumeEditor draft={helperDraft()} onChange={onChange} disabled />
+      </BrowserRouter>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Experience" }));
+    expect((screen.getByRole("button", { name: "Start bullet 1 with Built" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

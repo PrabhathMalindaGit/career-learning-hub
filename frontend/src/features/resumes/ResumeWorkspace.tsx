@@ -21,6 +21,7 @@ import {
 } from "./ResumeDesignControls";
 import {
   ResumeEditor,
+  RESUME_JOB_TITLE_DATALIST_ID,
   type ResumeEditorFocusRequest,
 } from "./ResumeEditor";
 import { ResumePrintControls } from "./ResumePrintControls";
@@ -1026,6 +1027,7 @@ export function ResumeWorkspace() {
               Target role
               <input
                 type="text"
+                list={RESUME_JOB_TITLE_DATALIST_ID}
                 value={targetRole}
                 minLength={2}
                 maxLength={200}
@@ -1061,7 +1063,8 @@ export function ResumeWorkspace() {
               Save or discard draft changes before assessing this resume.
             </p>
           ) : null}
-          {analysisJob ? (
+          {analysisJob &&
+          (analysisJob.status !== "completed" || analysis === undefined) ? (
             <div className="resume-job-status">
               <span>{analysisJob.progress}% checked</span>
               <JobResilienceActions

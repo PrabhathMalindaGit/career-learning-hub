@@ -18,6 +18,7 @@ import {
   unregisterActiveJobExecution,
 } from "../../jobs/job.execution.js";
 import { JobRecordModel } from "../../jobs/job.model.js";
+import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
 
 async function queuedJob(userId = new Types.ObjectId()) {
@@ -116,6 +117,34 @@ describe("durable job execution fences", () => {
       phase: "completed",
       result: { saved: true },
     });
+  });
+
+  it("preserves a job-specific earlier expiry on fenced completion", async () => {
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1_000);
+    const created = await queuedJob();
+    await JobRecordModel.updateOne({ _id: created._id }, { $set: { expiresAt } });
+    const claimed = (await claimNextJob())!;
+    const execution = identity(claimed);
+    await beginJobPersistence(execution);
+
+    await completeJob(execution, { saved: true }, claimed.expiresAt);
+
+    const completed = await JobRecordModel.findById(created._id).lean();
+    expect(completed?.expiresAt?.getTime()).toBe(expiresAt.getTime());
+  });
+
+  it("keeps the default terminal retention when no earlier expiry is supplied", async () => {
+    const before = Date.now();
+    const created = await queuedJob();
+    const claimed = (await claimNextJob())!;
+    const execution = identity(claimed);
+    await beginJobPersistence(execution);
+    await completeJob(execution, { saved: true });
+
+    const completed = await JobRecordModel.findById(created._id).lean();
+    const expected = before + env.JOB_RETENTION_DAYS * 24 * 60 * 60 * 1_000;
+    expect(completed?.expiresAt?.getTime()).toBeGreaterThanOrEqual(expected);
+    expect(completed?.expiresAt?.getTime()).toBeLessThanOrEqual(expected + 5_000);
   });
 
   it("prevents an expired execution from completing after a newer claim", async () => {

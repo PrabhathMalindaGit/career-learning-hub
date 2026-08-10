@@ -122,7 +122,7 @@ export function startJobWorker(): JobWorkerHandle {
       assertSignalActive();
       await beginJobPersistence(execution);
       assertSignalActive();
-      await completeJob(execution, result);
+      await completeJob(execution, result, job.expiresAt);
     } catch (error) {
       logger.error("job.execution.failed", {
         jobId: job._id.toString(),
