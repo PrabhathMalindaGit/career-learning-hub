@@ -5,6 +5,11 @@ import type { ResumeContent } from "./resume.types.js";
 
 const DOMAIN_STYLE_URL =
   /^(?=.{1,253}(?:[/:?#]|$))(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(?::\d{1,5})?(?:[/?#][^\s]*)?$/i;
+const objectIdStringSchema = z.string().regex(/^[a-f\d]{24}$/i);
+const expectedCandidatePhotoAssetIdSchema = z.union([
+  z.literal("none"),
+  objectIdStringSchema,
+]);
 
 export function normalizeResumeUrlInput(
   value: string,
@@ -154,11 +159,11 @@ export const resumeDesignInputSchema = z.object({
 }).strict();
 
 export const resumeIdParamsSchema = z.object({
-  resumeId: z.string().regex(/^[a-f\d]{24}$/i),
+  resumeId: objectIdStringSchema,
 });
 
 export const versionIdParamsSchema = resumeIdParamsSchema.extend({
-  versionId: z.string().regex(/^[a-f\d]{24}$/i),
+  versionId: objectIdStringSchema,
 });
 
 export const createResumeBodySchema = z.object({
@@ -170,13 +175,21 @@ export const createResumeBodySchema = z.object({
 export const createVersionBodySchema = z.object({
   content: resumeContentInputSchema,
   changeSummary: z.string().trim().max(500).optional(),
-  expectedCurrentVersionId: z.string().regex(/^[a-f\d]{24}$/i),
+  expectedCurrentVersionId: objectIdStringSchema,
 }).strict();
 
 export const updateDesignBodySchema = resumeDesignInputSchema.partial()
   .refine((value) => Object.keys(value).length > 0, {
     message: "At least one design property is required.",
   });
+
+export const candidatePhotoUploadBodySchema = z.object({
+  expectedCandidatePhotoAssetId: expectedCandidatePhotoAssetIdSchema,
+}).strict();
+
+export const candidatePhotoMutationBodySchema = z.object({
+  expectedCandidatePhotoAssetId: expectedCandidatePhotoAssetIdSchema,
+}).strict();
 
 export const resumeListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
