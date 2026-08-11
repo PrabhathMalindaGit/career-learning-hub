@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   createDraftEntity,
+  draftFingerprint,
   draftToInput,
   normalizeResumeUrlInput,
   parseResumeValidationDetails,
+  resumeContentInputToDraft,
   resumeContentToDraft,
   validateResumeDraft,
 } from "./resumeDraft";
-import type { ResumeContent } from "./types";
+import type { ResumeContent, ResumeContentInput } from "./types";
 
 const linkId = "123e4567-e89b-42d3-a456-426614174000";
 const experienceId = "123e4567-e89b-42d3-a456-426614174001";
@@ -70,6 +72,81 @@ describe("resume draft identity", () => {
       text: "New bullet",
     });
     expect(JSON.stringify(input)).not.toContain("clientKey");
+  });
+
+  it("reconstructs incomplete recoverable input without persisting client keys", () => {
+    const recoverable: ResumeContentInput = {
+      basics: { fullName: "", links: [] },
+      experience: [
+        {
+          employer: "Example",
+          jobTitle: "",
+          isCurrent: false,
+          bullets: [{ text: "Mid-edit bullet" }],
+        },
+      ],
+      education: [
+        {
+          id: experienceId,
+          institution: "",
+          qualification: "BSc",
+          isCurrent: true,
+          details: [],
+        },
+      ],
+      skills: [],
+      projects: [],
+      certifications: [],
+      languages: [],
+      interests: [""],
+    };
+
+    const draft = resumeContentInputToDraft(recoverable);
+    const roundTrip = draftToInput(draft);
+
+    expect(draft.experience[0]?.clientKey).toMatch(/^resume-draft-/);
+    expect(draft.experience[0]?.bullets[0]?.clientKey).toMatch(
+      /^resume-draft-/,
+    );
+    expect(draft.education[0]?.clientKey).toBe(experienceId);
+    expect(roundTrip).toEqual(recoverable);
+    expect(JSON.stringify(roundTrip)).not.toContain("clientKey");
+  });
+
+  it("uses the existing normalized draft comparison for recoverable input", () => {
+    const recoverable: ResumeContentInput = {
+      ...content(),
+      basics: {
+        ...content().basics,
+        links: [
+          {
+            id: linkId,
+            label: "Portfolio",
+            url: " example.test ",
+          },
+        ],
+      },
+    };
+
+    expect(
+      draftFingerprint(resumeContentInputToDraft(recoverable)),
+    ).toBe(
+      draftFingerprint(
+        resumeContentInputToDraft({
+          ...recoverable,
+          basics: {
+            ...recoverable.basics,
+            links: [
+              {
+                id: linkId,
+                label: "Portfolio",
+                url: "https://example.test",
+              },
+            ],
+          },
+        }),
+      ),
+    );
   });
 
   it("omits cleared optional email and credential URLs from save input", () => {

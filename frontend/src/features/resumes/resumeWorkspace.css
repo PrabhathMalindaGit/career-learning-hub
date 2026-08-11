@@ -121,6 +121,12 @@
   background: #fff5d7;
 }
 
+.resume-workspace-actions .resume-saved-state,
+.resume-workspace-actions .resume-dirty-state {
+  white-space: normal;
+  text-align: center;
+}
+
 .resume-record-list {
   display: grid;
   gap: 10px;
@@ -304,6 +310,14 @@
   border: 1px solid var(--accent-dark);
   color: #fff;
   background: var(--accent-dark);
+}
+
+.resume-save-shortcut {
+  margin-inline-start: 8px;
+  font: inherit;
+  font-size: 0.78em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .resume-secondary-button {
@@ -858,6 +872,32 @@
 .resume-print-controls {
   display: grid;
   gap: 16px;
+}
+
+.resume-export-readiness {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f8fbf9;
+  overflow-wrap: anywhere;
+}
+
+.resume-export-readiness p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.resume-export-readiness-source,
+.resume-export-ready {
+  color: #296544;
+  font-weight: 800;
+}
+
+.resume-export-blocked {
+  color: #795b15;
+  font-weight: 750;
 }
 
 .resume-print-control-row {
@@ -3502,6 +3542,36 @@
   gap: 10px;
 }
 
+.resume-recovery-review {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  min-width: 0;
+}
+
+.resume-recovery-review-warning {
+  padding: 20px;
+  border: 1px solid #ddc68f;
+  border-radius: 18px;
+  background: #fff8df;
+}
+
+.resume-recovery-review-warning h1,
+.resume-recovery-review-warning p {
+  margin-top: 0;
+}
+
+.resume-recovery-version-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-weight: 750;
+}
+
+.resume-recovery-review .resume-preview-panel {
+  user-select: text;
+}
+
 .resume-create-dialog-shell {
   width: min(calc(100% - 32px), 760px);
 }
@@ -3891,6 +3961,16 @@
     justify-content: flex-start;
   }
 
+  .resume-print-control-row,
+  .resume-recovery-version-context {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .resume-print-control-row > * {
+    width: 100%;
+  }
+
   .resume-form-grid {
     grid-template-columns: 1fr;
   }
@@ -4185,7 +4265,8 @@
   .app-sidebar,
   .app-header,
   .mobile-nav-drawer,
-  .resume-dialog {
+  .resume-dialog,
+  .resume-recovery-review {
     display: none !important;
   }
 

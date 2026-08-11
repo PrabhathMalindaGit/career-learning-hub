@@ -1108,7 +1108,7 @@ describe("authentication forms and shell interaction", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: "Discard draft changes",
+        name: "Discard changes",
       }),
     );
     await user.click(dashboardLink);

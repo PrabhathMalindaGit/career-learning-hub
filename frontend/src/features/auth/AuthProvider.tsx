@@ -24,6 +24,8 @@ import {
   refreshSession as refreshSessionRequest,
   register as registerRequest,
 } from "./authApi";
+import { removeResumeRecoveriesForUser } from "../resumes/resumeRecovery";
+import { invalidateResumeRecoveryWritersForUser } from "../resumes/resumeRecoveryWriter";
 
 export type AuthenticationStatus =
   | "bootstrapping"
@@ -53,16 +55,31 @@ export function AuthProvider({
     user: null,
   });
   const accessTokenRef = useRef<string | null>(null);
+  const knownUserIdRef = useRef<string | null>(null);
+
+  const cleanupOutgoingUserRecovery = useCallback((userId: string) => {
+    invalidateResumeRecoveryWritersForUser(userId);
+    try {
+      removeResumeRecoveriesForUser(sessionStorage, userId);
+    } catch {
+      // Authentication must continue when browser-local cleanup is unavailable.
+    }
+  }, []);
 
   const applyAuthentication = useCallback(
     (response: AuthenticationResponse) => {
+      const outgoingUserId = knownUserIdRef.current;
+      if (outgoingUserId && outgoingUserId !== response.user.id) {
+        cleanupOutgoingUserRecovery(outgoingUserId);
+      }
+      knownUserIdRef.current = response.user.id;
       accessTokenRef.current = response.accessToken;
       setState({
         status: "authenticated",
         user: response.user,
       });
     },
-    [],
+    [cleanupOutgoingUserRecovery],
   );
 
   const clearAuthentication = useCallback(() => {
@@ -109,12 +126,17 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
+    const outgoingUserId = knownUserIdRef.current;
+    if (outgoingUserId) {
+      cleanupOutgoingUserRecovery(outgoingUserId);
+      knownUserIdRef.current = null;
+    }
     try {
       await logoutRequest();
     } finally {
       clearAuthentication();
     }
-  }, [clearAuthentication]);
+  }, [cleanupOutgoingUserRecovery, clearAuthentication]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

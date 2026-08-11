@@ -1,10 +1,15 @@
 import type { ResumeDesign } from "./types";
 
+export type ResumeExportReadiness =
+  | { eligible: true; message: "Ready to print / save as PDF" }
+  | { eligible: false; reasonId: string; message: string };
+
 interface ResumePrintControlsProps {
   sourceKind: "current" | "historical";
   versionNumber: number;
   pageSize: ResumeDesign["pageSize"];
-  dirty: boolean;
+  readiness: ResumeExportReadiness;
+  suggestedFilename: string;
   pageSizeSaving: boolean;
   printPreparing: boolean;
   sourceLoading?: boolean;
@@ -20,7 +25,8 @@ export function ResumePrintControls({
   sourceKind,
   versionNumber,
   pageSize,
-  dirty,
+  readiness,
+  suggestedFilename,
   pageSizeSaving,
   printPreparing,
   sourceLoading = false,
@@ -30,8 +36,8 @@ export function ResumePrintControls({
 }: ResumePrintControlsProps) {
   const sourceLabel =
     sourceKind === "historical"
-      ? `Historical saved version ${versionNumber}`
-      : `Current saved version ${versionNumber}`;
+      ? `Historical Version ${versionNumber}`
+      : `Current saved version — Version ${versionNumber}`;
   const interactionDisabled = pageSizeSaving || printPreparing;
 
   return (
@@ -44,13 +50,28 @@ export function ResumePrintControls({
           <p className="resume-kicker">Browser printing</p>
           <h2 id="resume-print-controls-title">Print / Save as PDF</h2>
         </div>
-        <span className="resume-status">{sourceLabel}</span>
       </header>
 
       <p className="resume-muted-copy">
-        This opens your browser print dialog. Choose Save as PDF there if
-        needed. The browser controls the final filename and PDF settings.
+        Choose “Save as PDF” in your browser. Turn off “Headers and footers”
+        for a clean Resume PDF.
       </p>
+
+      <div className="resume-export-readiness">
+        <p className="resume-export-readiness-source">{sourceLabel}</p>
+        <p
+          id={readiness.eligible ? undefined : readiness.reasonId}
+          className={
+            readiness.eligible
+              ? "resume-export-ready"
+              : "resume-export-blocked"
+          }
+        >
+          {readiness.message}
+        </p>
+        <p>Page size: {pageSize === "LETTER" ? "Letter" : "A4"}</p>
+        <p>Suggested filename: {suggestedFilename}</p>
+      </div>
 
       <div className="resume-print-control-row">
         <label>
@@ -72,7 +93,8 @@ export function ResumePrintControls({
           className="resume-primary-button"
           type="button"
           aria-label={`Open print dialog for saved version ${versionNumber}`}
-          disabled={dirty || sourceLoading || interactionDisabled}
+          disabled={!readiness.eligible || sourceLoading || interactionDisabled}
+          aria-describedby={readiness.eligible ? undefined : readiness.reasonId}
           aria-busy={printPreparing}
           onClick={onPrint}
         >
@@ -83,17 +105,6 @@ export function ResumePrintControls({
       {pageSizeSaving ? (
         <p className="resume-inline-guidance" role="status">
           Saving paper size…
-        </p>
-      ) : null}
-      {sourceLoading ? (
-        <p className="resume-inline-guidance" role="status">
-          Loading the selected saved version before printing…
-        </p>
-      ) : null}
-      {dirty ? (
-        <p className="resume-disclaimer" role="status">
-          Printing is blocked because the editor has unsaved changes. Save
-          New Version or Discard before printing a saved version.
         </p>
       ) : null}
       {error ? (

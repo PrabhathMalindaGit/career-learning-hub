@@ -1,59 +1,67 @@
 # Current Execution Phase
 
-- Phase: 19A-2
-- Name: Resume Collection, Creation & Guided Entry
-- Status: `PHASE 19A-2 — COMPLETED / HUMAN-APPROVED / READY FOR MANUAL GIT PUBLICATION`
-- Branch: `phase-19a-2-resume-creation-guided-entry`
-- Baseline HEAD: `643b7e6451b2b14472bf7019e531dae4a8134f42`
-- Baseline subject:
-  `Merge pull request #5 from PrabhathMalindaGit/phase-19a-1-resume-editor-workspace`
-- Design authority:
-  `docs/superpowers/specs/2026-08-10-resume-collection-creation-guided-entry-design.md`
-- Accepted design token:
-  `PHASE_19A2_RESUME_COLLECTION_CREATION_GUIDED_ENTRY_DESIGN_APPROVED` —
-  `ACCEPTED / YES`
-- Implementation plan:
-  `docs/superpowers/plans/2026-08-10-resume-collection-creation-guided-entry.md`
-- Canonical closeout record:
-  `docs/planning/PHASE_19A2_RESUME_COLLECTION_CREATION_GUIDED_ENTRY.md`
-- Human visual-polish repair plan:
-  `docs/superpowers/plans/2026-08-10-resume-human-visual-polish-repair.md`
-- Final data-integrity repair plan:
-  `docs/superpowers/plans/2026-08-10-resume-final-data-integrity-repair.md`
-- Career-guidance generalization plan:
-  `docs/superpowers/plans/2026-08-11-resume-career-guidance-generalization.md`
-- Accepted career-guidance generalization token:
-  `PHASE_19A2G_CAREER_GUIDANCE_GENERALIZATION_APPROVED` — `ACCEPTED / YES`
-- Accepted final disabled-action visual-repair token:
-  `PHASE_19A2_DISABLED_ACTION_VISUAL_REPAIR_APPROVED` — `ACCEPTED / YES`
-- Accepted human visual-polish repair token:
-  `PHASE_19A2_HUMAN_VISUAL_POLISH_REPAIR_DESIGN_APPROVED` —
-  `ACCEPTED / YES`
-- Active boundary:
-  `FINDINGS 013-018, UNIFIED CREATION, DETERMINISTIC GUIDED ENTRY, AND STAGED
-  PDF IMPORT REVIEW IMPLEMENTED; APPROVED HUMAN VISUAL POLISH REPAIR
-  IMPLEMENTED; FINAL DATA-INTEGRITY REPAIR COMPLETE; CAREER GUIDANCE CATALOGUE
-  GENERALIZATION COMPLETE; FINAL DISABLED-ACTION VISUAL REPAIR COMPLETE;
-  AUTOMATED VERIFICATION PASSED; HUMAN VISUAL APPROVAL ACCEPTED; PHASE 19A-2
-  COMPLETE; MANUAL GIT PUBLICATION IS NEXT`
-- Accepted visual approval token:
-  `PHASE_19A2_RESUME_COLLECTION_CREATION_GUIDED_ENTRY_VISUAL_APPROVED` —
-  `ACCEPTED / YES`
+- Phase: 19A-3
+- Name: Resume Save, Recovery & Export Workflow
+- Status: `PHASE 19A-3 — DESIGN APPROVED / HUMAN-APPROVED / FROZEN /
+  IMPLEMENTATION PLAN HUMAN-APPROVED / FROZEN FOR EXECUTION /
+  IMPLEMENTED / AUTOMATED VERIFICATION PASSED / HUMAN VISUAL/FUNCTIONAL QA
+  COMPLETED AND HUMAN-APPROVED / READY FOR OPERATOR GIT PUBLICATION`
+- Branch: `phase-19a-3-resume-save-recovery-export`
+- Baseline HEAD: `7effc4e3897797f472c88f8f17d98524ba364a7d`
 - Completed predecessor:
-  `PHASE 19A-1 — RESUME EDITOR WORKSPACE REFINEMENT / HUMAN-APPROVED / MERGED`
+  `PHASE 19A-2 — RESUME COLLECTION, CREATION & GUIDED ENTRY /
+  HUMAN-APPROVED / MERGED AS PR #6`
+- Conversational and repository designs:
+  `APPROVED / HUMAN-APPROVED / FROZEN AS APPROACH A — BOUNDED SESSION RECOVERY
+  INTEGRATED WITH THE EXISTING RESUME WORKSPACE`
+- Design authority:
+  `docs/superpowers/specs/2026-08-11-resume-save-recovery-export-design.md`
+- Implementation-plan authority:
+  `docs/superpowers/plans/2026-08-11-resume-save-recovery-export.md`
+- Repository design approval token:
+  `PHASE_19A3_RESUME_SAVE_RECOVERY_EXPORT_DESIGN_APPROVED` —
+  `ACCEPTED / YES`
+- Implementation-plan approval token:
+  `PHASE_19A3_IMPLEMENTATION_PLAN_APPROVED` —
+  `ACCEPTED / YES`
+- Final human-QA approval token:
+  `PHASE_19A3_RESUME_SAVE_RECOVERY_EXPORT_HUMAN_QA_APPROVED` —
+  `ACCEPTED / YES`
+- Implementation status: `IMPLEMENTED`
+- Automated verification: `PASSED`
+- Post-implementation source-review repair:
+  `IMPLEMENTED / VERIFIED`
+- Final human-QA defect repair:
+  `IMPLEMENTED / VERIFIED`
+- Final header/print-copy visual polish:
+  `IMPLEMENTED / VERIFIED`
+- Implementation planning status:
+  `HUMAN-APPROVED / FROZEN FOR EXECUTION`
+- Human visual/functional QA:
+  `COMPLETED / HUMAN-APPROVED`
+- Overall Phase 19A-3 status:
+  `COMPLETED / HUMAN-APPROVED / READY FOR OPERATOR GIT PUBLICATION`
+- Active boundary:
+  `CONVERSATIONAL AND REPOSITORY DESIGNS HUMAN-APPROVED AND FROZEN;
+  IMPLEMENTATION PLAN HUMAN-APPROVED AND FROZEN; PHASE 19A-3 IMPLEMENTATION
+  IMPLEMENTED WITH AUTOMATED VERIFICATION PASSED; FINAL HUMAN VISUAL/FUNCTIONAL
+  QA COMPLETED AND HUMAN-APPROVED; READY FOR OPERATOR GIT PUBLICATION`
+- Selected recovery boundary:
+  `VERSIONED USER + RESUME SESSIONSTORAGE ENTRY / 24-HOUR MAXIMUM /
+  EXPLICIT RESTORE OR DISCARD / READ-ONLY STALE REVIEW / SERVER CANONICAL`
+- Save/export boundary:
+  `EXPLICIT IMMUTABLE SAVE NEW VERSION / WORKSPACE-SCOPED CMD/CTRL+S /
+  NATIVE WINDOW.PRINT CURRENT OR HISTORICAL SAVED CONTENT / A4 OR LETTER`
 - Release AI policy:
   `GEMINI DIRECT ONLY / FIXED gemini-3.6-flash / OPENROUTER DORMANT /
   NO OTHER PROVIDER OR FALLBACK AUTHORIZED`
-- `PHASE 19A-3 — RESUME SAVE, RECOVERY & EXPORT WORKFLOW`:
-  `PLANNED / INACTIVE`
 - `PHASE 19A-4 — CANDIDATE PHOTO SUPPORT`: `PLANNED / INACTIVE`
 - Phase 19B through Phase 19H status: `PLANNED / INACTIVE`
 - Phase 20 and Phase 21 status: `PLANNED / INACTIVE`
 - Git publication status:
-  `READY FOR OPERATOR-CONTROLLED MANUAL STAGING; NO STAGE / NO COMMIT /
-  NO PUSH / NO MERGE / NO PR / NO DEPLOYMENT`
-- Historical execution statements below do not override this Phase 19A-2
-  approved design/planning authority block.
+  `UNSTAGED / NOT COMMITTED / NOT PUSHED / NOT MERGED / NO PR YET`
+- Historical execution statements below do not override this Phase 19A-3
+  completed/human-approved authority block.
 
 ## Completed predecessor: G-5 and staging closeout
 
