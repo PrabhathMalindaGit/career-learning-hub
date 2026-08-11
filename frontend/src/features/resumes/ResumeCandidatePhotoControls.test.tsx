@@ -1,11 +1,12 @@
+import type { ComponentProps } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ResumeCandidatePhotoControls } from "./ResumeCandidatePhotoControls";
 
-function renderControls(
-  overrides: Partial<React.ComponentProps<typeof ResumeCandidatePhotoControls>> = {},
-) {
-  const props: React.ComponentProps<typeof ResumeCandidatePhotoControls> = {
+type Props = ComponentProps<typeof ResumeCandidatePhotoControls>;
+
+function renderControls(overrides: Partial<Props> = {}) {
+  const props: Props = {
     hasPhoto: false,
     visible: false,
     sourceLoading: false,
