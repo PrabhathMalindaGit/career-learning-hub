@@ -7,6 +7,7 @@ interface ResumeRecoveryReviewProps {
   baselineVersionNumber: number;
   currentVersionNumber: number;
   design: ResumeDesign;
+  candidatePhotoUrl?: string;
   discardError: boolean;
   onDiscard: () => void;
 }
@@ -16,6 +17,7 @@ export function ResumeRecoveryReview({
   baselineVersionNumber,
   currentVersionNumber,
   design,
+  candidatePhotoUrl,
   discardError,
   onDiscard,
 }: ResumeRecoveryReviewProps) {
@@ -46,6 +48,7 @@ export function ResumeRecoveryReview({
         ariaLabel="Recovered unsaved Resume draft preview"
         pageSize={design.pageSize}
         design={design}
+        candidatePhotoUrl={candidatePhotoUrl}
       />
 
       {discardError ? (
