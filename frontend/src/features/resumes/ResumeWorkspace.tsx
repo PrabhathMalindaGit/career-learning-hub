@@ -41,15 +41,17 @@ import {
   fetchJob,
   fetchResume,
   fetchResumeAnalysis,
-  fetchResumeCandidatePhotoSource,
   fetchResumeVersion,
   listResumeVersions,
   queueResumeAnalysis,
-  removeResumeCandidatePhoto,
   saveResumeVersion,
   updateResumeDesign,
-  uploadResumeCandidatePhoto,
 } from "./resumeApi";
+import {
+  fetchResumeCandidatePhotoSource,
+  removeResumeCandidatePhoto,
+  uploadResumeCandidatePhoto,
+} from "./resumeCandidatePhotoGateway";
 import {
   CandidatePhotoError,
   loadCanonicalCandidatePhoto,
