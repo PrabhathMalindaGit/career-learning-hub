@@ -1,20 +1,35 @@
 export async function fetchResumeCandidatePhotoSource(
-  ...args: Parameters<typeof import("./resumeApi")["fetchResumeCandidatePhotoSource"]>
+  resumeId: string,
+  signal?: AbortSignal,
 ) {
   const api = await import("./resumeApi");
-  return api.fetchResumeCandidatePhotoSource(...args);
+  return api.fetchResumeCandidatePhotoSource(resumeId, signal);
 }
 
 export async function uploadResumeCandidatePhoto(
-  ...args: Parameters<typeof import("./resumeApi")["uploadResumeCandidatePhoto"]>
+  resumeId: string,
+  file: File,
+  expectedCandidatePhotoAssetId: string | undefined,
+  signal?: AbortSignal,
 ) {
   const api = await import("./resumeApi");
-  return api.uploadResumeCandidatePhoto(...args);
+  return api.uploadResumeCandidatePhoto(
+    resumeId,
+    file,
+    expectedCandidatePhotoAssetId,
+    signal,
+  );
 }
 
 export async function removeResumeCandidatePhoto(
-  ...args: Parameters<typeof import("./resumeApi")["removeResumeCandidatePhoto"]>
+  resumeId: string,
+  expectedCandidatePhotoAssetId: string,
+  signal?: AbortSignal,
 ) {
   const api = await import("./resumeApi");
-  return api.removeResumeCandidatePhoto(...args);
+  return api.removeResumeCandidatePhoto(
+    resumeId,
+    expectedCandidatePhotoAssetId,
+    signal,
+  );
 }
