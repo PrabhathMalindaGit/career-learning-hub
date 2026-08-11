@@ -4,8 +4,13 @@ import type {
 } from "@career-learning-hub/shared-types";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiRequest } from "../../api/apiClient";
+import {
+  createResumeRecoveryKey,
+  createResumeRecoveryUserPrefix,
+} from "../resumes/resumeRecovery";
+import * as recoveryWriter from "../resumes/resumeRecoveryWriter";
 import {
   AuthProvider,
   useAuth,
@@ -127,8 +132,18 @@ function renderProvider(strict = false) {
 
 describe("AuthProvider", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    const storageKeys = Array.from(
+      { length: sessionStorage.length },
+      (_, index) => sessionStorage.key(index),
+    ).filter((key): key is string => key !== null);
+    storageKeys.forEach((key) => sessionStorage.removeItem(key));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("starts in the bootstrapping state", async () => {
@@ -301,6 +316,223 @@ describe("AuthProvider", () => {
     });
     expect(authApi.logout).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("user").textContent).toBe("No user");
+  });
+
+  it("cleans every outgoing-user Resume recovery before explicit logout", async () => {
+    const logout = deferred<void>();
+    vi.mocked(authApi.refreshSession).mockResolvedValue(restoredSession);
+    vi.mocked(authApi.logout).mockReturnValue(logout.promise);
+    const invalidate = vi.spyOn(
+      recoveryWriter,
+      "invalidateResumeRecoveryWritersForUser",
+    );
+    renderProvider();
+    await waitFor(() => {
+      expect(screen.getByTestId("status").textContent).toBe(
+        "authenticated",
+      );
+    });
+    const firstKey = createResumeRecoveryKey(
+      publicUser.id,
+      "507f1f77bcf86cd799439011",
+    );
+    const secondKey = createResumeRecoveryKey(
+      publicUser.id,
+      "507f1f77bcf86cd799439012",
+    );
+    const otherKey = createResumeRecoveryKey(
+      "another-user",
+      "507f1f77bcf86cd799439011",
+    );
+    sessionStorage.setItem(firstKey, "first");
+    sessionStorage.setItem(secondKey, "second");
+    sessionStorage.setItem(otherKey, "other");
+    sessionStorage.setItem("unrelated", "preserved");
+
+    screen.getByRole("button", { name: "Log out" }).click();
+
+    expect(invalidate).toHaveBeenCalledWith(publicUser.id);
+    expect(sessionStorage.getItem(firstKey)).toBeNull();
+    expect(sessionStorage.getItem(secondKey)).toBeNull();
+    expect(sessionStorage.getItem(otherKey)).toBe("other");
+    expect(sessionStorage.getItem("unrelated")).toBe("preserved");
+    await act(async () => {
+      logout.resolve(undefined);
+      await logout.promise;
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("status").textContent).toBe("anonymous");
+    });
+  });
+
+  it("prevents an outgoing-user writer from recreating recovery while logout is pending", async () => {
+    const logout = deferred<void>();
+    vi.mocked(authApi.refreshSession).mockResolvedValue(restoredSession);
+    vi.mocked(authApi.logout).mockReturnValue(logout.promise);
+    renderProvider();
+    await waitFor(() => {
+      expect(screen.getByTestId("status").textContent).toBe(
+        "authenticated",
+      );
+    });
+
+    vi.useFakeTimers();
+    const activeResumeId = "507f1f77bcf86cd799439011";
+    const outgoingKey = createResumeRecoveryKey(publicUser.id, activeResumeId);
+    const otherUserKey = createResumeRecoveryKey(
+      "another-user",
+      activeResumeId,
+    );
+    const writer = recoveryWriter.createResumeRecoveryWriter({
+      storage: sessionStorage,
+      userId: publicUser.id,
+      resumeId: activeResumeId,
+      onWriteResult: vi.fn(),
+    });
+    sessionStorage.setItem(outgoingKey, "existing outgoing recovery");
+    sessionStorage.setItem(otherUserKey, "other-user recovery");
+    sessionStorage.setItem("unrelated", "preserved");
+
+    screen.getByRole("button", { name: "Log out" }).click();
+    expect(sessionStorage.getItem(outgoingKey)).toBeNull();
+
+    writer.schedule({
+      fingerprint: "late outgoing draft",
+      payload: {
+        schemaVersion: 1,
+        userId: publicUser.id,
+        resumeId: activeResumeId,
+        baselineVersionId: "507f1f77bcf86cd799439012",
+        baselineVersionNumber: 1,
+        content: {
+          basics: { fullName: "Late Outgoing Candidate", links: [] },
+          experience: [],
+          education: [],
+          skills: [],
+          projects: [],
+          certifications: [],
+          languages: [],
+          interests: [],
+        },
+      },
+    });
+    act(() => vi.advanceTimersByTime(500));
+
+    expect(sessionStorage.getItem(outgoingKey)).toBeNull();
+    expect(sessionStorage.getItem(otherUserKey)).toBe("other-user recovery");
+    expect(sessionStorage.getItem("unrelated")).toBe("preserved");
+    expect(screen.getByTestId("status").textContent).toBe("authenticated");
+
+    await act(async () => {
+      logout.resolve(undefined);
+      await logout.promise;
+    });
+    expect(screen.getByTestId("status").textContent).toBe("anonymous");
+    writer.dispose();
+  });
+
+  it("continues logout when outgoing recovery removal fails", async () => {
+    vi.mocked(authApi.refreshSession).mockResolvedValue(restoredSession);
+    vi.mocked(authApi.logout).mockResolvedValue(undefined);
+    renderProvider();
+    await waitFor(() => {
+      expect(screen.getByTestId("status").textContent).toBe(
+        "authenticated",
+      );
+    });
+    const prefix = createResumeRecoveryUserPrefix(publicUser.id);
+    sessionStorage.setItem(`${prefix}507f1f77bcf86cd799439011`, "recovery");
+    const nativeRemove = Storage.prototype.removeItem;
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (key.startsWith(prefix)) {
+        throw new DOMException("Denied", "SecurityError");
+      }
+      nativeRemove.call(this, key);
+    });
+
+    screen.getByRole("button", { name: "Log out" }).click();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("status").textContent).toBe("anonymous");
+    });
+    expect(authApi.logout).toHaveBeenCalledTimes(1);
+  });
+
+  it("cleans User A before applying a genuine User B authentication", async () => {
+    const userB: PublicUser = {
+      ...publicUser,
+      id: "user-provider-b",
+      email: "provider-b@example.test",
+      profile: { ...publicUser.profile, displayName: "Provider B" },
+    };
+    vi.mocked(authApi.refreshSession).mockResolvedValue(restoredSession);
+    vi.mocked(authApi.login).mockResolvedValue({
+      user: userB,
+      accessToken: "user-b-token",
+    });
+    const invalidate = vi.spyOn(
+      recoveryWriter,
+      "invalidateResumeRecoveryWritersForUser",
+    );
+    renderProvider();
+    await waitFor(() => {
+      expect(screen.getByTestId("status").textContent).toBe(
+        "authenticated",
+      );
+    });
+    const outgoingKey = createResumeRecoveryKey(
+      publicUser.id,
+      "507f1f77bcf86cd799439011",
+    );
+    const incomingKey = createResumeRecoveryKey(
+      userB.id,
+      "507f1f77bcf86cd799439011",
+    );
+    sessionStorage.setItem(outgoingKey, "outgoing");
+    sessionStorage.setItem(incomingKey, "incoming");
+
+    screen.getByRole("button", { name: "Log in" }).click();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("user").textContent).toBe("Provider B");
+    });
+    expect(invalidate).toHaveBeenCalledWith(publicUser.id);
+    expect(sessionStorage.getItem(outgoingKey)).toBeNull();
+    expect(sessionStorage.getItem(incomingKey)).toBe("incoming");
+  });
+
+  it("does not clean recovery for the same authenticated user", async () => {
+    vi.mocked(authApi.refreshSession).mockResolvedValue(restoredSession);
+    vi.mocked(authApi.login).mockResolvedValue({
+      user: publicUser,
+      accessToken: "same-user-token",
+    });
+    const invalidate = vi.spyOn(
+      recoveryWriter,
+      "invalidateResumeRecoveryWritersForUser",
+    );
+    renderProvider(true);
+    await waitFor(() => {
+      expect(screen.getByTestId("status").textContent).toBe(
+        "authenticated",
+      );
+    });
+    const key = createResumeRecoveryKey(
+      publicUser.id,
+      "507f1f77bcf86cd799439011",
+    );
+    sessionStorage.setItem(key, "retained");
+
+    screen.getByRole("button", { name: "Log in" }).click();
+
+    await waitFor(() => {
+      expect(authApi.login).toHaveBeenCalledTimes(1);
+    });
+    expect(invalidate).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(key)).toBe("retained");
   });
 
   it("clears local authentication state when logout fails", async () => {

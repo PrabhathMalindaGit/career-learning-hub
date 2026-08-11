@@ -1,7 +1,14 @@
 import { render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ResumePrintControls } from "./ResumePrintControls";
+
+const resumeWorkspaceCss = readFileSync(
+  resolve(process.cwd(), "src/features/resumes/resumeWorkspace.css"),
+  "utf8",
+);
 
 function renderControls(
   overrides: Partial<
@@ -12,7 +19,8 @@ function renderControls(
     sourceKind: "current",
     versionNumber: 4,
     pageSize: "A4",
-    dirty: false,
+    readiness: { eligible: true, message: "Ready to print / save as PDF" },
+    suggestedFilename: "synthetic-resume-v4-a4.pdf",
     pageSizeSaving: false,
     printPreparing: false,
     onPageSizeChange: vi.fn(),
@@ -28,7 +36,12 @@ describe("ResumePrintControls", () => {
     const props = renderControls();
     const user = userEvent.setup();
 
-    expect(screen.getByText("Current saved version 4")).not.toBeNull();
+    expect(screen.getByText("Current saved version — Version 4")).not.toBeNull();
+    expect(screen.getByText("Ready to print / save as PDF")).not.toBeNull();
+    expect(screen.getByText("Page size: A4")).not.toBeNull();
+    expect(screen.getByText(/Suggested filename:/).textContent).toContain(
+      "synthetic-resume-v4-a4.pdf",
+    );
     expect(
       screen.getByRole("button", {
         name: "Open print dialog for saved version 4",
@@ -47,8 +60,29 @@ describe("ResumePrintControls", () => {
     expect(props.onPageSizeChange).toHaveBeenCalledWith("LETTER");
   });
 
+  it("tells users to turn off browser headers and footers for a clean Resume PDF", () => {
+    renderControls();
+
+    expect(
+      screen.getByText(
+        "Choose “Save as PDF” in your browser. Turn off “Headers and footers” for a clean Resume PDF.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.queryByText(
+        /The browser and operating system control the final filename and PDF settings/i,
+      ),
+    ).toBeNull();
+  });
+
   it("blocks dirty printing and directs the user to save or discard", () => {
-    renderControls({ dirty: true });
+    renderControls({
+      readiness: {
+        eligible: false,
+        reasonId: "resume-export-blocker",
+        message: "Save your changes before printing or saving as PDF.",
+      },
+    });
 
     expect(
       (
@@ -57,7 +91,15 @@ describe("ResumePrintControls", () => {
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
-    expect(screen.getByText(/save new version or discard/i)).not.toBeNull();
+    const blocker = screen.getByText(
+      "Save your changes before printing or saving as PDF.",
+    );
+    expect(blocker.id).toBe("resume-export-blocker");
+    expect(
+      screen
+        .getByRole("button", { name: "Open print dialog for saved version 4" })
+        .getAttribute("aria-describedby"),
+    ).toBe("resume-export-blocker");
   });
 
   it("identifies historical content and exposes safe page-size failure details", () => {
@@ -70,7 +112,7 @@ describe("ResumePrintControls", () => {
       },
     });
 
-    expect(screen.getByText("Historical saved version 2")).not.toBeNull();
+    expect(screen.getByText("Historical Version 2")).not.toBeNull();
     expect(
       screen.getByText("The paper size could not be saved."),
     ).not.toBeNull();
@@ -85,7 +127,8 @@ describe("ResumePrintControls", () => {
         sourceKind="current"
         versionNumber={1}
         pageSize="A4"
-        dirty={false}
+        readiness={{ eligible: true, message: "Ready to print / save as PDF" }}
+        suggestedFilename="resume-v1-a4.pdf"
         pageSizeSaving
         printPreparing={false}
         onPageSizeChange={vi.fn()}
@@ -113,7 +156,8 @@ describe("ResumePrintControls", () => {
         sourceKind="current"
         versionNumber={1}
         pageSize="A4"
-        dirty={false}
+        readiness={{ eligible: true, message: "Ready to print / save as PDF" }}
+        suggestedFilename="resume-v1-a4.pdf"
         pageSizeSaving={false}
         printPreparing
         onPageSizeChange={vi.fn()}
@@ -130,7 +174,14 @@ describe("ResumePrintControls", () => {
   });
 
   it("blocks printing while a selected saved version is loading", () => {
-    renderControls({ sourceLoading: true });
+    renderControls({
+      sourceLoading: true,
+      readiness: {
+        eligible: false,
+        reasonId: "resume-export-loading",
+        message: "Loading the selected saved version before printing…",
+      },
+    });
 
     expect(
       (
@@ -142,5 +193,14 @@ describe("ResumePrintControls", () => {
     expect(
       screen.getByText(/loading the selected saved version/i),
     ).not.toBeNull();
+  });
+
+  it("allows readiness details and controls to wrap without fixed-width overflow", () => {
+    expect(resumeWorkspaceCss).toMatch(
+      /\.resume-export-readiness\s*\{[^}]*overflow-wrap:\s*anywhere;/s,
+    );
+    expect(resumeWorkspaceCss).toMatch(
+      /@media \(max-width:\s*720px\)[\s\S]*\.resume-print-control-row[\s\S]*flex-direction:\s*column;/s,
+    );
   });
 });

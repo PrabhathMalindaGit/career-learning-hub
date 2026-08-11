@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  createResumeSuggestedFilename,
   createResumePrintTitle,
   openResumePrint,
 } from "./resumePrint";
@@ -33,6 +34,30 @@ describe("resume print utility", () => {
         pageSize: "LETTER",
       }).length,
     ).toBeLessThanOrEqual(96);
+  });
+
+  it("builds a best-effort PDF filename from canonical title, source version, and page size", () => {
+    expect(
+      createResumeSuggestedFilename({
+        resumeTitle: "  Software / Engineer Resume.pdf ",
+        versionNumber: 3,
+        pageSize: "A4",
+      }),
+    ).toBe("software-engineer-resume-v3-a4.pdf");
+    expect(
+      createResumeSuggestedFilename({
+        resumeTitle: "///",
+        versionNumber: 2,
+        pageSize: "LETTER",
+      }),
+    ).toBe("resume-v2-letter.pdf");
+    expect(
+      createResumeSuggestedFilename({
+        resumeTitle: "A".repeat(400),
+        versionNumber: 12,
+        pageSize: "LETTER",
+      }).length,
+    ).toBeLessThanOrEqual(100);
   });
 
   it("temporarily changes the title, prints once, and restores afterprint", async () => {

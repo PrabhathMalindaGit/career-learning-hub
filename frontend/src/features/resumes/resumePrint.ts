@@ -25,6 +25,14 @@ export function createResumePrintTitle(input: {
   return `${normalized || "resume"}${suffix}`;
 }
 
+export function createResumeSuggestedFilename(input: {
+  resumeTitle: string;
+  versionNumber: number;
+  pageSize: ResumeDesign["pageSize"];
+}): string {
+  return `${createResumePrintTitle(input)}.pdf`;
+}
+
 function settlePrintState(): Promise<void> {
   return new Promise((resolve) => {
     window.requestAnimationFrame(() => {

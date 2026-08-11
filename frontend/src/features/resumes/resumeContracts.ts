@@ -4,6 +4,7 @@ import type {
   Pagination,
   ResumeAnalysis,
   ResumeContent,
+  ResumeContentInput,
   ResumeDesign,
   ResumeJob,
   ResumeListPageData,
@@ -174,28 +175,73 @@ function parseDesign(value: unknown): ResumeDesign {
   };
 }
 
-function parseLink(value: unknown) {
+type ContentParsePolicy = {
+  requireIds: boolean;
+  requiredMinimum: 0 | 1;
+  validateEmail: boolean;
+  validateUrls: boolean;
+};
+
+const canonicalContentPolicy: ContentParsePolicy = {
+  requireIds: true,
+  requiredMinimum: 1,
+  validateEmail: true,
+  validateUrls: true,
+};
+
+const recoveryContentPolicy: ContentParsePolicy = {
+  requireIds: false,
+  requiredMinimum: 0,
+  validateEmail: false,
+  validateUrls: false,
+};
+
+function entityIdentifier(
+  item: Record<string, unknown>,
+  policy: ContentParsePolicy,
+): { id?: string } {
+  if (policy.requireIds) return { id: uuid(item.id) };
+  return item.id === undefined ? {} : { id: uuid(item.id) };
+}
+
+function contentUrl(
+  value: unknown,
+  policy: ContentParsePolicy,
+): string {
+  return policy.validateUrls
+    ? url(value)
+    : text(value, 2_000, policy.requiredMinimum);
+}
+
+function parseLink(value: unknown, policy: ContentParsePolicy) {
   const item = record(value);
   return {
-    id: uuid(item.id),
-    label: text(item.label, 80, 1),
-    url: url(item.url),
+    ...entityIdentifier(item, policy),
+    label: text(item.label, 80, policy.requiredMinimum),
+    url: contentUrl(item.url, policy),
   };
 }
 
-function parseBullet(value: unknown) {
+function parseBullet(value: unknown, policy: ContentParsePolicy) {
   const item = record(value);
   return {
-    id: uuid(item.id),
-    text: text(item.text, 2_000, 1),
+    ...entityIdentifier(item, policy),
+    text: text(item.text, 2_000, policy.requiredMinimum),
   };
 }
 
-function parseContent(value: unknown): ResumeContent {
+function parseContent(
+  value: unknown,
+  policy: ContentParsePolicy,
+): ResumeContentInput {
   const item = record(value);
   const basics = record(item.basics);
   const emailValue = optionalText(basics.email, 320);
-  if (emailValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+  if (
+    policy.validateEmail &&
+    emailValue &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)
+  ) {
     invalid();
   }
 
@@ -215,14 +261,15 @@ function parseContent(value: unknown): ResumeContent {
       ...(basics.summary === undefined
         ? {}
         : { summary: text(basics.summary, 5_000) }),
-      links: array(basics.links, 20, parseLink),
+      links: array(basics.links, 20, (entry) =>
+        parseLink(entry, policy)),
     },
     experience: array(item.experience, 50, (value) => {
       const entry = record(value);
       return {
-        id: uuid(entry.id),
-        employer: text(entry.employer, 200, 1),
-        jobTitle: text(entry.jobTitle, 200, 1),
+        ...entityIdentifier(entry, policy),
+        employer: text(entry.employer, 200, policy.requiredMinimum),
+        jobTitle: text(entry.jobTitle, 200, policy.requiredMinimum),
         ...(entry.location === undefined
           ? {}
           : { location: text(entry.location, 200) }),
@@ -233,15 +280,24 @@ function parseContent(value: unknown): ResumeContent {
           ? {}
           : { endDate: text(entry.endDate, 30) }),
         isCurrent: boolean(entry.isCurrent),
-        bullets: array(entry.bullets, 50, parseBullet),
+        bullets: array(entry.bullets, 50, (bullet) =>
+          parseBullet(bullet, policy)),
       };
     }),
     education: array(item.education, 30, (value) => {
       const entry = record(value);
       return {
-        id: uuid(entry.id),
-        institution: text(entry.institution, 200, 1),
-        qualification: text(entry.qualification, 200, 1),
+        ...entityIdentifier(entry, policy),
+        institution: text(
+          entry.institution,
+          200,
+          policy.requiredMinimum,
+        ),
+        qualification: text(
+          entry.qualification,
+          200,
+          policy.requiredMinimum,
+        ),
         ...(entry.fieldOfStudy === undefined
           ? {}
           : { fieldOfStudy: text(entry.fieldOfStudy, 200) }),
@@ -255,24 +311,25 @@ function parseContent(value: unknown): ResumeContent {
           ? {}
           : { endDate: text(entry.endDate, 30) }),
         isCurrent: boolean(entry.isCurrent),
-        details: array(entry.details, 30, parseBullet),
+        details: array(entry.details, 30, (detail) =>
+          parseBullet(detail, policy)),
       };
     }),
     skills: array(item.skills, 30, (value) => {
       const entry = record(value);
       return {
-        id: uuid(entry.id),
-        name: text(entry.name, 120, 1),
+        ...entityIdentifier(entry, policy),
+        name: text(entry.name, 120, policy.requiredMinimum),
         keywords: array(entry.keywords, 100, (keyword) =>
-          text(keyword, 120, 1),
+          text(keyword, 120, policy.requiredMinimum),
         ),
       };
     }),
     projects: array(item.projects, 50, (value) => {
       const entry = record(value);
       return {
-        id: uuid(entry.id),
-        name: text(entry.name, 200, 1),
+        ...entityIdentifier(entry, policy),
+        name: text(entry.name, 200, policy.requiredMinimum),
         ...(entry.role === undefined
           ? {}
           : { role: text(entry.role, 160) }),
@@ -286,17 +343,19 @@ function parseContent(value: unknown): ResumeContent {
           ? {}
           : { endDate: text(entry.endDate, 30) }),
         technologies: array(entry.technologies, 100, (technology) =>
-          text(technology, 120, 1),
+          text(technology, 120, policy.requiredMinimum),
         ),
-        links: array(entry.links, 20, parseLink),
-        bullets: array(entry.bullets, 50, parseBullet),
+        links: array(entry.links, 20, (link) =>
+          parseLink(link, policy)),
+        bullets: array(entry.bullets, 50, (bullet) =>
+          parseBullet(bullet, policy)),
       };
     }),
     certifications: array(item.certifications, 50, (value) => {
       const entry = record(value);
       return {
-        id: uuid(entry.id),
-        name: text(entry.name, 200, 1),
+        ...entityIdentifier(entry, policy),
+        name: text(entry.name, 200, policy.requiredMinimum),
         ...(entry.issuer === undefined
           ? {}
           : { issuer: text(entry.issuer, 200) }),
@@ -305,26 +364,45 @@ function parseContent(value: unknown): ResumeContent {
           : { issuedDate: text(entry.issuedDate, 30) }),
         ...(entry.credentialUrl === undefined
           ? {}
-          : { credentialUrl: url(entry.credentialUrl) }),
+          : {
+              credentialUrl: contentUrl(
+                entry.credentialUrl,
+                policy,
+              ),
+            }),
       };
     }),
     languages: array(item.languages, 30, (value) => {
       const entry = record(value);
       return {
-        id: uuid(entry.id),
-        name: text(entry.name, 120, 1),
+        ...entityIdentifier(entry, policy),
+        name: text(entry.name, 120, policy.requiredMinimum),
         ...(entry.proficiency === undefined
           ? {}
           : { proficiency: text(entry.proficiency, 80) }),
       };
     }),
     interests: array(item.interests, 50, (interest) =>
-      text(interest, 120, 1),
+      text(interest, 120, policy.requiredMinimum),
     ),
   };
 }
 
-function assertExactContentKeys(value: unknown): void {
+function exactEntityKeys(
+  value: unknown,
+  required: readonly string[],
+  optional: readonly string[],
+  policy: ContentParsePolicy,
+): Record<string, unknown> {
+  return policy.requireIds
+    ? exactKeys(value, ["id", ...required], optional)
+    : exactKeys(value, required, ["id", ...optional]);
+}
+
+function assertExactContentKeys(
+  value: unknown,
+  policy: ContentParsePolicy,
+): void {
   const item = exactKeys(value, [
     "basics", "experience", "education", "skills", "projects",
     "certifications", "languages", "interests",
@@ -335,52 +413,64 @@ function assertExactContentKeys(value: unknown): void {
     ["email", "phone", "location", "headline", "summary"],
   );
   array(basics.links, 20, (link) =>
-    exactKeys(link, ["id", "label", "url"]));
-  const bullet = (value: unknown) => exactKeys(value, ["id", "text"]);
+    exactEntityKeys(link, ["label", "url"], [], policy));
+  const bullet = (value: unknown) =>
+    exactEntityKeys(value, ["text"], [], policy);
   array(item.experience, 50, (value) => {
-    const entry = exactKeys(
+    const entry = exactEntityKeys(
       value,
-      ["id", "employer", "jobTitle", "isCurrent", "bullets"],
+      ["employer", "jobTitle", "isCurrent", "bullets"],
       ["location", "startDate", "endDate"],
+      policy,
     );
     array(entry.bullets, 50, bullet);
     return entry;
   });
   array(item.education, 30, (value) => {
-    const entry = exactKeys(
+    const entry = exactEntityKeys(
       value,
-      ["id", "institution", "qualification", "isCurrent", "details"],
+      ["institution", "qualification", "isCurrent", "details"],
       ["fieldOfStudy", "location", "startDate", "endDate"],
+      policy,
     );
     array(entry.details, 30, bullet);
     return entry;
   });
   array(item.skills, 30, (value) =>
-    exactKeys(value, ["id", "name", "keywords"]));
+    exactEntityKeys(value, ["name", "keywords"], [], policy));
   array(item.projects, 50, (value) => {
-    const entry = exactKeys(
+    const entry = exactEntityKeys(
       value,
-      ["id", "name", "technologies", "links", "bullets"],
+      ["name", "technologies", "links", "bullets"],
       ["role", "description", "startDate", "endDate"],
+      policy,
     );
     array(entry.links, 20, (link) =>
-      exactKeys(link, ["id", "label", "url"]));
+      exactEntityKeys(link, ["label", "url"], [], policy));
     array(entry.bullets, 50, bullet);
     return entry;
   });
   array(item.certifications, 50, (value) =>
-    exactKeys(
+    exactEntityKeys(
       value,
-      ["id", "name"],
+      ["name"],
       ["issuer", "issuedDate", "credentialUrl"],
+      policy,
     ));
   array(item.languages, 30, (value) =>
-    exactKeys(value, ["id", "name"], ["proficiency"]));
+    exactEntityKeys(value, ["name"], ["proficiency"], policy));
 }
 
 export function parseResumeContent(value: unknown): ResumeContent {
-  assertExactContentKeys(value);
-  return parseContent(value);
+  assertExactContentKeys(value, canonicalContentPolicy);
+  return parseContent(value, canonicalContentPolicy) as ResumeContent;
+}
+
+export function parseResumeRecoveryContent(
+  value: unknown,
+): ResumeContentInput {
+  assertExactContentKeys(value, recoveryContentPolicy);
+  return parseContent(value, recoveryContentPolicy);
 }
 
 function parseResume(value: unknown): ResumeRecord {
@@ -440,7 +530,10 @@ function parseVersion(value: unknown): ResumeVersion {
   return {
     ...parseVersionMetadata(item),
     resumeId: id(item.resumeId),
-    content: parseContent(item.content),
+    content: parseContent(
+      item.content,
+      canonicalContentPolicy,
+    ) as ResumeContent,
     updatedAt: date(item.updatedAt),
   };
 }

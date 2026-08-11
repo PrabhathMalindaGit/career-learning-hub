@@ -8,6 +8,7 @@ import { useBlocker, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { Dialog } from "../../components/Dialog";
+import { useAuth } from "../auth/AuthProvider";
 import { JobResilienceActions } from "../jobs/JobResilienceActions";
 import {
   cancelJob,
@@ -24,8 +25,12 @@ import {
   RESUME_JOB_TITLE_DATALIST_ID,
   type ResumeEditorFocusRequest,
 } from "./ResumeEditor";
-import { ResumePrintControls } from "./ResumePrintControls";
+import {
+  ResumePrintControls,
+  type ResumeExportReadiness,
+} from "./ResumePrintControls";
 import { ResumePreview } from "./ResumePreview";
+import { ResumeRecoveryReview } from "./ResumeRecoveryReview";
 import {
   ResumeVersionSourceBadge,
   ResumeVersionTimeline,
@@ -46,15 +51,30 @@ import {
   draftToInput,
   parseResumeValidationDetails,
   resumeFieldId,
+  resumeContentInputToDraft,
   resumeContentToDraft,
   type ResumeDraftValidationError,
   validateResumeDraft,
 } from "./resumeDraft";
 import { pollResumeJob } from "./resumePolling";
 import {
+  createResumeSuggestedFilename,
   createResumePrintTitle,
   openResumePrint,
 } from "./resumePrint";
+import {
+  classifyResumeRecovery,
+  createResumeRecoveryKey,
+  readResumeRecovery,
+  removeObsoleteResumeRecovery,
+  removeResumeRecoveryExact,
+  type ResumeRecoveryEnvelope,
+} from "./resumeRecovery";
+import {
+  createResumeRecoveryWriter,
+  type ResumeRecoveryWriter,
+} from "./resumeRecoveryWriter";
+import { parseResumeRecoveryContent } from "./resumeContracts";
 import type { ResumePresentationSelection } from "./resumeTemplateRegistry";
 import type {
   ResumeAnalysis,
@@ -72,8 +92,25 @@ type Notice = {
   tone: "success" | "error" | "warning" | "info";
   message: string;
   requestId?: string;
-  action?: "reload";
+  action?: "reload" | "retry-cleanup";
 };
+
+type CanonicalSaveState = "SAVED" | "DIRTY" | "SAVING" | "SAVE_FAILED";
+
+type FailedSaveAttempt = {
+  fingerprint: string;
+  conflict: boolean;
+};
+
+type RecoveryCleanupDebt = {
+  key: string;
+  obsoleteBaselineVersionId: string;
+};
+
+type RecoveryGate =
+  | { kind: "RECOVERY_AVAILABLE"; payload: ResumeRecoveryEnvelope }
+  | { kind: "STALE_CONFLICTED_RECOVERY"; payload: ResumeRecoveryEnvelope }
+  | { kind: "STALE_RECOVERY_REVIEW"; payload: ResumeRecoveryEnvelope };
 
 function safeFailure(
   error: unknown,
@@ -166,6 +203,7 @@ function saveFailure(error: unknown): Notice {
 
 export function ResumeWorkspace() {
   const { resumeId } = useParams<{ resumeId: string }>();
+  const { user } = useAuth();
   const [workspace, setWorkspace] = useState<ResumeWorkspaceData>();
   const [draft, setDraft] = useState<ResumeDraft>();
   const [baselineFingerprint, setBaselineFingerprint] = useState("");
@@ -188,6 +226,15 @@ export function ResumeWorkspace() {
   const [editorFocusRequest, setEditorFocusRequest] =
     useState<ResumeEditorFocusRequest>();
   const [saving, setSaving] = useState(false);
+  const [failedSave, setFailedSave] = useState<FailedSaveAttempt>();
+  const [recoveryCleanupDebt, setRecoveryCleanupDebt] =
+    useState<RecoveryCleanupDebt>();
+  const [recoveryWriteUnavailable, setRecoveryWriteUnavailable] =
+    useState(false);
+  const [recoveryGate, setRecoveryGate] = useState<RecoveryGate>();
+  const [recoveryDiscardError, setRecoveryDiscardError] = useState(false);
+  const [navigationDiscardError, setNavigationDiscardError] = useState(false);
+  const [workspaceOwnerUserId, setWorkspaceOwnerUserId] = useState<string>();
   const [designMutationSaving, setDesignMutationSaving] = useState(false);
   const [designStatus, setDesignStatus] =
     useState<ResumeDesignStatus>();
@@ -215,15 +262,81 @@ export function ResumeWorkspace() {
   );
   const designMutationRef = useRef(false);
   const saveMutationRef = useRef(false);
+  const saveOperationRef = useRef<() => void>(() => undefined);
+  const recoveryWriterRef = useRef<ResumeRecoveryWriter | undefined>(undefined);
+  const recoveryHadDirtyDraftRef = useRef(false);
+  const restoreRecoveryButtonRef = useRef<HTMLButtonElement>(null);
+  const reviewRecoveryButtonRef = useRef<HTMLButtonElement>(null);
   const keepEditingButtonRef = useRef<HTMLButtonElement>(null);
   const editorFocusRequestIdRef = useRef(0);
 
-  const dirty =
-    draft !== undefined &&
-    draftFingerprint(draft) !== baselineFingerprint;
+  const currentFingerprint = draft ? draftFingerprint(draft) : "";
+  const dirty = draft !== undefined && currentFingerprint !== baselineFingerprint;
+  const saveState: CanonicalSaveState = saving
+    ? "SAVING"
+    : dirty && failedSave?.fingerprint === currentFingerprint
+      ? "SAVE_FAILED"
+      : dirty
+        ? "DIRTY"
+        : "SAVED";
+  const selectedExportVersion = snapshot ?? workspace?.version;
+  const selectedSourceIsHistorical =
+    snapshot !== undefined &&
+    workspace !== undefined &&
+    snapshot.id !== workspace.version.id;
+  const loadingSourceIsHistorical =
+    snapshotLoadingId !== undefined &&
+    workspace !== undefined &&
+    snapshotLoadingId !== workspace.version.id;
+  const exportReadiness: ResumeExportReadiness = recoveryGate
+    ? {
+        eligible: false,
+        reasonId: "resume-export-recovery-blocker",
+        message: "Resolve recovered work before printing or saving as PDF.",
+      }
+    : snapshotLoadingId
+      ? {
+          eligible: false,
+          reasonId: "resume-export-source-loading",
+          message: "Loading the selected saved version before printing…",
+        }
+      : designMutationSaving
+        ? {
+            eligible: false,
+            reasonId: "resume-export-design-saving",
+            message: "Wait for the paper size to finish saving.",
+          }
+        : printPreparing
+          ? {
+              eligible: false,
+              reasonId: "resume-export-preparing",
+              message: "Preparing the saved Resume for browser printing…",
+            }
+          : !selectedExportVersion
+            ? {
+                eligible: false,
+                reasonId: "resume-export-no-version",
+                message: "Save a Resume version before printing or saving as PDF.",
+              }
+            : !selectedSourceIsHistorical && saving
+              ? {
+                  eligible: false,
+                  reasonId: "resume-export-saving",
+                  message: "Saving is in progress. Wait for the new version to finish.",
+                }
+              : !selectedSourceIsHistorical && dirty
+                ? {
+                    eligible: false,
+                    reasonId: "resume-export-unsaved",
+                    message: "Save your changes before printing or saving as PDF.",
+                  }
+                : {
+                    eligible: true,
+                    message: "Ready to print / save as PDF",
+                  };
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
-      dirty &&
+      (dirty || recoveryGate !== undefined) &&
       (currentLocation.pathname !== nextLocation.pathname ||
         currentLocation.search !== nextLocation.search),
   );
@@ -262,6 +375,12 @@ export function ResumeWorkspace() {
     snapshotControllerRef.current = undefined;
     setSaving(false);
     saveMutationRef.current = false;
+    setFailedSave(undefined);
+    setRecoveryCleanupDebt(undefined);
+    setRecoveryGate(undefined);
+    setRecoveryDiscardError(false);
+    setNavigationDiscardError(false);
+    setWorkspaceOwnerUserId(undefined);
     setAnalysisBusy(false);
     setApplying(false);
     designMutationRef.current = false;
@@ -300,7 +419,7 @@ export function ResumeWorkspace() {
   }, [dirty]);
 
   useEffect(() => {
-    if (!resumeId) {
+    if (!resumeId || !user) {
       setLoadFailure({
         tone: "error",
         message: "This resume route is invalid.",
@@ -314,6 +433,8 @@ export function ResumeWorkspace() {
     setLoading(true);
     setLoadFailure(undefined);
     setNotice(undefined);
+    setRecoveryGate(undefined);
+    setRecoveryDiscardError(false);
     setAnalysis(undefined);
     setAnalysisStale(false);
     setSelectedSuggestionIds(new Set());
@@ -322,6 +443,30 @@ export function ResumeWorkspace() {
       .then((nextWorkspace) => {
         if (!active) return;
         adoptCanonical(nextWorkspace);
+        setWorkspaceOwnerUserId(user.id);
+        const recovery = readResumeRecovery({
+          storage: sessionStorage,
+          userId: user.id,
+          resumeId: nextWorkspace.resume.id,
+          now: Date.now(),
+        });
+        if (recovery.kind !== "VALID") return;
+        const canonicalDraft = resumeContentToDraft(
+          nextWorkspace.version.content,
+        );
+        const classification = classifyResumeRecovery({
+          payload: recovery.payload,
+          canonicalVersionId: nextWorkspace.version.id,
+          canonicalFingerprint: draftFingerprint(canonicalDraft),
+        });
+        if (classification.kind === "CLEAN_OBSOLETE") {
+          removeResumeRecoveryExact(
+            sessionStorage,
+            createResumeRecoveryKey(user.id, nextWorkspace.resume.id),
+          );
+          return;
+        }
+        setRecoveryGate(classification);
       })
       .catch((error: unknown) => {
         if (!active || isAbort(error)) return;
@@ -337,7 +482,7 @@ export function ResumeWorkspace() {
       active = false;
       controller.abort();
     };
-  }, [resumeId, reloadSequence]);
+  }, [resumeId, reloadSequence, user?.id]);
 
   useEffect(() => {
     if (!resumeId) return;
@@ -377,8 +522,129 @@ export function ResumeWorkspace() {
     [selectedSuggestionIds],
   );
 
+  useEffect(() => {
+    const handleWorkspaceSaveShortcut = (event: KeyboardEvent) => {
+      const recognized =
+        event.key.toLowerCase() === "s" &&
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey &&
+        !event.shiftKey;
+      if (!recognized || event.isComposing) return;
+      event.preventDefault();
+      if (event.repeat) return;
+      saveOperationRef.current();
+    };
+    document.addEventListener("keydown", handleWorkspaceSaveShortcut);
+    return () =>
+      document.removeEventListener("keydown", handleWorkspaceSaveShortcut);
+  }, []);
+
+  useEffect(() => {
+    if (!user || !resumeId) return;
+    let active = true;
+    recoveryHadDirtyDraftRef.current = false;
+    setRecoveryWriteUnavailable(false);
+    const writer = createResumeRecoveryWriter({
+      storage: sessionStorage,
+      userId: user.id,
+      resumeId,
+      onWriteResult: (result) => {
+        if (!active) return;
+        if (result === "failure") {
+          setRecoveryWriteUnavailable(true);
+          return;
+        }
+        setRecoveryWriteUnavailable(false);
+        setRecoveryCleanupDebt(undefined);
+        setNotice((current) =>
+          current?.action === "retry-cleanup" ? undefined : current,
+        );
+      },
+    });
+    recoveryWriterRef.current = writer;
+    return () => {
+      active = false;
+      writer.dispose();
+      if (recoveryWriterRef.current === writer) {
+        recoveryWriterRef.current = undefined;
+      }
+    };
+  }, [resumeId, user?.id]);
+
+  useEffect(() => {
+    const flushPendingRecovery = () => {
+      recoveryWriterRef.current?.flush({ reportFailure: false });
+    };
+    window.addEventListener("pagehide", flushPendingRecovery);
+    return () => window.removeEventListener("pagehide", flushPendingRecovery);
+  }, [resumeId, user?.id]);
+
+  useEffect(() => {
+    const writer = recoveryWriterRef.current;
+    if (!writer || !user || !workspace || !draft || recoveryGate) return;
+    if (
+      workspace.resume.id !== resumeId ||
+      workspace.resume.id !== workspace.version.resumeId
+    ) {
+      return;
+    }
+
+    if (dirty) {
+      const content = draftToInput(draft);
+      try {
+        parseResumeRecoveryContent(content);
+      } catch {
+        return;
+      }
+      recoveryHadDirtyDraftRef.current = true;
+      writer.schedule({
+        fingerprint: currentFingerprint,
+        payload: {
+          schemaVersion: 1,
+          userId: user.id,
+          resumeId: workspace.resume.id,
+          baselineVersionId: workspace.version.id,
+          baselineVersionNumber: workspace.version.versionNumber,
+          content,
+        },
+      });
+      return;
+    }
+
+    if (!recoveryHadDirtyDraftRef.current) return;
+    writer.cancelPending();
+    removeResumeRecoveryExact(
+      sessionStorage,
+      createResumeRecoveryKey(user.id, workspace.resume.id),
+    );
+    recoveryHadDirtyDraftRef.current = false;
+    setRecoveryWriteUnavailable(false);
+  }, [
+    currentFingerprint,
+    dirty,
+    draft,
+    resumeId,
+    recoveryGate,
+    user,
+    workspace,
+  ]);
+
   async function handleSave() {
-    if (!resumeId || !workspace || !draft || saveMutationRef.current) return;
+    if (
+      !resumeId ||
+      !user ||
+      !workspace ||
+      !draft ||
+      saveMutationRef.current ||
+      !dirty ||
+      snapshot ||
+      printPreparing ||
+      applying ||
+      failedSave?.conflict ||
+      recoveryGate
+    ) {
+      return;
+    }
     const errors = validateResumeDraft(draft);
     setValidationErrors(errors);
     setNotice(undefined);
@@ -388,7 +654,11 @@ export function ResumeWorkspace() {
     }
 
     saveMutationRef.current = true;
+    const submittedFingerprint = currentFingerprint;
+    const obsoleteBaselineVersionId = workspace.version.id;
+    const recoveryKey = createResumeRecoveryKey(user.id, workspace.resume.id);
     const controller = beginOperation();
+    setFailedSave(undefined);
     setSaving(true);
     try {
       const next = await saveResumeVersion(
@@ -400,16 +670,37 @@ export function ResumeWorkspace() {
         controller.signal,
       );
       if (controller.signal.aborted) return;
+      recoveryWriterRef.current?.cancelPending();
       adoptCanonical(next);
       setHistoryPage(1);
       setHistoryReloadSequence((current) => current + 1);
       if (analysis) setAnalysisStale(true);
-      setNotice({
-        tone: "success",
-        message: `Version ${next.version.versionNumber} saved.`,
+      const cleanupConfirmed = removeObsoleteResumeRecovery({
+        storage: sessionStorage,
+        key: recoveryKey,
+        obsoleteBaselineVersionId,
       });
+      if (cleanupConfirmed) {
+        setRecoveryCleanupDebt(undefined);
+        setNotice({
+          tone: "success",
+          message: `Version ${next.version.versionNumber} saved.`,
+        });
+      } else {
+        setRecoveryCleanupDebt({ key: recoveryKey, obsoleteBaselineVersionId });
+        setNotice({
+          tone: "warning",
+          message:
+            "Your new version was saved, but local recovery data could not be cleared. Please retry cleanup.",
+          action: "retry-cleanup",
+        });
+      }
     } catch (error) {
       if (!isAbort(error)) {
+        setFailedSave({
+          fingerprint: submittedFingerprint,
+          conflict: error instanceof ApiError && error.status === 409,
+        });
         setNotice(saveFailure(error));
         if (
           error instanceof ApiError &&
@@ -427,6 +718,114 @@ export function ResumeWorkspace() {
       saveMutationRef.current = false;
       setSaving(false);
     }
+  }
+
+  saveOperationRef.current = () => {
+    void handleSave();
+  };
+
+  function restoreRecoveredDraft() {
+    if (recoveryGate?.kind !== "RECOVERY_AVAILABLE") return;
+    setDraft(resumeContentInputToDraft(recoveryGate.payload.content));
+    setRecoveryDiscardError(false);
+    setRecoveryGate(undefined);
+  }
+
+  function reviewStaleRecovery() {
+    if (
+      !user ||
+      !workspace ||
+      recoveryGate?.kind !== "STALE_CONFLICTED_RECOVERY"
+    ) {
+      return;
+    }
+    const recovery = readResumeRecovery({
+      storage: sessionStorage,
+      userId: user.id,
+      resumeId: workspace.resume.id,
+      now: Date.now(),
+    });
+    if (recovery.kind !== "VALID") {
+      setRecoveryGate(undefined);
+      return;
+    }
+    setRecoveryDiscardError(false);
+    setRecoveryGate({
+      kind: "STALE_RECOVERY_REVIEW",
+      payload: recovery.payload,
+    });
+  }
+
+  function discardRecovery() {
+    if (!user || !workspace || !recoveryGate) return;
+    recoveryWriterRef.current?.cancelPending();
+    const removed = removeResumeRecoveryExact(
+      sessionStorage,
+      createResumeRecoveryKey(user.id, workspace.resume.id),
+    );
+    if (!removed) {
+      setRecoveryDiscardError(true);
+      return;
+    }
+    setRecoveryDiscardError(false);
+    if (blocker.state === "blocked") blocker.reset();
+    setRecoveryGate(undefined);
+  }
+
+  function handleDiscardDraft() {
+    if (!user || !workspace || !dirty) return;
+    recoveryWriterRef.current?.cancelPending();
+    const removed = removeResumeRecoveryExact(
+      sessionStorage,
+      createResumeRecoveryKey(user.id, workspace.resume.id),
+    );
+    if (!removed) {
+      setNotice({
+        tone: "error",
+        message: "Local recovery could not be discarded. Please try again.",
+      });
+      return;
+    }
+    setDraft(resumeContentToDraft(workspace.version.content));
+    setValidationErrors([]);
+    setFailedSave(undefined);
+    setNotice(undefined);
+    setRecoveryWriteUnavailable(false);
+    recoveryHadDirtyDraftRef.current = false;
+  }
+
+  function handleKeepEditing() {
+    setNavigationDiscardError(false);
+    if (blocker.state === "blocked") blocker.reset();
+  }
+
+  function handleLeaveWithoutSaving() {
+    if (!user || !workspace || blocker.state !== "blocked") return;
+    recoveryWriterRef.current?.cancelPending();
+    const removed = removeResumeRecoveryExact(
+      sessionStorage,
+      createResumeRecoveryKey(user.id, workspace.resume.id),
+    );
+    if (!removed) {
+      setNavigationDiscardError(true);
+      return;
+    }
+    setNavigationDiscardError(false);
+    recoveryHadDirtyDraftRef.current = false;
+    blocker.proceed();
+  }
+
+  function retryRecoveryCleanup() {
+    if (!recoveryCleanupDebt) return;
+    const cleaned = removeObsoleteResumeRecovery({
+      storage: sessionStorage,
+      key: recoveryCleanupDebt.key,
+      obsoleteBaselineVersionId:
+        recoveryCleanupDebt.obsoleteBaselineVersionId,
+    });
+    if (!cleaned) return;
+    setRecoveryCleanupDebt(undefined);
+    setNotice(undefined);
   }
 
   async function cancelAnalysis(signal: AbortSignal): Promise<void> {
@@ -465,7 +864,7 @@ export function ResumeWorkspace() {
   }
 
   async function handleViewVersion(version: ResumeVersionMetadata) {
-    if (!resumeId) return;
+    if (!resumeId || recoveryGate) return;
     snapshotControllerRef.current?.abort();
     const controller = beginOperation();
     snapshotControllerRef.current = controller;
@@ -503,6 +902,7 @@ export function ResumeWorkspace() {
     if (
       !resumeId ||
       !workspace ||
+      recoveryGate ||
       designMutationRef.current ||
       pageSize === workspace.resume.design.pageSize
     ) {
@@ -551,7 +951,7 @@ export function ResumeWorkspace() {
   async function handleDesignSave(
     selection: ResumePresentationSelection,
   ) {
-    if (!resumeId || !workspace || designMutationRef.current) return;
+    if (!resumeId || !workspace || recoveryGate || designMutationRef.current) return;
 
     designMutationRef.current = true;
     const controller = beginOperation();
@@ -598,7 +998,7 @@ export function ResumeWorkspace() {
 
   function handlePrint() {
     const version = snapshot ?? workspace?.version;
-    if (!workspace || !version || dirty || printPreparing) return;
+    if (!workspace || !version || !exportReadiness.eligible) return;
     setNotice(undefined);
     void openResumePrint({
       title: createResumePrintTitle({
@@ -726,6 +1126,7 @@ export function ResumeWorkspace() {
       !resumeId ||
       !workspace ||
       dirty ||
+      recoveryGate ||
       analysisBusy ||
       targetRole.trim().length < 2
     ) {
@@ -770,6 +1171,7 @@ export function ResumeWorkspace() {
     if (
       !resumeId ||
       !analysis ||
+      recoveryGate ||
       analysisStale ||
       selectedSuggestionIds.size === 0 ||
       applying
@@ -816,7 +1218,7 @@ export function ResumeWorkspace() {
     }
   }
 
-  if (loading) {
+  if (loading || (user && workspaceOwnerUserId !== user.id)) {
     return (
       <section className="resume-route-state" role="status">
         <Breadcrumbs
@@ -854,6 +1256,28 @@ export function ResumeWorkspace() {
     );
   }
 
+  if (recoveryGate?.kind === "STALE_RECOVERY_REVIEW") {
+    return (
+      <section className="resume-workspace" aria-label="Stale recovery review">
+        <Breadcrumbs
+          items={[
+            { label: "Resumes", to: "/resumes" },
+            { label: workspace.resume.title },
+            { label: "Recovered draft review" },
+          ]}
+        />
+        <ResumeRecoveryReview
+          content={recoveryGate.payload.content}
+          baselineVersionNumber={recoveryGate.payload.baselineVersionNumber}
+          currentVersionNumber={workspace.version.versionNumber}
+          design={workspace.resume.design}
+          discardError={recoveryDiscardError}
+          onDiscard={discardRecovery}
+        />
+      </section>
+    );
+  }
+
   return (
     <section className="resume-workspace" aria-label="Resume Studio workspace">
       <Breadcrumbs
@@ -872,34 +1296,67 @@ export function ResumeWorkspace() {
           </p>
         </div>
         <div className="resume-workspace-actions">
-          {dirty ? (
-            <span className="resume-dirty-state">Unsaved changes</span>
-          ) : (
-            <span className="resume-saved-state">
-              Version {workspace.version.versionNumber} saved
-            </span>
-          )}
-          <button
-            type="button"
-            className="quiet-button"
-            disabled={!dirty || saving || applying}
-            onClick={() => {
-              const next = resumeContentToDraft(workspace.version.content);
-              setDraft(next);
-              setValidationErrors([]);
-              setNotice(undefined);
-            }}
+          <span
+            className={
+              saveState === "SAVED"
+                ? "resume-saved-state"
+                : "resume-dirty-state"
+            }
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
           >
-            Discard draft changes
-          </button>
+            {recoveryGate
+              ? "Recovery decision required"
+              : saveState === "SAVED"
+              ? `Version ${workspace.version.versionNumber} saved`
+              : saveState === "SAVING"
+                ? "Saving…"
+                : saveState === "SAVE_FAILED"
+                  ? "Save failed"
+                  : "Unsaved changes"}
+          </span>
+          {dirty &&
+          !saving &&
+          snapshot === undefined &&
+          recoveryGate === undefined ? (
+            <button
+              type="button"
+              className="quiet-button"
+              disabled={applying}
+              onClick={handleDiscardDraft}
+            >
+              Discard changes
+            </button>
+          ) : null}
           <button
             type="button"
             className="primary-button resume-primary-button"
-            disabled={!dirty || saving || applying}
+            disabled={
+              !dirty ||
+              saving ||
+              applying ||
+              snapshot !== undefined ||
+              printPreparing ||
+              recoveryGate !== undefined ||
+              failedSave?.conflict === true
+            }
             aria-busy={saving}
+            aria-keyshortcuts="Meta+S Control+S"
             onClick={() => void handleSave()}
           >
-            {saving ? "Saving…" : "Save new version"}
+            {saving ? (
+              "Saving…"
+            ) : (
+              <>
+                Save new version
+                <kbd className="resume-save-shortcut" aria-hidden="true">
+                  {navigator.platform.toLowerCase().includes("mac")
+                    ? "⌘S"
+                    : "Ctrl+S"}
+                </kbd>
+              </>
+            )}
           </button>
         </div>
       </header>
@@ -925,6 +1382,18 @@ export function ResumeWorkspace() {
               Reload and review
             </button>
           ) : null}
+          {notice.action === "retry-cleanup" ? (
+            <button type="button" onClick={retryRecoveryCleanup}>
+              Retry local cleanup
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {recoveryWriteUnavailable ? (
+        <div className="resume-notice resume-notice-warning" role="status">
+          Local recovery is unavailable. Save a new version to protect your
+          changes.
         </div>
       ) : null}
 
@@ -948,7 +1417,7 @@ export function ResumeWorkspace() {
 
       <ResumeDesignControls
         design={workspace.resume.design}
-        saving={designMutationSaving}
+        saving={designMutationSaving || recoveryGate !== undefined}
         status={designStatus}
         onPreviewChange={(selection) => {
           setDesignStatus(undefined);
@@ -962,12 +1431,17 @@ export function ResumeWorkspace() {
       />
 
       <ResumePrintControls
-        sourceKind={snapshot ? "historical" : "current"}
+        sourceKind={selectedSourceIsHistorical ? "historical" : "current"}
         versionNumber={
           (snapshot ?? workspace.version).versionNumber
         }
         pageSize={workspace.resume.design.pageSize}
-        dirty={dirty}
+        readiness={exportReadiness}
+        suggestedFilename={createResumeSuggestedFilename({
+          resumeTitle: workspace.resume.title,
+          versionNumber: (snapshot ?? workspace.version).versionNumber,
+          pageSize: workspace.resume.design.pageSize,
+        })}
         pageSizeSaving={designMutationSaving}
         printPreparing={printPreparing}
         sourceLoading={snapshotLoadingId !== undefined}
@@ -989,10 +1463,19 @@ export function ResumeWorkspace() {
         <div className="resume-editor-preview-grid">
           <ResumeEditor
             draft={draft}
-            disabled={saving || applying}
+            disabled={saving || applying || recoveryGate !== undefined}
             validationErrors={validationErrors}
             focusRequest={editorFocusRequest}
             onChange={(nextDraft) => {
+              const nextFingerprint = draftFingerprint(nextDraft);
+              if (
+                failedSave &&
+                nextFingerprint !== failedSave.fingerprint &&
+                !failedSave.conflict
+              ) {
+                setFailedSave(undefined);
+                setNotice(undefined);
+              }
               setDraft(nextDraft);
               if (validationErrors.length > 0) {
                 setValidationErrors(validateResumeDraft(nextDraft));
@@ -1031,7 +1514,7 @@ export function ResumeWorkspace() {
                 value={targetRole}
                 minLength={2}
                 maxLength={200}
-                disabled={analysisBusy}
+                disabled={analysisBusy || recoveryGate !== undefined}
                 onChange={(event) => setTargetRole(event.target.value)}
               />
             </label>
@@ -1041,7 +1524,7 @@ export function ResumeWorkspace() {
                 type="text"
                 value={company}
                 maxLength={200}
-                disabled={analysisBusy}
+                disabled={analysisBusy || recoveryGate !== undefined}
                 onChange={(event) => setCompany(event.target.value)}
               />
             </label>
@@ -1051,7 +1534,7 @@ export function ResumeWorkspace() {
                 value={jobDescription}
                 maxLength={30_000}
                 rows={7}
-                disabled={analysisBusy}
+                disabled={analysisBusy || recoveryGate !== undefined}
                 onChange={(event) =>
                   setJobDescription(event.target.value)
                 }
@@ -1080,6 +1563,7 @@ export function ResumeWorkspace() {
               className="primary-button resume-primary-button"
               disabled={
                 dirty ||
+                recoveryGate !== undefined ||
                 analysisBusy ||
                 targetRole.trim().length < 2
               }
@@ -1152,7 +1636,11 @@ export function ResumeWorkspace() {
         >
           <header className="resume-snapshot-header">
             <div>
-              <p className="resume-kicker">Historical snapshot</p>
+              <p className="resume-kicker">
+                {loadingSourceIsHistorical
+                  ? "Historical snapshot"
+                  : "Current saved snapshot"}
+              </p>
               <h2 id="resume-snapshot-loading-title">
                 Loading selected saved version
               </h2>
@@ -1175,7 +1663,11 @@ export function ResumeWorkspace() {
         >
           <header className="resume-snapshot-header">
             <div className="resume-snapshot-heading">
-              <p className="resume-kicker">Historical snapshot</p>
+              <p className="resume-kicker">
+                {selectedSourceIsHistorical
+                  ? "Historical snapshot"
+                  : "Current saved snapshot"}
+              </p>
               <h2 id="resume-snapshot-title">
                 Read-only version {snapshot.versionNumber}
               </h2>
@@ -1232,7 +1724,7 @@ export function ResumeWorkspace() {
           (snapshot ?? workspace.version).content,
         )}
         label={`Printable ${
-          snapshot ? "historical" : "current"
+          selectedSourceIsHistorical ? "historical" : "current"
         } saved version ${(snapshot ?? workspace.version).versionNumber}`}
         ariaLabel="Printable saved resume"
         pageSize={workspace.resume.design.pageSize}
@@ -1240,32 +1732,126 @@ export function ResumeWorkspace() {
         printOnly
       />
 
-      {blocker.state === "blocked" ? (
+      {recoveryGate?.kind === "RECOVERY_AVAILABLE" ? (
+        <Dialog
+          open
+          className="resume-dialog"
+          labelledBy="resume-recovery-dialog-title"
+          describedBy="resume-recovery-dialog-description"
+          initialFocusRef={restoreRecoveryButtonRef}
+          onCancel={() => undefined}
+          canDismissOnEscape={false}
+          canDismissOnBackdrop={false}
+        >
+          <h2 id="resume-recovery-dialog-title">Unsaved Resume work found</h2>
+          <p id="resume-recovery-dialog-description">
+            Unsaved Resume work from this browser session was found. The saved
+            server version has already been loaded, and this recovered draft
+            was based on that same saved version. Choose whether to restore or
+            discard it.
+          </p>
+          {recoveryDiscardError ? (
+            <p className="resume-dialog-error" role="alert">
+              Local recovery could not be discarded. Please try again.
+            </p>
+          ) : null}
+          <div className="resume-dialog-actions">
+            <button
+              ref={restoreRecoveryButtonRef}
+              type="button"
+              className="primary-button resume-primary-button"
+              onClick={restoreRecoveredDraft}
+            >
+              Restore recovered draft
+            </button>
+            <button
+              type="button"
+              className="destructive-button resume-danger-button"
+              onClick={discardRecovery}
+            >
+              Discard recovery
+            </button>
+          </div>
+        </Dialog>
+      ) : null}
+
+      {recoveryGate?.kind === "STALE_CONFLICTED_RECOVERY" ? (
+        <Dialog
+          open
+          className="resume-dialog"
+          labelledBy="resume-stale-recovery-dialog-title"
+          describedBy="resume-stale-recovery-dialog-description"
+          initialFocusRef={reviewRecoveryButtonRef}
+          onCancel={() => undefined}
+          canDismissOnEscape={false}
+          canDismissOnBackdrop={false}
+        >
+          <h2 id="resume-stale-recovery-dialog-title">
+            Recovered work is from an earlier version
+          </h2>
+          <p id="resume-stale-recovery-dialog-description">
+            Unsaved work from an earlier version of this Resume was found. The
+            Resume has been saved or changed since that work was created, so it
+            cannot be restored automatically. You can review and copy anything
+            you still need, or discard it.
+          </p>
+          {recoveryDiscardError ? (
+            <p className="resume-dialog-error" role="alert">
+              Local recovery could not be discarded. Please try again.
+            </p>
+          ) : null}
+          <div className="resume-dialog-actions">
+            <button
+              ref={reviewRecoveryButtonRef}
+              type="button"
+              className="primary-button resume-primary-button"
+              onClick={reviewStaleRecovery}
+            >
+              Review recovered draft
+            </button>
+            <button
+              type="button"
+              className="destructive-button resume-danger-button"
+              onClick={discardRecovery}
+            >
+              Discard recovery
+            </button>
+          </div>
+        </Dialog>
+      ) : null}
+
+      {blocker.state === "blocked" && recoveryGate === undefined ? (
         <Dialog
           open
           className="resume-dialog"
           labelledBy="resume-navigation-dialog-title"
           describedBy="resume-navigation-dialog-description"
           initialFocusRef={keepEditingButtonRef}
-          onCancel={() => blocker.reset()}
+          onCancel={handleKeepEditing}
         >
           <h2 id="resume-navigation-dialog-title">Unsaved changes</h2>
           <p id="resume-navigation-dialog-description">
             Leaving now will discard changes that have not been saved as
             a new version.
           </p>
+          {navigationDiscardError ? (
+            <p className="resume-dialog-error" role="alert">
+              Your unsaved recovery could not be removed. Please try again
+              before leaving.
+            </p>
+          ) : null}
           <div className="resume-dialog-actions">
             <button
               ref={keepEditingButtonRef}
               type="button"
-              onClick={() => blocker.reset()}
+              onClick={handleKeepEditing}
             >
               Keep editing
             </button>
             <button
               type="button"
               className="destructive-button resume-danger-button"
-              onClick={() => blocker.proceed()}
+              onClick={handleLeaveWithoutSaving}
             >
               Leave without saving
             </button>

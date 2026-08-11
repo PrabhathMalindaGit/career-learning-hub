@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import {
+  act,
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -11,8 +13,9 @@ import {
   createMemoryRouter,
   RouterProvider,
 } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiClient";
+import { createResumeRecoveryKey } from "./resumeRecovery";
 import * as resumeApi from "./resumeApi";
 import * as resumePrint from "./resumePrint";
 import * as polling from "./resumePolling";
@@ -50,6 +53,13 @@ vi.mock("./resumePolling", async () => {
     );
   return { ...actual, pollResumeJob: vi.fn() };
 });
+
+vi.mock("../auth/AuthProvider", () => ({
+  useAuth: () => ({
+    status: "authenticated",
+    user: { id: "resume-workspace-user" },
+  }),
+}));
 
 const resumeId = "507f1f77bcf86cd799439011";
 const versionId = "507f1f77bcf86cd799439012";
@@ -163,6 +173,7 @@ function renderWorkspace() {
   const router = createMemoryRouter(
     [
       { path: "/resumes/:resumeId", element: <ResumeWorkspace /> },
+      { path: "/resumes", element: <h1>Resume collection destination</h1> },
       { path: "/dashboard", element: <h1>Dashboard destination</h1> },
     ],
     { initialEntries: [`/resumes/${resumeId}`] },
@@ -173,7 +184,11 @@ function renderWorkspace() {
 
 describe("ResumeWorkspace", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
+    sessionStorage.removeItem(
+      createResumeRecoveryKey("resume-workspace-user", resumeId),
+    );
     vi.mocked(resumeApi.fetchResume).mockResolvedValue(workspace());
     vi.mocked(resumeApi.listResumeVersions).mockResolvedValue({
       versions: [
@@ -187,6 +202,11 @@ describe("ResumeWorkspace", () => {
       ],
       pagination: { page: 1, limit: 20, total: 1, pages: 1 },
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it("loads the route-owned canonical workspace and renders the neutral A4 preview", async () => {
@@ -373,6 +393,13 @@ describe("ResumeWorkspace", () => {
         "aria-busy",
       ),
     ).toBe("true");
+    expect(
+      screen.queryByRole("button", { name: /discard/i }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Saving…" }).textContent,
+    ).toBe("Saving…");
+    expect((fullName as HTMLInputElement).disabled).toBe(true);
 
     resolveSave?.(workspace(nextVersionId, "Synthetic Candidate changed"));
     expect(await screen.findByText("Version 2 saved.")).not.toBeNull();
@@ -435,12 +462,896 @@ describe("ResumeWorkspace", () => {
     expect((fullName as HTMLInputElement).value).toBe(
       "Preserved Draft Candidate",
     );
-    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    expect(screen.getByText("Save failed")).not.toBeNull();
     if (failure instanceof ApiError) {
       expect(
         screen.getByText(`Request ID: ${failure.requestId}`),
       ).not.toBeNull();
     }
+  });
+
+  it("returns Save failed to Unsaved changes after the next meaningful edit", async () => {
+    vi.mocked(resumeApi.saveResumeVersion).mockRejectedValueOnce(
+      new TypeError("Synthetic network failure"),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+    await user.click(
+      screen.getByRole("button", { name: "Save new version" }),
+    );
+    expect(await screen.findByText("Save failed")).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Discard changes" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Save new version" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("A network error prevented the resume from being saved."),
+    ).not.toBeNull();
+
+    await user.type(fullName, " again");
+
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    expect(screen.queryByText("Save failed")).toBeNull();
+    expect(
+      screen.queryByText(
+        "A network error prevented the resume from being saved.",
+      ),
+    ).toBeNull();
+    expect(resumeApi.saveResumeVersion).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries an unchanged failed draft through the same save operation", async () => {
+    vi.mocked(resumeApi.saveResumeVersion)
+      .mockRejectedValueOnce(new TypeError("Synthetic network failure"))
+      .mockResolvedValueOnce(
+        workspace(nextVersionId, "Synthetic Candidate changed"),
+      );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+    const save = screen.getByRole("button", { name: "Save new version" });
+    await user.click(save);
+    expect(await screen.findByText("Save failed")).not.toBeNull();
+
+    await user.click(save);
+
+    expect(await screen.findByText("Version 2 saved")).not.toBeNull();
+    expect(resumeApi.saveResumeVersion).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps canonical save success when obsolete recovery cleanup fails", async () => {
+    vi.mocked(resumeApi.saveResumeVersion).mockResolvedValue(
+      workspace(nextVersionId, "Synthetic Candidate changed"),
+    );
+    const recoveryKey = createResumeRecoveryKey(
+      "resume-workspace-user",
+      resumeId,
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+    sessionStorage.setItem(recoveryKey, "{");
+
+    await user.click(
+      screen.getByRole("button", { name: "Save new version" }),
+    );
+
+    expect(await screen.findByText("Version 2 saved")).not.toBeNull();
+    expect(
+      screen.getByText(
+        "Your new version was saved, but local recovery data could not be cleared. Please retry cleanup.",
+      ),
+    ).not.toBeNull();
+    expect(screen.queryByText("Save failed")).toBeNull();
+    sessionStorage.setItem(
+      recoveryKey,
+      JSON.stringify({ baselineVersionId: versionId }),
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Retry local cleanup" }),
+    );
+
+    expect(sessionStorage.getItem(recoveryKey)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Retry local cleanup" })).toBeNull();
+    expect(resumeApi.saveResumeVersion).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Version 2 saved")).not.toBeNull();
+  });
+
+  it.each([
+    ["Meta+S", { metaKey: true }],
+    ["Control+S", { ctrlKey: true }],
+  ])("routes %s inside an input through the guarded save operation", async (
+    _shortcut,
+    modifier,
+  ) => {
+    vi.mocked(resumeApi.saveResumeVersion).mockResolvedValue(
+      workspace(nextVersionId, "Synthetic Candidate changed"),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+
+    const dispatched = fireEvent.keyDown(fullName, {
+      key: "s",
+      code: "KeyS",
+      ...modifier,
+    });
+
+    expect(dispatched).toBe(false);
+    await waitFor(() =>
+      expect(resumeApi.saveResumeVersion).toHaveBeenCalledTimes(1),
+    );
+    expect(await screen.findByText("Version 2 saved")).not.toBeNull();
+  });
+
+  it("intercepts a clean save shortcut as an intentional no-op", async () => {
+    renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+
+    const dispatched = fireEvent.keyDown(fullName, {
+      key: "s",
+      code: "KeyS",
+      metaKey: true,
+    });
+
+    expect(dispatched).toBe(false);
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+    expect(screen.getByText("Version 1 saved")).not.toBeNull();
+  });
+
+  it("ignores non-save, composing, and repeated keyboard input", async () => {
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+
+    expect(fireEvent.keyDown(fullName, { key: "s" })).toBe(true);
+    expect(
+      fireEvent.keyDown(fullName, {
+        key: "s",
+        metaKey: true,
+        altKey: true,
+      }),
+    ).toBe(true);
+    expect(
+      fireEvent.keyDown(fullName, {
+        key: "s",
+        metaKey: true,
+        isComposing: true,
+      }),
+    ).toBe(true);
+    expect(
+      fireEvent.keyDown(fullName, {
+        key: "s",
+        metaKey: true,
+        repeat: true,
+      }),
+    ).toBe(false);
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+  });
+
+  it("keeps rapid shortcut and button collisions single-flight", async () => {
+    let resolveSave: ((value: ResumeWorkspaceData) => void) | undefined;
+    vi.mocked(resumeApi.saveResumeVersion).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+    const save = screen.getByRole("button", { name: "Save new version" });
+
+    fireEvent.keyDown(fullName, { key: "s", metaKey: true });
+    fireEvent.keyDown(fullName, { key: "s", metaKey: true });
+    await user.click(save);
+
+    expect(resumeApi.saveResumeVersion).toHaveBeenCalledTimes(1);
+    resolveSave?.(workspace(nextVersionId, "Synthetic Candidate changed"));
+    expect(await screen.findByText("Version 2 saved")).not.toBeNull();
+  });
+
+  it("intercepts but does not save while a historical snapshot is active", async () => {
+    vi.mocked(resumeApi.fetchResumeVersion).mockResolvedValue(
+      workspace().version,
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.type(fullName, " changed");
+    await user.click(
+      screen.getByRole("button", { name: "View current saved version 1" }),
+    );
+    await screen.findByRole("heading", { name: "Read-only version 1" });
+
+    const dispatched = fireEvent.keyDown(document, {
+      key: "s",
+      ctrlKey: true,
+    });
+
+    expect(dispatched).toBe(false);
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+  });
+
+  it("removes shortcut ownership after leaving Resume Studio", async () => {
+    const router = renderWorkspace();
+    await screen.findByLabelText("Full name");
+    await router.navigate("/dashboard");
+    await screen.findByRole("heading", { name: "Dashboard destination" });
+
+    expect(
+      fireEvent.keyDown(document, { key: "s", metaKey: true }),
+    ).toBe(true);
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+  });
+
+  it("keeps clean and dirty save actions compact and hides discard again when clean", async () => {
+    vi.spyOn(window.navigator, "platform", "get").mockReturnValue("MacIntel");
+    renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+
+    expect(screen.getByText("Version 1 saved")).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Discard changes" }),
+    ).toBeNull();
+    expect(screen.queryByText("Discard draft changes")).toBeNull();
+    expect(screen.queryByText(/keyboard shortcut:/i)).toBeNull();
+    const save = screen.getByRole("button", { name: "Save new version" });
+    expect(save.getAttribute("aria-keyshortcuts")).toBe(
+      "Meta+S Control+S",
+    );
+    expect(save.textContent).toContain("⌘S");
+    expect(save.querySelector("kbd")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+
+    fireEvent.change(fullName, {
+      target: { value: "Synthetic Candidate changed" },
+    });
+
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Discard changes" }),
+    ).not.toBeNull();
+    expect(save.textContent).toContain("⌘S");
+
+    fireEvent.change(fullName, {
+      target: { value: "Synthetic Candidate" },
+    });
+
+    expect(screen.getByText("Version 1 saved")).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Discard changes" }),
+    ).toBeNull();
+    expect(resumeWorkspaceCss).toMatch(
+      /\.resume-workspace-actions\s+\.resume-(?:saved|dirty)-state[^{]*\{[^}]*white-space:\s*normal;/s,
+    );
+  });
+
+  it("writes the latest structurally safe dirty draft after 500 ms", async () => {
+    renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-11T10:00:00.000Z"));
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+
+    fireEvent.change(fullName, { target: { value: "First recovery" } });
+    fireEvent.change(fullName, { target: { value: "Latest recovery" } });
+    act(() => vi.advanceTimersByTime(499));
+    expect(sessionStorage.getItem(key)).toBeNull();
+    act(() => vi.advanceTimersByTime(1));
+
+    const stored = JSON.parse(sessionStorage.getItem(key) ?? "null");
+    expect(Object.keys(stored).sort()).toEqual([
+      "baselineVersionId",
+      "baselineVersionNumber",
+      "content",
+      "resumeId",
+      "schemaVersion",
+      "userId",
+      "writtenAt",
+    ]);
+    expect(stored).toEqual(
+      expect.objectContaining({
+        schemaVersion: 1,
+        userId: "resume-workspace-user",
+        resumeId,
+        baselineVersionId: versionId,
+        baselineVersionNumber: 1,
+        writtenAt: expect.any(Number),
+        content: expect.objectContaining({
+          basics: expect.objectContaining({ fullName: "Latest recovery" }),
+        }),
+      }),
+    );
+    expect(sessionStorage.getItem(key)).not.toContain("clientKey");
+    vi.useRealTimers();
+  });
+
+  it("flushes a pending draft on pagehide without deleting it", async () => {
+    renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+    vi.useFakeTimers();
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    fireEvent.change(fullName, { target: { value: "Lifecycle recovery" } });
+
+    fireEvent(window, new Event("pagehide"));
+
+    expect(
+      JSON.parse(sessionStorage.getItem(key) ?? "null").content.basics.fullName,
+    ).toBe("Lifecycle recovery");
+    const firstWrite = sessionStorage.getItem(key);
+    act(() => vi.advanceTimersByTime(500));
+    fireEvent(window, new Event("pagehide"));
+    expect(sessionStorage.getItem(key)).toBe(firstWrite);
+    vi.useRealTimers();
+  });
+
+  it("cleans recovery after editing back to the canonical fingerprint", async () => {
+    renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+    vi.useFakeTimers();
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    fireEvent.change(fullName, { target: { value: "Temporary recovery" } });
+    act(() => vi.advanceTimersByTime(500));
+    expect(sessionStorage.getItem(key)).not.toBeNull();
+
+    fireEvent.change(fullName, { target: { value: "Synthetic Candidate" } });
+
+    expect(sessionStorage.getItem(key)).toBeNull();
+    act(() => vi.runAllTimers());
+    expect(sessionStorage.getItem(key)).toBeNull();
+    expect(screen.getByText("Version 1 saved")).not.toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("preserves Resume A recovery when the active route switches to Resume B", async () => {
+    const resumeB = "507f1f77bcf86cd799439099";
+    vi.mocked(resumeApi.fetchResume).mockImplementation(async (id) =>
+      id === resumeB ? workspace(versionId, "Resume B", resumeB) : workspace(),
+    );
+    const router = renderWorkspace();
+    await screen.findByLabelText("Full name");
+    const resumeAKey = createResumeRecoveryKey(
+      "resume-workspace-user",
+      resumeId,
+    );
+    const resumeARecovery = JSON.stringify({
+      schemaVersion: 1,
+      userId: "resume-workspace-user",
+      resumeId,
+      baselineVersionId: versionId,
+      baselineVersionNumber: 1,
+      content: workspace().version.content,
+      writtenAt: Date.now(),
+    });
+    sessionStorage.setItem(resumeAKey, resumeARecovery);
+
+    await router.navigate(`/resumes/${resumeB}`);
+    await waitFor(() =>
+      expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe(
+        "Resume B",
+      ),
+    );
+
+    expect(sessionStorage.getItem(resumeAKey)).toBe(resumeARecovery);
+  });
+
+  it("shows one non-blocking warning for a recovery write failure episode", async () => {
+    const realStorage = sessionStorage;
+    const values = new Map<string, string>();
+    let failWrites = true;
+    const deniedStorage: Storage = {
+      get length() {
+        return values.size;
+      },
+      clear: () => values.clear(),
+      getItem: (key) => values.get(key) ?? null,
+      key: (index) => [...values.keys()][index] ?? null,
+      removeItem: (key) => values.delete(key),
+      setItem(key, value) {
+        if (failWrites) throw new DOMException("Denied", "SecurityError");
+        values.set(key, value);
+      },
+    };
+    vi.stubGlobal("sessionStorage", deniedStorage);
+    renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+    vi.useFakeTimers();
+    fireEvent.change(fullName, { target: { value: "Unprotected draft" } });
+    act(() => vi.advanceTimersByTime(500));
+
+    expect(
+      screen.getAllByText(
+        "Local recovery is unavailable. Save a new version to protect your changes.",
+      ),
+    ).toHaveLength(1);
+    expect((fullName as HTMLInputElement).disabled).toBe(false);
+    expect(
+      (screen.getByRole("button", { name: "Save new version" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+    fireEvent.change(fullName, { target: { value: "Still unprotected" } });
+    act(() => vi.advanceTimersByTime(500));
+    expect(
+      screen.getAllByText(
+        "Local recovery is unavailable. Save a new version to protect your changes.",
+      ),
+    ).toHaveLength(1);
+
+    failWrites = false;
+    fireEvent.change(fullName, { target: { value: "Protected again" } });
+    act(() => vi.advanceTimersByTime(500));
+    expect(
+      screen.queryByText(
+        "Local recovery is unavailable. Save a new version to protect your changes.",
+      ),
+    ).toBeNull();
+    vi.useRealTimers();
+    vi.stubGlobal("sessionStorage", realStorage);
+  });
+
+  it("loads canonical state before offering different same-baseline recovery", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        schemaVersion: 1,
+        userId: "resume-workspace-user",
+        resumeId,
+        baselineVersionId: versionId,
+        baselineVersionNumber: 1,
+        content: {
+          ...workspace().version.content,
+          basics: {
+            ...workspace().version.content.basics,
+            fullName: "Recovered Candidate",
+          },
+        },
+        writtenAt: Date.now(),
+      }),
+    );
+
+    renderWorkspace();
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "Unsaved Resume work found",
+    });
+    expect(resumeApi.fetchResume).toHaveBeenCalledTimes(1);
+    expect(dialog.textContent).toContain(
+      "The saved server version has already been loaded",
+    );
+    expect(
+      screen.getByRole("button", { name: "Restore recovered draft" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Discard recovery" }),
+    ).not.toBeNull();
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(
+      screen.getByRole("dialog", { name: "Unsaved Resume work found" }),
+    ).not.toBeNull();
+    expect(
+      fireEvent.keyDown(document, { key: "s", metaKey: true }),
+    ).toBe(false);
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+  });
+
+  it("keeps the same-baseline recovery decision as the only dialog during blocked navigation", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        schemaVersion: 1,
+        userId: "resume-workspace-user",
+        resumeId,
+        baselineVersionId: versionId,
+        baselineVersionNumber: 1,
+        content: {
+          ...workspace().version.content,
+          basics: {
+            ...workspace().version.content.basics,
+            fullName: "Route-blocked Recovery",
+          },
+        },
+        writtenAt: Date.now(),
+      }),
+    );
+    const router = renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByRole("dialog", { name: "Unsaved Resume work found" });
+
+    await act(async () => {
+      await router.navigate("/resumes");
+    });
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(`/resumes/${resumeId}`);
+    });
+    expect(sessionStorage.getItem(key)).not.toBeNull();
+    expect(document.querySelectorAll("dialog")).toHaveLength(1);
+    expect(
+      screen.getByRole("dialog", { name: "Unsaved Resume work found" }),
+    ).not.toBeNull();
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
+    expect(screen.queryByText("Keep editing")).toBeNull();
+    expect(screen.queryByText("Leave without saving")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Discard recovery" }));
+    expect(sessionStorage.getItem(key)).toBeNull();
+    expect(await screen.findByText("Version 1 saved")).not.toBeNull();
+  });
+
+  it("restores same-baseline content as a dirty draft without a backend save", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        schemaVersion: 1,
+        userId: "resume-workspace-user",
+        resumeId,
+        baselineVersionId: versionId,
+        baselineVersionNumber: 1,
+        content: {
+          ...workspace().version.content,
+          basics: {
+            ...workspace().version.content.basics,
+            fullName: "Restored Candidate",
+          },
+        },
+        writtenAt: Date.now(),
+      }),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByRole("dialog", { name: "Unsaved Resume work found" });
+
+    await user.click(
+      screen.getByRole("button", { name: "Restore recovered draft" }),
+    );
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe(
+      "Restored Candidate",
+    );
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+    expect((
+      screen.getByRole("button", {
+        name: "Open print dialog for saved version 1",
+      }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("discards same-baseline recovery only after exact removal is confirmed", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        schemaVersion: 1,
+        userId: "resume-workspace-user",
+        resumeId,
+        baselineVersionId: versionId,
+        baselineVersionNumber: 1,
+        content: {
+          ...workspace().version.content,
+          basics: {
+            ...workspace().version.content.basics,
+            fullName: "Discarded Candidate",
+          },
+        },
+        writtenAt: Date.now(),
+      }),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByRole("dialog", { name: "Unsaved Resume work found" });
+
+    await user.click(
+      screen.getByRole("button", { name: "Discard recovery" }),
+    );
+
+    expect(sessionStorage.getItem(key)).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByText("Version 1 saved")).not.toBeNull();
+    expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe(
+      "Synthetic Candidate",
+    );
+  });
+
+  it("fails closed when same-baseline recovery removal cannot be confirmed", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    const payload = JSON.stringify({
+      schemaVersion: 1,
+      userId: "resume-workspace-user",
+      resumeId,
+      baselineVersionId: versionId,
+      baselineVersionNumber: 1,
+      content: {
+        ...workspace().version.content,
+        basics: {
+          ...workspace().version.content.basics,
+          fullName: "Retained Candidate",
+        },
+      },
+      writtenAt: Date.now(),
+    });
+    const storage: Storage = {
+      length: 1,
+      clear: () => undefined,
+      getItem: (candidateKey) => (candidateKey === key ? payload : null),
+      key: (index) => (index === 0 ? key : null),
+      removeItem: () => {
+        throw new DOMException("Denied", "SecurityError");
+      },
+      setItem: () => undefined,
+    };
+    vi.stubGlobal("sessionStorage", storage);
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByRole("dialog", { name: "Unsaved Resume work found" });
+
+    await user.click(
+      screen.getByRole("button", { name: "Discard recovery" }),
+    );
+
+    expect(
+      screen.getByRole("dialog", { name: "Unsaved Resume work found" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("Local recovery could not be discarded. Please try again."),
+    ).not.toBeNull();
+    expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe(
+      "Synthetic Candidate",
+    );
+  });
+
+  it("suppresses invalid and identical recovery without making the workspace dirty", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        schemaVersion: 1,
+        userId: "resume-workspace-user",
+        resumeId,
+        baselineVersionId: nextVersionId,
+        baselineVersionNumber: 2,
+        content: workspace().version.content,
+        writtenAt: Date.now(),
+      }),
+    );
+
+    renderWorkspace();
+
+    expect(await screen.findByText("Version 1 saved")).not.toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
+    expect(sessionStorage.getItem(key)).toBeNull();
+  });
+
+  it("offers read-only review for different content from an older baseline", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        schemaVersion: 1,
+        userId: "resume-workspace-user",
+        resumeId,
+        baselineVersionId: nextVersionId,
+        baselineVersionNumber: 3,
+        content: {
+          ...workspace().version.content,
+          basics: {
+            ...workspace().version.content.basics,
+            fullName: "Stale Recovered Candidate",
+          },
+        },
+        writtenAt: Date.now(),
+      }),
+    );
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "Recovered work is from an earlier version",
+    });
+    expect(dialog.textContent).toContain("cannot be restored automatically");
+    expect(
+      screen.getByRole("button", { name: "Review recovered draft" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Discard recovery" }),
+    ).not.toBeNull();
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(screen.getByRole("dialog")).not.toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Review recovered draft" }),
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Recovered unsaved draft — based on an older saved version",
+      }),
+    ).not.toBeNull();
+    expect(screen.getByText("Recovered draft based on Version 3")).not.toBeNull();
+    expect(screen.getByText("Current saved Resume: Version 1")).not.toBeNull();
+    expect(screen.getByText("Stale Recovered Candidate")).not.toBeNull();
+    expect(screen.queryByLabelText("Full name")).toBeNull();
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+    expect(resumePrint.openResumePrint).not.toHaveBeenCalled();
+  });
+
+  it("keeps the stale Stage-1 recovery decision as the only dialog during blocked navigation", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        schemaVersion: 1,
+        userId: "resume-workspace-user",
+        resumeId,
+        baselineVersionId: nextVersionId,
+        baselineVersionNumber: 2,
+        content: {
+          ...workspace().version.content,
+          basics: {
+            ...workspace().version.content.basics,
+            fullName: "Stale Route-blocked Recovery",
+          },
+        },
+        writtenAt: Date.now(),
+      }),
+    );
+    const router = renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByRole("dialog", {
+      name: "Recovered work is from an earlier version",
+    });
+
+    await act(async () => {
+      await router.navigate("/resumes");
+    });
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(`/resumes/${resumeId}`);
+    });
+    expect(sessionStorage.getItem(key)).not.toBeNull();
+    expect(document.querySelectorAll("dialog")).toHaveLength(1);
+    expect(
+      screen.getByRole("dialog", {
+        name: "Recovered work is from an earlier version",
+      }),
+    ).not.toBeNull();
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
+    expect(screen.queryByText("Keep editing")).toBeNull();
+    expect(screen.queryByText("Leave without saving")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Review recovered draft" }),
+    ).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Discard recovery" }));
+    expect(sessionStorage.getItem(key)).toBeNull();
+    expect(await screen.findByText("Version 1 saved")).not.toBeNull();
+  });
+
+  it("keeps stale recovery review route-blocked until verified discard", async () => {
+    vi.mocked(resumeApi.fetchResume).mockResolvedValue(
+      workspace(nextVersionId),
+    );
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        schemaVersion: 1,
+        userId: "resume-workspace-user",
+        resumeId,
+        baselineVersionId: versionId,
+        baselineVersionNumber: 1,
+        content: {
+          ...workspace().version.content,
+          basics: {
+            ...workspace().version.content.basics,
+            fullName: "Stale Route Candidate",
+          },
+        },
+        writtenAt: Date.now(),
+      }),
+    );
+    const router = renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByRole("dialog", {
+      name: "Recovered work is from an earlier version",
+    });
+    await user.click(
+      screen.getByRole("button", { name: "Review recovered draft" }),
+    );
+    expect(
+      screen.getByRole("heading", {
+        name: "Recovered unsaved draft — based on an older saved version",
+      }),
+    ).not.toBeNull();
+
+    await user.click(screen.getByRole("link", { name: "Resumes" }));
+
+    expect(router.state.location.pathname).toBe(`/resumes/${resumeId}`);
+    expect(sessionStorage.getItem(key)).not.toBeNull();
+    expect(screen.getByText("Stale Route Candidate")).not.toBeNull();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Discard recovery and return to current Resume",
+      }),
+    );
+
+    expect(sessionStorage.getItem(key)).toBeNull();
+    expect(await screen.findByText("Version 2 saved")).not.toBeNull();
+    expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe(
+      "Synthetic Candidate",
+    );
+
+    await router.navigate("/resumes");
+    expect(
+      await screen.findByRole("heading", {
+        name: "Resume collection destination",
+      }),
+    ).not.toBeNull();
+  });
+
+  it("fails closed when stale-review discard cannot remove the exact entry", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    const payload = JSON.stringify({
+      schemaVersion: 1,
+      userId: "resume-workspace-user",
+      resumeId,
+      baselineVersionId: nextVersionId,
+      baselineVersionNumber: 2,
+      content: {
+        ...workspace().version.content,
+        basics: { ...workspace().version.content.basics, fullName: "Stale" },
+      },
+      writtenAt: Date.now(),
+    });
+    vi.stubGlobal("sessionStorage", {
+      length: 1,
+      clear: () => undefined,
+      getItem: (candidateKey: string) => (candidateKey === key ? payload : null),
+      key: (index: number) => (index === 0 ? key : null),
+      removeItem: () => {
+        throw new DOMException("Denied", "SecurityError");
+      },
+      setItem: () => undefined,
+    } satisfies Storage);
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByRole("dialog", {
+      name: "Recovered work is from an earlier version",
+    });
+    await user.click(
+      screen.getByRole("button", { name: "Review recovered draft" }),
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: "Discard recovery and return to current Resume",
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Recovered unsaved draft — based on an older saved version",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.getByText("Local recovery could not be discarded. Please try again."),
+    ).not.toBeNull();
+    expect(screen.getByText("Stale")).not.toBeNull();
   });
 
   it("maps one structured 400 issue inline and preserves focus, draft, and request ID", async () => {
@@ -504,7 +1415,7 @@ describe("ResumeWorkspace", () => {
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     expect((fullName as HTMLInputElement).value).toBe("Server rejected draft");
     expect((url as HTMLInputElement).value).toBe("https://example.test");
-    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    expect(screen.getByText("Save failed")).not.toBeNull();
     expect(
       screen.getByText("Request ID: save-request-validation-400"),
     ).not.toBeNull();
@@ -648,7 +1559,9 @@ describe("ResumeWorkspace", () => {
       name: "Open print dialog for saved version 1",
     });
 
-    expect(screen.getByText("Current saved version 1")).not.toBeNull();
+    expect(screen.getByText("Current saved version — Version 1")).not.toBeNull();
+    expect(screen.getByText("Ready to print / save as PDF")).not.toBeNull();
+    expect(screen.getByText("Suggested filename: synthetic-platform-resume-v1-a4.pdf")).not.toBeNull();
     expect((printButton as HTMLButtonElement).disabled).toBe(false);
     await user.click(printButton);
     expect(resumePrint.openResumePrint).toHaveBeenCalledWith(
@@ -661,7 +1574,7 @@ describe("ResumeWorkspace", () => {
     await user.type(fullName, "Mutable Draft Candidate");
 
     expect((printButton as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByText(/save new version or discard/i)).not.toBeNull();
+    expect(screen.getByText(/save your changes before printing/i)).not.toBeNull();
     const printSurface = screen.getByLabelText(
       "Printable current saved version 1",
     );
@@ -679,7 +1592,7 @@ describe("ResumeWorkspace", () => {
     expect(
       (
         screen.getByRole("button", {
-          name: "Discard draft changes",
+          name: "Discard changes",
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(false);
@@ -975,7 +1888,7 @@ describe("ResumeWorkspace", () => {
     expect(
       (screen.getByLabelText("Full name") as HTMLInputElement).value,
     ).toBe("Conflicted Candidate");
-    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    expect(screen.getByText("Save failed")).not.toBeNull();
 
     await user.click(
       screen.getByRole("button", { name: "Reload and review" }),
@@ -989,8 +1902,78 @@ describe("ResumeWorkspace", () => {
     expect(screen.getByText("Current version")).not.toBeNull();
   });
 
-  it("shows a historical snapshot read-only without replacing the active draft", async () => {
+  it("keeps the selected current saved version current and export-blocked by a dirty draft", async () => {
+    const currentSavedVersion = workspace().version;
+    vi.mocked(resumeApi.fetchResumeVersion).mockResolvedValue({
+      ...currentSavedVersion,
+      content: {
+        ...currentSavedVersion.content,
+        basics: {
+          ...currentSavedVersion.content.basics,
+          fullName: "Current Saved Candidate",
+        },
+      },
+    });
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = await screen.findByLabelText("Full name");
+    await user.clear(fullName);
+    await user.type(fullName, "Draft Candidate");
+    await user.click(
+      screen.getByRole("button", {
+        name: "View current saved version 1",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Read-only version 1",
+      }),
+    ).not.toBeNull();
+    expect(screen.getByText("Current saved snapshot")).not.toBeNull();
+    expect(screen.queryByText("Historical snapshot")).toBeNull();
+    expect(screen.queryByText("Historical Version 1")).toBeNull();
+    expect(screen.getByText("Current saved version — Version 1")).not.toBeNull();
+    expect(screen.getByText(/save your changes before printing/i)).not.toBeNull();
+    expect(screen.getByText("Suggested filename: synthetic-platform-resume-v1-a4.pdf")).not.toBeNull();
+    expect(
+      screen.getByLabelText("Printable current saved version 1").textContent,
+    ).toContain("Current Saved Candidate");
+    expect(
+      (screen.getByRole("button", {
+        name: "Open print dialog for saved version 1",
+      }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(resumePrint.openResumePrint).not.toHaveBeenCalled();
+    await user.click(
+      screen.getByRole("button", { name: "Return to current draft" }),
+    );
+    expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe(
+      "Draft Candidate",
+    );
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+  });
+
+  it("exports a genuine historical snapshot while preserving a dirty current draft", async () => {
     const historical = workspace().version;
+    vi.mocked(resumeApi.fetchResume).mockResolvedValue(workspace(nextVersionId));
+    vi.mocked(resumeApi.listResumeVersions).mockResolvedValue({
+      versions: [
+        {
+          id: nextVersionId,
+          versionNumber: 2,
+          source: "manual",
+          createdAt: timestamp,
+        },
+        {
+          id: versionId,
+          versionNumber: 1,
+          source: "manual",
+          createdAt: timestamp,
+        },
+      ],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
     vi.mocked(resumeApi.fetchResumeVersion).mockResolvedValue({
       ...historical,
       content: {
@@ -1021,24 +2004,32 @@ describe("ResumeWorkspace", () => {
         ],
       },
     });
+    vi.mocked(resumePrint.openResumePrint).mockResolvedValue(true);
     renderWorkspace();
     const user = userEvent.setup();
     const fullName = await screen.findByLabelText("Full name");
     await user.clear(fullName);
     await user.type(fullName, "Draft Candidate");
     await user.click(
-      screen.getByRole("button", {
-        name: "View current saved version 1",
-      }),
+      screen.getByRole("button", { name: "View saved version 1" }),
     );
 
     expect(
-      await screen.findByRole("heading", {
-        name: "Read-only version 1",
-      }),
+      await screen.findByRole("heading", { name: "Read-only version 1" }),
     ).not.toBeNull();
+    expect(screen.getByText("Historical snapshot")).not.toBeNull();
     expect(screen.getAllByText("Historical Candidate")).toHaveLength(2);
-    expect(screen.getByText("Historical saved version 1")).not.toBeNull();
+    expect(screen.getByText("Historical Version 1")).not.toBeNull();
+    expect(screen.getByText("Ready to print / save as PDF")).not.toBeNull();
+    expect(screen.getByText("Suggested filename: synthetic-platform-resume-v1-a4.pdf")).not.toBeNull();
+    const historicalPrint = screen.getByRole("button", {
+      name: "Open print dialog for saved version 1",
+    });
+    expect((historicalPrint as HTMLButtonElement).disabled).toBe(false);
+    await user.click(historicalPrint);
+    expect(resumePrint.openResumePrint).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "synthetic-platform-resume-v1-a4" }),
+    );
     const historicalPreview = screen.getByLabelText("Resume version 1 preview");
     expect(historicalPreview.textContent).toContain("Experience");
     expect(historicalPreview.textContent).toContain(
@@ -1057,6 +2048,7 @@ describe("ResumeWorkspace", () => {
     expect(
       (screen.getByLabelText("Full name") as HTMLInputElement).value,
     ).toBe("Draft Candidate");
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
   });
 
   it("clears a prior historical print source when another snapshot fails", async () => {
@@ -1273,7 +2265,7 @@ describe("ResumeWorkspace", () => {
       ).disabled,
     ).toBe(true);
     const discard = screen.getByRole("button", {
-      name: "Discard draft changes",
+      name: "Discard changes",
     });
     const save = screen.getByRole("button", {
       name: "Save new version",
@@ -1522,6 +2514,96 @@ describe("ResumeWorkspace", () => {
       keepEditingAgain,
     );
     expect(router.state.location.pathname).toBe(`/resumes/${resumeId}`);
+  });
+
+  it("discards a dirty draft only after exact recovery removal is confirmed", async () => {
+    renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+    vi.useFakeTimers();
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    fireEvent.change(fullName, { target: { value: "Discard me" } });
+    act(() => vi.advanceTimersByTime(500));
+    expect(sessionStorage.getItem(key)).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
+    act(() => vi.runAllTimers());
+
+    expect(sessionStorage.getItem(key)).toBeNull();
+    expect((fullName as HTMLInputElement).value).toBe("Synthetic Candidate");
+    expect(screen.getByText("Version 1 saved")).not.toBeNull();
+  });
+
+  it("fails closed when dirty-draft recovery removal cannot be confirmed", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    const values = new Map<string, string>();
+    vi.stubGlobal("sessionStorage", {
+      get length() {
+        return values.size;
+      },
+      clear: () => values.clear(),
+      getItem: (candidateKey: string) => values.get(candidateKey) ?? null,
+      key: (index: number) => [...values.keys()][index] ?? null,
+      removeItem: () => {
+        throw new DOMException("Denied", "SecurityError");
+      },
+      setItem: (candidateKey: string, value: string) => values.set(candidateKey, value),
+    } satisfies Storage);
+    renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+    fireEvent.change(fullName, { target: { value: "Keep this draft" } });
+    values.set(key, "retained");
+
+    fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
+
+    expect((fullName as HTMLInputElement).value).toBe("Keep this draft");
+    expect(screen.getByText("Local recovery could not be discarded. Please try again.")).not.toBeNull();
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+  });
+
+  it("removes recovery before Leave without saving completes navigation", async () => {
+    const router = renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    fireEvent.change(fullName, { target: { value: "Leave draft" } });
+    fireEvent(window, new Event("pagehide"));
+    expect(sessionStorage.getItem(key)).not.toBeNull();
+
+    void router.navigate("/dashboard");
+    await screen.findByRole("dialog", { name: "Unsaved changes" });
+    fireEvent.click(screen.getByRole("button", { name: "Leave without saving" }));
+
+    expect(sessionStorage.getItem(key)).toBeNull();
+    expect(await screen.findByRole("heading", { name: "Dashboard destination" })).not.toBeNull();
+  });
+
+  it("keeps the route blocker and draft when Leave cleanup cannot be confirmed", async () => {
+    const key = createResumeRecoveryKey("resume-workspace-user", resumeId);
+    const values = new Map<string, string>();
+    vi.stubGlobal("sessionStorage", {
+      get length() {
+        return values.size;
+      },
+      clear: () => values.clear(),
+      getItem: (candidateKey: string) => values.get(candidateKey) ?? null,
+      key: (index: number) => [...values.keys()][index] ?? null,
+      removeItem: () => {
+        throw new DOMException("Denied", "SecurityError");
+      },
+      setItem: (candidateKey: string, value: string) => values.set(candidateKey, value),
+    } satisfies Storage);
+    const router = renderWorkspace();
+    const fullName = await screen.findByLabelText("Full name");
+    fireEvent.change(fullName, { target: { value: "Cannot leave" } });
+    values.set(key, "retained");
+
+    void router.navigate("/dashboard");
+    await screen.findByRole("dialog", { name: "Unsaved changes" });
+    fireEvent.click(screen.getByRole("button", { name: "Leave without saving" }));
+
+    expect(router.state.location.pathname).toBe(`/resumes/${resumeId}`);
+    expect(screen.getByRole("dialog", { name: "Unsaved changes" })).not.toBeNull();
+    expect(screen.getByText("Your unsaved recovery could not be removed. Please try again before leaving.")).not.toBeNull();
+    expect((fullName as HTMLInputElement).value).toBe("Cannot leave");
   });
 
   it("maps indexed Link errors inline and scrolls and focuses the first invalid field", async () => {

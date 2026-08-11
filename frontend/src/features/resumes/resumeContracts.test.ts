@@ -4,6 +4,7 @@ import {
   parseJob,
   parseResumeEnvelope,
   parseResumeContent,
+  parseResumeRecoveryContent,
   parseResumeList,
   parseResumeWorkspace,
   parseVersionList,
@@ -99,6 +100,87 @@ describe("resume contract validators", () => {
       parseResumeContent({
         ...contentFixture(),
         interests: Array.from({ length: 51 }, (_, index) => `Interest ${index}`),
+      }),
+    ).toThrowError(/invalid resume response/i);
+  });
+
+  it("accepts bounded incomplete recovery content without weakening save readiness", () => {
+    const incomplete = {
+      basics: {
+        fullName: "",
+        email: "mid-edit-email",
+        links: [{ label: "", url: "https://" }],
+      },
+      experience: [
+        {
+          employer: "Example",
+          jobTitle: "",
+          isCurrent: false,
+          bullets: [{ text: "" }],
+        },
+      ],
+      education: [
+        {
+          institution: "",
+          qualification: "",
+          isCurrent: false,
+          details: [],
+        },
+      ],
+      skills: [{ name: "", keywords: [""] }],
+      projects: [],
+      certifications: [],
+      languages: [],
+      interests: [""],
+    };
+
+    expect(parseResumeRecoveryContent(incomplete)).toEqual(incomplete);
+    expect(() => parseResumeContent(incomplete)).toThrowError(
+      /invalid resume response/i,
+    );
+  });
+
+  it("rejects malformed recovery content without stripping or coercing", () => {
+    expect(() =>
+      parseResumeRecoveryContent({
+        ...contentFixture(),
+        unexpected: true,
+      }),
+    ).toThrowError(/invalid resume response/i);
+    expect(() =>
+      parseResumeRecoveryContent({
+        ...contentFixture(),
+        experience: [
+          {
+            employer: "Example",
+            jobTitle: "Engineer",
+            isCurrent: "false",
+            bullets: [],
+          },
+        ],
+      }),
+    ).toThrowError(/invalid resume response/i);
+    expect(() =>
+      parseResumeRecoveryContent({
+        ...contentFixture(),
+        experience: [
+          {
+            employer: "Example",
+            jobTitle: "Engineer",
+            isCurrent: false,
+            bullets: [],
+            unknownNestedField: "private",
+          },
+        ],
+      }),
+    ).toThrowError(/invalid resume response/i);
+    expect(() =>
+      parseResumeRecoveryContent({
+        ...contentFixture(),
+        basics: {
+          ...contentFixture().basics,
+          fullName: "x".repeat(201),
+        },
       }),
     ).toThrowError(/invalid resume response/i);
   });

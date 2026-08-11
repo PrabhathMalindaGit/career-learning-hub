@@ -131,41 +131,51 @@ export function createDraftEntity<T extends object>(
   return { ...value, clientKey: clientKey() };
 }
 
-function loaded<T extends { id: string }>(
+function recoverable<T extends { id?: string }>(
   value: T,
 ): Omit<T, "id"> & ClientEntity {
   const { id, ...rest } = value;
-  return { ...rest, id, clientKey: id };
+  return {
+    ...rest,
+    ...(id === undefined ? {} : { id }),
+    clientKey: id ?? clientKey(),
+  };
+}
+
+export function resumeContentInputToDraft(
+  content: ResumeContentInput,
+): ResumeDraft {
+  return {
+    basics: {
+      ...content.basics,
+      links: content.basics.links.map(recoverable),
+    },
+    experience: content.experience.map((entry) => ({
+      ...recoverable(entry),
+      bullets: entry.bullets.map(recoverable),
+    })),
+    education: content.education.map((entry) => ({
+      ...recoverable(entry),
+      details: entry.details.map(recoverable),
+    })),
+    skills: content.skills.map(recoverable),
+    projects: content.projects.map((entry) => ({
+      ...recoverable(entry),
+      links: entry.links.map(recoverable),
+      bullets: entry.bullets.map(recoverable),
+    })),
+    certifications: content.certifications.map(recoverable),
+    languages: content.languages.map(recoverable),
+    interests: content.interests.map((value) =>
+      createDraftEntity({ value }),
+    ),
+  };
 }
 
 export function resumeContentToDraft(
   content: ResumeContent,
 ): ResumeDraft {
-  return {
-    basics: {
-      ...content.basics,
-      links: content.basics.links.map(loaded),
-    },
-    experience: content.experience.map((entry) => ({
-      ...loaded(entry),
-      bullets: entry.bullets.map(loaded),
-    })),
-    education: content.education.map((entry) => ({
-      ...loaded(entry),
-      details: entry.details.map(loaded),
-    })),
-    skills: content.skills.map(loaded),
-    projects: content.projects.map((entry) => ({
-      ...loaded(entry),
-      links: entry.links.map(loaded),
-      bullets: entry.bullets.map(loaded),
-    })),
-    certifications: content.certifications.map(loaded),
-    languages: content.languages.map(loaded),
-    interests: content.interests.map((value) =>
-      createDraftEntity({ value }),
-    ),
-  };
+  return resumeContentInputToDraft(content);
 }
 
 function persisted<T extends ClientEntity>(
