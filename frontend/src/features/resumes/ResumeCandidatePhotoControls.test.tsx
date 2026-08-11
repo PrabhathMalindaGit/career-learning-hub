@@ -27,8 +27,7 @@ describe("ResumeCandidatePhotoControls", () => {
     renderControls();
     expect(screen.getByRole("heading", { name: "Candidate photo" })).toBeTruthy();
     expect(screen.getByText("Not added")).toBeTruthy();
-    expect(screen.getByLabelText("Choose photo")).toHaveAttribute(
-      "accept",
+    expect(screen.getByLabelText("Choose photo").getAttribute("accept")).toBe(
       "image/jpeg,image/png,image/webp",
     );
     expect(screen.queryByRole("button", { name: "Remove photo" })).toBeNull();
@@ -51,8 +50,7 @@ describe("ResumeCandidatePhotoControls", () => {
       visible: true,
       sourceUrl: "blob:canonical",
     });
-    expect(screen.getByAltText("Candidate photo preview")).toHaveAttribute(
-      "src",
+    expect(screen.getByAltText("Candidate photo preview").getAttribute("src")).toBe(
       "blob:canonical",
     );
     expect(screen.getByRole("button", { name: "Hide from Resume" })).toBeTruthy();
