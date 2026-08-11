@@ -184,10 +184,16 @@ export interface ResumeRecord {
   title: string;
   status: ResumeStatus;
   currentVersionId?: string;
+  candidatePhotoAssetId?: string;
   latestVersionNumber: number;
   design: ResumeDesign;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CandidatePhotoSource {
+  url: string;
+  expiresAt: string;
 }
 
 export interface ResumeVersionMetadata {
