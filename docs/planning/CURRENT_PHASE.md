@@ -1,74 +1,48 @@
 # Current Execution Phase
 
-- Phase: 19A-3
-- Name: Resume Save, Recovery & Export Workflow
-- Status: `PHASE 19A-3 — COMPLETED / HUMAN-APPROVED / MERGED`
-- Current canonical branch: `main`
-- Canonical main HEAD: `6d104cd502ad1e0d26d66a934deaa6306f0adddb`
-- Phase 19A-3 implementation branch:
-  `phase-19a-3-resume-save-recovery-export`
-- Implementation branch state:
-  `MERGED / LOCAL BRANCH DELETED / REMOTE BRANCH DELETED`
-- Implementation commit:
-  `f16d4de9145555d66eab9e466b223d8f81e9b6f0` —
-  `Complete Phase 19A-3 resume save recovery and export`
-- Pull request:
-  `PR #7 — Complete Phase 19A-3 Resume Save, Recovery & Export`
-- Pull request status: `MERGED`
-- Merge commit: `6d104cd502ad1e0d26d66a934deaa6306f0adddb`
+- Current execution phase: `PHASE 19A-4`
+- Name: `Candidate Photo Support`
+- Status:
+  `ACTIVE — HUMAN-APPROVED FROZEN DESIGN / REPOSITORY DESIGN SPEC RECORDED /
+  FINAL FIDELITY REVIEW PENDING / IMPLEMENTATION NOT STARTED`
+- Phase branch: `phase-19a-4-candidate-photo-support`
+- Phase start baseline: `ad10229aa64cc79b4503901d8b59ac127fac0a20`
+- Baseline subject: `Record Phase 19A-3 merge closeout`
 - Completed predecessor:
-  `PHASE 19A-2 — RESUME COLLECTION, CREATION & GUIDED ENTRY /
-  HUMAN-APPROVED / MERGED AS PR #6`
-- Conversational and repository designs:
-  `APPROVED / HUMAN-APPROVED / FROZEN AS APPROACH A — BOUNDED SESSION RECOVERY
-  INTEGRATED WITH THE EXISTING RESUME WORKSPACE`
-- Design authority:
-  `docs/superpowers/specs/2026-08-11-resume-save-recovery-export-design.md`
-- Implementation-plan authority:
-  `docs/superpowers/plans/2026-08-11-resume-save-recovery-export.md`
-- Repository design approval token:
-  `PHASE_19A3_RESUME_SAVE_RECOVERY_EXPORT_DESIGN_APPROVED` —
-  `ACCEPTED / YES`
-- Implementation-plan approval token:
-  `PHASE_19A3_IMPLEMENTATION_PLAN_APPROVED` —
-  `ACCEPTED / YES`
-- Final human-QA approval token:
-  `PHASE_19A3_RESUME_SAVE_RECOVERY_EXPORT_HUMAN_QA_APPROVED` —
-  `ACCEPTED / YES`
-- Implementation status: `IMPLEMENTED`
-- Automated verification: `PASSED`
-- Post-implementation source-review repair:
-  `IMPLEMENTED / VERIFIED`
-- Final human-QA defect repair:
-  `IMPLEMENTED / VERIFIED`
-- Final header/print-copy visual polish:
-  `IMPLEMENTED / VERIFIED`
-- Implementation plan status: `HUMAN-APPROVED / FROZEN`
-- Human visual/functional QA:
-  `COMPLETED / HUMAN-APPROVED`
-- Overall Phase 19A-3 status:
-  `COMPLETED / HUMAN-APPROVED / MERGED`
-- Active boundary:
-  `CONVERSATIONAL AND REPOSITORY DESIGNS HUMAN-APPROVED AND FROZEN;
-  IMPLEMENTATION PLAN HUMAN-APPROVED AND FROZEN; PHASE 19A-3 IMPLEMENTATION
-  IMPLEMENTED WITH AUTOMATED VERIFICATION PASSED; FINAL HUMAN VISUAL/FUNCTIONAL
-  QA COMPLETED AND HUMAN-APPROVED; PR #7 MERGED TO MAIN`
-- Selected recovery boundary:
-  `VERSIONED USER + RESUME SESSIONSTORAGE ENTRY / 24-HOUR MAXIMUM /
-  EXPLICIT RESTORE OR DISCARD / READ-ONLY STALE REVIEW / SERVER CANONICAL`
-- Save/export boundary:
-  `EXPLICIT IMMUTABLE SAVE NEW VERSION / WORKSPACE-SCOPED CMD/CTRL+S /
-  NATIVE WINDOW.PRINT CURRENT OR HISTORICAL SAVED CONTENT / A4 OR LETTER`
-- Release AI policy:
-  `GEMINI DIRECT ONLY / FIXED gemini-3.6-flash / OPENROUTER DORMANT /
-  NO OTHER PROVIDER OR FALLBACK AUTHORIZED`
-- `PHASE 19A-4 — CANDIDATE PHOTO SUPPORT`: `PLANNED / INACTIVE`
+  `PHASE 19A-3 — RESUME SAVE, RECOVERY & EXPORT WORKFLOW /
+  COMPLETED / HUMAN-APPROVED / MERGED`
+- Phase 19A-3 implementation commit:
+  `f16d4de9145555d66eab9e466b223d8f81e9b6f0`
+- Phase 19A-3 pull request: `PR #7 / MERGED`
+- Phase 19A-3 merge commit: `6d104cd502ad1e0d26d66a934deaa6306f0adddb`
+- Phase 19A-3 documentation-closeout baseline:
+  `ad10229aa64cc79b4503901d8b59ac127fac0a20`
+- Phase 19A-4 conversational design:
+  `HUMAN-APPROVED / FROZEN`
+- Phase 19A-4 design approval token:
+  `PHASE_19A4_CANDIDATE_PHOTO_SUPPORT_DESIGN_APPROVED`
+- Design approval token accepted: `YES`
+- Selected architecture:
+  `APPROACH A — BOUNDED EXTENSION OF THE EXISTING PRIVATE ASSET ARCHITECTURE`
+- Design specification:
+  `docs/superpowers/specs/2026-08-11-resume-candidate-photo-support-design.md`
+- Repository design-spec status:
+  `RECORDED FROM HUMAN-APPROVED FROZEN DESIGN /
+  FINAL FIDELITY REVIEW PENDING`
+- Implementation plan: `NOT YET CREATED`
+- Implementation: `NOT STARTED`
+- Automated verification: `NOT STARTED`
+- Human visual/functional QA: `NOT STARTED`
+- Git publication:
+  `NO PHASE 19A-4 COMMIT / PUSH / PR / MERGE YET`
+- Next gate: `FINAL REPOSITORY DESIGN-SPEC FIDELITY REVIEW`
+- Gate rule:
+  `ONLY AFTER EXPLICIT ACCEPTANCE OF THE FIDELITY REVIEW MAY THE PHASE 19A-4
+  IMPLEMENTATION PLAN BE CREATED`
 - Phase 19B through Phase 19H status: `PLANNED / INACTIVE`
 - Phase 20 and Phase 21 status: `PLANNED / INACTIVE`
-- Git publication status:
-  `COMMITTED / PUSHED / PR #7 MERGED / MAIN SYNCED / FEATURE BRANCH DELETED`
-- Historical execution statements below do not override this Phase 19A-3
-  completed/human-approved authority block.
+- Historical execution statements below do not override this Phase 19A-4
+  current-authority block.
 
 ## Completed predecessor: G-5 and staging closeout
 
