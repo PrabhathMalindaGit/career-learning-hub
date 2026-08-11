@@ -356,9 +356,9 @@ export async function applyResumeSuggestions(
     },
   );
   const result = parseApplyResult(data);
-  result.resume = attachCandidatePhotoToResume(result.resume, data);
-  assertResumeIdentity(resumeId, result.resume.id);
-  return result;
+  const resume = attachCandidatePhotoToResume(result.resume, data);
+  assertResumeIdentity(resumeId, resume.id);
+  return { ...result, resume };
 }
 
 export async function fetchJob(
