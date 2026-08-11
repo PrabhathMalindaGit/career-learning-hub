@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ResumeCandidatePhotoControls } from "./ResumeCandidatePhotoControls";
 
@@ -68,8 +68,9 @@ describe("ResumeCandidatePhotoControls", () => {
     const onRemove = vi.fn();
     renderControls({ hasPhoto: true, visible: true, onRemove });
     fireEvent.click(screen.getByRole("button", { name: "Remove photo" }));
-    expect(screen.getByRole("dialog")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Remove photo" }));
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove photo" }));
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
 
