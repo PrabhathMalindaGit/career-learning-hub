@@ -5,6 +5,7 @@ import {
   DEFAULT_RESUME_TEMPLATE,
   resolveResumePresentation,
 } from "./resumeTemplateRegistry";
+import "./resumeCandidatePhoto.css";
 
 interface ResumePreviewProps {
   draft: ResumeDraft;
@@ -13,6 +14,7 @@ interface ResumePreviewProps {
   ariaLabel?: string;
   pageSize?: ResumeDesign["pageSize"];
   design?: ResumeDesign;
+  candidatePhotoUrl?: string;
   printOnly?: boolean;
 }
 
@@ -74,6 +76,7 @@ export function ResumePreview({
   ariaLabel = "Resume preview",
   pageSize,
   design,
+  candidatePhotoUrl,
   printOnly = false,
 }: ResumePreviewProps) {
   const resolved = resolveResumePresentation(
@@ -84,6 +87,8 @@ export function ResumePreview({
     },
   );
   const effectivePageSize = pageSize ?? design?.pageSize ?? "A4";
+  const showCandidatePhoto =
+    design?.showProfilePhoto === true && candidatePhotoUrl !== undefined;
 
   return (
     <section
@@ -120,41 +125,54 @@ export function ResumePreview({
         aria-label={ariaLabel}
       >
         <header className="resume-paper-header">
-          <h3>{draft.basics.fullName || "Your name"}</h3>
-          {draft.basics.headline ? <p>{draft.basics.headline}</p> : null}
-          {draft.basics.email ||
-          draft.basics.phone ||
-          draft.basics.location ? (
-            <ul className="resume-paper-contact">
-              {draft.basics.email ? (
-                <li>
-                  <SafeLink href={`mailto:${draft.basics.email}`}>
-                    {draft.basics.email}
-                  </SafeLink>
-                </li>
+          <div className="resume-paper-identity">
+            <div className="resume-paper-identity-copy">
+              <h3>{draft.basics.fullName || "Your name"}</h3>
+              {draft.basics.headline ? <p>{draft.basics.headline}</p> : null}
+              {draft.basics.email ||
+              draft.basics.phone ||
+              draft.basics.location ? (
+                <ul className="resume-paper-contact">
+                  {draft.basics.email ? (
+                    <li>
+                      <SafeLink href={`mailto:${draft.basics.email}`}>
+                        {draft.basics.email}
+                      </SafeLink>
+                    </li>
+                  ) : null}
+                  {draft.basics.phone ? (
+                    <li>
+                      <SafeLink href={`tel:${draft.basics.phone}`}>
+                        {draft.basics.phone}
+                      </SafeLink>
+                    </li>
+                  ) : null}
+                  {draft.basics.location ? (
+                    <li>{draft.basics.location}</li>
+                  ) : null}
+                </ul>
               ) : null}
-              {draft.basics.phone ? (
-                <li>
-                  <SafeLink href={`tel:${draft.basics.phone}`}>
-                    {draft.basics.phone}
-                  </SafeLink>
-                </li>
+              {draft.basics.links.length > 0 ? (
+                <ul className="resume-paper-links">
+                  {draft.basics.links.map((link) => (
+                    <li key={link.clientKey}>
+                      <SafeLink href={link.url}>{link.label}</SafeLink>:{" "}
+                      {link.url}
+                    </li>
+                  ))}
+                </ul>
               ) : null}
-              {draft.basics.location ? (
-                <li>{draft.basics.location}</li>
-              ) : null}
-            </ul>
-          ) : null}
-          {draft.basics.links.length > 0 ? (
-            <ul className="resume-paper-links">
-              {draft.basics.links.map((link) => (
-                <li key={link.clientKey}>
-                  <SafeLink href={link.url}>{link.label}</SafeLink>:{" "}
-                  {link.url}
-                </li>
-              ))}
-            </ul>
-          ) : null}
+            </div>
+            {showCandidatePhoto ? (
+              <div className="resume-profile-photo-frame" aria-hidden="true">
+                <img
+                  className="resume-profile-photo"
+                  src={candidatePhotoUrl}
+                  alt=""
+                />
+              </div>
+            ) : null}
+          </div>
         </header>
 
         {draft.basics.summary ? (
