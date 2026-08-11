@@ -4,8 +4,6 @@ import { resumeContentToDraft } from "./resumeDraft";
 import { ResumePreview } from "./ResumePreview";
 import type { ResumeContent, ResumeDesign } from "./types";
 
-const id = "123e4567-e89b-42d3-a456-426614174000";
-
 const content: ResumeContent = {
   basics: {
     fullName: "Synthetic Candidate",
