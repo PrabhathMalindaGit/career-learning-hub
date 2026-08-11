@@ -16,6 +16,7 @@ import {
   retryJob,
 } from "../jobs/jobResilience";
 import { AiRecommendations } from "./AiRecommendations";
+import { ResumeCandidatePhotoControls } from "./ResumeCandidatePhotoControls";
 import {
   ResumeDesignControls,
   type ResumeDesignStatus,
@@ -40,12 +41,20 @@ import {
   fetchJob,
   fetchResume,
   fetchResumeAnalysis,
+  fetchResumeCandidatePhotoSource,
   fetchResumeVersion,
   listResumeVersions,
   queueResumeAnalysis,
+  removeResumeCandidatePhoto,
   saveResumeVersion,
   updateResumeDesign,
+  uploadResumeCandidatePhoto,
 } from "./resumeApi";
+import {
+  CandidatePhotoError,
+  loadCanonicalCandidatePhoto,
+  preflightCandidatePhoto,
+} from "./resumeCandidatePhoto";
 import {
   draftFingerprint,
   draftToInput,
@@ -81,6 +90,7 @@ import type {
   ResumeDesign,
   ResumeDraft,
   ResumeJob,
+  ResumeRecord,
   Pagination,
   ResumeVersion,
   ResumeVersionMetadata,
@@ -131,6 +141,20 @@ function safeFailure(
     };
   }
   return { tone: "error", message: fallback };
+}
+
+function candidatePhotoFailure(
+  error: unknown,
+  fallback: string,
+): Notice {
+  if (error instanceof CandidatePhotoError) {
+    return { tone: "error", message: error.message };
+  }
+  return safeFailure(
+    error,
+    fallback,
+    "The candidate photo changed after this Resume was loaded. Reload and review before trying again.",
+  );
 }
 
 function isAbort(error: unknown): boolean {
@@ -241,6 +265,18 @@ export function ResumeWorkspace() {
   const [previewDesign, setPreviewDesign] = useState<ResumeDesign>();
   const [pageSizeFailure, setPageSizeFailure] = useState<Notice>();
   const [printPreparing, setPrintPreparing] = useState(false);
+  const [candidatePhotoSourceUrl, setCandidatePhotoSourceUrl] =
+    useState<string>();
+  const [candidatePhotoSourceLoading, setCandidatePhotoSourceLoading] =
+    useState(false);
+  const [candidatePhotoSourceFailure, setCandidatePhotoSourceFailure] =
+    useState<Notice>();
+  const [candidatePhotoMutationFailure, setCandidatePhotoMutationFailure] =
+    useState<Notice>();
+  const [candidatePhotoMutationSaving, setCandidatePhotoMutationSaving] =
+    useState(false);
+  const [candidatePhotoSourceReloadSequence, setCandidatePhotoSourceReloadSequence] =
+    useState(0);
   const [analysis, setAnalysis] = useState<ResumeAnalysis>();
   const [analysisStale, setAnalysisStale] = useState(false);
   const [analysisBusy, setAnalysisBusy] = useState(false);
@@ -260,6 +296,11 @@ export function ResumeWorkspace() {
   const analysisControllerRef = useRef<AbortController | undefined>(
     undefined,
   );
+  const candidatePhotoSourceControllerRef = useRef<AbortController | undefined>(
+    undefined,
+  );
+  const candidatePhotoObjectUrlRef = useRef<string | undefined>(undefined);
+  const candidatePhotoSelectionGenerationRef = useRef(0);
   const designMutationRef = useRef(false);
   const saveMutationRef = useRef(false);
   const saveOperationRef = useRef<() => void>(() => undefined);
@@ -288,6 +329,9 @@ export function ResumeWorkspace() {
     snapshotLoadingId !== undefined &&
     workspace !== undefined &&
     snapshotLoadingId !== workspace.version.id;
+  const hasCandidatePhoto = workspace?.resume.candidatePhotoAssetId !== undefined;
+  const candidatePhotoVisible =
+    hasCandidatePhoto && workspace?.resume.design.showProfilePhoto === true;
   const exportReadiness: ResumeExportReadiness = recoveryGate
     ? {
         eligible: false,
@@ -300,40 +344,53 @@ export function ResumeWorkspace() {
           reasonId: "resume-export-source-loading",
           message: "Loading the selected saved version before printing…",
         }
-      : designMutationSaving
+      : designMutationSaving || candidatePhotoMutationSaving
         ? {
             eligible: false,
             reasonId: "resume-export-design-saving",
-            message: "Wait for the paper size to finish saving.",
+            message: "Wait for Resume presentation changes to finish saving.",
           }
-        : printPreparing
+        : candidatePhotoVisible && candidatePhotoSourceLoading
           ? {
               eligible: false,
-              reasonId: "resume-export-preparing",
-              message: "Preparing the saved Resume for browser printing…",
+              reasonId: "resume-export-photo-loading",
+              message: "Loading the saved candidate photo before printing…",
             }
-          : !selectedExportVersion
+          : candidatePhotoVisible &&
+              (candidatePhotoSourceFailure || !candidatePhotoSourceUrl)
             ? {
                 eligible: false,
-                reasonId: "resume-export-no-version",
-                message: "Save a Resume version before printing or saving as PDF.",
+                reasonId: "resume-export-photo-unavailable",
+                message: "Retry the saved candidate photo before printing.",
               }
-            : !selectedSourceIsHistorical && saving
+            : printPreparing
               ? {
                   eligible: false,
-                  reasonId: "resume-export-saving",
-                  message: "Saving is in progress. Wait for the new version to finish.",
+                  reasonId: "resume-export-preparing",
+                  message: "Preparing the saved Resume for browser printing…",
                 }
-              : !selectedSourceIsHistorical && dirty
+              : !selectedExportVersion
                 ? {
                     eligible: false,
-                    reasonId: "resume-export-unsaved",
-                    message: "Save your changes before printing or saving as PDF.",
+                    reasonId: "resume-export-no-version",
+                    message: "Save a Resume version before printing or saving as PDF.",
                   }
-                : {
-                    eligible: true,
-                    message: "Ready to print / save as PDF",
-                  };
+                : !selectedSourceIsHistorical && saving
+                  ? {
+                      eligible: false,
+                      reasonId: "resume-export-saving",
+                      message: "Saving is in progress. Wait for the new version to finish.",
+                    }
+                  : !selectedSourceIsHistorical && dirty
+                    ? {
+                        eligible: false,
+                        reasonId: "resume-export-unsaved",
+                        message: "Save your changes before printing or saving as PDF.",
+                      }
+                    : {
+                        eligible: true,
+                        message: "Ready to print / save as PDF",
+                      };
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       (dirty || recoveryGate !== undefined) &&
@@ -349,6 +406,15 @@ export function ResumeWorkspace() {
 
   function finishOperation(controller: AbortController) {
     activeControllers.current.delete(controller);
+  }
+
+  function replaceCandidatePhotoObjectUrl(next?: string) {
+    const current = candidatePhotoObjectUrlRef.current;
+    if (current && current !== next) {
+      URL.revokeObjectURL(current);
+    }
+    candidatePhotoObjectUrlRef.current = next;
+    setCandidatePhotoSourceUrl(next);
   }
 
   function focusResumeField(path: string) {
@@ -369,10 +435,29 @@ export function ResumeWorkspace() {
     setPreviewDesign(next.resume.design);
   }
 
+  function adoptPhotoResume(resume: ResumeRecord) {
+    setWorkspace((current) =>
+      current ? { ...current, resume } : current,
+    );
+    setPreviewDesign((current) =>
+      current
+        ? {
+            ...current,
+            pageSize: resume.design.pageSize,
+            showProfilePhoto: resume.design.showProfilePhoto,
+          }
+        : resume.design,
+    );
+  }
+
   useEffect(() => {
     snapshotControllerRef.current?.abort();
     analysisControllerRef.current?.abort();
+    candidatePhotoSourceControllerRef.current?.abort();
     snapshotControllerRef.current = undefined;
+    candidatePhotoSourceControllerRef.current = undefined;
+    candidatePhotoSelectionGenerationRef.current += 1;
+    replaceCandidatePhotoObjectUrl(undefined);
     setSaving(false);
     saveMutationRef.current = false;
     setFailedSave(undefined);
@@ -389,6 +474,10 @@ export function ResumeWorkspace() {
     setPreviewDesign(undefined);
     setPageSizeFailure(undefined);
     setPrintPreparing(false);
+    setCandidatePhotoSourceLoading(false);
+    setCandidatePhotoSourceFailure(undefined);
+    setCandidatePhotoMutationFailure(undefined);
+    setCandidatePhotoMutationSaving(false);
     setSnapshot(undefined);
     setSnapshotLoadingId(undefined);
     setAnalysis(undefined);
@@ -404,6 +493,10 @@ export function ResumeWorkspace() {
         controller.abort(),
       );
       activeControllers.current.clear();
+      candidatePhotoSourceControllerRef.current?.abort();
+      const objectUrl = candidatePhotoObjectUrlRef.current;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      candidatePhotoObjectUrlRef.current = undefined;
     };
   }, [resumeId]);
 
@@ -483,6 +576,67 @@ export function ResumeWorkspace() {
       controller.abort();
     };
   }, [resumeId, reloadSequence, user?.id]);
+
+  useEffect(() => {
+    candidatePhotoSourceControllerRef.current?.abort();
+    replaceCandidatePhotoObjectUrl(undefined);
+    setCandidatePhotoSourceFailure(undefined);
+
+    const assetId = workspace?.resume.candidatePhotoAssetId;
+    if (!resumeId || !user || !assetId) {
+      setCandidatePhotoSourceLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    candidatePhotoSourceControllerRef.current = controller;
+    let active = true;
+    setCandidatePhotoSourceLoading(true);
+
+    void fetchResumeCandidatePhotoSource(resumeId, controller.signal)
+      .then((source) => loadCanonicalCandidatePhoto(source, controller.signal))
+      .then((objectUrl) => {
+        if (
+          !active ||
+          controller.signal.aborted ||
+          candidatePhotoSourceControllerRef.current !== controller
+        ) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        replaceCandidatePhotoObjectUrl(objectUrl);
+      })
+      .catch((error: unknown) => {
+        if (!active || isAbort(error)) return;
+        setCandidatePhotoSourceFailure(
+          candidatePhotoFailure(
+            error,
+            "The saved candidate photo could not be loaded. Try again.",
+          ),
+        );
+      })
+      .finally(() => {
+        if (
+          active &&
+          candidatePhotoSourceControllerRef.current === controller
+        ) {
+          setCandidatePhotoSourceLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+      if (candidatePhotoSourceControllerRef.current === controller) {
+        candidatePhotoSourceControllerRef.current = undefined;
+      }
+    };
+  }, [
+    resumeId,
+    user?.id,
+    workspace?.resume.candidatePhotoAssetId,
+    candidatePhotoSourceReloadSequence,
+  ]);
 
   useEffect(() => {
     if (!resumeId) return;
@@ -917,18 +1071,14 @@ export function ResumeWorkspace() {
     try {
       const resume = await updateResumeDesign(
         resumeId,
-        { ...workspace.resume.design, pageSize },
+        { pageSize },
         controller.signal,
       );
       if (controller.signal.aborted) return;
       setWorkspace((current) =>
         current ? { ...current, resume } : current,
       );
-      setPreviewDesign((current) => ({
-        ...(current ?? resume.design),
-        pageSize: resume.design.pageSize,
-        showProfilePhoto: false,
-      }));
+      setPreviewDesign(resume.design);
       setNotice({
         tone: "success",
         message: `Paper size saved as ${
@@ -961,11 +1111,7 @@ export function ResumeWorkspace() {
     try {
       const resume = await updateResumeDesign(
         resumeId,
-        {
-          ...workspace.resume.design,
-          ...selection,
-          showProfilePhoto: false,
-        },
+        selection,
         controller.signal,
       );
       if (controller.signal.aborted) return;
@@ -993,6 +1139,149 @@ export function ResumeWorkspace() {
       finishOperation(controller);
       designMutationRef.current = false;
       setDesignMutationSaving(false);
+    }
+  }
+
+  async function handleCandidatePhotoFile(file: File) {
+    if (
+      !resumeId ||
+      !workspace ||
+      recoveryGate ||
+      designMutationRef.current
+    ) {
+      return;
+    }
+
+    designMutationRef.current = true;
+    candidatePhotoSelectionGenerationRef.current += 1;
+    const generation = candidatePhotoSelectionGenerationRef.current;
+    const controller = beginOperation();
+    setCandidatePhotoMutationSaving(true);
+    setCandidatePhotoMutationFailure(undefined);
+    try {
+      await preflightCandidatePhoto(
+        file,
+        () =>
+          generation === candidatePhotoSelectionGenerationRef.current &&
+          !controller.signal.aborted,
+      );
+      if (controller.signal.aborted) return;
+
+      const resume = await uploadResumeCandidatePhoto(
+        resumeId,
+        file,
+        workspace.resume.candidatePhotoAssetId,
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      replaceCandidatePhotoObjectUrl(undefined);
+      adoptPhotoResume(resume);
+      setCandidatePhotoSourceFailure(undefined);
+      setCandidatePhotoSourceReloadSequence((current) => current + 1);
+      setNotice({
+        tone: "success",
+        message: workspace.resume.candidatePhotoAssetId
+          ? "Candidate photo replaced."
+          : "Candidate photo added.",
+      });
+    } catch (error) {
+      if (!isAbort(error)) {
+        setCandidatePhotoMutationFailure(
+          candidatePhotoFailure(
+            error,
+            "The candidate photo could not be saved. Try again.",
+          ),
+        );
+      }
+    } finally {
+      finishOperation(controller);
+      designMutationRef.current = false;
+      setCandidatePhotoMutationSaving(false);
+    }
+  }
+
+  async function handleCandidatePhotoVisibility(show: boolean) {
+    if (
+      !resumeId ||
+      !workspace ||
+      recoveryGate ||
+      designMutationRef.current ||
+      !workspace.resume.candidatePhotoAssetId
+    ) {
+      return;
+    }
+
+    designMutationRef.current = true;
+    const controller = beginOperation();
+    setCandidatePhotoMutationSaving(true);
+    setCandidatePhotoMutationFailure(undefined);
+    try {
+      const resume = await updateResumeDesign(
+        resumeId,
+        { showProfilePhoto: show },
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      adoptPhotoResume(resume);
+    } catch (error) {
+      if (!isAbort(error)) {
+        setCandidatePhotoMutationFailure(
+          candidatePhotoFailure(
+            error,
+            show
+              ? "The candidate photo could not be shown."
+              : "The candidate photo could not be hidden.",
+          ),
+        );
+      }
+    } finally {
+      finishOperation(controller);
+      designMutationRef.current = false;
+      setCandidatePhotoMutationSaving(false);
+    }
+  }
+
+  async function handleCandidatePhotoRemove() {
+    const candidatePhotoAssetId = workspace?.resume.candidatePhotoAssetId;
+    if (
+      !resumeId ||
+      !workspace ||
+      !candidatePhotoAssetId ||
+      recoveryGate ||
+      designMutationRef.current
+    ) {
+      return;
+    }
+
+    designMutationRef.current = true;
+    candidatePhotoSelectionGenerationRef.current += 1;
+    const controller = beginOperation();
+    setCandidatePhotoMutationSaving(true);
+    setCandidatePhotoMutationFailure(undefined);
+    try {
+      const resume = await removeResumeCandidatePhoto(
+        resumeId,
+        candidatePhotoAssetId,
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      replaceCandidatePhotoObjectUrl(undefined);
+      setCandidatePhotoSourceFailure(undefined);
+      adoptPhotoResume(resume);
+      setNotice({ tone: "success", message: "Candidate photo removed." });
+    } catch (error) {
+      if (!isAbort(error)) {
+        setCandidatePhotoMutationFailure(
+          candidatePhotoFailure(
+            error,
+            "The candidate photo could not be removed. Try again.",
+          ),
+        );
+      }
+    } finally {
+      finishOperation(controller);
+      designMutationRef.current = false;
+      setCandidatePhotoMutationSaving(false);
     }
   }
 
@@ -1271,12 +1560,16 @@ export function ResumeWorkspace() {
           baselineVersionNumber={recoveryGate.payload.baselineVersionNumber}
           currentVersionNumber={workspace.version.versionNumber}
           design={workspace.resume.design}
+          candidatePhotoUrl={candidatePhotoSourceUrl}
           discardError={recoveryDiscardError}
           onDiscard={discardRecovery}
         />
       </section>
     );
   }
+
+  const candidatePhotoError =
+    candidatePhotoMutationFailure ?? candidatePhotoSourceFailure;
 
   return (
     <section className="resume-workspace" aria-label="Resume Studio workspace">
@@ -1417,17 +1710,42 @@ export function ResumeWorkspace() {
 
       <ResumeDesignControls
         design={workspace.resume.design}
-        saving={designMutationSaving || recoveryGate !== undefined}
+        saving={
+          designMutationSaving ||
+          candidatePhotoMutationSaving ||
+          recoveryGate !== undefined
+        }
         status={designStatus}
         onPreviewChange={(selection) => {
           setDesignStatus(undefined);
           setPreviewDesign({
             ...workspace.resume.design,
             ...selection,
-            showProfilePhoto: false,
           });
         }}
         onSave={(selection) => void handleDesignSave(selection)}
+      />
+
+      <ResumeCandidatePhotoControls
+        hasPhoto={hasCandidatePhoto}
+        visible={workspace.resume.design.showProfilePhoto}
+        sourceUrl={candidatePhotoSourceUrl}
+        sourceLoading={candidatePhotoSourceLoading}
+        busy={
+          candidatePhotoMutationSaving ||
+          designMutationSaving ||
+          recoveryGate !== undefined
+        }
+        error={candidatePhotoError?.message}
+        requestId={candidatePhotoError?.requestId}
+        onSelectFile={(file) => void handleCandidatePhotoFile(file)}
+        onShow={() => void handleCandidatePhotoVisibility(true)}
+        onHide={() => void handleCandidatePhotoVisibility(false)}
+        onRemove={() => void handleCandidatePhotoRemove()}
+        onRetrySource={() => {
+          setCandidatePhotoSourceFailure(undefined);
+          setCandidatePhotoSourceReloadSequence((current) => current + 1);
+        }}
       />
 
       <ResumePrintControls
@@ -1486,6 +1804,7 @@ export function ResumeWorkspace() {
             draft={draft}
             pageSize={workspace.resume.design.pageSize}
             design={previewDesign ?? workspace.resume.design}
+            candidatePhotoUrl={candidatePhotoSourceUrl}
           />
         </div>
 
@@ -1715,6 +2034,7 @@ export function ResumeWorkspace() {
             ariaLabel={`Resume version ${snapshot.versionNumber} preview`}
             pageSize={workspace.resume.design.pageSize}
             design={workspace.resume.design}
+            candidatePhotoUrl={candidatePhotoSourceUrl}
           />
         </section>
       ) : null}
@@ -1729,6 +2049,7 @@ export function ResumeWorkspace() {
         ariaLabel="Printable saved resume"
         pageSize={workspace.resume.design.pageSize}
         design={workspace.resume.design}
+        candidatePhotoUrl={candidatePhotoSourceUrl}
         printOnly
       />
 
