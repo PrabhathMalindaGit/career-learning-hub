@@ -10,11 +10,16 @@ import {
   parseVersionEnvelope,
   parseVersionList,
 } from "./resumeContracts";
+import {
+  parseCandidatePhotoAssetIdFromResumeData,
+  parseCandidatePhotoSource,
+} from "./resumeCandidatePhoto";
 import type {
   CreateResumeInput,
   ResumeContentInput,
   ResumeDesign,
   ResumeJob,
+  ResumeRecord,
   ResumeWorkspaceData,
 } from "./types";
 
@@ -49,6 +54,31 @@ function assertResumeIdentity(
   }
 }
 
+function attachCandidatePhotoToResume(
+  resume: ResumeRecord,
+  rawData: unknown,
+): ResumeRecord {
+  const candidatePhotoAssetId = parseCandidatePhotoAssetIdFromResumeData(rawData);
+  return {
+    ...resume,
+    ...(candidatePhotoAssetId === undefined
+      ? {}
+      : { candidatePhotoAssetId }),
+  };
+}
+
+function parseWorkspaceWithCandidatePhoto(rawData: unknown): ResumeWorkspaceData {
+  const workspace = parseResumeWorkspace(rawData);
+  return {
+    ...workspace,
+    resume: attachCandidatePhotoToResume(workspace.resume, rawData),
+  };
+}
+
+function parseResumeWithCandidatePhoto(rawData: unknown): ResumeRecord {
+  return attachCandidatePhotoToResume(parseResumeEnvelope(rawData), rawData);
+}
+
 export async function listResumes(
   input: { page?: number; limit?: number } = {},
   signal?: AbortSignal,
@@ -73,7 +103,7 @@ export async function createResume(
     authentication: "required",
     signal,
   });
-  return parseResumeWorkspace(data);
+  return parseWorkspaceWithCandidatePhoto(data);
 }
 
 export async function fetchResume(
@@ -84,7 +114,7 @@ export async function fetchResume(
     authentication: "required",
     signal,
   });
-  const workspace = parseResumeWorkspace(data);
+  const workspace = parseWorkspaceWithCandidatePhoto(data);
   assertResumeIdentity(resumeId, workspace.resume.id);
   return workspace;
 }
@@ -107,14 +137,14 @@ export async function saveResumeVersion(
       signal,
     },
   );
-  const workspace = parseResumeWorkspace(data);
+  const workspace = parseWorkspaceWithCandidatePhoto(data);
   assertResumeIdentity(resumeId, workspace.resume.id);
   return workspace;
 }
 
 export async function updateResumeDesign(
   resumeId: string,
-  design: ResumeDesign,
+  design: Partial<ResumeDesign>,
   signal?: AbortSignal,
 ) {
   const data = await apiRequest<unknown>(
@@ -126,9 +156,66 @@ export async function updateResumeDesign(
       signal,
     },
   );
-  const resume = parseResumeEnvelope(data);
+  const resume = parseResumeWithCandidatePhoto(data);
   assertResumeIdentity(resumeId, resume.id);
   return resume;
+}
+
+export async function uploadResumeCandidatePhoto(
+  resumeId: string,
+  file: File,
+  expectedCandidatePhotoAssetId: string | undefined,
+  signal?: AbortSignal,
+) {
+  const form = new FormData();
+  form.set(
+    "expectedCandidatePhotoAssetId",
+    expectedCandidatePhotoAssetId ?? "none",
+  );
+  form.set("file", file);
+
+  const data = await apiRequest<unknown>(
+    `/resumes/${resumeId}/candidate-photo`,
+    {
+      method: "POST",
+      body: form,
+      authentication: "required",
+      signal,
+    },
+  );
+  const resume = parseResumeWithCandidatePhoto(data);
+  assertResumeIdentity(resumeId, resume.id);
+  return resume;
+}
+
+export async function removeResumeCandidatePhoto(
+  resumeId: string,
+  expectedCandidatePhotoAssetId: string,
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/resumes/${resumeId}/candidate-photo`,
+    {
+      method: "DELETE",
+      body: { expectedCandidatePhotoAssetId },
+      authentication: "required",
+      signal,
+    },
+  );
+  const resume = parseResumeWithCandidatePhoto(data);
+  assertResumeIdentity(resumeId, resume.id);
+  return resume;
+}
+
+export async function fetchResumeCandidatePhotoSource(
+  resumeId: string,
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/resumes/${resumeId}/candidate-photo/source`,
+    { authentication: "required", signal },
+  );
+  return parseCandidatePhotoSource(data);
 }
 
 export async function listResumeVersions(
@@ -197,7 +284,7 @@ export async function confirmResumePdfImport(
       signal,
     },
   );
-  return parseResumeWorkspace(data);
+  return parseWorkspaceWithCandidatePhoto(data);
 }
 
 export async function queueResumeAnalysis(
@@ -269,6 +356,7 @@ export async function applyResumeSuggestions(
     },
   );
   const result = parseApplyResult(data);
+  result.resume = attachCandidatePhotoToResume(result.resume, data);
   assertResumeIdentity(resumeId, result.resume.id);
   return result;
 }
