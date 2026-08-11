@@ -5,6 +5,7 @@ export const assetPurposes = [
   "resume-import",
   "resume-export",
   "resume-thumbnail",
+  "resume-photo",
   "learning-document",
   "interview-audio",
   "other",
