@@ -1,0 +1,236 @@
+.interview-type-controls {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #d5e0d8;
+  border-radius: 14px;
+  background: #fbfdfb;
+}
+
+.interview-type-controls legend {
+  padding: 0 6px;
+  color: #2a4334;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.interview-type-controls__help,
+.interview-type-counts__summary,
+.interview-type-controls__error {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.interview-type-controls__help,
+.interview-type-counts__summary {
+  color: var(--text-muted);
+}
+
+.interview-type-controls__error {
+  color: var(--error);
+  font-weight: 700;
+}
+
+.interview-type-controls__options {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.interview-type-choice {
+  display: inline-flex;
+  min-height: var(--minimum-interactive-target);
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid #cbd9d0;
+  border-radius: 999px;
+  color: #2f4d3b;
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.interview-type-choice:has(input:checked) {
+  border-color: #6b9a7c;
+  color: #174e2d;
+  background: #eaf3ed;
+}
+
+.interview-type-choice input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.interview-type-controls__count-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.interview-type-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.interview-type-counts label,
+.interview-mcq-editor label,
+.interview-answer-control label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: #3c4a42;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.interview-type-counts input,
+.interview-mcq-editor input[type="text"],
+.interview-answer-control textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.interview-question-type-label {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid #d2ddd6;
+  border-radius: 999px;
+  color: #486052;
+  background: #f5f8f6;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.interview-mcq-editor {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #d7e1da;
+  border-radius: 14px;
+  background: #fbfdfb;
+}
+
+.interview-mcq-editor__option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.interview-mcq-editor__correct {
+  display: flex;
+  min-height: var(--minimum-interactive-target);
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.interview-mcq-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.interview-answer-control {
+  display: grid;
+  gap: 10px;
+}
+
+.interview-answer-control__options {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.interview-answer-control__options legend {
+  margin-bottom: 4px;
+  color: #3c4a42;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.interview-answer-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-height: var(--minimum-interactive-target);
+  padding: 10px 12px;
+  border: 1px solid #d4dfd7;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.interview-answer-option:has(input:checked) {
+  border-color: #6a9a7b;
+  background: #edf5ef;
+}
+
+.interview-answer-option input {
+  margin-top: 3px;
+}
+
+.interview-answer-control__coding {
+  min-height: 220px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  tab-size: 2;
+}
+
+.interview-attempt-result {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #d6e0d9;
+  border-radius: 12px;
+  background: #f8fbf9;
+}
+
+.interview-attempt-result__badge {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 28px;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #28593d;
+  background: #e8f2eb;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.interview-attempt-result__badge--review {
+  color: #715711;
+  background: #fff2cf;
+}
+
+.interview-explanation-lock {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 640px) {
+  .interview-mcq-editor__option {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .interview-type-counts {
+    grid-template-columns: 1fr;
+  }
+}

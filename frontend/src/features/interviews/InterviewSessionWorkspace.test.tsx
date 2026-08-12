@@ -480,6 +480,7 @@ describe("InterviewSessionWorkspace", () => {
     expect(interviewApi.addManualQuestion).toHaveBeenCalledWith(
       sessionId,
       {
+        questionType: "short-answer",
         category: "Reliability",
         difficulty: "medium",
         question: "How do you handle poison messages?",
@@ -808,6 +809,7 @@ describe("InterviewSessionWorkspace", () => {
       attemptId,
       expect.any(AbortSignal),
       questionId,
+      "legacy-open-response",
     );
     expect(
       await screen.findByText("Model-generated practice guidance"),
@@ -817,6 +819,7 @@ describe("InterviewSessionWorkspace", () => {
       attemptId,
       expect.any(AbortSignal),
       questionId,
+      "legacy-open-response",
     );
   });
 
@@ -997,7 +1000,6 @@ describe("InterviewSessionWorkspace", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Generate questions" }),
     );
-
     await waitFor(() => {
       expect(interviewApi.generateInterviewQuestions).toHaveBeenCalledWith(
         sessionId,
@@ -1005,6 +1007,7 @@ describe("InterviewSessionWorkspace", () => {
           requestId: "a4d20e66-4af2-4dd2-834b-fad9fe354a6f",
           count: 10,
           categories: [],
+          questionTypes: ["short-answer"],
         },
         expect.any(AbortSignal),
       );
@@ -1510,6 +1513,7 @@ describe("InterviewSessionWorkspace", () => {
       attemptId,
       expect.any(AbortSignal),
       questionId,
+      "legacy-open-response",
     );
     await user.click(
       screen.getByRole("button", { name: "Request feedback" }),
@@ -1519,6 +1523,7 @@ describe("InterviewSessionWorkspace", () => {
       attemptId,
       expect.any(AbortSignal),
       questionId,
+      "legacy-open-response",
     );
 
     await user.click(attemptButtons[1]!);
@@ -1738,7 +1743,7 @@ describe("InterviewSessionWorkspace", () => {
     });
     await waitFor(() => {
       expect(
-        screen.getByText("No saved written attempts for this question yet."),
+        screen.getByText("No saved attempts for this question yet."),
       ).not.toBeNull();
     });
 

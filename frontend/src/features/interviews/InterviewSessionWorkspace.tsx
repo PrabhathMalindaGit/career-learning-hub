@@ -40,10 +40,18 @@ import type {
   InterviewJobType,
   InterviewQuestionDetail,
   InterviewQuestionSummary,
+  InterviewQuestionType,
   InterviewSessionDetail,
   Pagination,
+  TypedInterviewAnswer,
 } from "./types";
 import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
+import { InterviewAnswerControl } from "./InterviewAnswerControl";
+import {
+  InterviewQuestionTypeControls,
+  QUESTION_TYPE_LABELS,
+  interviewTypeCountsAreValid,
+} from "./InterviewQuestionTypeControls";
 import "./interviewCoach.css";
 
 const PAGE_SIZE = 20;
@@ -180,6 +188,30 @@ function feedbackPanel(attempt: InterviewAttempt) {
   );
 }
 
+function optionText(
+  question: InterviewQuestionDetail | null,
+  optionId: string,
+): string {
+  return (
+    question?.multipleChoice?.options.find((option) => option.id === optionId)
+      ?.text ?? "Option unavailable"
+  );
+}
+
+function attemptAnswerText(
+  attempt: InterviewAttempt,
+  question: InterviewQuestionDetail | null,
+): string {
+  if ("answerText" in attempt && typeof attempt.answerText === "string") {
+    return attempt.answerText;
+  }
+  if (!attempt.answer) return "Answer unavailable";
+  if (attempt.answer.type === "multiple-choice") {
+    return optionText(question, attempt.answer.selectedOptionId);
+  }
+  return attempt.answer.text;
+}
+
 export function InterviewSessionWorkspace() {
   const { sessionId = "" } = useParams();
   const [session, setSession] = useState<InterviewSessionDetail | null>(
@@ -214,6 +246,7 @@ export function InterviewSessionWorkspace() {
     "clean" | "dirty" | "saving" | "saved" | "error"
   >("clean");
   const [answerDraft, setAnswerDraft] = useState("");
+  const [selectedOptionId, setSelectedOptionId] = useState("");
   const [answerError, setAnswerError] = useState<SafeError | null>(null);
   const [answerBusy, setAnswerBusy] = useState(false);
   const [questionActionError, setQuestionActionError] =
@@ -237,16 +270,28 @@ export function InterviewSessionWorkspace() {
     useState<InterviewAttempt | null>(null);
 
   const [manualOpen, setManualOpen] = useState(false);
+  const [manualQuestionType, setManualQuestionType] =
+    useState<InterviewQuestionType>("short-answer");
   const [manualCategory, setManualCategory] = useState("");
   const [manualDifficulty, setManualDifficulty] =
     useState<InterviewDifficulty>("medium");
   const [manualQuestion, setManualQuestion] = useState("");
   const [manualModelAnswer, setManualModelAnswer] = useState("");
+  const [manualOptions, setManualOptions] = useState<string[]>(["", ""]);
+  const [manualCorrectOptionIndex, setManualCorrectOptionIndex] = useState<
+    number | null
+  >(null);
   const [manualBusy, setManualBusy] = useState(false);
   const [manualError, setManualError] = useState<SafeError | null>(null);
 
   const [generationCount, setGenerationCount] = useState(10);
   const [generationCategories, setGenerationCategories] = useState("");
+  const [generationQuestionTypes, setGenerationQuestionTypes] = useState<
+    InterviewQuestionType[]
+  >(["short-answer"]);
+  const [generationTypeCounts, setGenerationTypeCounts] = useState<
+    Partial<Record<InterviewQuestionType, number>> | undefined
+  >();
   const [providerBusy, setProviderBusy] = useState(false);
   const [providerError, setProviderError] = useState<SafeError | null>(
     null,
@@ -415,6 +460,7 @@ export function InterviewSessionWorkspace() {
       setSelectedQuestion(null);
       setNotesDraft("");
       setAnswerDraft("");
+      setSelectedOptionId("");
     },
     [invalidateQuestionScope],
   );
@@ -465,20 +511,26 @@ export function InterviewSessionWorkspace() {
       setSelectedAttempt(null);
       setNotesDraft("");
       setAnswerDraft("");
+      setSelectedOptionId("");
       setAnswerError(null);
       setAnswerBusy(false);
       setNotesState("clean");
       setQuestionActionError(null);
       setPinPendingQuestionId("");
       setManualOpen(false);
+      setManualQuestionType("short-answer");
       setManualCategory("");
       setManualDifficulty("medium");
       setManualQuestion("");
       setManualModelAnswer("");
+      setManualOptions(["", ""]);
+      setManualCorrectOptionIndex(null);
       setManualBusy(false);
       setManualError(null);
       setGenerationCount(10);
       setGenerationCategories("");
+      setGenerationQuestionTypes(["short-answer"]);
+      setGenerationTypeCounts(undefined);
       setProviderBusy(false);
       setActiveJob(null);
       setProviderError(null);
@@ -590,6 +642,7 @@ export function InterviewSessionWorkspace() {
       setQuestionDetailLoading(false);
       setNotesDraft("");
       setAnswerDraft("");
+      setSelectedOptionId("");
       return;
     }
     const sequence = ++questionDetailSequence.current;
@@ -601,6 +654,7 @@ export function InterviewSessionWorkspace() {
     setSelectedAttemptId("");
     setSelectedAttempt(null);
     setAnswerDraft("");
+    setSelectedOptionId("");
     void fetchInterviewQuestion(
       sessionId,
       selectedQuestionId,
@@ -734,12 +788,17 @@ export function InterviewSessionWorkspace() {
     const selection = attemptSelectionSequence.current;
     const expectedAttemptId = selectedAttemptId;
     const expectedQuestionId = selectedQuestionId;
+    const expectedQuestionType =
+      selectedQuestion?.id === expectedQuestionId
+        ? selectedQuestion.questionType
+        : undefined;
     const controller = new AbortController();
     void fetchInterviewAttempt(
       sessionId,
       selectedAttemptId,
       controller.signal,
       expectedQuestionId,
+      expectedQuestionType,
     )
       .then((attempt) => {
         if (
@@ -766,7 +825,7 @@ export function InterviewSessionWorkspace() {
         }
       });
     return () => controller.abort();
-  }, [selectedAttemptId, selectedQuestionId, sessionId]);
+  }, [selectedAttemptId, selectedQuestion, selectedQuestionId, sessionId]);
 
   const pollAcceptedJob = useCallback(
     async (
@@ -1030,6 +1089,11 @@ export function InterviewSessionWorkspace() {
     }
   }
 
+  function resetManualMcqDraft() {
+    setManualOptions(["", ""]);
+    setManualCorrectOptionIndex(null);
+  }
+
   async function submitManualQuestion(event: FormEvent) {
     event.preventDefault();
     if (
@@ -1043,26 +1107,69 @@ export function InterviewSessionWorkspace() {
       });
       return;
     }
+    const trimmedOptions = manualOptions.map((option) => option.trim());
+    if (manualQuestionType === "multiple-choice") {
+      if (
+        trimmedOptions.length < 2 ||
+        trimmedOptions.length > 8 ||
+        trimmedOptions.some((option) => !option)
+      ) {
+        setManualError({
+          message: "Multiple Choice requires 2–8 non-blank options.",
+        });
+        return;
+      }
+      if (new Set(trimmedOptions).size !== trimmedOptions.length) {
+        setManualError({
+          message: "Multiple Choice options must be distinct.",
+        });
+        return;
+      }
+      if (
+        manualCorrectOptionIndex === null ||
+        manualCorrectOptionIndex < 0 ||
+        manualCorrectOptionIndex >= trimmedOptions.length
+      ) {
+        setManualError({
+          message: "Select the correct answer before adding the question.",
+        });
+        return;
+      }
+    }
     const controller = makeController();
     setManualBusy(true);
     setManualError(null);
     try {
       const created = await addManualQuestion(
         sessionId,
-        {
-          category: manualCategory.trim(),
-          difficulty: manualDifficulty,
-          question: manualQuestion.trim(),
-          ...(manualModelAnswer.trim()
-            ? { modelAnswer: manualModelAnswer.trim() }
-            : {}),
-        },
+        manualQuestionType === "multiple-choice"
+          ? {
+              questionType: "multiple-choice",
+              category: manualCategory.trim(),
+              difficulty: manualDifficulty,
+              question: manualQuestion.trim(),
+              multipleChoice: {
+                options: trimmedOptions,
+                correctOptionIndex: manualCorrectOptionIndex!,
+              },
+            }
+          : {
+              questionType: manualQuestionType,
+              category: manualCategory.trim(),
+              difficulty: manualDifficulty,
+              question: manualQuestion.trim(),
+              ...(manualModelAnswer.trim()
+                ? { modelAnswer: manualModelAnswer.trim() }
+                : {}),
+            },
         controller.signal,
       );
       if (!actionIsCurrent(controller)) return;
+      setManualQuestionType("short-answer");
       setManualCategory("");
       setManualQuestion("");
       setManualModelAnswer("");
+      resetManualMcqDraft();
       setManualOpen(false);
       setQuestionReloadKey((key) => key + 1);
       setSessionReloadKey((key) => key + 1);
@@ -1079,6 +1186,19 @@ export function InterviewSessionWorkspace() {
   async function submitGeneration(event: FormEvent) {
     event.preventDefault();
     if (providerBusy) return;
+    if (
+      !interviewTypeCountsAreValid(
+        generationCount,
+        generationQuestionTypes,
+        generationTypeCounts,
+      )
+    ) {
+      setProviderError({
+        message:
+          "Select at least one question type and make exact counts equal the Question count.",
+      });
+      return;
+    }
     const controller = makeController();
     const requestId =
       generationIntentId.current ?? crypto.randomUUID();
@@ -1098,6 +1218,10 @@ export function InterviewSessionWorkspace() {
           requestId,
           count: generationCount,
           categories: parseList(generationCategories),
+          questionTypes: generationQuestionTypes,
+          ...(generationTypeCounts === undefined
+            ? {}
+            : { typeCounts: generationTypeCounts }),
         },
         controller.signal,
       );
@@ -1284,11 +1408,43 @@ export function InterviewSessionWorkspace() {
   async function submitAttempt() {
     if (!selectedQuestion || answerBusy) return;
     const answer = answerDraft.trim();
-    if (answer.length < 1 || answer.length > ANSWER_MAX_LENGTH) {
-      setAnswerError({
-        message: `Enter an answer with 1–${ANSWER_MAX_LENGTH.toLocaleString()} characters.`,
-      });
-      return;
+    let submission:
+      | { answerText: string }
+      | { answer: TypedInterviewAnswer };
+    if (selectedQuestion.questionType === "legacy-open-response") {
+      if (answer.length < 1 || answer.length > ANSWER_MAX_LENGTH) {
+        setAnswerError({
+          message: `Enter an answer with 1–${ANSWER_MAX_LENGTH.toLocaleString()} characters.`,
+        });
+        return;
+      }
+      submission = { answerText: answer };
+    } else if (selectedQuestion.questionType === "multiple-choice") {
+      if (!selectedOptionId) {
+        setAnswerError({
+          message: "Select an answer before saving this attempt.",
+        });
+        return;
+      }
+      submission = {
+        answer: {
+          type: "multiple-choice",
+          selectedOptionId,
+        },
+      };
+    } else {
+      if (answer.length < 1 || answer.length > ANSWER_MAX_LENGTH) {
+        setAnswerError({
+          message: `Enter an answer with 1–${ANSWER_MAX_LENGTH.toLocaleString()} characters.`,
+        });
+        return;
+      }
+      submission = {
+        answer: {
+          type: selectedQuestion.questionType,
+          text: answer,
+        },
+      };
     }
     const expectedQuestionId = selectedQuestion.id;
     const selection = questionSelectionSequence.current;
@@ -1299,7 +1455,7 @@ export function InterviewSessionWorkspace() {
       const created = await recordInterviewAttempt(
         sessionId,
         expectedQuestionId,
-        answer,
+        submission,
         controller.signal,
       );
       if (
@@ -1310,6 +1466,7 @@ export function InterviewSessionWorkspace() {
         return;
       }
       setAnswerDraft("");
+      setSelectedOptionId("");
       selectAttempt(created.id);
       setSelectedAttempt(created);
       setAttemptReloadKey((key) => key + 1);
@@ -1336,7 +1493,13 @@ export function InterviewSessionWorkspace() {
   }
 
   async function requestFeedback(attempt: InterviewAttempt) {
-    if (providerBusy || attempt.feedback) return;
+    if (
+      providerBusy ||
+      attempt.feedback ||
+      attempt.answer?.type === "multiple-choice"
+    ) {
+      return;
+    }
     const expectedAttemptId = attempt.id;
     const expectedQuestionId = attempt.questionId;
     const selection = attemptSelectionSequence.current;
@@ -1346,11 +1509,16 @@ export function InterviewSessionWorkspace() {
     setProviderBusy(true);
     setProviderError(null);
     try {
+      const expectedQuestionType =
+        selectedQuestion?.id === expectedQuestionId
+          ? selectedQuestion.questionType
+          : undefined;
       const result = await requestAttemptFeedback(
         sessionId,
         expectedAttemptId,
         controller.signal,
         expectedQuestionId,
+        expectedQuestionType,
       );
       if (
         !actionIsCurrent(controller) ||
@@ -1442,6 +1610,11 @@ export function InterviewSessionWorkspace() {
     activeJob?.scope === "generation" &&
     (activeJob.job.status === "queued" ||
       activeJob.job.status === "processing");
+  const mcqExplanationLocked =
+    selectedQuestion?.questionType === "multiple-choice" &&
+    !selectedQuestion.explanation &&
+    !selectedAttempt &&
+    (attemptPagination?.total ?? attempts.length) === 0;
 
   return (
     <section
@@ -1614,10 +1787,28 @@ export function InterviewSessionWorkspace() {
                 }
               />
             </label>
+            <div className="interview-span-two">
+              <InterviewQuestionTypeControls
+                count={generationCount}
+                selected={generationQuestionTypes}
+                explicitCounts={generationTypeCounts}
+                disabled={providerBusy || generationStatusPending}
+                onSelectedChange={setGenerationQuestionTypes}
+                onExplicitCountsChange={setGenerationTypeCounts}
+              />
+            </div>
             <button
               className="interview-primary-button"
               type="submit"
-              disabled={providerBusy || generationStatusPending}
+              disabled={
+                providerBusy ||
+                generationStatusPending ||
+                !interviewTypeCountsAreValid(
+                  generationCount,
+                  generationQuestionTypes,
+                  generationTypeCounts,
+                )
+              }
             >
               {providerBusy && activeJob?.scope === "generation"
                 ? "Generating…"
@@ -1637,6 +1828,28 @@ export function InterviewSessionWorkspace() {
               onSubmit={(event) => void submitManualQuestion(event)}
               noValidate
             >
+              <label>
+                Question type
+                <select
+                  value={manualQuestionType}
+                  onChange={(event) => {
+                    const next = event.target.value as InterviewQuestionType;
+                    setManualQuestionType(next);
+                    setManualError(null);
+                    if (next !== "multiple-choice") {
+                      resetManualMcqDraft();
+                    }
+                  }}
+                >
+                  {Object.entries(QUESTION_TYPE_LABELS)
+                    .filter(([value]) => value !== "legacy-open-response")
+                    .map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                </select>
+              </label>
               <label>
                 Category
                 <input
@@ -1673,17 +1886,91 @@ export function InterviewSessionWorkspace() {
                   }
                 />
               </label>
-              <label className="interview-span-two">
-                Model answer <span>(optional)</span>
-                <textarea
-                  rows={5}
-                  maxLength={12_000}
-                  value={manualModelAnswer}
-                  onChange={(event) =>
-                    setManualModelAnswer(event.target.value)
-                  }
-                />
-              </label>
+              {manualQuestionType === "multiple-choice" ? (
+                <fieldset className="interview-mcq-editor">
+                  <legend>Multiple Choice options</legend>
+                  {manualOptions.map((option, index) => (
+                    <div
+                      className="interview-mcq-editor__option"
+                      key={`manual-option-${index}`}
+                    >
+                      <label className="interview-mcq-editor__correct">
+                        <input
+                          type="radio"
+                          name="manual-correct-option"
+                          checked={manualCorrectOptionIndex === index}
+                          onChange={() => setManualCorrectOptionIndex(index)}
+                        />
+                        Correct
+                      </label>
+                      <label>
+                        Option {index + 1}
+                        <input
+                          type="text"
+                          maxLength={500}
+                          value={option}
+                          onChange={(event) =>
+                            setManualOptions((current) =>
+                              current.map((value, optionIndex) =>
+                                optionIndex === index
+                                  ? event.target.value
+                                  : value,
+                              ),
+                            )
+                          }
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="interview-secondary-button"
+                        disabled={manualOptions.length <= 2}
+                        onClick={() => {
+                          setManualOptions((current) =>
+                            current.filter(
+                              (_, optionIndex) => optionIndex !== index,
+                            ),
+                          );
+                          setManualCorrectOptionIndex((current) =>
+                            current === null
+                              ? null
+                              : current === index
+                                ? null
+                                : current > index
+                                  ? current - 1
+                                  : current,
+                          );
+                        }}
+                      >
+                        Remove option {index + 1}
+                      </button>
+                    </div>
+                  ))}
+                  <div className="interview-mcq-editor__actions">
+                    <button
+                      type="button"
+                      className="interview-secondary-button"
+                      disabled={manualOptions.length >= 8}
+                      onClick={() =>
+                        setManualOptions((current) => [...current, ""])
+                      }
+                    >
+                      Add option
+                    </button>
+                  </div>
+                </fieldset>
+              ) : (
+                <label className="interview-span-two">
+                  Model answer <span>(optional)</span>
+                  <textarea
+                    rows={5}
+                    maxLength={12_000}
+                    value={manualModelAnswer}
+                    onChange={(event) =>
+                      setManualModelAnswer(event.target.value)
+                    }
+                  />
+                </label>
+              )}
               {manualError ? (
                 <SafeErrorMessage error={manualError} />
               ) : null}
@@ -1839,6 +2126,9 @@ export function InterviewSessionWorkspace() {
                     }${question.question}`}
                     onClick={() => selectQuestion(question.id)}
                   >
+                    <span className="interview-question-type-label">
+                      {QUESTION_TYPE_LABELS[question.questionType]}
+                    </span>
                     <span>
                       {question.category} · {question.difficulty}
                     </span>
@@ -1893,9 +2183,14 @@ export function InterviewSessionWorkspace() {
               </h2>
             </div>
             {selectedQuestion ? (
-              <span className="interview-chip">
-                {selectedQuestion.difficulty}
-              </span>
+              <div className="interview-context-chips">
+                <span className="interview-question-type-label">
+                  {QUESTION_TYPE_LABELS[selectedQuestion.questionType]}
+                </span>
+                <span className="interview-chip">
+                  {selectedQuestion.difficulty}
+                </span>
+              </div>
             ) : null}
           </div>
           {questionDetailLoading ? (
@@ -1972,6 +2267,10 @@ export function InterviewSessionWorkspace() {
                     </ul>
                   ) : null}
                 </section>
+              ) : editable && mcqExplanationLocked ? (
+                <p className="interview-explanation-lock">
+                  Submit an attempt to unlock the explanation.
+                </p>
               ) : editable ? (
                 <button
                   type="button"
@@ -2036,66 +2335,28 @@ export function InterviewSessionWorkspace() {
                   aria-labelledby="attempt-composer-title"
                 >
                   <h3 id="attempt-composer-title">
-                    Save another written attempt
+                    Save another attempt
                   </h3>
                   <p>
                     Each submission is saved separately so you can review your
                     practice over time.
                   </p>
-                  <label
-                    className="field-label interview-answer-field"
-                    htmlFor="interview-written-answer"
-                  >
-                    <span>
-                      Written answer{" "}
-                      <span
-                        className="field-required"
-                        aria-hidden="true"
-                      >
-                        (required)
-                      </span>
-                    </span>
-                    <textarea
-                      id="interview-written-answer"
-                      name="writtenAnswer"
-                      className="field-control"
-                      required
-                      rows={9}
-                      maxLength={ANSWER_MAX_LENGTH}
-                      value={answerDraft}
-                      aria-invalid={Boolean(answerError)}
-                      aria-describedby={`interview-written-answer-count${
-                        answerError
-                          ? " interview-written-answer-error"
-                          : ""
-                      }`}
-                      onChange={(event) =>
-                        setAnswerDraft(event.target.value)
-                      }
-                    />
-                  </label>
-                  <small
-                    className="field-help"
-                    id="interview-written-answer-count"
-                  >
-                    {answerDraft.length.toLocaleString()} /{" "}
-                    {ANSWER_MAX_LENGTH.toLocaleString()}
-                  </small>
-                  {answerError ? (
-                    <SafeErrorMessage
-                      error={answerError}
-                      id="interview-written-answer-error"
-                    />
-                  ) : null}
-                  <button
-                    type="button"
-                    className="primary-button interview-primary-button"
-                    disabled={answerBusy || answerDraft.trim() === ""}
-                    aria-busy={answerBusy}
-                    onClick={() => void submitAttempt()}
-                  >
-                    {answerBusy ? "Saving…" : "Save attempt"}
-                  </button>
+                  <InterviewAnswerControl
+                    question={selectedQuestion}
+                    textValue={answerDraft}
+                    selectedOptionId={selectedOptionId}
+                    disabled={answerBusy}
+                    error={answerError}
+                    onTextChange={(value) => {
+                      setAnswerDraft(value);
+                      if (answerError) setAnswerError(null);
+                    }}
+                    onSelectedOptionChange={(optionId) => {
+                      setSelectedOptionId(optionId);
+                      if (answerError) setAnswerError(null);
+                    }}
+                    onSubmit={() => void submitAttempt()}
+                  />
                 </section>
               ) : null}
 
@@ -2165,7 +2426,7 @@ export function InterviewSessionWorkspace() {
             </div>
           ) : attempts.length === 0 ? (
             <p className="interview-state">
-              No saved written attempts for this question yet.
+              No saved attempts for this question yet.
             </p>
           ) : (
             <ol className="interview-attempt-list">
@@ -2181,7 +2442,9 @@ export function InterviewSessionWorkspace() {
                   >
                     <strong>Attempt {index + 1}</strong>
                     <span>{attemptStatusLabels[attempt.status]}</span>
-                    {attempt.feedback ? (
+                    {attempt.evaluation ? (
+                      <span>{attempt.evaluation.score}/100</span>
+                    ) : attempt.feedback ? (
                       <span>{attempt.feedback.score}/100</span>
                     ) : null}
                     <small>
@@ -2218,12 +2481,38 @@ export function InterviewSessionWorkspace() {
                 <h3>Saved answer</h3>
                 <span>{attemptStatusLabels[selectedAttempt.status]}</span>
               </div>
-              <p>{selectedAttempt.answerText}</p>
+              <p>{attemptAnswerText(selectedAttempt, selectedQuestion)}</p>
+              {selectedAttempt.answer?.type === "multiple-choice" &&
+              selectedAttempt.evaluation ? (
+                <div className="interview-attempt-result">
+                  <span
+                    className={
+                      selectedAttempt.evaluation.correct
+                        ? "interview-attempt-result__badge"
+                        : "interview-attempt-result__badge interview-attempt-result__badge--review"
+                    }
+                  >
+                    {selectedAttempt.evaluation.correct
+                      ? "Correct"
+                      : "Needs review"}
+                  </span>
+                  <strong>{selectedAttempt.evaluation.score}/100</strong>
+                  <span>
+                    Correct answer:{" "}
+                    {optionText(
+                      selectedQuestion,
+                      selectedAttempt.evaluation.correctOptionId,
+                    )}
+                  </span>
+                </div>
+              ) : null}
               <small>
                 Submitted {new Date(selectedAttempt.createdAt).toLocaleString()}
               </small>
               {feedbackPanel(selectedAttempt)}
-              {editable && !selectedAttempt.feedback ? (
+              {editable &&
+              !selectedAttempt.feedback &&
+              selectedAttempt.answer?.type !== "multiple-choice" ? (
                 <button
                   type="button"
                   className="interview-secondary-button"
