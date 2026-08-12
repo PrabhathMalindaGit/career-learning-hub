@@ -1787,6 +1787,14 @@ export function ResumeWorkspace() {
             validationErrors={validationErrors}
             focusRequest={editorFocusRequest}
             onChange={(nextDraft) => {
+              const snapshotController = snapshotControllerRef.current;
+              if (snapshotController) {
+                snapshotController.abort();
+                snapshotControllerRef.current = undefined;
+              }
+              if (snapshotLoadingId !== undefined) {
+                setSnapshotLoadingId(undefined);
+              }
               if (snapshot !== undefined) {
                 setSnapshot(undefined);
               }
