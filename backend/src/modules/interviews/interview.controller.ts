@@ -3,6 +3,7 @@ import { env } from "../../config/env.js";
 import { enqueueJob } from "../../jobs/job.queue.js";
 import { AppError } from "../../shared/appError.js";
 import { InterviewAttemptModel } from "./interviewAttempt.model.js";
+import { InterviewQuestionModel } from "./interviewQuestion.model.js";
 import { resolveQuestionTypeCounts } from "./interviewQuestionDistribution.js";
 import {
   addManualQuestion,
@@ -11,6 +12,7 @@ import {
   listInterviewQuestions,
   listInterviewSessions,
   recordInterviewAttempt,
+  serializeInterviewAttempt,
   serializeQuestionDetail,
   serializeQuestionSummary,
   setQuestionNotes,
@@ -367,12 +369,18 @@ export async function recordInterviewAttemptController(
     userId: request.auth!.userId,
     session: request.interviewSession!,
     question: request.interviewQuestion!,
-    answerText: request.body.answerText,
+    submission: request.body,
   });
 
   response.status(201).json({
     success: true,
-    data: { attempt },
+    data: {
+      attempt: serializeInterviewAttempt({
+        attempt,
+        question: request.interviewQuestion!,
+        revealCorrectOption: true,
+      }),
+    },
   });
 }
 
@@ -401,10 +409,21 @@ export async function getInterviewAttemptController(
   request: Request,
   response: Response,
 ): Promise<void> {
+  const attempt = request.interviewAttempt!;
+  const question = await InterviewQuestionModel.findOne({
+    _id: attempt.questionId,
+    userId: request.auth!.userId,
+    sessionId: request.interviewSession!._id,
+  });
+
   response.status(200).json({
     success: true,
     data: {
-      attempt: request.interviewAttempt,
+      attempt: serializeInterviewAttempt({
+        attempt,
+        question: question ?? undefined,
+        revealCorrectOption: true,
+      }),
     },
   });
 }
