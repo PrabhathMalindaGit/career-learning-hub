@@ -252,9 +252,9 @@ describe("InterviewSessionWorkspace Saved Attempts UX", () => {
   it("uses the shared Saved attempt pager only when the server reports multiple pages", async () => {
     vi.mocked(interviewApi.listAttemptHistory).mockImplementation(
       async (_sessionId, query) => ({
-        attempts: [attempt("recorded", query.page ?? 1)],
+        attempts: [attempt("recorded", query?.page ?? 1)],
         pagination: {
-          page: query.page ?? 1,
+          page: query?.page ?? 1,
           limit: 20,
           total: 21,
           pages: 2,
