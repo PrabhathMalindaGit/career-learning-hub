@@ -191,7 +191,7 @@ describe("InterviewSessionWorkspace Saved Attempts UX", () => {
       screen.getByRole("heading", { name: "Saved attempts" }),
     ).not.toBeNull();
     expect(
-      screen.getByRole("heading", { name: "Save another written attempt" }),
+      screen.getByRole("heading", { name: "Save another attempt" }),
     ).not.toBeNull();
     expect(
       screen.getByText(
@@ -321,7 +321,9 @@ describe("InterviewSessionWorkspace Saved Attempts UX", () => {
     expect(interviewApi.recordInterviewAttempt).toHaveBeenCalledWith(
       sessionId,
       questionId,
-      "I would use idempotency keys and bounded retries.",
+      {
+        answerText: "I would use idempotency keys and bounded retries.",
+      },
       expect.any(AbortSignal),
     );
     expect(
