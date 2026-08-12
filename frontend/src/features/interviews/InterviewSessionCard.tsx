@@ -54,7 +54,6 @@ export function InterviewSessionCard({
       <div className="interview-session-card__body">
         <div className="interview-session-card__heading">
           <div>
-            <p className="interview-kicker">Target role</p>
             <h3>{session.targetRole}</h3>
             {differsMeaningfully(session.title, session.targetRole) ? (
               <p className="interview-session-card__title">
