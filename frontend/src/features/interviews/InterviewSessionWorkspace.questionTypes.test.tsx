@@ -329,11 +329,13 @@ describe("InterviewSessionWorkspace typed question UX", () => {
       },
       expect.any(AbortSignal),
     );
-    expect(await screen.findByText("Needs review")).not.toBeNull();
-    expect(screen.getByText("0/100")).not.toBeNull();
-    expect(screen.getByText(/Correct answer:/).textContent).toContain(
-      "Second option",
-    );
+    const reviewBadge = await screen.findByText("Needs review");
+    const attemptDetail = reviewBadge.closest(".interview-attempt-detail");
+    expect(attemptDetail).not.toBeNull();
+    expect(within(attemptDetail as HTMLElement).getByText("0/100")).not.toBeNull();
+    expect(
+      within(attemptDetail as HTMLElement).getByText(/Correct answer:/).textContent,
+    ).toContain("Second option");
     expect(
       screen.queryByRole("button", { name: "Request feedback" }),
     ).toBeNull();
