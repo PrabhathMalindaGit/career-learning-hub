@@ -1184,3 +1184,100 @@
     animation: none;
   }
 }
+
+.interview-tag-input {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  color: #3c4a42;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.interview-tag-input__control {
+  display: flex;
+  min-width: 0;
+  min-height: var(--minimum-interactive-target);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  border: 1px solid #c8d5cd;
+  border-radius: 10px;
+  background: #fbfdfc;
+}
+
+.interview-tag-input__control:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(42, 103, 67, 0.14);
+}
+
+.interview-tag-input__control input {
+  min-width: min(180px, 100%);
+  flex: 1 1 180px;
+  padding: 6px 4px;
+  border: 0;
+  outline: 0;
+  color: #18211b;
+  background: transparent;
+  font: inherit;
+}
+
+.interview-tag-input__control input[aria-invalid="true"] {
+  color: var(--error);
+}
+
+.interview-tag-input__chip {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 5px;
+  padding-left: 9px;
+  border: 1px solid #c9d9ce;
+  border-radius: 999px;
+  color: #245e3c;
+  background: #edf5f0;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.interview-tag-input__chip > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.interview-tag-input__chip button {
+  display: inline-flex;
+  min-width: var(--minimum-interactive-target);
+  min-height: var(--minimum-interactive-target);
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  color: #245e3c;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.interview-tag-input__chip button:hover {
+  background: #dfece3;
+}
+
+.interview-tag-input__chip button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.interview-tag-input__help {
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+@media (max-width: 560px) {
+  .interview-tag-input__control input {
+    flex-basis: 100%;
+  }
+}
