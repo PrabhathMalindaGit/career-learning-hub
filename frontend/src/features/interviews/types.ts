@@ -1,3 +1,5 @@
+import type { PartialJobResilienceMetadata } from "../jobs/jobResilience";
+
 export type InterviewSessionStatus =
   | "active"
   | "completed"
@@ -12,6 +14,41 @@ export type CreateInterviewMode = Exclude<
 >;
 export type InterviewDifficulty = "easy" | "medium" | "hard";
 export type InterviewQuestionSource = "manual" | "ai-generated";
+export type InterviewQuestionType =
+  | "multiple-choice"
+  | "short-answer"
+  | "coding"
+  | "behavioral"
+  | "scenario-based"
+  | "technical-explanation";
+export type EffectiveInterviewQuestionType =
+  | InterviewQuestionType
+  | "legacy-open-response";
+export type TypedInterviewAnswer =
+  | {
+      type: "multiple-choice";
+      selectedOptionId: string;
+    }
+  | {
+      type: "short-answer";
+      text: string;
+    }
+  | {
+      type: "coding";
+      text: string;
+    }
+  | {
+      type: "behavioral";
+      text: string;
+    }
+  | {
+      type: "scenario-based";
+      text: string;
+    }
+  | {
+      type: "technical-explanation";
+      text: string;
+    };
 export type InterviewAttemptStatus =
   | "recorded"
   | "feedback-queued"
@@ -61,6 +98,13 @@ export interface InterviewSessionPage {
   pagination: Pagination;
 }
 
+export interface InterviewMultipleChoicePublic {
+  options: Array<{
+    id: string;
+    text: string;
+  }>;
+}
+
 export interface InterviewQuestionSummary {
   id: string;
   sessionId: string;
@@ -68,6 +112,8 @@ export interface InterviewQuestionSummary {
   category: string;
   difficulty: InterviewDifficulty;
   question: string;
+  questionType: EffectiveInterviewQuestionType;
+  multipleChoice?: InterviewMultipleChoicePublic;
   isPinned: boolean;
   userNotes?: string;
   createdAt: string;
@@ -95,16 +141,36 @@ export interface InterviewFeedback {
   completedAt: string;
 }
 
-export interface InterviewAttempt {
+export interface InterviewMultipleChoiceEvaluation {
+  kind: "multiple-choice";
+  score: 0 | 100;
+  correct: boolean;
+  correctOptionId: string;
+}
+
+export interface InterviewAttemptBase {
   id: string;
   sessionId: string;
   questionId: string;
-  answerText: string;
   status: InterviewAttemptStatus;
   feedback?: InterviewFeedback;
   createdAt: string;
   updatedAt: string;
 }
+
+export type InterviewAttempt = InterviewAttemptBase &
+  (
+    | {
+        answerText: string;
+        answer?: never;
+        evaluation?: never;
+      }
+    | {
+        answer: TypedInterviewAnswer;
+        answerText?: never;
+        evaluation?: InterviewMultipleChoiceEvaluation;
+      }
+  );
 
 export interface InterviewAttemptPage {
   attempts: InterviewAttempt[];
@@ -161,10 +227,15 @@ export interface CreateInterviewSessionInput {
 }
 
 export interface ManualInterviewQuestionInput {
+  questionType: InterviewQuestionType;
   category: string;
   difficulty: InterviewDifficulty;
   question: string;
   modelAnswer?: string;
+  multipleChoice?: {
+    options: string[];
+    correctOptionIndex: number;
+  };
 }
 
 export type ExplanationRequestResult =
@@ -187,4 +258,3 @@ export type FeedbackRequestResult =
       attemptId: string;
       job: AcceptedInterviewJob;
     };
-import type { PartialJobResilienceMetadata } from "../jobs/jobResilience";
