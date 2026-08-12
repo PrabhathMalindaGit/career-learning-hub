@@ -20,12 +20,15 @@ import {
 } from "./interviewContracts";
 import type {
   CreateInterviewSessionInput,
+  EffectiveInterviewQuestionType,
   InterviewAttemptStatus,
   InterviewDifficulty,
   InterviewJob,
   InterviewJobType,
+  InterviewQuestionType,
   InterviewSessionStatus,
   ManualInterviewQuestionInput,
+  TypedInterviewAnswer,
 } from "./types";
 
 function boundedInteger(
@@ -43,6 +46,13 @@ function canonicalList(values: readonly string[]): string[] {
     .map((value) => value.trim())
     .filter(Boolean)
     .slice(0, 50);
+}
+
+function canonicalOptions(values: readonly string[]): string[] {
+  return values
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .slice(0, 8);
 }
 
 function paginationQuery(input: {
@@ -84,6 +94,57 @@ async function requestParsed<T>(
       response.requestId,
     );
   }
+}
+
+type LegacyManualInterviewQuestionInput = Omit<
+  ManualInterviewQuestionInput,
+  "questionType" | "multipleChoice"
+> & {
+  questionType?: never;
+  multipleChoice?: never;
+};
+
+type GenerateInterviewQuestionsInput = {
+  requestId: string;
+  count: number;
+  categories: string[];
+  questionTypes: InterviewQuestionType[];
+  typeCounts?: Partial<Record<InterviewQuestionType, number>>;
+};
+
+type LegacyGenerateInterviewQuestionsInput = {
+  requestId: string;
+  count: number;
+  categories: string[];
+  questionTypes?: never;
+  typeCounts?: never;
+};
+
+type InterviewAttemptSubmission =
+  | { answerText: string }
+  | { answer: TypedInterviewAnswer };
+
+function canonicalTypedAnswer(
+  answer: TypedInterviewAnswer,
+): TypedInterviewAnswer {
+  if (answer.type === "multiple-choice") {
+    return {
+      type: answer.type,
+      selectedOptionId: answer.selectedOptionId.trim(),
+    };
+  }
+  return {
+    type: answer.type,
+    text: answer.text.trim(),
+  } as TypedInterviewAnswer;
+}
+
+function expectedTypeForSubmission(
+  submission: InterviewAttemptSubmission,
+): EffectiveInterviewQuestionType {
+  return "answerText" in submission
+    ? "legacy-open-response"
+    : submission.answer.type;
 }
 
 export async function listInterviewSessions(
@@ -185,10 +246,29 @@ export async function listInterviewQuestions(
 
 export async function addManualQuestion(
   sessionId: string,
-  input: ManualInterviewQuestionInput,
+  input:
+    | ManualInterviewQuestionInput
+    | LegacyManualInterviewQuestionInput,
   signal?: AbortSignal,
 ) {
   const modelAnswer = input.modelAnswer?.trim();
+  const questionType = input.questionType;
+  const typedInput =
+    questionType === undefined
+      ? undefined
+      : (input as ManualInterviewQuestionInput);
+  const multipleChoice =
+    typedInput?.questionType === "multiple-choice" &&
+    typedInput.multipleChoice
+      ? {
+          options: canonicalOptions(
+            typedInput.multipleChoice.options,
+          ),
+          correctOptionIndex:
+            typedInput.multipleChoice.correctOptionIndex,
+        }
+      : undefined;
+
   return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions`,
     {
@@ -196,10 +276,15 @@ export async function addManualQuestion(
       authentication: "required",
       signal,
       body: {
+        ...(questionType === undefined ? {} : { questionType }),
         category: input.category.trim(),
         difficulty: input.difficulty,
         question: input.question.trim(),
-        ...(modelAnswer ? { modelAnswer } : {}),
+        ...(multipleChoice === undefined
+          ? modelAnswer
+            ? { modelAnswer }
+            : {}
+          : { multipleChoice }),
       },
     },
     (data) => parseCreatedQuestion(data, sessionId),
@@ -208,13 +293,23 @@ export async function addManualQuestion(
 
 export async function generateInterviewQuestions(
   sessionId: string,
-  input: {
-    requestId: string;
-    count: number;
-    categories: string[];
-  },
+  input:
+    | GenerateInterviewQuestionsInput
+    | LegacyGenerateInterviewQuestionsInput,
   signal?: AbortSignal,
 ) {
+  const selectedTypes = input.questionTypes?.slice(0, 6);
+  const typeCounts =
+    selectedTypes && input.typeCounts
+      ? selectedTypes.reduce<
+          Partial<Record<InterviewQuestionType, number>>
+        >((result, type) => {
+          const count = input.typeCounts?.[type];
+          if (count !== undefined) result[type] = count;
+          return result;
+        }, {})
+      : undefined;
+
   return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions/generate`,
     {
@@ -225,6 +320,10 @@ export async function generateInterviewQuestions(
         requestId: input.requestId,
         count: boundedInteger(input.count, 10, 1, 20),
         categories: canonicalList(input.categories),
+        ...(selectedTypes === undefined
+          ? {}
+          : { questionTypes: selectedTypes }),
+        ...(typeCounts === undefined ? {} : { typeCounts }),
       },
     },
     (data) =>
@@ -310,20 +409,33 @@ export async function requestQuestionExplanation(
 export async function recordInterviewAttempt(
   sessionId: string,
   questionId: string,
-  answerText: string,
+  submission: InterviewAttemptSubmission | string,
   signal?: AbortSignal,
 ) {
+  const normalizedSubmission: InterviewAttemptSubmission =
+    typeof submission === "string"
+      ? { answerText: submission.trim() }
+      : "answerText" in submission
+        ? { answerText: submission.answerText.trim() }
+        : { answer: canonicalTypedAnswer(submission.answer) };
+
   return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/questions/${routeId(
       questionId,
     )}/attempts`,
     {
       method: "POST",
-      body: { answerText: answerText.trim() },
+      body: normalizedSubmission,
       authentication: "required",
       signal,
     },
-    (data) => parseRecordedAttempt(data, sessionId, questionId),
+    (data) =>
+      parseRecordedAttempt(
+        data,
+        sessionId,
+        questionId,
+        expectedTypeForSubmission(normalizedSubmission),
+      ),
   );
 }
 
@@ -352,6 +464,7 @@ export async function fetchInterviewAttempt(
   attemptId: string,
   signal?: AbortSignal,
   expectedQuestionId?: string,
+  expectedQuestionType?: EffectiveInterviewQuestionType,
 ) {
   return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/attempts/${routeId(
@@ -364,6 +477,7 @@ export async function fetchInterviewAttempt(
         sessionId,
         attemptId,
         expectedQuestionId,
+        expectedQuestionType,
       ),
   );
 }
@@ -373,6 +487,7 @@ export async function requestAttemptFeedback(
   attemptId: string,
   signal?: AbortSignal,
   expectedQuestionId?: string,
+  expectedQuestionType?: EffectiveInterviewQuestionType,
 ) {
   return requestParsed(
     `/interview-sessions/${routeId(sessionId)}/attempts/${routeId(
@@ -389,6 +504,7 @@ export async function requestAttemptFeedback(
         sessionId,
         attemptId,
         expectedQuestionId,
+        expectedQuestionType,
       ),
   );
 }
