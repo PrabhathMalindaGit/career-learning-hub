@@ -352,7 +352,7 @@ export async function queueAttemptFeedbackController(
     return;
   }
 
-  if (attempt.answerText.length > env.INTERVIEW_MAX_ANSWER_CHARACTERS) {
+  if (attempt.answerText!.length > env.INTERVIEW_MAX_ANSWER_CHARACTERS) {
     throw new AppError(
       413,
       "INTERVIEW_ANSWER_TOO_LONG",

@@ -1,7 +1,6 @@
 import { z } from "zod";
-import {
-  interviewDifficulties,
-} from "./interviewQuestion.model.js";
+import { interviewDifficulties } from "./interviewQuestion.model.js";
+import { interviewQuestionTypes } from "./interviewQuestion.types.js";
 import {
   interviewModes,
   interviewSessionStatuses,
@@ -12,6 +11,49 @@ const conciseList = z
   .array(z.string().trim().min(1).max(120))
   .max(50)
   .default([]);
+
+export const interviewQuestionTypeSchema = z.enum(
+  interviewQuestionTypes,
+);
+
+export const typedInterviewAnswerSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("multiple-choice"),
+      selectedOptionId: z.string().trim().min(1).max(64),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("short-answer"),
+      text: z.string().trim().min(1).max(50_000),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("coding"),
+      text: z.string().trim().min(1).max(50_000),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("behavioral"),
+      text: z.string().trim().min(1).max(50_000),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("scenario-based"),
+      text: z.string().trim().min(1).max(50_000),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("technical-explanation"),
+      text: z.string().trim().min(1).max(50_000),
+    })
+    .strict(),
+]);
 
 export const sessionIdParamsSchema = z.object({
   sessionId: objectId,

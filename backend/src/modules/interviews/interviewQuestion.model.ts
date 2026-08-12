@@ -1,4 +1,9 @@
 import { Schema, Types, model, type HydratedDocument } from "mongoose";
+import {
+  interviewQuestionTypes,
+  type InterviewMultipleChoiceStorage,
+  type InterviewQuestionType,
+} from "./interviewQuestion.types.js";
 
 export const interviewDifficulties = [
   "easy",
@@ -17,6 +22,8 @@ export interface InterviewQuestion {
   difficulty: InterviewDifficulty;
   question: string;
   questionFingerprint: string;
+  questionType?: InterviewQuestionType;
+  multipleChoice?: InterviewMultipleChoiceStorage;
   modelAnswer?: string;
   explanation?: string;
   explanationKeyPoints: string[];
@@ -30,6 +37,52 @@ export interface InterviewQuestion {
 
 export type InterviewQuestionDocument =
   HydratedDocument<InterviewQuestion>;
+
+const multipleChoiceOptionSchema = new Schema(
+  {
+    id: {
+      type: String,
+      required: true,
+      maxlength: 64,
+      immutable: true,
+    },
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 1,
+      maxlength: 500,
+      immutable: true,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
+const multipleChoiceSchema = new Schema(
+  {
+    options: {
+      type: [multipleChoiceOptionSchema],
+      required: true,
+      immutable: true,
+      validate: {
+        validator: (value: unknown[]) =>
+          value.length >= 2 && value.length <= 8,
+        message: "Multiple Choice requires 2–8 options.",
+      },
+    },
+    correctOptionId: {
+      type: String,
+      required: true,
+      maxlength: 64,
+      immutable: true,
+    },
+  },
+  {
+    _id: false,
+  },
+);
 
 const interviewQuestionSchema = new Schema<InterviewQuestion>(
   {
@@ -72,6 +125,15 @@ const interviewQuestionSchema = new Schema<InterviewQuestion>(
       required: true,
       immutable: true,
       match: /^[a-f0-9]{64}$/,
+    },
+    questionType: {
+      type: String,
+      enum: interviewQuestionTypes,
+      immutable: true,
+    },
+    multipleChoice: {
+      type: multipleChoiceSchema,
+      immutable: true,
     },
     modelAnswer: {
       type: String,
@@ -119,16 +181,19 @@ interviewQuestionSchema.index(
     name: "interview_question_session_fingerprint_unique",
   },
 );
+
 interviewQuestionSchema.index({
   userId: 1,
   sessionId: 1,
   isPinned: -1,
   createdAt: -1,
 });
+
 interviewQuestionSchema.index({
   generationJobId: 1,
   createdAt: 1,
 });
+
 interviewQuestionSchema.index(
   { explanationJobId: 1 },
   {
