@@ -534,7 +534,7 @@ describe("InterviewSessionWorkspace", () => {
     const user = userEvent.setup();
     await user.type(answer, "My private answer draft.");
     await user.click(
-      screen.getByRole("button", { name: "Record immutable attempt" }),
+      screen.getByRole("button", { name: "Save attempt" }),
     );
 
     expect(
@@ -552,7 +552,7 @@ describe("InterviewSessionWorkspace", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: "Record immutable attempt" }),
+      screen.getByRole("button", { name: "Save attempt" }),
     );
     await waitFor(() => {
       expect((answer as HTMLTextAreaElement).value).toBe("");
@@ -571,7 +571,7 @@ describe("InterviewSessionWorkspace", () => {
     renderWorkspace();
 
     await userEvent.click(
-      await screen.findByRole("button", { name: /Open attempt/ }),
+      await screen.findByRole("button", { name: /Review attempt/ }),
     );
     expect(
       await screen.findByText(
@@ -787,7 +787,7 @@ describe("InterviewSessionWorkspace", () => {
     });
     renderWorkspace();
     await userEvent.click(
-      await screen.findByRole("button", { name: /Open attempt/ }),
+      await screen.findByRole("button", { name: /Review attempt/ }),
     );
     expect(interviewApi.requestAttemptFeedback).not.toHaveBeenCalled();
 
@@ -849,7 +849,7 @@ describe("InterviewSessionWorkspace", () => {
     });
     renderWorkspace();
     await userEvent.click(
-      await screen.findByRole("button", { name: /Open attempt/ }),
+      await screen.findByRole("button", { name: /Review attempt/ }),
     );
     await userEvent.click(
       await screen.findByRole("button", { name: "Request feedback" }),
@@ -929,7 +929,7 @@ describe("InterviewSessionWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     const attemptButtons = await screen.findAllByRole("button", {
-      name: /Open attempt/,
+      name: /Review attempt/,
     });
     await user.click(attemptButtons[0]!);
     await user.click(
@@ -1216,7 +1216,7 @@ describe("InterviewSessionWorkspace", () => {
       ).toBeNull();
       expect(
         screen.queryByRole("button", {
-          name: "Record immutable attempt",
+          name: "Save attempt",
         }),
       ).toBeNull();
       expect(
@@ -1445,7 +1445,7 @@ describe("InterviewSessionWorkspace", () => {
     });
     await user.type(firstAnswer, "Attempt for A.");
     await user.click(
-      screen.getByRole("button", { name: "Record immutable attempt" }),
+      screen.getByRole("button", { name: "Save attempt" }),
     );
     await user.click(
       screen.getByRole("button", {
@@ -1464,7 +1464,9 @@ describe("InterviewSessionWorkspace", () => {
         "Draft answer for B.",
       );
     });
-    expect(screen.queryByText(/Immutable attempt recorded/)).toBeNull();
+    expect(
+      screen.queryByText("Attempt saved. Another submission will be saved separately."),
+    ).toBeNull();
     expect(
       screen.queryByText(
         "I would use a durable queue and idempotency keys.",
@@ -1489,7 +1491,7 @@ describe("InterviewSessionWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
     const attemptButtons = await screen.findAllByRole("button", {
-      name: /Open attempt/,
+      name: /Review attempt/,
     });
     await user.click(attemptButtons[0]!);
     await screen.findByText(
@@ -1585,7 +1587,7 @@ describe("InterviewSessionWorkspace", () => {
     );
     await user.click(screen.getByRole("button", { name: "Pin question" }));
     await user.click(
-      await screen.findByRole("button", { name: /Open attempt/ }),
+      await screen.findByRole("button", { name: /Review attempt/ }),
     );
     await user.click(
       await screen.findByRole("button", { name: "Request feedback" }),
@@ -1671,10 +1673,10 @@ describe("InterviewSessionWorkspace", () => {
       );
     });
     await user.click(
-      await screen.findByRole("button", { name: /Open attempt/ }),
+      await screen.findByRole("button", { name: /Review attempt/ }),
     );
     const history = screen
-      .getByRole("heading", { name: "Attempt history" })
+      .getByRole("heading", { name: "Saved attempts" })
       .closest("section");
     expect(history).not.toBeNull();
     await user.click(
@@ -1711,8 +1713,8 @@ describe("InterviewSessionWorkspace", () => {
       );
     });
     expect(
-      within(history as HTMLElement).getByText("Page 1"),
-    ).not.toBeNull();
+      within(history as HTMLElement).queryByText("Page 1"),
+    ).toBeNull();
     expect(
       screen.getByRole("heading", { name: "System design" }),
     ).not.toBeNull();
@@ -1728,7 +1730,7 @@ describe("InterviewSessionWorkspace", () => {
     });
     await waitFor(() => {
       expect(
-        screen.getByText("No written attempts have been recorded for this question."),
+        screen.getByText("No saved written attempts for this question yet."),
       ).not.toBeNull();
     });
 
@@ -1745,7 +1747,7 @@ describe("InterviewSessionWorkspace", () => {
       screen.getByRole("option", { name: "All statuses" }),
     ).not.toBeNull();
     expect(
-      screen.getByRole("option", { name: "Recorded" }),
+      screen.getByRole("option", { name: "Saved" }),
     ).not.toBeNull();
     expect(
       screen.getByRole("option", { name: "Feedback queued" }),
@@ -1754,10 +1756,10 @@ describe("InterviewSessionWorkspace", () => {
       screen.getByRole("option", { name: "Feedback processing" }),
     ).not.toBeNull();
     expect(
-      screen.getByRole("option", { name: "Feedback completed" }),
+      screen.getByRole("option", { name: "Feedback ready" }),
     ).not.toBeNull();
     expect(
-      screen.getByRole("option", { name: "Feedback failed" }),
+      screen.getByRole("option", { name: "Feedback unavailable" }),
     ).not.toBeNull();
   });
 
@@ -1857,7 +1859,7 @@ describe("InterviewSessionWorkspace", () => {
 
     await user.type(answer, "A private practice answer.");
     await user.click(
-      screen.getByRole("button", { name: "Record immutable attempt" }),
+      screen.getByRole("button", { name: "Save attempt" }),
     );
     expect(
       await screen.findByText("Request ID: answer-request-id-0001"),
@@ -1911,7 +1913,7 @@ describe("InterviewSessionWorkspace", () => {
       ),
     ).not.toBeNull();
     await userEvent.click(
-      await screen.findByRole("button", { name: /Open attempt/ }),
+      await screen.findByRole("button", { name: /Review attempt/ }),
     );
     expect(
       await screen.findByText(
@@ -1981,7 +1983,7 @@ describe("InterviewSessionWorkspace", () => {
     ).not.toBeNull();
 
     await user.click(
-      await screen.findByRole("button", { name: /Open attempt/ }),
+      await screen.findByRole("button", { name: /Review attempt/ }),
     );
     await user.click(
       await screen.findByRole("button", { name: "Request feedback" }),
@@ -2243,7 +2245,7 @@ describe("InterviewSessionWorkspace", () => {
     });
 
     await user.click(
-      await screen.findByRole("button", { name: /Open attempt/ }),
+      await screen.findByRole("button", { name: /Review attempt/ }),
     );
     expect(
       await screen.findByText(
