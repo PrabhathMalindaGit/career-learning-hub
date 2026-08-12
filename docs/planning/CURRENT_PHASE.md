@@ -3,16 +3,15 @@
 - Current execution phase: `PHASE 19A-4`
 - Name: `Candidate Photo Support`
 - Status:
-  `ACTIVE — HUMAN-APPROVED FROZEN DESIGN / REPOSITORY DESIGN SPEC RECORDED /
-  FINAL FIDELITY REVIEW PENDING / IMPLEMENTATION NOT STARTED`
+  `IMPLEMENTED / FINAL REPAIRED AUTOMATED VERIFICATION PASSED /
+  HUMAN QA PASSED / PR #8 READY-FOR-REVIEW RECONCILIATION IN PROGRESS /
+  NOT MERGED`
 - Phase branch: `phase-19a-4-candidate-photo-support`
 - Phase start baseline: `ad10229aa64cc79b4503901d8b59ac127fac0a20`
 - Baseline subject: `Record Phase 19A-3 merge closeout`
 - Completed predecessor:
   `PHASE 19A-3 — RESUME SAVE, RECOVERY & EXPORT WORKFLOW /
   COMPLETED / HUMAN-APPROVED / MERGED`
-- Phase 19A-3 implementation commit:
-  `f16d4de9145555d66eab9e466b223d8f81e9b6f0`
 - Phase 19A-3 pull request: `PR #7 / MERGED`
 - Phase 19A-3 merge commit: `6d104cd502ad1e0d26d66a934deaa6306f0adddb`
 - Phase 19A-3 documentation-closeout baseline:
@@ -26,19 +25,38 @@
   `APPROACH A — BOUNDED EXTENSION OF THE EXISTING PRIVATE ASSET ARCHITECTURE`
 - Design specification:
   `docs/superpowers/specs/2026-08-11-resume-candidate-photo-support-design.md`
-- Repository design-spec status:
-  `RECORDED FROM HUMAN-APPROVED FROZEN DESIGN /
-  FINAL FIDELITY REVIEW PENDING`
-- Implementation plan: `NOT YET CREATED`
-- Implementation: `NOT STARTED`
-- Automated verification: `NOT STARTED`
-- Human visual/functional QA: `NOT STARTED`
-- Git publication:
-  `NO PHASE 19A-4 COMMIT / PUSH / PR / MERGE YET`
-- Next gate: `FINAL REPOSITORY DESIGN-SPEC FIDELITY REVIEW`
-- Gate rule:
-  `ONLY AFTER EXPLICIT ACCEPTANCE OF THE FIDELITY REVIEW MAY THE PHASE 19A-4
-  IMPLEMENTATION PLAN BE CREATED`
+- Frozen design fidelity review: `PASSED / ACCEPTED`
+- Implementation plan:
+  `docs/superpowers/plans/2026-08-12-resume-candidate-photo-support.md`
+- Implementation:
+  `COMPLETE`
+- Final executable checkpoint:
+  `ff7e84572d029f01cf61f4fee873f11204a6a75e`
+- Final repaired automated verification:
+  `FRONTEND 906/906 / BACKEND UNIT 206/206 /
+  BACKEND INTEGRATION 193/193 / BACKEND SECURITY 36/36 /
+  TOTAL 1,341/1,341 PASS / TYPECHECKS PASS / PRODUCTION BUILD PASS /
+  GIT DIFF CHECK PASS / CLEAN WORKTREE`
+- Human visual/functional QA:
+  `PASSED`
+- PR-review repairs:
+  `MALFORMED PNG IHDR ACCEPTANCE — REPAIRED / VERIFIED /
+  GENERIC DELETION OF ACTIVE ATTACHED CANDIDATE PHOTO — REPAIRED / VERIFIED`
+- Phase 19A-4 closeout record:
+  `docs/planning/PHASE_19A_4_CANDIDATE_PHOTO_SUPPORT_CLOSEOUT.md`
+- Pull request:
+  `PR #8 — COMPLETE PHASE 19A-4 CANDIDATE PHOTO SUPPORT`
+- Pull request state:
+  `DRAFT PENDING FINAL DOCUMENTATION RECONCILIATION / OPEN / NOT MERGED`
+- Merge authorization:
+  `NOT GRANTED — SEPARATE EXPLICIT OPERATOR APPROVAL REQUIRED`
+- Deployment:
+  `NOT PART OF PHASE 19A-4 CLOSEOUT`
+- Main branch:
+  `UNCHANGED`
+- Next gate:
+  `FINAL DOCUMENTATION RECONCILIATION → RESOLVE GOVERNANCE REVIEW THREAD →
+  MARK PR #8 READY FOR REVIEW`
 - Phase 19B through Phase 19H status: `PLANNED / INACTIVE`
 - Phase 20 and Phase 21 status: `PLANNED / INACTIVE`
 - Historical execution statements below do not override this Phase 19A-4
