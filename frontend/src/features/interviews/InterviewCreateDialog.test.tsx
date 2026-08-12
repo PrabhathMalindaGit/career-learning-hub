@@ -158,12 +158,14 @@ describe("InterviewCreateDialog", () => {
       screen.queryByRole("option", { name: /mock interview/i }),
     ).toBeNull();
 
-    expect(
-      screen.getByText("Additional context (optional)"),
-    ).not.toBeNull();
-    expect(
-      screen.queryByRole("textbox", { name: /^Job description/i }),
-    ).toBeNull();
+    const additionalContext = screen.getByText(
+      "Additional context (optional)",
+    );
+    const details = additionalContext.closest("details") as
+      | HTMLDetailsElement
+      | null;
+    expect(details).not.toBeNull();
+    expect(details?.open).toBe(false);
   });
 
   it("Cancel resets the form, closes the dialog, and returns focus to the invoking control", async () => {
