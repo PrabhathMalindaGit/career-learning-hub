@@ -90,7 +90,8 @@ function malformedImage(): never {
 
 function readPngDimensions(buffer: Buffer): RasterDimensions {
   if (
-    buffer.length < 24 ||
+    buffer.length < 33 ||
+    buffer.readUInt32BE(8) !== 13 ||
     buffer.subarray(12, 16).toString("ascii") !== "IHDR"
   ) {
     malformedImage();
