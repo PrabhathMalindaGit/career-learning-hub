@@ -48,6 +48,10 @@ function readValues(): string[] {
   ) as string[];
 }
 
+function readInputValue(element: HTMLElement): string {
+  return (element as HTMLInputElement).value;
+}
+
 describe("mergeInterviewTags", () => {
   it("merges trimmed comma-separated values in first-seen order and suppresses exact duplicates", () => {
     expect(
@@ -105,7 +109,7 @@ describe("InterviewTagInput", () => {
     await user.keyboard("{Enter}");
 
     expect(readValues()).toEqual(["API design"]);
-    expect(input).toHaveValue("");
+    expect(readInputValue(input)).toBe("");
     expect(screen.getByText("API design")).not.toBeNull();
   });
 
@@ -119,7 +123,7 @@ describe("InterviewTagInput", () => {
     await user.type(input, "Reliability,");
 
     expect(readValues()).toEqual(["Reliability"]);
-    expect(input).toHaveValue("");
+    expect(readInputValue(input)).toBe("");
   });
 
   it("handles comma-separated paste as one bounded merge", async () => {
@@ -137,7 +141,7 @@ describe("InterviewTagInput", () => {
       "API design",
       "Communication",
     ]);
-    expect(input).toHaveValue("");
+    expect(readInputValue(input)).toBe("");
   });
 
   it("does not create a chip for whitespace-only input", async () => {
@@ -151,7 +155,7 @@ describe("InterviewTagInput", () => {
     await user.keyboard("{Enter}");
 
     expect(readValues()).toEqual(["Reliability"]);
-    expect(input).toHaveValue("");
+    expect(readInputValue(input)).toBe("");
   });
 
   it("suppresses exact duplicate chips", async () => {
@@ -247,7 +251,7 @@ describe("InterviewTagInput", () => {
     await user.keyboard("{Enter}");
 
     expect(readValues()).toEqual(["Reliability"]);
-    expect(screen.getByRole("alert")).toHaveTextContent(/120/);
+    expect(screen.getByRole("alert").textContent).toMatch(/120/);
   });
 
   it("shows an explicit error and preserves all 50 values when another unique chip would exceed the item limit", async () => {
@@ -265,6 +269,6 @@ describe("InterviewTagInput", () => {
     await user.keyboard("{Enter}");
 
     expect(readValues()).toEqual(initialValues);
-    expect(screen.getByRole("alert")).toHaveTextContent(/50/);
+    expect(screen.getByRole("alert").textContent).toMatch(/50/);
   });
 });
