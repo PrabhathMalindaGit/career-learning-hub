@@ -32,6 +32,7 @@ export function ResumeCandidatePhotoControls({
 }: ResumeCandidatePhotoControlsProps) {
   const [removeOpen, setRemoveOpen] = useState(false);
   const cancelRemoveRef = useRef<HTMLButtonElement>(null);
+  const fileActionLabel = hasPhoto ? "Replace photo" : "Choose photo";
 
   return (
     <section
@@ -68,19 +69,33 @@ export function ResumeCandidatePhotoControls({
         </div>
 
         <div className="resume-candidate-photo-actions">
-          <label className="resume-candidate-photo-file-control">
-            <span>{hasPhoto ? "Replace photo" : "Choose photo"}</span>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              disabled={busy}
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                event.currentTarget.value = "";
-                if (file) onSelectFile(file);
-              }}
-            />
-          </label>
+          <div className="resume-candidate-photo-file-picker">
+            <label className="resume-candidate-photo-file-control">
+              <input
+                className="resume-candidate-photo-file-input"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-label={fileActionLabel}
+                disabled={busy}
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  event.currentTarget.value = "";
+                  if (file) onSelectFile(file);
+                }}
+              />
+              <span
+                className="resume-candidate-photo-file-button"
+                aria-hidden="true"
+              >
+                {fileActionLabel}
+              </span>
+            </label>
+            <span className="resume-candidate-photo-file-status">
+              {hasPhoto
+                ? "Select a new image to replace the current photo."
+                : "Select an image from your device."}
+            </span>
+          </div>
 
           {hasPhoto ? (
             <div className="resume-button-row">
