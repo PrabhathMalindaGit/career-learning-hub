@@ -490,4 +490,71 @@ describe("Interview Multiple Choice answer-key secrecy", () => {
     );
   });
 
+  it("reveals the correct option only through the owner's post-submission attempt response", async () => {
+    const fixture = await createOwnedMcqFixture();
+    const authorization =
+      `Bearer ${fixture.owner.accessToken}`;
+
+    const recorded = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${fixture.sessionId}/questions/${fixture.questionId}/attempts`,
+      )
+      .set("Authorization", authorization)
+      .send({
+        answer: {
+          type: "multiple-choice",
+          selectedOptionId: "option-a",
+        },
+      })
+      .expect(201);
+
+    expect(recorded.body.data.attempt.evaluation).toEqual({
+      kind: "multiple-choice",
+      score: 0,
+      correct: false,
+      correctOptionId: "option-b",
+    });
+
+    const attemptId =
+      recorded.body.data.attempt._id as string;
+    const stored = await InterviewAttemptModel.findById(
+      attemptId,
+    ).lean();
+
+    expect(stored).not.toBeNull();
+    expectNoMcqSecrets(stored);
+
+    const other = await registerTestUser(app, {
+      email: "interview-mcq-attempt-secrecy-other@example.com",
+      displayName: "Interview MCQ Attempt Secrecy Other",
+    });
+
+    const foreignAttemptResponse = await request(app)
+      .get(
+        `/api/v1/interview-sessions/${fixture.sessionId}/attempts/${attemptId}`,
+      )
+      .set(
+        "Authorization",
+        `Bearer ${other.accessToken}`,
+      )
+      .expect(404);
+
+    expect(foreignAttemptResponse.body.error).toMatchObject({
+      code: "INTERVIEW_SESSION_NOT_FOUND",
+      message: "Interview session not found.",
+    });
+    expectNoMcqSecrets(foreignAttemptResponse.body);
+
+    const questionAfterAttempt = await request(app)
+      .get(
+        `/api/v1/interview-sessions/${fixture.sessionId}/questions/${fixture.questionId}`,
+      )
+      .set("Authorization", authorization)
+      .expect(200);
+
+    expectNoMcqSecrets(
+      questionAfterAttempt.body.data.question,
+    );
+  });
+
 });
