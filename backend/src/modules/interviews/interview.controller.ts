@@ -5,6 +5,7 @@ import { AppError } from "../../shared/appError.js";
 import { InterviewAttemptModel } from "./interviewAttempt.model.js";
 import { InterviewQuestionModel } from "./interviewQuestion.model.js";
 import { resolveQuestionTypeCounts } from "./interviewQuestionDistribution.js";
+import { effectiveInterviewQuestionType } from "./interviewQuestion.types.js";
 import {
   addManualQuestion,
   createInterviewSession,
@@ -433,19 +434,65 @@ export async function queueAttemptFeedbackController(
   response: Response,
 ): Promise<void> {
   const attempt = request.interviewAttempt!;
+  const question = await InterviewQuestionModel.findOne({
+    _id: attempt.questionId,
+    userId: request.auth!.userId,
+    sessionId: request.interviewSession!._id,
+  });
+
+  if (!question) {
+    throw new AppError(
+      404,
+      "INTERVIEW_QUESTION_NOT_FOUND",
+      "Interview question not found.",
+    );
+  }
+
+  const effectiveType =
+    effectiveInterviewQuestionType(question);
+
+  if (effectiveType === "multiple-choice") {
+    throw new AppError(
+      409,
+      "INTERVIEW_MCQ_FEEDBACK_NOT_REQUIRED",
+      "Multiple Choice correctness is already available from the saved attempt.",
+    );
+  }
 
   if (attempt.feedback) {
     response.status(200).json({
       success: true,
       data: {
-        attempt,
+        attempt: serializeInterviewAttempt({
+          attempt,
+          question,
+          revealCorrectOption: false,
+        }),
         alreadyAvailable: true,
       },
     });
     return;
   }
 
-  if (attempt.answerText!.length > env.INTERVIEW_MAX_ANSWER_CHARACTERS) {
+  const answerText =
+    effectiveType === "legacy-open-response"
+      ? attempt.answerText
+      : attempt.answer?.type === effectiveType &&
+          "text" in attempt.answer
+        ? attempt.answer.text
+        : undefined;
+
+  if (!answerText) {
+    throw new AppError(
+      409,
+      "INTERVIEW_ATTEMPT_ANSWER_INVALID",
+      "The saved answer does not match the Interview question type.",
+      undefined,
+      false,
+    );
+  }
+
+  if (answerText.length > env.INTERVIEW_MAX_ANSWER_CHARACTERS) {
     throw new AppError(
       413,
       "INTERVIEW_ANSWER_TOO_LONG",
