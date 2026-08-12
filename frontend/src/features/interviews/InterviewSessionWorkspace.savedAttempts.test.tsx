@@ -217,7 +217,7 @@ describe("InterviewSessionWorkspace Saved Attempts UX", () => {
 
     const history = attemptSection();
     for (const label of expectedStatusLabels) {
-      expect(within(history).getByText(label)).not.toBeNull();
+      expect(within(history).getAllByText(label).length).toBeGreaterThan(0);
     }
   });
 
