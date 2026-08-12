@@ -505,15 +505,22 @@ export const generateQuestionsBodySchema = z
     }
   });
 
-export const recordAttemptBodySchema = z
-  .object({
-    answerText: z
-      .string()
-      .trim()
-      .min(1)
-      .max(50_000),
-  })
-  .strict();
+export const recordAttemptBodySchema = z.union([
+  z
+    .object({
+      answerText: z
+        .string()
+        .trim()
+        .min(1)
+        .max(50_000),
+    })
+    .strict(),
+  z
+    .object({
+      answer: typedInterviewAnswerSchema,
+    })
+    .strict(),
+]);
 
 export const attemptListQuerySchema = z.object({
   page: z.coerce
