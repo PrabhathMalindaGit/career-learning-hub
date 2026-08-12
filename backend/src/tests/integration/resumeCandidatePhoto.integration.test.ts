@@ -8,11 +8,17 @@ import { ResumeVersionModel } from "../../modules/resumes/resumeVersion.model.js
 import { registerTestUser } from "../helpers/auth.js";
 
 function png(width = 800, height = 1000): Buffer {
-  const buffer = Buffer.alloc(24);
+  const buffer = Buffer.alloc(33);
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(buffer, 0);
+  buffer.writeUInt32BE(13, 8);
   Buffer.from("IHDR", "ascii").copy(buffer, 12);
   buffer.writeUInt32BE(width, 16);
   buffer.writeUInt32BE(height, 20);
+  buffer[24] = 8;
+  buffer[25] = 2;
+  buffer[26] = 0;
+  buffer[27] = 0;
+  buffer[28] = 0;
   return buffer;
 }
 
@@ -190,6 +196,51 @@ describe("Resume Candidate Photo integration", () => {
         status: "active",
       }),
     ).toBe(1);
+  });
+
+  it("rejects generic deletion of an attached candidate photo", async () => {
+    const owner = await registerTestUser(app, {
+      email: "candidate-photo-generic-delete@example.com",
+      displayName: "Candidate Photo Generic Delete",
+    });
+    const resumeId = await createOwnedResume(
+      owner.accessToken,
+      "Attached Candidate Photo Resume",
+    );
+
+    const uploaded = await request(app)
+      .post(`/api/v1/resumes/${resumeId}/candidate-photo`)
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .field("expectedCandidatePhotoAssetId", "none")
+      .attach("file", png(), {
+        filename: "attached.png",
+        contentType: "image/png",
+      })
+      .expect(201);
+    const assetId = uploaded.body.data.resume.candidatePhotoAssetId as string;
+
+    const rejected = await request(app)
+      .delete(`/api/v1/assets/${assetId}`)
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .expect(409);
+
+    expect(rejected.body.error.code).toBe("RESUME_PHOTO_ATTACHED");
+
+    const storedResume = await ResumeModel.findById(resumeId).lean();
+    expect(storedResume?.candidatePhotoAssetId?.toString()).toBe(assetId);
+    expect(
+      await AssetModel.countDocuments({
+        _id: new Types.ObjectId(assetId),
+        userId: owner.userId,
+        purpose: "resume-photo",
+        status: "active",
+      }),
+    ).toBe(1);
+
+    await request(app)
+      .get(`/api/v1/resumes/${resumeId}/candidate-photo/source`)
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .expect(200);
   });
 
   it("rejects Show when no candidate photo exists", async () => {
