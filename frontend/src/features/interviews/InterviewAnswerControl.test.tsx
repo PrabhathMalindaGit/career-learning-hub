@@ -88,10 +88,11 @@ describe("InterviewAnswerControl", () => {
         onSubmit={vi.fn()}
       />,
     );
-    expect(screen.getByRole("textbox", { name: /Short answer/ })).toHaveAttribute(
-      "rows",
-      "5",
-    );
+    expect(
+      screen
+        .getByRole("textbox", { name: /Short answer/ })
+        .getAttribute("rows"),
+    ).toBe("5");
 
     rerender(
       <InterviewAnswerControl
@@ -121,7 +122,7 @@ describe("InterviewAnswerControl", () => {
 
     const textarea = screen.getByRole("textbox", { name: /Coding answer/ });
     expect(textarea.className).toContain("interview-answer-control__coding");
-    expect(textarea).toHaveAttribute("rows", "12");
+    expect(textarea.getAttribute("rows")).toBe("12");
     expect(screen.queryByRole("button", { name: /run|execute/i })).toBeNull();
   });
 
@@ -140,10 +141,11 @@ describe("InterviewAnswerControl", () => {
         onSubmit={vi.fn()}
       />,
     );
-    expect(screen.getByRole("textbox", { name: new RegExp(label, "i") })).toHaveAttribute(
-      "rows",
-      "9",
-    );
+    expect(
+      screen
+        .getByRole("textbox", { name: new RegExp(label, "i") })
+        .getAttribute("rows"),
+    ).toBe("9");
   });
 
   it("keeps text submit disabled for blank or over-bound content and shows safe errors", () => {
