@@ -1714,9 +1714,7 @@ describe("ResumeWorkspace", () => {
         {
           templateId: "modern-professional",
           colorPaletteId: "navy",
-          pageSize: "A4",
           fontFamily: "Georgia",
-          showProfilePhoto: false,
         },
         expect.any(AbortSignal),
       );
