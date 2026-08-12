@@ -89,6 +89,7 @@ function questionSummary() {
     category: "System design",
     difficulty: "medium" as const,
     question: "How would you design a reliable job processor?",
+    questionType: "legacy-open-response" as const,
     isPinned: false,
     userNotes: "Review idempotency.",
     createdAt: timestamp,
