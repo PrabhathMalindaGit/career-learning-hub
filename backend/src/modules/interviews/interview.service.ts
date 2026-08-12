@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { ClientSession } from "mongoose";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
@@ -19,6 +20,7 @@ import {
 } from "./interviewQuestion.model.js";
 import {
   effectiveInterviewQuestionType,
+  type InterviewMultipleChoiceStorage,
   type InterviewQuestionType,
 } from "./interviewQuestion.types.js";
 import {
@@ -28,11 +30,73 @@ import {
   type InterviewSessionStatus,
 } from "./interviewSession.model.js";
 
-export interface ManualQuestionInput {
-  category: string;
-  difficulty: InterviewDifficulty;
-  question: string;
+export type ManualQuestionInput =
+  | {
+      questionType: "multiple-choice";
+      category: string;
+      difficulty: InterviewDifficulty;
+      question: string;
+      multipleChoice: {
+        options: string[];
+        correctOptionIndex: number;
+      };
+    }
+  | {
+      questionType: Exclude<
+        InterviewQuestionType,
+        "multiple-choice"
+      >;
+      category: string;
+      difficulty: InterviewDifficulty;
+      question: string;
+      modelAnswer?: string;
+    };
+
+function canonicalizeManualQuestion(
+  question: ManualQuestionInput,
+): {
+  questionType: InterviewQuestionType;
   modelAnswer?: string;
+  multipleChoice?: InterviewMultipleChoiceStorage;
+} {
+  if (
+    question.questionType === "multiple-choice"
+  ) {
+    const options =
+      question.multipleChoice.options.map(
+        (text) => ({
+          id: randomUUID(),
+          text,
+        }),
+      );
+
+    const correctOption =
+      options[
+        question.multipleChoice
+          .correctOptionIndex
+      ];
+
+    if (!correctOption) {
+      throw new AppError(
+        400,
+        "INTERVIEW_MCQ_CORRECT_OPTION_INVALID",
+        "The correct option must reference an existing Multiple Choice option.",
+      );
+    }
+
+    return {
+      questionType: question.questionType,
+      multipleChoice: {
+        options,
+        correctOptionId: correctOption.id,
+      },
+    };
+  }
+
+  return {
+    questionType: question.questionType,
+    modelAnswer: question.modelAnswer,
+  };
 }
 
 function assertUniqueQuestionInputs(
@@ -141,7 +205,7 @@ export async function createInterviewSession(input: {
               difficulty: question.difficulty,
               question: question.question,
               questionFingerprint: question.questionFingerprint,
-              modelAnswer: question.modelAnswer,
+              ...canonicalizeManualQuestion(question),
             })),
             { session },
           );
@@ -308,7 +372,9 @@ export async function addManualQuestion(input: {
             difficulty: input.question.difficulty,
             question: input.question.question,
             questionFingerprint,
-            modelAnswer: input.question.modelAnswer,
+            ...canonicalizeManualQuestion(
+              input.question,
+            ),
           },
         ],
         { session: mongoSession },

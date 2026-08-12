@@ -524,7 +524,7 @@ describe("AI retry classification and provider-to-persistence", () => {
     await expect(ResumeAnalysisModel.countDocuments({ userId })).resolves.toBe(0);
   });
 
-  it("persists a schema-valid Interview provider response", async () => {
+  it("persists a schema-valid typed Interview provider response", async () => {
     const userId = new Types.ObjectId();
     const session = await InterviewSessionModel.create({
       userId,
@@ -537,6 +537,7 @@ describe("AI retry classification and provider-to-persistence", () => {
     });
     const fetchMock = mockGemini({
       questions: [{
+        questionType: "technical-explanation",
         category: "Technical",
         difficulty: "easy",
         question: "How would you test a small function?",
@@ -552,6 +553,10 @@ describe("AI retry classification and provider-to-persistence", () => {
       count: 1,
       categories: ["Technical"],
       difficultyMix: { easy: 1, medium: 0, hard: 0 },
+      questionTypes: ["technical-explanation"],
+      typeCounts: {
+        "technical-explanation": 1,
+      },
       jobId: job._id.toString(),
       execution,
     });
@@ -561,7 +566,335 @@ describe("AI retry classification and provider-to-persistence", () => {
     expect(execution.assertActive).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0]?.[0])).not.toMatch(/openrouter|[?&]key=/i);
-    await expect(InterviewQuestionModel.countDocuments({ userId })).resolves.toBe(1);
+
+    await expect(
+      InterviewQuestionModel.findOne({ userId }).lean(),
+    ).resolves.toMatchObject({
+      questionType: "technical-explanation",
+    });
+  });
+
+  it("rejects Interview provider question-type drift before persistence", async () => {
+    const userId = new Types.ObjectId();
+    const session = await InterviewSessionModel.create({
+      userId,
+      title: "Synthetic type-drift interview",
+      targetRole: "Synthetic Engineer",
+      experienceLevel: "Junior",
+      focusTopics: [],
+      skillGaps: [],
+      mode: "study",
+    });
+
+    mockGemini({
+      questions: [
+        {
+          questionType: "behavioral",
+          category: "Behavioral",
+          difficulty: "medium",
+          question:
+            "Describe how you handled a disagreement.",
+          modelAnswer:
+            "Use a truthful situation-action-result structure.",
+        },
+        {
+          questionType: "behavioral",
+          category: "Behavioral",
+          difficulty: "medium",
+          question:
+            "Describe how you handled an unexpected deadline.",
+          modelAnswer:
+            "Use a truthful situation-action-result structure.",
+        },
+      ],
+    });
+
+    const job = await routedJob(
+      userId.toString(),
+      "interview.questions.generate",
+    );
+
+    await expect(
+      generateInterviewQuestions({
+        userId: userId.toString(),
+        sessionId: session._id.toString(),
+        count: 2,
+        categories: [],
+        questionTypes: [
+          "behavioral",
+          "coding",
+        ],
+        typeCounts: {
+          behavioral: 1,
+          coding: 1,
+        },
+        jobId: job._id.toString(),
+        execution: executionLifecycle(),
+      }),
+    ).rejects.toMatchObject({
+      code:
+        "AI_INTERVIEW_QUESTION_TYPE_MISMATCH",
+    });
+
+    await expect(
+      InterviewQuestionModel.countDocuments({
+        userId,
+      }),
+    ).resolves.toBe(0);
+  });
+
+  it("persists canonical MCQ options, mixed typed output, and same-job retry idempotency", async () => {
+    const userId = new Types.ObjectId();
+    const session = await InterviewSessionModel.create({
+      userId,
+      title: "Synthetic mixed typed interview",
+      targetRole: "Synthetic Engineer",
+      experienceLevel: "Junior",
+      focusTopics: [],
+      skillGaps: [],
+      mode: "study",
+    });
+
+    const fetchMock = mockGemini({
+      questions: [
+        {
+          questionType: "multiple-choice",
+          category: "JavaScript",
+          difficulty: "medium",
+          question:
+            "Which statement about const is correct?",
+          options: [
+            "A const binding cannot be reassigned.",
+            "A const object can never be mutated.",
+          ],
+          correctOptionIndex: 0,
+          modelAnswer:
+            "The first option is correct.",
+        },
+        {
+          questionType: "coding",
+          category: "JavaScript",
+          difficulty: "medium",
+          question:
+            "Write a function that reverses an array.",
+          modelAnswer:
+            "Show a small implementation and discuss complexity.",
+        },
+      ],
+    });
+
+    const job = await routedJob(
+      userId.toString(),
+      "interview.questions.generate",
+    );
+
+    const input = {
+      userId: userId.toString(),
+      sessionId: session._id.toString(),
+      count: 2,
+      categories: ["JavaScript"],
+      questionTypes: [
+        "multiple-choice",
+        "coding",
+      ] as const,
+      typeCounts: {
+        "multiple-choice": 1,
+        coding: 1,
+      },
+      jobId: job._id.toString(),
+      execution: executionLifecycle(),
+    };
+
+    const first =
+      await generateInterviewQuestions(input);
+
+    const second =
+      await generateInterviewQuestions(input);
+
+    expect(first.insertedCount).toBe(2);
+    expect(second.insertedCount).toBe(2);
+    expect(second.questionIds).toEqual(
+      first.questionIds,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const questions =
+      await InterviewQuestionModel.find({
+        userId,
+      })
+        .sort({ createdAt: 1, _id: 1 })
+        .lean();
+
+    expect(
+      questions.map(
+        (question) => question.questionType,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "multiple-choice",
+        "coding",
+      ]),
+    );
+
+    const mcq = questions.find(
+      (question) =>
+        question.questionType ===
+        "multiple-choice",
+    );
+
+    expect(mcq?.multipleChoice?.options).toHaveLength(
+      2,
+    );
+
+    for (const option of
+      mcq?.multipleChoice?.options ?? []) {
+      expect(option.id).toMatch(
+        /^[0-9a-f-]{36}$/i,
+      );
+    }
+
+    expect(
+      mcq?.multipleChoice?.correctOptionId,
+    ).toBe(
+      mcq?.multipleChoice?.options[0]?.id,
+    );
+  });
+
+  it("preserves duplicate fingerprint behavior for typed generated questions", async () => {
+    const userId = new Types.ObjectId();
+    const session = await InterviewSessionModel.create({
+      userId,
+      title: "Synthetic duplicate typed interview",
+      targetRole: "Synthetic Engineer",
+      experienceLevel: "Junior",
+      focusTopics: [],
+      skillGaps: [],
+      mode: "study",
+    });
+
+    mockGemini({
+      questions: [
+        {
+          questionType: "behavioral",
+          category: "Behavioral",
+          difficulty: "medium",
+          question:
+            "Describe a time you improved a process.",
+          modelAnswer:
+            "Use a truthful structured example.",
+        },
+        {
+          questionType: "behavioral",
+          category: "Behavioral",
+          difficulty: "medium",
+          question:
+            "Describe a time you improved a process.",
+          modelAnswer:
+            "Use a truthful structured example.",
+        },
+      ],
+    });
+
+    const job = await routedJob(
+      userId.toString(),
+      "interview.questions.generate",
+    );
+
+    const result =
+      await generateInterviewQuestions({
+        userId: userId.toString(),
+        sessionId: session._id.toString(),
+        count: 2,
+        categories: ["Behavioral"],
+        questionTypes: ["behavioral"],
+        typeCounts: {
+          behavioral: 2,
+        },
+        jobId: job._id.toString(),
+        execution: executionLifecycle(),
+      });
+
+    expect(result).toMatchObject({
+      insertedCount: 1,
+      duplicateCount: 0,
+    });
+
+    await expect(
+      InterviewQuestionModel.countDocuments({
+        userId,
+      }),
+    ).resolves.toBe(1);
+  });
+
+  it("keeps typed Interview persistence behind the execution fence", async () => {
+    const userId = new Types.ObjectId();
+    const session = await InterviewSessionModel.create({
+      userId,
+      title: "Synthetic fenced typed interview",
+      targetRole: "Synthetic Engineer",
+      experienceLevel: "Junior",
+      focusTopics: [],
+      skillGaps: [],
+      mode: "study",
+    });
+
+    mockGemini({
+      questions: [
+        {
+          questionType:
+            "technical-explanation",
+          category: "Technical",
+          difficulty: "medium",
+          question:
+            "Explain optimistic concurrency.",
+          modelAnswer:
+            "Explain version checking and conflicting writes.",
+        },
+      ],
+    });
+
+    const job = await routedJob(
+      userId.toString(),
+      "interview.questions.generate",
+    );
+
+    const execution = executionLifecycle();
+
+    execution.beginPersistence =
+      vi.fn().mockRejectedValue(
+        new AppError(
+          409,
+          "JOB_EXECUTION_FENCE_LOST",
+          "Synthetic execution fence lost.",
+          undefined,
+          false,
+        ),
+      );
+
+    await expect(
+      generateInterviewQuestions({
+        userId: userId.toString(),
+        sessionId: session._id.toString(),
+        count: 1,
+        categories: ["Technical"],
+        questionTypes: [
+          "technical-explanation",
+        ],
+        typeCounts: {
+          "technical-explanation": 1,
+        },
+        jobId: job._id.toString(),
+        execution,
+      }),
+    ).rejects.toMatchObject({
+      code: "JOB_EXECUTION_FENCE_LOST",
+    });
+
+    await expect(
+      InterviewQuestionModel.countDocuments({
+        userId,
+      }),
+    ).resolves.toBe(0);
   });
 
   it("persists a schema-valid Learning provider response", async () => {

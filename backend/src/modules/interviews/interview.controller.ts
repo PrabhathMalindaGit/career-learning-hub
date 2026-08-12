@@ -3,6 +3,7 @@ import { env } from "../../config/env.js";
 import { enqueueJob } from "../../jobs/job.queue.js";
 import { AppError } from "../../shared/appError.js";
 import { InterviewAttemptModel } from "./interviewAttempt.model.js";
+import { resolveQuestionTypeCounts } from "./interviewQuestionDistribution.js";
 import {
   addManualQuestion,
   createInterviewSession,
@@ -233,6 +234,14 @@ export async function queueQuestionGenerationController(
   request: Request,
   response: Response,
 ): Promise<void> {
+  const typeCounts =
+    resolveQuestionTypeCounts({
+      count: request.body.count,
+      questionTypes:
+        request.body.questionTypes,
+      typeCounts: request.body.typeCounts,
+    });
+
   const remainingCapacity =
     env.INTERVIEW_MAX_QUESTIONS_PER_SESSION -
     request.interviewSession!.questionCount;
@@ -261,6 +270,9 @@ export async function queueQuestionGenerationController(
       count: request.body.count,
       categories: request.body.categories,
       difficultyMix: request.body.difficultyMix,
+      questionTypes:
+        request.body.questionTypes,
+      typeCounts,
     },
     maxAttempts: env.INTERVIEW_AI_JOB_MAX_ATTEMPTS,
     idempotencyKey: [

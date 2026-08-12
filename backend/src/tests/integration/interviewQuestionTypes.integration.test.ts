@@ -1,10 +1,46 @@
+import { randomUUID } from "node:crypto";
 import { Types } from "mongoose";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../../app.js";
+import { env } from "../../config/env.js";
+import { JobRecordModel } from "../../jobs/job.model.js";
+import {
+  activateProvider,
+  ensureAiFoundation,
+} from "../../modules/ai/aiProvider.service.js";
 import { InterviewAttemptModel } from "../../modules/interviews/interviewAttempt.model.js";
 import { InterviewQuestionModel } from "../../modules/interviews/interviewQuestion.model.js";
+import { interviewQuestionTypes } from "../../modules/interviews/interviewQuestion.types.js";
 import { registerTestUser } from "../helpers/auth.js";
+
+const originalFoundation =
+  env.AI_ROUTING_FOUNDATION_ENABLED;
+const originalAdminCompatibility =
+  env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED;
+
+async function connectApplicationManagedGemini(
+  userId: string,
+): Promise<void> {
+  env.AI_ROUTING_FOUNDATION_ENABLED = true;
+  env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = true;
+
+  await ensureAiFoundation(userId);
+
+  await activateProvider({
+    userId,
+    provider: "gemini-direct",
+    credentialSource: "administrator-managed",
+    expectedRevision: 0,
+  });
+}
+
+afterEach(() => {
+  env.AI_ROUTING_FOUNDATION_ENABLED =
+    originalFoundation;
+  env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED =
+    originalAdminCompatibility;
+});
 
 describe("Interview question typed storage compatibility", () => {
   it("persists a modern Multiple Choice question without nested ObjectIds", async () => {
@@ -275,6 +311,7 @@ describe("Interview question public serialization", () => {
         mode: "study",
         manualQuestions: [
           {
+            questionType: "behavioral",
             category: "Behavioral",
             difficulty: "medium",
             question:
@@ -295,7 +332,7 @@ describe("Interview question public serialization", () => {
       difficulty: "medium",
       question:
         "Tell me about a project that challenged you.",
-      questionType: "legacy-open-response",
+      questionType: "behavioral",
     });
 
     expect(question).not.toHaveProperty(
@@ -338,6 +375,7 @@ describe("Interview question public serialization", () => {
         `Bearer ${owner.accessToken}`,
       )
       .send({
+        questionType: "technical-explanation",
         category: "Technical",
         difficulty: "medium",
         question:
@@ -352,7 +390,7 @@ describe("Interview question public serialization", () => {
       difficulty: "medium",
       question:
         "Explain how event-loop scheduling works.",
-      questionType: "legacy-open-response",
+      questionType: "technical-explanation",
     });
 
     expect(
@@ -360,4 +398,241 @@ describe("Interview question public serialization", () => {
     ).not.toHaveProperty("questionFingerprint");
   });
 
+});
+
+
+describe("Interview typed manual creation and generation request", () => {
+  it("creates all six modern manual question types and canonicalizes MCQ option IDs", async () => {
+    const owner = await registerTestUser(app, {
+      email:
+        "interview-all-manual-types-owner@example.com",
+      displayName:
+        "Interview All Manual Types Owner",
+    });
+
+    const createdSession = await request(app)
+      .post("/api/v1/interview-sessions")
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .send({
+        title: "All manual question types",
+        targetRole: "Software Engineer",
+        experienceLevel: "Junior",
+        focusTopics: [],
+        skillGaps: [],
+        mode: "study",
+        manualQuestions: [],
+      })
+      .expect(201);
+
+    const sessionId =
+      createdSession.body.data.session._id as string;
+    const authorization =
+      `Bearer ${owner.accessToken}`;
+
+    const mcqResponse = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions`,
+      )
+      .set("Authorization", authorization)
+      .send({
+        questionType: "multiple-choice",
+        category: "JavaScript",
+        difficulty: "medium",
+        question:
+          "Which statement about const is correct?",
+        multipleChoice: {
+          options: [
+            "A const binding cannot be reassigned.",
+            "A const object can never be mutated.",
+          ],
+          correctOptionIndex: 0,
+        },
+      })
+      .expect(201);
+
+    expect(
+      mcqResponse.body.data.question,
+    ).toMatchObject({
+      questionType: "multiple-choice",
+      multipleChoice: {
+        options: [
+          {
+            text:
+              "A const binding cannot be reassigned.",
+          },
+          {
+            text:
+              "A const object can never be mutated.",
+          },
+        ],
+      },
+    });
+
+    expect(
+      mcqResponse.body.data.question,
+    ).not.toHaveProperty(
+      "multipleChoice.correctOptionId",
+    );
+
+    expect(
+      mcqResponse.body.data.question,
+    ).not.toHaveProperty("modelAnswer");
+
+    const mcqId =
+      mcqResponse.body.data.question._id as string;
+
+    const storedMcq =
+      await InterviewQuestionModel.findById(
+        mcqId,
+      ).lean();
+
+    expect(storedMcq?.questionType).toBe(
+      "multiple-choice",
+    );
+
+    expect(
+      storedMcq?.multipleChoice?.options,
+    ).toHaveLength(2);
+
+    for (const option of
+      storedMcq?.multipleChoice?.options ?? []) {
+      expect(option.id).toMatch(
+        /^[0-9a-f-]{36}$/i,
+      );
+    }
+
+    expect(
+      storedMcq?.multipleChoice?.correctOptionId,
+    ).toBe(
+      storedMcq?.multipleChoice?.options[0]?.id,
+    );
+
+    for (const [index, questionType] of
+      interviewQuestionTypes
+        .filter(
+          (type) => type !== "multiple-choice",
+        )
+        .entries()) {
+      const response = await request(app)
+        .post(
+          `/api/v1/interview-sessions/${sessionId}/questions`,
+        )
+        .set("Authorization", authorization)
+        .send({
+          questionType,
+          category: "General",
+          difficulty: "medium",
+          question:
+            `Practice question ${index + 1} for ${questionType}.`,
+          modelAnswer:
+            `Model structure for ${questionType}.`,
+        })
+        .expect(201);
+
+      expect(
+        response.body.data.question,
+      ).toMatchObject({
+        questionType,
+        category: "General",
+      });
+
+      expect(
+        response.body.data.question,
+      ).not.toHaveProperty("multipleChoice");
+    }
+  });
+
+  it("queues a balanced typed generation payload without changing request-id idempotency", async () => {
+    const owner = await registerTestUser(app, {
+      email:
+        "interview-generation-types-owner@example.com",
+      displayName:
+        "Interview Generation Types Owner",
+    });
+
+    const createdSession = await request(app)
+      .post("/api/v1/interview-sessions")
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .send({
+        title: "Typed generation payload",
+        targetRole: "Software Engineer",
+        experienceLevel: "Junior",
+        focusTopics: [],
+        skillGaps: [],
+        mode: "study",
+        manualQuestions: [],
+      })
+      .expect(201);
+
+    await connectApplicationManagedGemini(
+      owner.userId,
+    );
+
+    const sessionId =
+      createdSession.body.data.session._id as string;
+    const requestId = randomUUID();
+
+    const first = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/generate`,
+      )
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .send({
+        requestId,
+        count: 5,
+        categories: ["Technical"],
+        questionTypes: [
+          "behavioral",
+          "technical-explanation",
+        ],
+      })
+      .expect(202);
+
+    const repeated = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/generate`,
+      )
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .send({
+        requestId,
+        count: 5,
+        categories: ["Technical"],
+        questionTypes: [
+          "behavioral",
+          "technical-explanation",
+        ],
+      })
+      .expect(202);
+
+    expect(
+      repeated.body.data.job.id,
+    ).toBe(first.body.data.job.id);
+
+    const job = await JobRecordModel.findById(
+      first.body.data.job.id,
+    ).lean();
+
+    expect(job?.payload).toMatchObject({
+      questionTypes: [
+        "behavioral",
+        "technical-explanation",
+      ],
+      typeCounts: {
+        behavioral: 3,
+        "technical-explanation": 2,
+      },
+    });
+  });
 });
