@@ -2,9 +2,11 @@
 
 ## Status
 
-`IMPLEMENTED / FINAL AUTOMATED VERIFICATION PASSED / HUMAN QA PASSED / PR READY FOR REVIEW / NOT MERGED`
+`IMPLEMENTED / FINAL REPAIRED AUTOMATED VERIFICATION PASSED / HUMAN QA PASSED / FINAL GOVERNANCE RECONCILIATION PENDING / PR DRAFT / NOT MERGED`
 
-Phase 19A-4 is implementation-complete and verified on the feature branch. The final executable code checkpoint passed the complete local automated gate, the relevant Candidate Photo and Resume Studio workflows were exercised in real Chrome, and PR #8 has been prepared for final review. No merge or deployment is authorized by this record.
+Phase 19A-4 is implementation-complete and executable verification is complete on the feature branch. Candidate Photo behavior, the Resume snapshot-editing repair found during human QA, and the two P2 findings raised during PR review have all been repaired and verified. Only truthful reconciliation of the controlling `docs/planning/CURRENT_PHASE.md` block and the final documentation-only PR handoff remain before PR #8 may return to Ready for review.
+
+No merge or deployment is authorized by this record.
 
 ## Identity
 
@@ -15,17 +17,17 @@ Phase 19A-4 is implementation-complete and verified on the feature branch. The f
 - Frozen-design commit: `3b4855926f842a95ca1e11631059af1aeb1abce8`
   (`Record Phase 19A-4 frozen design`)
 - Final executable code checkpoint:
-  `bd134bf361b18deb48b6bb697e88c14ccab852fc`
-  (`Cancel in-flight snapshot when editing begins`)
+  `ff7e84572d029f01cf61f4fee873f11204a6a75e`
+  (`Protect attached Candidate Photos from generic deletion`)
 - Design specification:
   `docs/superpowers/specs/2026-08-11-resume-candidate-photo-support-design.md`
 - Implementation plan:
   `docs/superpowers/plans/2026-08-12-resume-candidate-photo-support.md`
 - Pull request: `PR #8 — Complete Phase 19A-4 Candidate Photo Support`
-- PR status at closeout: `READY FOR REVIEW / OPEN / NOT MERGED`
+- PR status at this record: `DRAFT / OPEN / NOT MERGED`
 - Deployment status: `NOT PART OF THIS PHASE CLOSEOUT`
 
-The documentation reconciliation commit hash is intentionally not self-recorded in this same file; the executable checkpoint above is the exact code state on which the final automated gate was run.
+The documentation-only reconciliation commit hash is intentionally not self-recorded in this file. The executable checkpoint above is the exact code state on which the fresh repaired repository-wide gate was run.
 
 ## Approval and process truthfulness
 
@@ -35,13 +37,13 @@ The documentation reconciliation commit hash is intentionally not self-recorded 
 - Frozen design fidelity review: `PASSED / ACCEPTED`
 - Implementation was subsequently authorized and performed directly on the GitHub feature branch.
 - No claim is made that a separate `PHASE_19A4_IMPLEMENTATION_PLAN_APPROVED` token was accepted; that token was not part of the final authorization path.
-- Main remained untouched throughout implementation and verification.
+- `main` remained untouched throughout implementation and verification.
 
 ## Approved architecture preserved
 
 Phase 19A-4 implements the approved bounded extension of the existing private Asset architecture:
 
-- one optional Resume-root `candidatePhotoAssetId`;
+- optional Resume-root `candidatePhotoAssetId`;
 - independent `Resume.design.showProfilePhoto` visibility;
 - no Candidate Photo field in `ResumeContent` or `ResumeVersion`;
 - no Candidate Photo identity, file, bytes, Blob URL, signed URL, dimensions, or metadata in Resume recovery;
@@ -77,123 +79,153 @@ The Resume Studio Candidate Photo panel supports:
 - canonical saved-photo loading/retry behavior;
 - keyboard-operable native file selection;
 - a visually hidden real file input with a styled Choose/Replace trigger;
-- deliberate helper text instead of browser-native `Choose File / No file chosen` chrome;
+- deliberate helper text instead of browser-native filename chrome;
 - `Candidate photo preview` thumbnail alternative text;
-- decorative empty-alt semantics for the portrait embedded beside the candidate identity;
+- decorative empty-alt semantics for the portrait embedded beside candidate identity;
 - responsive and reduced-motion-compatible presentation.
 
-The file-picker visual refinement was requested during human QA and implemented without changing Candidate Photo storage, API, validation, or lifecycle semantics.
+The file-picker visual refinement requested during human QA changed presentation only; Candidate Photo storage, API, validation, and lifecycle semantics remained intact.
 
-## Snapshot-editing defect discovered during human QA
+## Resume snapshot-editing repairs discovered during QA/review
 
-Human QA exposed a general Resume Studio state inconsistency unrelated to language serialization:
+Human QA exposed a general Resume Studio state inconsistency: a saved/read-only version snapshot could remain selected while the current editor accepted changes, making the draft dirty while `Save new version` stayed disabled.
 
-1. a saved/read-only version snapshot could remain open;
-2. the current editor still accepted changes;
-3. the draft became dirty;
-4. `Save new version` remained disabled because the snapshot was still selected.
+The Language data path itself was healthy; manually returning to the current draft allowed the edit to save as the next Resume version.
 
-The language path itself was healthy. Returning manually to the current draft allowed the edited Language to save successfully as the next Resume version.
+### Loaded-snapshot RED → GREEN
 
-### First RED → GREEN repair
+- RED: editing was accepted but `Read-only version 1` remained visible and Save stayed disabled.
+- Minimal repair: a real editor change clears an already-loaded snapshot.
+- GREEN focused regression: `1/1 PASS` at that stage.
+- Existing `ResumeWorkspace.test.tsx`: `61/61 PASS`.
+- Frontend typecheck and production build: `PASS`.
+- Real Chrome confirmation: `PASS`.
 
-A regression test reproduced the loaded-snapshot case:
+### In-flight late-response RED → GREEN
 
-- RED: editing was accepted but `Read-only version 1` remained visible;
-- minimal production repair: an actual editor change clears an already-loaded snapshot;
-- GREEN: focused snapshot test passed;
-- existing `ResumeWorkspace.test.tsx`: `61/61 PASS`;
-- frontend typecheck: `PASS`;
-- frontend production build: `PASS`;
-- `git diff --check`: `PASS`;
-- real Chrome confirmation: `PASS`.
+Final review then found the corresponding race while a snapshot request was still loading.
 
-### Late-response race discovered during final diff review
+- RED: the loaded-snapshot test stayed green while a new late-response test failed because the completed request reopened the read-only snapshot.
+- Root cause: editor changes did not abort `snapshotControllerRef` while a version request was in flight.
+- Minimal repair: editing aborts and clears the in-flight controller, clears `snapshotLoadingId`, and clears any already-loaded snapshot.
+- Existing `handleViewVersion()` already ignores results from an aborted controller; no generation-counter/request subsystem was added.
+- Final focused snapshot-editing suite: `2/2 PASS`.
+- Real Chrome confirmation after repair: `PASS`.
 
-Final review found a second edge case: if the saved snapshot was still loading when editing began, its late response could reopen the read-only snapshot.
+The rule that an intentionally selected historical snapshot remains non-saveable until the user returns to or edits the current draft remains preserved.
 
-A second test-first repair covered that race:
+## PR-review P2 repairs
 
-- RED: the original loaded-snapshot test remained green while the new late-response test failed because `Read-only version 1` reopened;
-- root cause: editor changes did not abort `snapshotControllerRef` while a saved-version request was in flight;
-- minimal production repair: editing aborts and clears the in-flight snapshot controller, clears `snapshotLoadingId`, and clears any already-loaded snapshot;
-- existing `handleViewVersion()` already checks `controller.signal.aborted` before applying the returned snapshot, so no new request-generation architecture was added;
-- GREEN focused snapshot suite: `2/2 PASS`.
+When PR #8 was first moved to review, automated review identified two valid P2 findings. Both were independently reproduced RED before production changes.
 
-The existing rule that an intentionally selected historical snapshot remains non-saveable until the user returns to the current draft is preserved.
+### P2-1 — Malformed PNG IHDR acceptance
+
+Original parser behavior trusted `IHDR` at bytes 12–15 and dimensions at bytes 16–23 without requiring the mandatory 13-byte IHDR data extent.
+
+- RED regression: deliberately truncated 24-byte pseudo-IHDR was accepted; focused result `1 failed / 12 passed`.
+- Fix commit: `933937ec3ab60b5cab6bac2bc02277c4729ef1ee`.
+- Repair: PNG Candidate Photo dimension parsing requires the complete bounded IHDR extent and declared IHDR data length exactly `13`.
+- GREEN: `resumePhotoAssetPolicy.test.ts` `13/13 PASS`.
+- Review thread: `RESOLVED` with RED→GREEN evidence.
+
+### P2-2 — Generic deletion of attached Candidate Photo
+
+The generic authenticated Asset DELETE route could delete an active attached `resume-photo`, leaving the Resume with a dangling `candidatePhotoAssetId`.
+
+- RED regression: generic asset DELETE returned HTTP `204` where attached-photo protection required `409`.
+- Fix commit: `ff7e84572d029f01cf61f4fee873f11204a6a75e`.
+- Repair: generic deletion rejects an active attached `resume-photo` with `RESUME_PHOTO_ATTACHED`.
+- Dedicated replacement/removal cleanup remains valid because the Resume transaction first retires the old Asset to `temporary`; cleanup of retired/staged photos is therefore still permitted.
+- GREEN: `resumeCandidatePhoto.integration.test.ts` `4/4 PASS`.
+- Review thread: `RESOLVED` with RED→GREEN evidence.
 
 ## Human Chrome QA evidence
 
-The operator ran the local frontend/backend with healthy API/database/storage readiness and confirmed the relevant Candidate Photo and Resume Studio workflows in real Chrome.
-
-Human QA evidence includes:
+The operator ran the local application and confirmed the relevant Candidate Photo and Resume Studio workflows in real Chrome, including:
 
 - no-photo state;
-- valid photo upload and saved private-photo rendering;
+- valid Candidate Photo upload and private saved-photo rendering;
 - shown and hidden states;
 - Show on Resume / Hide from Resume;
+- refined Choose/Replace picker presentation;
 - Remove photo confirmation and confirmed removal;
-- refined Choose/Replace picker presentation without native filename chrome;
-- Candidate Photo in the current Resume preview;
-- Candidate Photo in saved-version/historical presentation using the current Resume-level photo state;
+- Candidate Photo in current Resume preview;
+- Candidate Photo in saved-version/historical presentation using current Resume-level photo state;
 - Candidate Photo in browser print preview when visible;
-- the original snapshot-editing defect reproduced in the real application;
-- manual `Return to current draft` confirmed the Language save path itself was healthy;
-- post-repair browser confirmation that editing a selected saved snapshot returns to the current draft, preserves the edit, re-enables `Save new version`, and saves the new version successfully.
+- original snapshot-editing defect reproduction;
+- manual Return to current draft proving the Language serialization/save path was healthy;
+- post-repair confirmation that editing a selected saved snapshot returns to the current draft, preserves the edit, enables Save, and successfully creates the next Resume version.
 
-Automated coverage additionally exercises replacement, invalid input, ownership, validation, source access, and lifecycle boundaries that were not all separately asserted as manual-browser observations.
+Automated coverage additionally exercises replacement, invalid input, ownership, source access, validation, and lifecycle boundaries not all separately asserted as manual-browser observations.
 
-## Final automated verification
+## Final repaired automated verification
 
-The complete final gate was run locally against exact executable HEAD:
+The complete final repaired gate was run locally against exact executable HEAD:
 
-`bd134bf361b18deb48b6bb697e88c14ccab852fc`
+`ff7e84572d029f01cf61f4fee873f11204a6a75e`
 
 Results:
 
 - Frontend complete suite: `70/70 files`, `906/906 tests PASS`
-- Backend unit: `15/15 files`, `205/205 tests PASS`
-- Backend integration: `19/19 files`, `192/192 tests PASS`
+- Backend unit: `15/15 files`, `206/206 tests PASS`
+- Backend integration: `19/19 files`, `193/193 tests PASS`
 - Backend security: `4/4 files`, `36/36 tests PASS`
-- Total final recorded tests: `1,339 PASS`
+- Total final recorded executable tests: `1,341 PASS`
 - Monorepo typecheck (frontend/backend/shared-types): `PASS`
 - Backend test-source typecheck: `PASS`
 - Production build (frontend + backend): `PASS`
 - `git diff --check`: `PASS`
 - Worktree before/after final verification: `CLEAN`
-- Final executable HEAD after verification: unchanged at `bd134bf361b18deb48b6bb697e88c14ccab852fc`
+- Final executable HEAD after verification: unchanged at `ff7e84572d029f01cf61f4fee873f11204a6a75e`
 
-A separate complete Resume feature gate immediately before the repository-wide gate also passed:
-
-- `frontend/src/features/resumes`: `30/30 files`, `294/294 tests PASS`
-- focused snapshot-editing suite: `2/2 PASS`
+A separate Resume feature gate before the earlier complete gate also passed `30/30 files`, `294/294 tests`, and the final focused snapshot suite passed `2/2`.
 
 ## Known non-blocking diagnostics
 
-The final gate retained known non-failing diagnostics that are outside the Phase 19A-4 blocking scope:
+The repaired final gate retained known non-failing diagnostics outside the Phase 19A-4 blocking scope:
 
-- `InterviewSessionWorkspace.test.tsx` emits a React Router/ErrorBoundary `TypeError` diagnostic during a test that nevertheless completes successfully; the complete frontend suite remains green;
-- `ResumeVersionTimeline.test.tsx` emits an existing duplicate React key warning for a fixture path; the suite remains green;
-- the rate-limit spoof-resistance security test intentionally exercises `X-Forwarded-For` with `trust proxy` disabled and emits the express-rate-limit validation diagnostic while the security test passes;
+- `InterviewSessionWorkspace.test.tsx` emits a React Router/ErrorBoundary `TypeError` diagnostic during a test that nevertheless completes successfully; the complete frontend suite is green;
+- `ResumeVersionTimeline.test.tsx` emits an existing duplicate React key warning for a fixture path; the suite is green;
+- the rate-limit spoof-resistance test intentionally exercises `X-Forwarded-For` with `trust proxy` disabled and emits the express-rate-limit validation diagnostic while the security test passes;
 - Vite reports ignored React Router `use client` directives;
-- Vite reports that `resumeCandidatePhotoGateway.ts` dynamically imports `resumeApi.ts` while other modules import it statically, so it does not create a separate chunk;
+- Vite reports the `resumeCandidatePhotoGateway.ts` dynamic import of `resumeApi.ts` does not create a separate chunk because `resumeApi.ts` is also statically imported elsewhere;
 - the application JavaScript bundle remains above Vite's default 500 kB advisory threshold.
 
-None of these diagnostics produced a failed test, failed typecheck, or failed production build in the final gate.
+None produced a failed test, typecheck, or production build.
 
 ## Final scope review
 
-The final `main...phase-19a-4-candidate-photo-support` comparison is based on main baseline `ad10229aa64cc79b4503901d8b59ac127fac0a20` and contains the Candidate Photo / Resume presentation implementation, directly relevant tests, the frozen design and implementation plan, the bounded Resume snapshot-editing repair found during QA, rate-limit wiring for the dedicated photo route, and phase documentation.
+The final executable `main...phase-19a-4-candidate-photo-support` comparison is based on main baseline `ad10229aa64cc79b4503901d8b59ac127fac0a20`.
 
-The changed-file set contains no package manifest, lockfile, environment file, deployment configuration, migration, or shared-types package change.
+At executable checkpoint `ff7e84572d029f01cf61f4fee873f11204a6a75e` the branch was `49 commits ahead / 0 behind` main. The changed-file set was bounded to:
 
-The branch is ahead of main and not behind it. Main is not modified by this closeout.
+- Candidate Photo / Resume presentation implementation;
+- dedicated backend validation/lifecycle/rate-limit wiring;
+- directly relevant frontend/backend tests;
+- the bounded Resume snapshot-editing repair discovered during QA;
+- the two validated PR-review repairs;
+- Phase 19A-4 design, plan, and closeout documentation.
+
+No package manifest, lockfile, environment file, deployment configuration, migration, or shared-types package change is included.
+
+Main was not modified by this closeout.
+
+## Remaining governance reconciliation
+
+Executable implementation and verification are complete. Before PR #8 returns to Ready for review:
+
+1. reconcile the stale top authority block in `docs/planning/CURRENT_PHASE.md` with this final verified state;
+2. resolve the corresponding governance review thread;
+3. perform a final `main...feature` comparison after the documentation-only reconciliation;
+4. mark PR #8 Ready for review.
+
+A documentation-only reconciliation does not require rerunning the executable 1,341-test gate. The final executable checkpoint remains `ff7e84572d029f01cf61f4fee873f11204a6a75e`.
 
 ## Release control
 
-- PR #8 is ready for final human review.
-- PR #8 is open and not merged.
+- PR #8 remains open and Draft while governance reconciliation is pending.
+- PR #8 is not merged.
 - No merge to `main` is authorized by this document.
 - No deployment is authorized by this document.
-- Final merge requires explicit operator approval.
+- Final merge requires separate explicit operator approval.
 - After an authorized merge, perform a separate post-merge documentation reconciliation on `main` if needed to record the merge commit and activate the next execution phase.
