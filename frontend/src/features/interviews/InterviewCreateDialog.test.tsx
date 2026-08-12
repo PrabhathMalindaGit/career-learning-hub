@@ -6,10 +6,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  useRef,
-  useState,
-} from "react";
+import { useRef, useState } from "react";
 import {
   afterAll,
   beforeAll,
@@ -42,6 +39,13 @@ const createdSession = {
   questionCount: 0,
   createdAt: timestamp,
   updatedAt: timestamp,
+};
+
+const createdResponse: Awaited<
+  ReturnType<typeof interviewApi.createInterviewSession>
+> = {
+  session: createdSession,
+  questions: [],
 };
 
 const originalShowModal = HTMLDialogElement.prototype.showModal;
@@ -117,16 +121,22 @@ async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
 
 function inputValue(name: string): string {
   return (
-    screen.getByRole("textbox", { name }) as HTMLInputElement | HTMLTextAreaElement
+    screen.getByRole("textbox", { name }) as
+      | HTMLInputElement
+      | HTMLTextAreaElement
   ).value;
+}
+
+function dispatchDialogCancel(dialog: HTMLElement) {
+  fireEvent(dialog, new Event("cancel", { cancelable: true }));
 }
 
 describe("InterviewCreateDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(interviewApi.createInterviewSession).mockResolvedValue({
-      session: createdSession,
-    });
+    vi.mocked(interviewApi.createInterviewSession).mockResolvedValue(
+      createdResponse,
+    );
   });
 
   it("opens as a modal, focuses Session title, exposes only approved modes, and keeps optional context collapsed", async () => {
@@ -152,7 +162,7 @@ describe("InterviewCreateDialog", () => {
       screen.getByText("Additional context (optional)"),
     ).not.toBeNull();
     expect(
-      screen.queryByRole("textbox", { name: "Job description" }),
+      screen.queryByRole("textbox", { name: /^Job description/i }),
     ).toBeNull();
   });
 
@@ -212,7 +222,7 @@ describe("InterviewCreateDialog", () => {
       "Temporary title",
     );
     const dialog = screen.getByRole("dialog", { name: "Create interview" });
-    fireEvent.cancel(dialog);
+    dispatchDialogCancel(dialog);
 
     const openButton = screen.getByRole("button", {
       name: "Open create dialog",
@@ -234,7 +244,9 @@ describe("InterviewCreateDialog", () => {
       screen.getByRole("textbox", { name: "Target role" }),
       "Backend Engineer",
     );
-    await user.click(screen.getByRole("button", { name: "Create interview" }));
+    await user.click(
+      screen.getByRole("button", { name: "Create interview" }),
+    );
 
     const title = screen.getByRole("textbox", { name: "Session title" });
     await waitFor(() => expect(document.activeElement).toBe(title));
@@ -249,7 +261,9 @@ describe("InterviewCreateDialog", () => {
     await user.clear(
       screen.getByRole("textbox", { name: "Experience level" }),
     );
-    await user.click(screen.getByRole("button", { name: "Create interview" }));
+    await user.click(
+      screen.getByRole("button", { name: "Create interview" }),
+    );
 
     const summary = screen.getByRole("alert");
     await waitFor(() => expect(document.activeElement).toBe(summary));
@@ -278,7 +292,9 @@ describe("InterviewCreateDialog", () => {
       "Reliability",
     );
     await user.keyboard("{Enter}");
-    await user.click(screen.getByRole("button", { name: "Create interview" }));
+    await user.click(
+      screen.getByRole("button", { name: "Create interview" }),
+    );
 
     const error = await screen.findByRole("alert");
     expect(error.textContent).toContain(
@@ -300,7 +316,11 @@ describe("InterviewCreateDialog", () => {
   it("prevents duplicate submission while the create request is pending", async () => {
     const user = userEvent.setup();
     let resolveCreate:
-      | ((value: { session: typeof createdSession }) => void)
+      | ((
+          value: Awaited<
+            ReturnType<typeof interviewApi.createInterviewSession>
+          >,
+        ) => void)
       | undefined;
     vi.mocked(interviewApi.createInterviewSession).mockReturnValueOnce(
       new Promise((resolve) => {
@@ -316,7 +336,7 @@ describe("InterviewCreateDialog", () => {
     fireEvent.submit(submit.closest("form") as HTMLFormElement);
 
     expect(interviewApi.createInterviewSession).toHaveBeenCalledTimes(1);
-    resolveCreate?.({ session: createdSession });
+    resolveCreate?.(createdResponse);
   });
 
   it("does not close from Cancel or Escape while submission is pending", async () => {
@@ -327,12 +347,14 @@ describe("InterviewCreateDialog", () => {
     render(<Harness />);
 
     await fillRequiredFields(user);
-    await user.click(screen.getByRole("button", { name: "Create interview" }));
+    await user.click(
+      screen.getByRole("button", { name: "Create interview" }),
+    );
 
     const dialog = screen.getByRole("dialog", { name: "Create interview" });
     const cancel = screen.getByRole("button", { name: "Cancel" });
     expect((cancel as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.cancel(dialog);
+    dispatchDialogCancel(dialog);
 
     expect(dialog.hasAttribute("open")).toBe(true);
   });
@@ -368,11 +390,13 @@ describe("InterviewCreateDialog", () => {
 
     await user.click(screen.getByText("Additional context (optional)"));
     await user.type(
-      screen.getByRole("textbox", { name: "Job description" }),
+      screen.getByRole("textbox", { name: /^Job description/i }),
       "  Build reliable platform services.  ",
     );
 
-    await user.click(screen.getByRole("button", { name: "Create interview" }));
+    await user.click(
+      screen.getByRole("button", { name: "Create interview" }),
+    );
 
     await waitFor(() => {
       expect(interviewApi.createInterviewSession).toHaveBeenCalledTimes(1);
