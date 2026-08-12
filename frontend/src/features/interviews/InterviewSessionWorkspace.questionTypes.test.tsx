@@ -99,7 +99,10 @@ function questionDetail(
 }
 
 function textAttempt(
-  type: Exclude<EffectiveInterviewQuestionType, "legacy-open-response" | "multiple-choice">,
+  type: Exclude<
+    EffectiveInterviewQuestionType,
+    "legacy-open-response" | "multiple-choice"
+  >,
   text: string,
 ): InterviewAttempt {
   return {
@@ -199,8 +202,9 @@ describe("InterviewSessionWorkspace typed question UX", () => {
     await waitForWorkspace();
 
     expect(
-      (screen.getByRole("checkbox", { name: "Short Answer" }) as HTMLInputElement)
-        .checked,
+      (screen.getByRole("checkbox", {
+        name: "Short Answer",
+      }) as HTMLInputElement).checked,
     ).toBe(true);
     await userEvent.click(
       screen.getByRole("button", { name: "Generate questions" }),
@@ -236,7 +240,10 @@ describe("InterviewSessionWorkspace typed question UX", () => {
       manual.getByRole("combobox", { name: "Question type" }),
       "multiple-choice",
     );
-    await user.type(manual.getByRole("textbox", { name: "Category" }), " JavaScript ");
+    await user.type(
+      manual.getByRole("textbox", { name: "Category" }),
+      " JavaScript ",
+    );
     await user.type(
       manual.getByRole("textbox", { name: "Question" }),
       "Which option is correct?",
@@ -304,6 +311,10 @@ describe("InterviewSessionWorkspace typed question UX", () => {
     expect(
       screen.queryByRole("button", { name: "Request explanation" }),
     ).toBeNull();
+    vi.mocked(interviewApi.listAttemptHistory).mockResolvedValue({
+      attempts: [saved],
+      pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+    });
     await user.click(screen.getByRole("radio", { name: "First option" }));
     await user.click(screen.getByRole("button", { name: "Save attempt" }));
 
