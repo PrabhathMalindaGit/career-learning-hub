@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { AppError } from "../../shared/appError.js";
 import {
   createResume,
   createResumeVersion,
@@ -8,6 +9,11 @@ import {
   listResumeVersions,
   updateResumeDesign,
 } from "./resume.service.js";
+import {
+  createOrReplaceCandidatePhoto,
+  getCandidatePhotoSource,
+  removeCandidatePhoto,
+} from "./resumePhoto.service.js";
 
 type ResumeIdParams = {
   resumeId: string;
@@ -109,6 +115,55 @@ export async function updateDesignController(
     userId: request.auth!.userId,
     resumeId: request.params.resumeId,
     designPatch: request.body,
+  });
+
+  response.status(200).json({ success: true, data: { resume } });
+}
+
+export async function uploadCandidatePhotoController(
+  request: Request<ResumeIdParams>,
+  response: Response,
+): Promise<void> {
+  if (!request.file) {
+    throw new AppError(
+      400,
+      "RESUME_PHOTO_FILE_REQUIRED",
+      "Choose a candidate photo to upload.",
+    );
+  }
+
+  const resume = await createOrReplaceCandidatePhoto({
+    userId: request.auth!.userId,
+    resumeId: request.params.resumeId,
+    expectedCandidatePhotoAssetId:
+      request.body.expectedCandidatePhotoAssetId,
+    file: request.file,
+  });
+
+  response.status(201).json({ success: true, data: { resume } });
+}
+
+export async function getCandidatePhotoSourceController(
+  request: Request<ResumeIdParams>,
+  response: Response,
+): Promise<void> {
+  const source = await getCandidatePhotoSource({
+    userId: request.auth!.userId,
+    resumeId: request.params.resumeId,
+  });
+
+  response.status(200).json({ success: true, data: source });
+}
+
+export async function removeCandidatePhotoController(
+  request: Request<ResumeIdParams>,
+  response: Response,
+): Promise<void> {
+  const resume = await removeCandidatePhoto({
+    userId: request.auth!.userId,
+    resumeId: request.params.resumeId,
+    expectedCandidatePhotoAssetId:
+      request.body.expectedCandidatePhotoAssetId,
   });
 
   response.status(200).json({ success: true, data: { resume } });

@@ -53,6 +53,7 @@ export async function createResume(input: {
           design: {
             ...defaultDesign,
             ...input.design,
+            showProfilePhoto: false,
           },
         },
       ],
@@ -109,7 +110,7 @@ export async function listResumes(
   const [resumes, total] = await Promise.all([
     ResumeModel.find(filter)
       .select(
-        "title status currentVersionId latestVersionNumber design createdAt updatedAt",
+        "title status currentVersionId candidatePhotoAssetId latestVersionNumber design createdAt updatedAt",
       )
       .sort({ updatedAt: -1, _id: -1 })
       .skip((input.page - 1) * input.limit)
@@ -298,6 +299,17 @@ export async function updateResumeDesign(input: {
   designPatch: Partial<ResumeDesign>;
 }): Promise<ResumeDocument> {
   const resume = await requireOwnedResume(input.userId, input.resumeId);
+
+  if (
+    input.designPatch.showProfilePhoto === true &&
+    !resume.candidatePhotoAssetId
+  ) {
+    throw new AppError(
+      409,
+      "RESUME_PHOTO_REQUIRED",
+      "Add a candidate photo before showing it on the Resume.",
+    );
+  }
 
   if (input.designPatch.templateId !== undefined) {
     resume.design.templateId = input.designPatch.templateId;

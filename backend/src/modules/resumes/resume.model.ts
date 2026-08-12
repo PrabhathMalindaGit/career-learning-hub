@@ -6,6 +6,7 @@ export interface Resume {
   title: string;
   status: "draft" | "active" | "archived";
   currentVersionId?: Types.ObjectId;
+  candidatePhotoAssetId?: Types.ObjectId;
   latestVersionNumber: number;
   design: ResumeDesign;
   createdAt: Date;
@@ -33,6 +34,10 @@ const resumeSchema = new Schema<Resume>(
     currentVersionId: {
       type: Schema.Types.ObjectId,
       ref: "ResumeVersion",
+    },
+    candidatePhotoAssetId: {
+      type: Schema.Types.ObjectId,
+      ref: "Asset",
     },
     latestVersionNumber: {
       type: Number,

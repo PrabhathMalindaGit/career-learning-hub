@@ -226,6 +226,19 @@ export async function deleteOwnedAsset(
   assetId: string,
 ): Promise<void> {
   const asset = await getOwnedAsset(userId, assetId);
+
+  if (
+    asset.purpose === "resume-photo" &&
+    asset.status === "active" &&
+    typeof asset.metadata?.resumeId === "string"
+  ) {
+    throw new AppError(
+      409,
+      "RESUME_PHOTO_ATTACHED",
+      "Attached Candidate Photos must be removed from the Resume first.",
+    );
+  }
+
   const storage = getStorageForProvider(asset.storageProvider);
 
   await storage.deleteObject(asset.storageKey);

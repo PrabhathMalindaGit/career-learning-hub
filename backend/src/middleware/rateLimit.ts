@@ -90,6 +90,13 @@ export const resumeAnalysisRateLimiter =
     keyGenerator: authenticatedUserKey,
   });
 
+export const resumePhotoRateLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1_000,
+  limit: 30,
+  identifier: "resume-photo",
+  keyGenerator: authenticatedUserKey,
+});
+
 export const interviewGenerationRateLimiter =
   createRateLimiter({
     windowMs: 60 * 60 * 1_000,

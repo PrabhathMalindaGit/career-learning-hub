@@ -1,5 +1,14 @@
 import { z } from "zod";
-import { assetPurposes } from "./asset.model.js";
+
+const genericUploadAssetPurposes = [
+  "avatar",
+  "resume-import",
+  "resume-export",
+  "resume-thumbnail",
+  "learning-document",
+  "interview-audio",
+  "other",
+] as const;
 
 export const assetIdParamsSchema = z.object({
   assetId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid asset identifier."),
@@ -7,7 +16,7 @@ export const assetIdParamsSchema = z.object({
 
 export const uploadAssetBodySchema = z
   .object({
-    purpose: z.enum(assetPurposes),
+    purpose: z.enum(genericUploadAssetPurposes),
     temporary: z
       .enum(["true", "false"])
       .optional()
