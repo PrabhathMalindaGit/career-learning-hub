@@ -636,3 +636,375 @@ describe("Interview typed manual creation and generation request", () => {
     });
   });
 });
+
+
+describe("Interview typed attempt recording and deterministic MCQ evaluation", () => {
+  it("keeps legacy answerText compatibility and rejects typed answers for historical questions", async () => {
+    const owner = await registerTestUser(app, {
+      email: "interview-legacy-attempt-owner@example.com",
+      displayName: "Interview Legacy Attempt Owner",
+    });
+
+    const createdSession = await request(app)
+      .post("/api/v1/interview-sessions")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        title: "Legacy attempt compatibility",
+        targetRole: "Software Engineer",
+        experienceLevel: "Junior",
+        focusTopics: [],
+        skillGaps: [],
+        mode: "written-practice",
+        manualQuestions: [],
+      })
+      .expect(201);
+
+    const sessionId =
+      createdSession.body.data.session._id as string;
+    const questionId = new Types.ObjectId();
+    const now = new Date();
+
+    await InterviewQuestionModel.collection.insertOne({
+      _id: questionId,
+      userId: new Types.ObjectId(owner.userId),
+      sessionId: new Types.ObjectId(sessionId),
+      source: "manual",
+      category: "Behavioral",
+      difficulty: "medium",
+      question: "Tell me about a difficult project.",
+      questionFingerprint: "e".repeat(64),
+      explanationKeyPoints: [],
+      isPinned: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const accepted = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId.toString()}/attempts`,
+      )
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        answerText:
+          "I explained the situation, action, and result.",
+      })
+      .expect(201);
+
+    expect(accepted.body.data.attempt).toMatchObject({
+      questionId: questionId.toString(),
+      answerText:
+        "I explained the situation, action, and result.",
+      status: "recorded",
+    });
+    expect(accepted.body.data.attempt).not.toHaveProperty(
+      "answer",
+    );
+    expect(accepted.body.data.attempt).not.toHaveProperty(
+      "evaluation",
+    );
+
+    const rejected = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId.toString()}/attempts`,
+      )
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        answer: {
+          type: "behavioral",
+          text: "A typed answer must not rewrite legacy semantics.",
+        },
+      })
+      .expect(409);
+
+    expect(rejected.body.error).toMatchObject({
+      code: "INTERVIEW_ATTEMPT_TYPE_MISMATCH",
+    });
+  });
+
+  it("accepts only matching typed text answers and keeps them immutable", async () => {
+    const owner = await registerTestUser(app, {
+      email: "interview-typed-text-attempt-owner@example.com",
+      displayName: "Interview Typed Text Attempt Owner",
+    });
+
+    const createdSession = await request(app)
+      .post("/api/v1/interview-sessions")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        title: "Typed text attempt",
+        targetRole: "Software Engineer",
+        experienceLevel: "Junior",
+        focusTopics: [],
+        skillGaps: [],
+        mode: "written-practice",
+        manualQuestions: [
+          {
+            questionType: "behavioral",
+            category: "Behavioral",
+            difficulty: "medium",
+            question:
+              "Describe a time you resolved a difficult disagreement.",
+          },
+        ],
+      })
+      .expect(201);
+
+    const sessionId =
+      createdSession.body.data.session._id as string;
+    const questionId =
+      createdSession.body.data.questions[0]._id as string;
+    const authorization =
+      `Bearer ${owner.accessToken}`;
+    const originalText =
+      "I clarified the disagreement, gathered evidence, and aligned the team on a decision.";
+
+    const accepted = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId}/attempts`,
+      )
+      .set("Authorization", authorization)
+      .send({
+        answer: {
+          type: "behavioral",
+          text: originalText,
+        },
+      })
+      .expect(201);
+
+    expect(accepted.body.data.attempt).toMatchObject({
+      questionId,
+      answer: {
+        type: "behavioral",
+        text: originalText,
+      },
+      status: "recorded",
+    });
+    expect(accepted.body.data.attempt).not.toHaveProperty(
+      "answerText",
+    );
+    expect(accepted.body.data.attempt).not.toHaveProperty(
+      "evaluation",
+    );
+
+    const legacyPayload = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId}/attempts`,
+      )
+      .set("Authorization", authorization)
+      .send({ answerText: "Legacy payload." })
+      .expect(409);
+
+    expect(legacyPayload.body.error).toMatchObject({
+      code: "INTERVIEW_ATTEMPT_TYPE_MISMATCH",
+    });
+
+    const wrongType = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId}/attempts`,
+      )
+      .set("Authorization", authorization)
+      .send({
+        answer: {
+          type: "coding",
+          text: "const value = 1;",
+        },
+      })
+      .expect(409);
+
+    expect(wrongType.body.error).toMatchObject({
+      code: "INTERVIEW_ATTEMPT_TYPE_MISMATCH",
+    });
+
+    const attemptId =
+      accepted.body.data.attempt._id as string;
+    const stored = await InterviewAttemptModel.findById(
+      attemptId,
+    );
+
+    expect(stored).not.toBeNull();
+    stored!.answer = {
+      type: "behavioral",
+      text: "This replacement must not persist.",
+    };
+    await stored!.save();
+
+    const reloaded = await InterviewAttemptModel.findById(
+      attemptId,
+    ).lean();
+
+    expect(reloaded?.answer).toEqual({
+      type: "behavioral",
+      text: originalText,
+    });
+  });
+
+  it("scores Multiple Choice deterministically, rejects invalid submissions, and reveals the owned key only through attempt responses", async () => {
+    const owner = await registerTestUser(app, {
+      email: "interview-mcq-attempt-owner@example.com",
+      displayName: "Interview MCQ Attempt Owner",
+    });
+
+    const createdSession = await request(app)
+      .post("/api/v1/interview-sessions")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        title: "Deterministic MCQ attempt",
+        targetRole: "Software Engineer",
+        experienceLevel: "Junior",
+        focusTopics: [],
+        skillGaps: [],
+        mode: "written-practice",
+        manualQuestions: [
+          {
+            questionType: "multiple-choice",
+            category: "JavaScript",
+            difficulty: "medium",
+            question:
+              "Which statement about const is correct?",
+            multipleChoice: {
+              options: [
+                "A const object can never be mutated.",
+                "A const binding cannot be reassigned.",
+              ],
+              correctOptionIndex: 1,
+            },
+          },
+        ],
+      })
+      .expect(201);
+
+    const sessionId =
+      createdSession.body.data.session._id as string;
+    const question = createdSession.body.data.questions[0];
+    const questionId = question._id as string;
+    const firstOptionId =
+      question.multipleChoice.options[0].id as string;
+    const correctOptionId =
+      question.multipleChoice.options[1].id as string;
+    const authorization =
+      `Bearer ${owner.accessToken}`;
+
+    const incorrect = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId}/attempts`,
+      )
+      .set("Authorization", authorization)
+      .send({
+        answer: {
+          type: "multiple-choice",
+          selectedOptionId: firstOptionId,
+        },
+      })
+      .expect(201);
+
+    expect(incorrect.body.data.attempt).toMatchObject({
+      answer: {
+        type: "multiple-choice",
+        selectedOptionId: firstOptionId,
+      },
+      evaluation: {
+        kind: "multiple-choice",
+        score: 0,
+        correct: false,
+        correctOptionId,
+      },
+    });
+
+    const correct = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId}/attempts`,
+      )
+      .set("Authorization", authorization)
+      .send({
+        answer: {
+          type: "multiple-choice",
+          selectedOptionId: correctOptionId,
+        },
+      })
+      .expect(201);
+
+    expect(correct.body.data.attempt).toMatchObject({
+      answer: {
+        type: "multiple-choice",
+        selectedOptionId: correctOptionId,
+      },
+      evaluation: {
+        kind: "multiple-choice",
+        score: 100,
+        correct: true,
+        correctOptionId,
+      },
+    });
+
+    const invalidOption = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId}/attempts`,
+      )
+      .set("Authorization", authorization)
+      .send({
+        answer: {
+          type: "multiple-choice",
+          selectedOptionId: "not-a-real-option",
+        },
+      })
+      .expect(400);
+
+    expect(invalidOption.body.error).toMatchObject({
+      code: "INTERVIEW_MCQ_OPTION_INVALID",
+    });
+
+    const textAnswer = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId}/attempts`,
+      )
+      .set("Authorization", authorization)
+      .send({
+        answer: {
+          type: "short-answer",
+          text: "This must not be accepted for MCQ.",
+        },
+      })
+      .expect(409);
+
+    expect(textAnswer.body.error).toMatchObject({
+      code: "INTERVIEW_ATTEMPT_TYPE_MISMATCH",
+    });
+
+    const storedAttempts = await InterviewAttemptModel.find({
+      userId: new Types.ObjectId(owner.userId),
+      sessionId: new Types.ObjectId(sessionId),
+      questionId: new Types.ObjectId(questionId),
+    }).lean();
+
+    expect(storedAttempts).toHaveLength(2);
+    expect(JSON.stringify(storedAttempts)).not.toContain(
+      "correctOptionId",
+    );
+
+    const page = await request(app)
+      .get(`/api/v1/interview-sessions/${sessionId}/attempts`)
+      .set("Authorization", authorization)
+      .expect(200);
+
+    expect(page.body.data.attempts).toHaveLength(2);
+    for (const attempt of page.body.data.attempts) {
+      expect(
+        attempt.evaluation.correctOptionId,
+      ).toBe(correctOptionId);
+    }
+
+    const detail = await request(app)
+      .get(
+        `/api/v1/interview-sessions/${sessionId}/attempts/${incorrect.body.data.attempt._id}`,
+      )
+      .set("Authorization", authorization)
+      .expect(200);
+
+    expect(detail.body.data.attempt.evaluation).toMatchObject({
+      kind: "multiple-choice",
+      score: 0,
+      correct: false,
+      correctOptionId,
+    });
+  });
+});

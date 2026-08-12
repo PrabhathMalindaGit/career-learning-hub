@@ -22,6 +22,7 @@ import {
   effectiveInterviewQuestionType,
   type InterviewMultipleChoiceStorage,
   type InterviewQuestionType,
+  type TypedInterviewAnswer,
 } from "./interviewQuestion.types.js";
 import {
   InterviewSessionModel,
@@ -51,6 +52,10 @@ export type ManualQuestionInput =
       question: string;
       modelAnswer?: string;
     };
+
+export type RecordInterviewAttemptInput =
+  | { answerText: string }
+  | { answer: TypedInterviewAnswer };
 
 function canonicalizeManualQuestion(
   question: ManualQuestionInput,
@@ -576,6 +581,139 @@ export function serializeQuestionDetail(
   return result;
 }
 
+function interviewAttemptRecord(
+  attempt:
+    | InterviewAttemptDocument
+    | Record<string, unknown>,
+): Record<string, unknown> {
+  if (
+    "toObject" in attempt &&
+    typeof attempt.toObject === "function"
+  ) {
+    return (
+      attempt as InterviewAttemptDocument
+    ).toObject<Record<string, unknown>>();
+  }
+
+  return attempt as Record<string, unknown>;
+}
+
+function correctOptionIdForQuestion(
+  question:
+    | InterviewQuestionDocument
+    | Record<string, unknown>
+    | undefined,
+): string | undefined {
+  if (!question) return undefined;
+
+  const value = interviewQuestionRecord(question);
+  const questionType = effectiveInterviewQuestionType({
+    questionType: value.questionType as
+      | InterviewQuestionType
+      | undefined,
+  });
+
+  if (questionType !== "multiple-choice") {
+    return undefined;
+  }
+
+  const multipleChoice = value.multipleChoice as
+    | {
+        options?: Array<{ id?: unknown }>;
+        correctOptionId?: unknown;
+      }
+    | undefined;
+
+  if (
+    typeof multipleChoice?.correctOptionId !== "string" ||
+    !multipleChoice.options?.some(
+      (option) =>
+        String(option.id ?? "") ===
+        multipleChoice.correctOptionId,
+    )
+  ) {
+    return undefined;
+  }
+
+  return multipleChoice.correctOptionId;
+}
+
+export function serializeInterviewAttempt(input: {
+  attempt:
+    | InterviewAttemptDocument
+    | Record<string, unknown>;
+  question?:
+    | InterviewQuestionDocument
+    | Record<string, unknown>;
+  revealCorrectOption: boolean;
+}): Record<string, unknown> {
+  const value = interviewAttemptRecord(input.attempt);
+
+  const result: Record<string, unknown> = {
+    _id: value._id,
+    userId: value.userId,
+    sessionId: value.sessionId,
+    questionId: value.questionId,
+    status: value.status,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+  };
+
+  if (value.answerText !== undefined) {
+    result.answerText = value.answerText;
+  }
+
+  if (value.answer !== undefined) {
+    result.answer = value.answer;
+  }
+
+  if (value.evaluation !== undefined) {
+    const evaluation = value.evaluation as {
+      kind?: unknown;
+      score?: unknown;
+      correct?: unknown;
+    };
+
+    const publicEvaluation: Record<string, unknown> = {
+      kind: evaluation.kind,
+      score: evaluation.score,
+      correct: evaluation.correct,
+    };
+
+    if (
+      input.revealCorrectOption &&
+      input.question &&
+      String(
+        interviewQuestionRecord(input.question)._id ?? "",
+      ) === String(value.questionId ?? "")
+    ) {
+      const correctOptionId =
+        correctOptionIdForQuestion(input.question);
+
+      if (correctOptionId) {
+        publicEvaluation.correctOptionId =
+          correctOptionId;
+      }
+    }
+
+    result.evaluation = publicEvaluation;
+  }
+
+  if (value.feedbackJobId !== undefined) {
+    result.feedbackJobId = value.feedbackJobId;
+  }
+
+  if (value.feedback !== undefined) {
+    result.feedback = value.feedback;
+  }
+
+  if (value.feedbackError !== undefined) {
+    result.feedbackError = value.feedbackError;
+  }
+
+  return result;
+}
+
 export async function setQuestionPinned(input: {
   question: InterviewQuestionDocument;
   isPinned: boolean;
@@ -594,14 +732,9 @@ export async function setQuestionNotes(input: {
   return input.question;
 }
 
-export async function recordInterviewAttempt(input: {
-  userId: string;
-  session: InterviewSessionDocument;
-  question: InterviewQuestionDocument;
-  answerText: string;
-}): Promise<InterviewAttemptDocument> {
+function assertAnswerWithinLimit(answer: string): void {
   if (
-    input.answerText.length >
+    answer.length >
     env.INTERVIEW_MAX_ANSWER_CHARACTERS
   ) {
     throw new AppError(
@@ -610,12 +743,115 @@ export async function recordInterviewAttempt(input: {
       `The answer exceeds the ${env.INTERVIEW_MAX_ANSWER_CHARACTERS}-character limit.`,
     );
   }
+}
+
+function rejectAttemptTypeMismatch(): never {
+  throw new AppError(
+    409,
+    "INTERVIEW_ATTEMPT_TYPE_MISMATCH",
+    "The submitted answer does not match this interview question type.",
+  );
+}
+
+export async function recordInterviewAttempt(input: {
+  userId: string;
+  session: InterviewSessionDocument;
+  question: InterviewQuestionDocument;
+  submission: RecordInterviewAttemptInput;
+}): Promise<InterviewAttemptDocument> {
+  const effectiveType = effectiveInterviewQuestionType(
+    input.question,
+  );
+
+  let answerFields:
+    | { answerText: string }
+    | {
+        answer: TypedInterviewAnswer;
+        evaluation?: {
+          kind: "multiple-choice";
+          score: 0 | 100;
+          correct: boolean;
+        };
+      };
+
+  if (effectiveType === "legacy-open-response") {
+    if (!("answerText" in input.submission)) {
+      rejectAttemptTypeMismatch();
+    }
+
+    assertAnswerWithinLimit(
+      input.submission.answerText,
+    );
+    answerFields = {
+      answerText: input.submission.answerText,
+    };
+  } else {
+    if (!("answer" in input.submission)) {
+      rejectAttemptTypeMismatch();
+    }
+
+    const answer = input.submission.answer;
+
+    if (answer.type !== effectiveType) {
+      rejectAttemptTypeMismatch();
+    }
+
+    if (answer.type === "multiple-choice") {
+      const multipleChoice =
+        input.question.multipleChoice;
+
+      if (
+        !multipleChoice ||
+        !multipleChoice.options.some(
+          (option) =>
+            option.id ===
+            multipleChoice.correctOptionId,
+        )
+      ) {
+        throw new AppError(
+          409,
+          "INTERVIEW_MCQ_CONFIGURATION_INVALID",
+          "This Multiple Choice question is not configured correctly.",
+        );
+      }
+
+      const selectedOption =
+        multipleChoice.options.find(
+          (option) =>
+            option.id === answer.selectedOptionId,
+        );
+
+      if (!selectedOption) {
+        throw new AppError(
+          400,
+          "INTERVIEW_MCQ_OPTION_INVALID",
+          "Select one of the available Multiple Choice options.",
+        );
+      }
+
+      const correct =
+        selectedOption.id ===
+        multipleChoice.correctOptionId;
+
+      answerFields = {
+        answer,
+        evaluation: {
+          kind: "multiple-choice",
+          score: correct ? 100 : 0,
+          correct,
+        },
+      };
+    } else {
+      assertAnswerWithinLimit(answer.text);
+      answerFields = { answer };
+    }
+  }
 
   const attempt = await InterviewAttemptModel.create({
     userId: input.userId,
     sessionId: input.session._id,
     questionId: input.question._id,
-    answerText: input.answerText,
+    ...answerFields,
     status: "recorded",
   });
 
@@ -664,8 +900,40 @@ export async function listInterviewAttempts(
     InterviewAttemptModel.countDocuments(filter),
   ]);
 
+  const questionIds = [
+    ...new Set(
+      attempts.map((attempt) =>
+        String(attempt.questionId),
+      ),
+    ),
+  ];
+
+  const questions =
+    questionIds.length === 0
+      ? []
+      : await InterviewQuestionModel.find({
+          _id: { $in: questionIds },
+          userId,
+          sessionId: session._id,
+        }).lean();
+
+  const questionById = new Map(
+    questions.map((question) => [
+      String(question._id),
+      question,
+    ]),
+  );
+
   return {
-    attempts,
+    attempts: attempts.map((attempt) =>
+      serializeInterviewAttempt({
+        attempt,
+        question: questionById.get(
+          String(attempt.questionId),
+        ),
+        revealCorrectOption: true,
+      }),
+    ),
     pagination: {
       page: input.page,
       limit: input.limit,
