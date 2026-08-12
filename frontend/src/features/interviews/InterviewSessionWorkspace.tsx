@@ -8,6 +8,7 @@ import {
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
+import { Pager } from "../../components/Pager";
 import { JobResilienceActions } from "../jobs/JobResilienceActions";
 import {
   cancelJob,
@@ -49,6 +50,14 @@ const PAGE_SIZE = 20;
 const ANSWER_MAX_LENGTH = 12_000;
 const CANONICAL_REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{16,128}$/;
 const FEEDBACK_READY_MESSAGE = "Practice feedback is ready.";
+
+const attemptStatusLabels: Record<InterviewAttemptStatus, string> = {
+  recorded: "Saved",
+  "feedback-queued": "Feedback queued",
+  "feedback-processing": "Feedback processing",
+  "feedback-completed": "Feedback ready",
+  "feedback-failed": "Feedback unavailable",
+};
 
 type SafeError = { message: string; requestId?: string };
 type ProviderOperation = {
@@ -1305,7 +1314,7 @@ export function InterviewSessionWorkspace() {
       setSelectedAttempt(created);
       setAttemptReloadKey((key) => key + 1);
       setStatusMessage(
-        "Immutable attempt recorded. Another try will create a new record.",
+        "Attempt saved. Another submission will be saved separately.",
       );
     } catch (error) {
       if (
@@ -2027,11 +2036,11 @@ export function InterviewSessionWorkspace() {
                   aria-labelledby="attempt-composer-title"
                 >
                   <h3 id="attempt-composer-title">
-                    Record another written attempt
+                    Save another written attempt
                   </h3>
                   <p>
-                    Recording creates an immutable practice record. Another
-                    try creates a separate attempt.
+                    Each submission is saved separately so you can review your
+                    practice over time.
                   </p>
                   <label
                     className="field-label interview-answer-field"
@@ -2085,9 +2094,7 @@ export function InterviewSessionWorkspace() {
                     aria-busy={answerBusy}
                     onClick={() => void submitAttempt()}
                   >
-                    {answerBusy
-                      ? "Recording…"
-                      : "Record immutable attempt"}
+                    {answerBusy ? "Saving…" : "Save attempt"}
                   </button>
                 </section>
               ) : null}
@@ -2105,8 +2112,10 @@ export function InterviewSessionWorkspace() {
         >
           <div className="interview-section-heading">
             <div>
-              <p className="interview-kicker">Immutable record</p>
-              <h2 id="attempt-history-title">Attempt history</h2>
+              <h2 id="attempt-history-title">Saved attempts</h2>
+              <p className="interview-saved-attempts-copy">
+                Review each saved submission and any available feedback.
+              </p>
             </div>
             {attemptPagination ? (
               <span className="interview-chip">
@@ -2128,15 +2137,13 @@ export function InterviewSessionWorkspace() {
               }}
             >
               <option value="">All statuses</option>
-              <option value="recorded">Recorded</option>
+              <option value="recorded">Saved</option>
               <option value="feedback-queued">Feedback queued</option>
               <option value="feedback-processing">
                 Feedback processing
               </option>
-              <option value="feedback-completed">
-                Feedback completed
-              </option>
-              <option value="feedback-failed">Feedback failed</option>
+              <option value="feedback-completed">Feedback ready</option>
+              <option value="feedback-failed">Feedback unavailable</option>
             </select>
           </label>
           {attemptLoading ? (
@@ -2158,7 +2165,7 @@ export function InterviewSessionWorkspace() {
             </div>
           ) : attempts.length === 0 ? (
             <p className="interview-state">
-              No written attempts have been recorded for this question.
+              No saved written attempts for this question yet.
             </p>
           ) : (
             <ol className="interview-attempt-list">
@@ -2167,54 +2174,53 @@ export function InterviewSessionWorkspace() {
                   <button
                     type="button"
                     aria-pressed={selectedAttemptId === attempt.id}
-                    aria-label={`Open attempt ${index + 1} from ${new Date(
+                    aria-label={`Review attempt ${index + 1} submitted ${new Date(
                       attempt.createdAt,
                     ).toLocaleString()}`}
                     onClick={() => selectAttempt(attempt.id)}
                   >
                     <strong>Attempt {index + 1}</strong>
-                    <span>{attempt.status.replaceAll("-", " ")}</span>
+                    <span>{attemptStatusLabels[attempt.status]}</span>
+                    {attempt.feedback ? (
+                      <span>{attempt.feedback.score}/100</span>
+                    ) : null}
                     <small>
-                      {new Date(attempt.createdAt).toLocaleString()}
+                      Submitted {new Date(attempt.createdAt).toLocaleString()}
                     </small>
+                    <span className="interview-attempt-list__review">
+                      Review attempt
+                    </span>
                   </button>
                 </li>
               ))}
             </ol>
           )}
-          <div className="interview-pagination">
-            <button
-              type="button"
-              disabled={attemptLoading || attemptPage <= 1}
-              onClick={() => setAttemptPage((current) => current - 1)}
-            >
-              Previous
-            </button>
-            <span>Page {attemptPage}</span>
-            <button
-              type="button"
-              disabled={
-                attemptLoading ||
-                !attemptPagination ||
-                attemptPagination.pages === 0 ||
-                attemptPage >= attemptPagination.pages
+          {attemptPagination && attemptPagination.pages > 1 ? (
+            <Pager
+              className="interview-pagination"
+              label="Saved attempt pages"
+              currentPage={`Page ${attemptPage}`}
+              previousLabel="Previous"
+              nextLabel="Next"
+              previousDisabled={attemptLoading || attemptPage <= 1}
+              nextDisabled={
+                attemptLoading || attemptPage >= attemptPagination.pages
               }
-              onClick={() => setAttemptPage((current) => current + 1)}
-            >
-              Next
-            </button>
-          </div>
+              busy={attemptLoading}
+              onPrevious={() => setAttemptPage((current) => current - 1)}
+              onNext={() => setAttemptPage((current) => current + 1)}
+            />
+          ) : null}
 
           {selectedAttempt ? (
             <article className="interview-attempt-detail">
               <div className="interview-section-heading">
-                <h3>Recorded answer</h3>
-                <span>{selectedAttempt.status.replaceAll("-", " ")}</span>
+                <h3>Saved answer</h3>
+                <span>{attemptStatusLabels[selectedAttempt.status]}</span>
               </div>
               <p>{selectedAttempt.answerText}</p>
               <small>
-                Recorded{" "}
-                {new Date(selectedAttempt.createdAt).toLocaleString()}
+                Submitted {new Date(selectedAttempt.createdAt).toLocaleString()}
               </small>
               {feedbackPanel(selectedAttempt)}
               {editable && !selectedAttempt.feedback ? (
