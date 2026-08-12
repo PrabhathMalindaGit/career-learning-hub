@@ -938,6 +938,49 @@
   color: var(--text-muted);
 }
 
+.interview-saved-attempts-copy {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.interview-attempt-list button[aria-pressed="true"] {
+  border-color: #6a9f7c;
+  background: #edf6f0;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.interview-attempt-list button[aria-pressed="true"] strong {
+  color: #174e2d;
+}
+
+.interview-attempt-list__review {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 2px;
+  color: #245e3c !important;
+  font-weight: 800;
+  text-transform: none !important;
+}
+
+.interview-attempt-detail > small {
+  color: var(--text-muted);
+}
+
+.interview-attempt-detail .interview-section-heading > span {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #296544;
+  background: #ecf2ee;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: none;
+}
+
 .interview-feedback-panel {
   margin-top: 12px;
   padding: 18px;
