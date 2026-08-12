@@ -5,8 +5,24 @@ import { validateAssetFile } from "../../modules/assets/asset.policy.js";
 const MAX = 10 * 1024 * 1024;
 
 function png(width: number, height: number): Buffer {
+  const buffer = Buffer.alloc(33);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(buffer, 0);
+  buffer.writeUInt32BE(13, 8);
+  Buffer.from("IHDR", "ascii").copy(buffer, 12);
+  buffer.writeUInt32BE(width, 16);
+  buffer.writeUInt32BE(height, 20);
+  buffer[24] = 8;
+  buffer[25] = 2;
+  buffer[26] = 0;
+  buffer[27] = 0;
+  buffer[28] = 0;
+  return buffer;
+}
+
+function truncatedPngIhdr(width: number, height: number): Buffer {
   const buffer = Buffer.alloc(24);
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(buffer, 0);
+  buffer.writeUInt32BE(13, 8);
   Buffer.from("IHDR", "ascii").copy(buffer, 12);
   buffer.writeUInt32BE(width, 16);
   buffer.writeUInt32BE(height, 20);
@@ -65,6 +81,10 @@ describe("Candidate Photo asset policy", () => {
     expect(validate(mimeType, buffer)).toEqual({
       checksumSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
+  });
+
+  it("rejects a truncated PNG IHDR chunk even when dimensions are present", () => {
+    expect(() => validate("image/png", truncatedPngIhdr(800, 1000))).toThrow();
   });
 
   it("rejects resume-photo through the generic upload schema", () => {
