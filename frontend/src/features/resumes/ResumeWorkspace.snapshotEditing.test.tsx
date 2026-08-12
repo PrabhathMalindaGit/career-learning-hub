@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   createMemoryRouter,
@@ -145,6 +145,61 @@ describe("ResumeWorkspace snapshot editing", () => {
     });
     expect(fullName.value).toBe("Edited after snapshot");
     expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    expect(
+      (screen.getByRole("button", {
+        name: "Save new version",
+      }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+    expect(resumeApi.saveResumeVersion).not.toHaveBeenCalled();
+  });
+
+  it("keeps a late snapshot response from reopening after editing starts", async () => {
+    let resolveSnapshot:
+      | ((value: ResumeWorkspaceData["version"]) => void)
+      | undefined;
+    vi.mocked(resumeApi.fetchResumeVersion).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSnapshot = resolve;
+        }),
+    );
+
+    renderWorkspace();
+    const user = userEvent.setup();
+    const fullName = (await screen.findByLabelText(
+      "Full name",
+    )) as HTMLInputElement;
+
+    await user.click(
+      screen.getByRole("button", { name: "View current saved version 1" }),
+    );
+    expect(
+      await screen.findByRole("heading", {
+        name: "Loading selected saved version",
+      }),
+    ).not.toBeNull();
+
+    await user.clear(fullName);
+    await user.type(fullName, "Edited while snapshot loads");
+
+    expect(fullName.value).toBe("Edited while snapshot loads");
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+
+    await act(async () => {
+      resolveSnapshot?.(workspace().version);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "Read-only version 1" }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole("heading", {
+          name: "Loading selected saved version",
+        }),
+      ).toBeNull();
+    });
     expect(
       (screen.getByRole("button", {
         name: "Save new version",
