@@ -23,13 +23,22 @@ function renderControls(overrides: Partial<Props> = {}) {
 }
 
 describe("ResumeCandidatePhotoControls", () => {
-  it("offers an optional local file chooser when no photo exists", () => {
+  it("offers a styled accessible local file chooser when no photo exists", () => {
     renderControls();
     expect(screen.getByRole("heading", { name: "Candidate photo" })).toBeTruthy();
     expect(screen.getByText("Not added")).toBeTruthy();
-    expect(screen.getByLabelText("Choose photo").getAttribute("accept")).toBe(
+
+    const input = screen.getByLabelText("Choose photo");
+    expect(input.getAttribute("accept")).toBe(
       "image/jpeg,image/png,image/webp",
     );
+    expect(input.classList.contains("resume-candidate-photo-file-input")).toBe(true);
+    expect(
+      screen
+        .getByText("Choose photo")
+        .classList.contains("resume-candidate-photo-file-button"),
+    ).toBe(true);
+    expect(screen.getByText("Select an image from your device.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Remove photo" })).toBeNull();
   });
 
@@ -44,7 +53,7 @@ describe("ResumeCandidatePhotoControls", () => {
     expect(onSelectFile).toHaveBeenCalledWith(file);
   });
 
-  it("shows a non-redundant thumbnail and Hide when the photo is visible", () => {
+  it("shows a polished Replace photo trigger and non-redundant thumbnail when visible", () => {
     renderControls({
       hasPhoto: true,
       visible: true,
@@ -53,6 +62,15 @@ describe("ResumeCandidatePhotoControls", () => {
     expect(screen.getByAltText("Candidate photo preview").getAttribute("src")).toBe(
       "blob:canonical",
     );
+    expect(screen.getByLabelText("Replace photo")).toBeTruthy();
+    expect(
+      screen
+        .getByText("Replace photo")
+        .classList.contains("resume-candidate-photo-file-button"),
+    ).toBe(true);
+    expect(
+      screen.getByText("Select a new image to replace the current photo."),
+    ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Hide from Resume" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Show on Resume" })).toBeNull();
   });
