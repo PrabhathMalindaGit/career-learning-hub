@@ -1,7 +1,10 @@
 import { Types } from "mongoose";
+import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { app } from "../../app.js";
 import { InterviewAttemptModel } from "../../modules/interviews/interviewAttempt.model.js";
 import { InterviewQuestionModel } from "../../modules/interviews/interviewQuestion.model.js";
+import { registerTestUser } from "../helpers/auth.js";
 
 describe("Interview question typed storage compatibility", () => {
   it("persists a modern Multiple Choice question without nested ObjectIds", async () => {
@@ -162,4 +165,199 @@ describe("Interview question typed storage compatibility", () => {
     expect(attemptAfter).not.toHaveProperty("answer");
     expect(attemptAfter).not.toHaveProperty("evaluation");
   });
+});
+
+
+describe("Interview question public serialization", () => {
+  it("serializes historical questions as legacy-open-response in list and detail responses", async () => {
+    const owner = await registerTestUser(app, {
+      email: "interview-legacy-question-owner@example.com",
+      displayName: "Interview Legacy Question Owner",
+    });
+
+    const createdSession = await request(app)
+      .post("/api/v1/interview-sessions")
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .send({
+        title: "Legacy question compatibility",
+        targetRole: "Software Engineer",
+        experienceLevel: "Junior",
+        focusTopics: [],
+        skillGaps: [],
+        mode: "study",
+        manualQuestions: [],
+      })
+      .expect(201);
+
+    const sessionId =
+      createdSession.body.data.session._id as string;
+    const questionId = new Types.ObjectId();
+    const now = new Date();
+
+    await InterviewQuestionModel.collection.insertOne({
+      _id: questionId,
+      userId: new Types.ObjectId(owner.userId),
+      sessionId: new Types.ObjectId(sessionId),
+      source: "manual",
+      category: "Behavioral",
+      difficulty: "medium",
+      question: "Tell me about a difficult project.",
+      questionFingerprint: "c".repeat(64),
+      explanationKeyPoints: [],
+      isPinned: true,
+      userNotes: "Keep the answer concise.",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const listResponse = await request(app)
+      .get(`/api/v1/interview-sessions/${sessionId}/questions`)
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .expect(200);
+
+    expect(listResponse.body.data.questions).toHaveLength(1);
+
+    expect(listResponse.body.data.questions[0]).toMatchObject({
+      _id: questionId.toString(),
+      category: "Behavioral",
+      difficulty: "medium",
+      question: "Tell me about a difficult project.",
+      isPinned: true,
+      userNotes: "Keep the answer concise.",
+      questionType: "legacy-open-response",
+    });
+
+    const detailResponse = await request(app)
+      .get(
+        `/api/v1/interview-sessions/${sessionId}/questions/${questionId.toString()}`,
+      )
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .expect(200);
+
+    expect(detailResponse.body.data.question).toMatchObject({
+      _id: questionId.toString(),
+      category: "Behavioral",
+      difficulty: "medium",
+      question: "Tell me about a difficult project.",
+      isPinned: true,
+      userNotes: "Keep the answer concise.",
+      questionType: "legacy-open-response",
+    });
+  });
+
+  it("serializes initial manual questions returned from session creation", async () => {
+    const owner = await registerTestUser(app, {
+      email: "interview-created-question-serialization@example.com",
+      displayName: "Created Question Serialization",
+    });
+
+    const response = await request(app)
+      .post("/api/v1/interview-sessions")
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .send({
+        title: "Created question serialization",
+        targetRole: "Software Engineer",
+        experienceLevel: "Junior",
+        focusTopics: [],
+        skillGaps: [],
+        mode: "study",
+        manualQuestions: [
+          {
+            category: "Behavioral",
+            difficulty: "medium",
+            question:
+              "Tell me about a project that challenged you.",
+            modelAnswer:
+              "Use a concise situation-action-result structure.",
+          },
+        ],
+      })
+      .expect(201);
+
+    expect(response.body.data.questions).toHaveLength(1);
+
+    const question = response.body.data.questions[0];
+
+    expect(question).toMatchObject({
+      category: "Behavioral",
+      difficulty: "medium",
+      question:
+        "Tell me about a project that challenged you.",
+      questionType: "legacy-open-response",
+    });
+
+    expect(question).not.toHaveProperty(
+      "questionFingerprint",
+    );
+  });
+
+  it("serializes a question returned from manual question creation", async () => {
+    const owner = await registerTestUser(app, {
+      email: "interview-added-question-serialization@example.com",
+      displayName: "Added Question Serialization",
+    });
+
+    const createdSession = await request(app)
+      .post("/api/v1/interview-sessions")
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .send({
+        title: "Added question serialization",
+        targetRole: "Software Engineer",
+        experienceLevel: "Junior",
+        focusTopics: [],
+        skillGaps: [],
+        mode: "written-practice",
+        manualQuestions: [],
+      })
+      .expect(201);
+
+    const sessionId =
+      createdSession.body.data.session._id as string;
+
+    const response = await request(app)
+      .post(
+        `/api/v1/interview-sessions/${sessionId}/questions`,
+      )
+      .set(
+        "Authorization",
+        `Bearer ${owner.accessToken}`,
+      )
+      .send({
+        category: "Technical",
+        difficulty: "medium",
+        question:
+          "Explain how event-loop scheduling works.",
+        modelAnswer:
+          "Explain tasks, microtasks, and ordering.",
+      })
+      .expect(201);
+
+    expect(response.body.data.question).toMatchObject({
+      category: "Technical",
+      difficulty: "medium",
+      question:
+        "Explain how event-loop scheduling works.",
+      questionType: "legacy-open-response",
+    });
+
+    expect(
+      response.body.data.question,
+    ).not.toHaveProperty("questionFingerprint");
+  });
+
 });

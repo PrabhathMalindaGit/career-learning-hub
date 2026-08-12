@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { env } from "../../config/env.js";
 import { enqueueJob } from "../../jobs/job.queue.js";
 import { AppError } from "../../shared/appError.js";
+import { InterviewAttemptModel } from "./interviewAttempt.model.js";
 import {
   addManualQuestion,
   createInterviewSession,
@@ -10,10 +11,38 @@ import {
   listInterviewSessions,
   recordInterviewAttempt,
   serializeQuestionDetail,
+  serializeQuestionSummary,
   setQuestionNotes,
   setQuestionPinned,
   updateInterviewSessionStatus,
 } from "./interview.service.js";
+
+async function hasOwnedAttemptForQuestion(
+  request: Request,
+): Promise<boolean> {
+  const attempt = await InterviewAttemptModel.exists({
+    userId: request.auth!.userId,
+    sessionId: request.interviewSession!._id,
+    questionId: request.interviewQuestion!._id,
+  });
+
+  return Boolean(attempt);
+}
+
+async function shouldRevealQuestionStudyMaterial(
+  request: Request,
+): Promise<boolean> {
+  const question = request.interviewQuestion!;
+
+  if (question.questionType !== "multiple-choice") {
+    return (
+      request.interviewSession!.mode === "study" ||
+      Boolean(question.explanation)
+    );
+  }
+
+  return hasOwnedAttemptForQuestion(request);
+}
 import { resolveInterviewResumeVersion } from "./interviewAi.service.js";
 
 export async function createInterviewSessionController(
@@ -37,7 +66,12 @@ export async function createInterviewSessionController(
 
   response.status(201).json({
     success: true,
-    data: result,
+    data: {
+      session: result.session,
+      questions: result.questions.map((question) =>
+        serializeQuestionSummary(question),
+      ),
+    },
   });
 }
 
@@ -99,7 +133,13 @@ export async function addManualQuestionController(
 
   response.status(201).json({
     success: true,
-    data: { question },
+    data: {
+      question: serializeQuestionDetail(
+        question,
+        request.interviewSession!.mode === "study" ||
+          Boolean(question.explanation),
+      ),
+    },
   });
 }
 
@@ -129,13 +169,15 @@ export async function getInterviewQuestionController(
   request: Request,
   response: Response,
 ): Promise<void> {
+  const revealStudyMaterial =
+    await shouldRevealQuestionStudyMaterial(request);
+
   response.status(200).json({
     success: true,
     data: {
       question: serializeQuestionDetail(
         request.interviewQuestion!,
-        request.interviewSession!.mode === "study" ||
-          Boolean(request.interviewQuestion!.explanation),
+        revealStudyMaterial,
       ),
     },
   });
@@ -150,14 +192,16 @@ export async function setQuestionPinnedController(
     isPinned: request.body.isPinned,
   });
 
+  const revealStudyMaterial =
+    await shouldRevealQuestionStudyMaterial(request);
+
   response.status(200).json({
     success: true,
     data: {
       question: serializeQuestionDetail(
-          question,
-          request.interviewSession!.mode === "study" ||
-            Boolean(question.explanation),
-        ),
+        question,
+        revealStudyMaterial,
+      ),
     },
   });
 }
@@ -171,14 +215,16 @@ export async function setQuestionNotesController(
     notes: request.body.notes,
   });
 
+  const revealStudyMaterial =
+    await shouldRevealQuestionStudyMaterial(request);
+
   response.status(200).json({
     success: true,
     data: {
       question: serializeQuestionDetail(
-          question,
-          request.interviewSession!.mode === "study" ||
-            Boolean(question.explanation),
-        ),
+        question,
+        revealStudyMaterial,
+      ),
     },
   });
 }
@@ -242,12 +288,28 @@ export async function queueQuestionExplanationController(
   response: Response,
 ): Promise<void> {
   const question = request.interviewQuestion!;
+  const isMultipleChoice =
+    question.questionType === "multiple-choice";
+
+  if (
+    isMultipleChoice &&
+    !(await hasOwnedAttemptForQuestion(request))
+  ) {
+    throw new AppError(
+      409,
+      "INTERVIEW_MCQ_EXPLANATION_REQUIRES_ATTEMPT",
+      "Submit an attempt before requesting the Multiple Choice explanation.",
+    );
+  }
 
   if (question.explanation) {
     response.status(200).json({
       success: true,
       data: {
-        question: serializeQuestionDetail(question),
+        question: serializeQuestionDetail(
+          question,
+          true,
+        ),
         alreadyAvailable: true,
       },
     });

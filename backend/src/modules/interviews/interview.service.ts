@@ -18,6 +18,10 @@ import {
   type InterviewQuestionDocument,
 } from "./interviewQuestion.model.js";
 import {
+  effectiveInterviewQuestionType,
+  type InterviewQuestionType,
+} from "./interviewQuestion.types.js";
+import {
   InterviewSessionModel,
   type InterviewMode,
   type InterviewSessionDocument,
@@ -382,7 +386,9 @@ export async function listInterviewQuestions(
   ]);
 
   return {
-    questions,
+    questions: questions.map((question) =>
+      serializeQuestionSummary(question),
+    ),
     pagination: {
       page: input.page,
       limit: input.limit,
@@ -392,20 +398,116 @@ export async function listInterviewQuestions(
   };
 }
 
-export function serializeQuestionDetail(
-  question: InterviewQuestionDocument,
-  revealAnswers = false,
-) {
-  const value = question.toObject<Record<string, unknown>>();
-  delete value.questionFingerprint;
+export interface PublicMultipleChoiceQuestion {
+  options: Array<{
+    id: string;
+    text: string;
+  }>;
+}
 
-  if (!revealAnswers) {
-    delete value.modelAnswer;
-    delete value.explanation;
-    delete value.explanationKeyPoints;
+function interviewQuestionRecord(
+  question:
+    | InterviewQuestionDocument
+    | Record<string, unknown>,
+): Record<string, unknown> {
+  if (
+    "toObject" in question &&
+    typeof question.toObject === "function"
+  ) {
+    return (
+      question as InterviewQuestionDocument
+    ).toObject<Record<string, unknown>>();
   }
 
-  return value;
+  return question as Record<string, unknown>;
+}
+
+export function serializeQuestionSummary(
+  question:
+    | InterviewQuestionDocument
+    | Record<string, unknown>,
+): Record<string, unknown> {
+  const value = interviewQuestionRecord(question);
+
+  const questionType = effectiveInterviewQuestionType({
+    questionType: value.questionType as
+      | InterviewQuestionType
+      | undefined,
+  });
+
+  const result: Record<string, unknown> = {
+    _id: value._id,
+    sessionId: value.sessionId,
+    source: value.source,
+    category: value.category,
+    difficulty: value.difficulty,
+    question: value.question,
+    questionType,
+    isPinned: value.isPinned,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+  };
+
+  if (value.userNotes !== undefined) {
+    result.userNotes = value.userNotes;
+  }
+
+  if (questionType === "multiple-choice") {
+    const multipleChoice = value.multipleChoice as
+      | {
+          options?: Array<{
+            id?: unknown;
+            text?: unknown;
+          }>;
+        }
+      | undefined;
+
+    result.multipleChoice = {
+      options: (multipleChoice?.options ?? []).map(
+        (option) => ({
+          id: String(option.id ?? ""),
+          text: String(option.text ?? ""),
+        }),
+      ),
+    } satisfies PublicMultipleChoiceQuestion;
+  }
+
+  return result;
+}
+
+export function serializeQuestionDetail(
+  question: InterviewQuestionDocument,
+  revealStudyMaterial = false,
+): Record<string, unknown> {
+  const value = interviewQuestionRecord(question);
+  const result = serializeQuestionSummary(value);
+
+  if (!revealStudyMaterial) {
+    return result;
+  }
+
+  if (result.questionType === "multiple-choice") {
+    if (value.explanation !== undefined) {
+      result.explanation = value.explanation;
+      result.explanationKeyPoints =
+        value.explanationKeyPoints ?? [];
+    }
+
+    return result;
+  }
+
+  if (value.modelAnswer !== undefined) {
+    result.modelAnswer = value.modelAnswer;
+  }
+
+  if (value.explanation !== undefined) {
+    result.explanation = value.explanation;
+  }
+
+  result.explanationKeyPoints =
+    value.explanationKeyPoints ?? [];
+
+  return result;
 }
 
 export async function setQuestionPinned(input: {
