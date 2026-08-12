@@ -527,6 +527,9 @@ describe("InterviewSessionWorkspace", () => {
         ),
       )
       .mockResolvedValueOnce(attempt());
+    vi.mocked(interviewApi.fetchInterviewAttempt).mockResolvedValue(
+      attempt(),
+    );
     renderWorkspace();
     const answer = await screen.findByRole("textbox", {
       name: "Written answer",
@@ -578,10 +581,14 @@ describe("InterviewSessionWorkspace", () => {
         "I would use a durable queue and idempotency keys.",
       ),
     ).not.toBeNull();
+    const feedbackHeading = screen.getByRole("heading", {
+      name: "Model-generated practice guidance",
+    });
+    const feedback = feedbackHeading.closest("section");
+    expect(feedback).not.toBeNull();
     expect(
-      screen.getByText("Model-generated practice guidance"),
+      within(feedback as HTMLElement).getByText("76/100"),
     ).not.toBeNull();
-    expect(screen.getByText("76/100")).not.toBeNull();
     expect(
       screen.getByText(
         "This is not a hiring prediction, an objective evaluation, or a guarantee. Model guidance may be imperfect.",
