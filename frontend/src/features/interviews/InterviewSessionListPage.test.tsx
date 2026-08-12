@@ -1,4 +1,5 @@
 import {
+  cleanup,
   render,
   screen,
   waitFor,
@@ -273,28 +274,27 @@ describe("InterviewSessionListPage", () => {
     });
   });
 
-  it("hides pagination for zero or one page and shows it only for two or more pages", async () => {
-    const { unmount } = renderPage();
+  it("hides pagination for zero or one page", async () => {
+    renderPage();
     await screen.findByText(/No interview sessions yet\./);
     expect(
       screen.queryByRole("navigation", {
         name: "Interview session pages",
       }),
     ).toBeNull();
-    unmount();
+    cleanup();
 
     vi.mocked(interviewApi.listInterviewSessions).mockResolvedValue({
       sessions: [sessionSummary()],
       pagination: { page: 1, limit: 20, total: 1, pages: 1 },
     });
-    const onePage = renderPage();
+    renderPage();
     await screen.findByRole("list", { name: "Interview sessions" });
     expect(
       screen.queryByRole("navigation", {
         name: "Interview session pages",
       }),
     ).toBeNull();
-    onePage.unmount?.();
   });
 
   it("shows bounded Previous and Next controls when the server reports multiple pages", async () => {
