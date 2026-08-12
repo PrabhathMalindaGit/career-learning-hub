@@ -1,65 +1,63 @@
 # Current Execution Phase
 
-- Current execution phase: `PHASE 19A-4`
-- Name: `Candidate Photo Support`
+- Current execution phase: `PHASE 19B`
+- Name: `Interview Coach Refinements`
 - Status:
-  `IMPLEMENTED / FINAL REPAIRED AUTOMATED VERIFICATION PASSED /
-  HUMAN QA PASSED / PR #8 READY-FOR-REVIEW RECONCILIATION IN PROGRESS /
-  NOT MERGED`
-- Phase branch: `phase-19a-4-candidate-photo-support`
-- Phase start baseline: `ad10229aa64cc79b4503901d8b59ac127fac0a20`
-- Baseline subject: `Record Phase 19A-3 merge closeout`
+  `PLANNED / NOT STARTED`
+- Authoritative branch: `main`
+- Main baseline:
+  `7d153f8817004a9f0b62719fc2063ee974e3418e`
+- Main baseline subject:
+  `Merge PR #8: Complete Phase 19A-4 Candidate Photo Support`
 - Completed predecessor:
-  `PHASE 19A-3 — RESUME SAVE, RECOVERY & EXPORT WORKFLOW /
-  COMPLETED / HUMAN-APPROVED / MERGED`
-- Phase 19A-3 pull request: `PR #7 / MERGED`
-- Phase 19A-3 merge commit: `6d104cd502ad1e0d26d66a934deaa6306f0adddb`
-- Phase 19A-3 documentation-closeout baseline:
-  `ad10229aa64cc79b4503901d8b59ac127fac0a20`
-- Phase 19A-4 conversational design:
-  `HUMAN-APPROVED / FROZEN`
-- Phase 19A-4 design approval token:
-  `PHASE_19A4_CANDIDATE_PHOTO_SUPPORT_DESIGN_APPROVED`
-- Design approval token accepted: `YES`
-- Selected architecture:
-  `APPROACH A — BOUNDED EXTENSION OF THE EXISTING PRIVATE ASSET ARCHITECTURE`
-- Design specification:
-  `docs/superpowers/specs/2026-08-11-resume-candidate-photo-support-design.md`
-- Frozen design fidelity review: `PASSED / ACCEPTED`
-- Implementation plan:
-  `docs/superpowers/plans/2026-08-12-resume-candidate-photo-support.md`
-- Implementation:
-  `COMPLETE`
-- Final executable checkpoint:
+  `PHASE 19A — RESUME STUDIO REFINEMENTS / COMPLETED / MERGED`
+- Phase 19A completion:
+  `19A-1 RESUME EDITOR WORKSPACE — COMPLETED /
+  19A-2 RESUME COLLECTION, CREATION & GUIDED ENTRY — COMPLETED /
+  19A-3 RESUME SAVE, RECOVERY & EXPORT — COMPLETED /
+  19A-4 CANDIDATE PHOTO SUPPORT — COMPLETED / MERGED`
+- Phase 19A-4 pull request:
+  `PR #8 — MERGED`
+- Phase 19A-4 merge commit:
+  `7d153f8817004a9f0b62719fc2063ee974e3418e`
+- Phase 19A-4 final executable checkpoint:
   `ff7e84572d029f01cf61f4fee873f11204a6a75e`
-- Final repaired automated verification:
+- Phase 19A-4 final automated verification:
   `FRONTEND 906/906 / BACKEND UNIT 206/206 /
   BACKEND INTEGRATION 193/193 / BACKEND SECURITY 36/36 /
   TOTAL 1,341/1,341 PASS / TYPECHECKS PASS / PRODUCTION BUILD PASS /
   GIT DIFF CHECK PASS / CLEAN WORKTREE`
-- Human visual/functional QA:
+- Phase 19A-4 human visual/functional QA:
   `PASSED`
-- PR-review repairs:
-  `MALFORMED PNG IHDR ACCEPTANCE — REPAIRED / VERIFIED /
-  GENERIC DELETION OF ACTIVE ATTACHED CANDIDATE PHOTO — REPAIRED / VERIFIED`
+- Phase 19A-4 PR-review findings:
+  `ALL RESOLVED`
 - Phase 19A-4 closeout record:
   `docs/planning/PHASE_19A_4_CANDIDATE_PHOTO_SUPPORT_CLOSEOUT.md`
-- Pull request:
-  `PR #8 — COMPLETE PHASE 19A-4 CANDIDATE PHOTO SUPPORT`
-- Pull request state:
-  `DRAFT PENDING FINAL DOCUMENTATION RECONCILIATION / OPEN / NOT MERGED`
-- Merge authorization:
-  `NOT GRANTED — SEPARATE EXPLICIT OPERATOR APPROVAL REQUIRED`
-- Deployment:
-  `NOT PART OF PHASE 19A-4 CLOSEOUT`
-- Main branch:
-  `UNCHANGED`
+- Phase 19A overall status:
+  `COMPLETED`
+- Phase 19B implementation:
+  `NOT STARTED`
+- Phase 19B original issue allocation:
+  `CLH-UX-INTERVIEW-006 THROUGH CLH-UX-INTERVIEW-010 /
+  CLH-FEATURE-INTERVIEW-011 /
+  CLH-UX-INTERVIEW-012`
+- Phase 19B question-type feature rule:
+  `CLH-FEATURE-INTERVIEW-011 REQUIRES A BOUNDED ARCHITECTURE AUDIT /
+  DESIGN DECISION BEFORE IMPLEMENTATION`
 - Next gate:
-  `FINAL DOCUMENTATION RECONCILIATION → RESOLVE GOVERNANCE REVIEW THREAD →
-  MARK PR #8 READY FOR REVIEW`
-- Phase 19B through Phase 19H status: `PLANNED / INACTIVE`
-- Phase 20 and Phase 21 status: `PLANNED / INACTIVE`
-- Historical execution statements below do not override this Phase 19A-4
+  `PHASE 19B REPOSITORY PREFLIGHT / CURRENT INTERVIEW ARCHITECTURE REVIEW /
+  BOUNDED SCOPE CONFIRMATION`
+- Deployment:
+  `NO NEW DEPLOYMENT ACTION IS AUTHORIZED OR REQUIRED BY THIS
+  POST-MERGE GOVERNANCE CLOSEOUT`
+- Phase 19C through Phase 19H status:
+  `PLANNED / INACTIVE`
+- Phase 20 and Phase 21 status:
+  `PLANNED / INACTIVE`
+- Deferred item:
+  `CLH-FEATURE-AUTH-049 — THIRD-PARTY OAUTH /
+  SEPARATE FUTURE AUTHENTICATION DESIGN AND APPROVAL`
+- Historical execution statements below do not override this Phase 19B
   current-authority block.
 
 ## Completed predecessor: G-5 and staging closeout

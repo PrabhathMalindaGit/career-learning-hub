@@ -2,11 +2,11 @@
 
 ## Status
 
-`IMPLEMENTED / FINAL REPAIRED AUTOMATED VERIFICATION PASSED / HUMAN QA PASSED / PR REVIEW FINDINGS RESOLVED / READY FOR REVIEW / NOT MERGED`
+`COMPLETED / MERGED / FINAL REPAIRED AUTOMATED VERIFICATION PASSED / HUMAN QA PASSED / PR REVIEW FINDINGS RESOLVED`
 
-Phase 19A-4 is implementation-complete and verified on the feature branch. Candidate Photo support, the Resume snapshot-editing repairs discovered during QA/review, and both P2 findings raised during PR review are repaired and verified. The controlling `CURRENT_PHASE.md` pre-implementation state was reconciled in documentation commit `7c96b52c4fb70ffc8de4ada7d6bb0b9b32d7de88`.
+Phase 19A-4 is complete, verified, human-approved, and merged into `main`. Candidate Photo support, the Resume snapshot-editing repairs discovered during QA/review, and both P2 findings raised during PR review were repaired and verified before merge. The controlling `CURRENT_PHASE.md` pre-implementation state was reconciled in documentation commit `7c96b52c4fb70ffc8de4ada7d6bb0b9b32d7de88`.
 
-No merge or deployment is authorized by this record.
+The operator separately authorized the merge after the completed verification and review gates. PR #8 was merged into `main` as `7d153f8817004a9f0b62719fc2063ee974e3418e`. No separate deployment action is authorized or recorded by this post-merge closeout.
 
 ## Identity
 
@@ -25,7 +25,11 @@ No merge or deployment is authorized by this record.
 - Implementation plan:
   `docs/superpowers/plans/2026-08-12-resume-candidate-photo-support.md`
 - Pull request: `PR #8 — Complete Phase 19A-4 Candidate Photo Support`
-- Deployment status: `NOT PART OF THIS PHASE CLOSEOUT`
+- Pull request state: `MERGED / CLOSED`
+- Merge commit: `7d153f8817004a9f0b62719fc2063ee974e3418e`
+- Post-merge main baseline:
+  `7d153f8817004a9f0b62719fc2063ee974e3418e`
+- Deployment status: `NO SEPARATE DEPLOYMENT ACTION PERFORMED BY THIS CLOSEOUT`
 
 The executable checkpoint is intentionally separate from later documentation-only closeout commits. The complete 1,341-test gate was run against `ff7e84572d029f01cf61f4fee873f11204a6a75e`; documentation-only reconciliation did not alter executable behavior.
 
@@ -37,8 +41,9 @@ The executable checkpoint is intentionally separate from later documentation-onl
 - Frozen design fidelity review: `PASSED / ACCEPTED`
 - Implementation was authorized and performed directly on the GitHub feature branch.
 - No claim is made that `PHASE_19A4_IMPLEMENTATION_PLAN_APPROVED` was accepted; it was not part of the final authorization path.
-- `main` remained untouched throughout implementation, verification, repair, and closeout.
-- Merge requires a separate explicit operator instruction.
+- `main` remained untouched throughout implementation, verification, repair, and pre-merge closeout.
+- The operator subsequently gave the required separate explicit merge authorization.
+- PR #8 was merged into `main` as `7d153f8817004a9f0b62719fc2063ee974e3418e`.
 
 ## Implemented architecture
 
@@ -172,7 +177,7 @@ Known non-failing diagnostics remained unchanged: the pre-existing Interview Err
 
 ## Final scope review
 
-The branch remains based on `main` at `ad10229aa64cc79b4503901d8b59ac127fac0a20` and is not behind main.
+Immediately before merge, the feature branch remained based on `main` at `ad10229aa64cc79b4503901d8b59ac127fac0a20` and was not behind main. The separately authorized merge produced main commit `7d153f8817004a9f0b62719fc2063ee974e3418e`.
 
 The changed-file set is bounded to:
 
@@ -187,9 +192,21 @@ No package manifest, lockfile, environment file, deployment configuration, migra
 
 ## Release control
 
-- PR #8 is ready for review.
-- PR #8 remains open and unmerged.
-- No merge to `main` is authorized by this closeout.
-- No deployment is authorized.
-- Final merge requires separate explicit operator approval.
-- After an authorized merge, perform post-merge documentation reconciliation on `main` to record the merge commit and activate the next execution phase.
+- PR #8: `MERGED / CLOSED`.
+- Merge commit: `7d153f8817004a9f0b62719fc2063ee974e3418e`.
+- `main` includes the complete Phase 19A-4 Candidate Photo Support change set.
+- Final executable verification remains the fresh complete gate performed at
+  `ff7e84572d029f01cf61f4fee873f11204a6a75e`:
+  `1,341/1,341 PASS`, with passing typechecks, production build,
+  `git diff --check`, and clean worktree.
+- The later closeout and merge records are documentation/governance changes and
+  do not alter that executable verification checkpoint.
+- Human Chrome QA: `PASSED`.
+- All recorded Phase 19A-4 PR-review findings: `RESOLVED`.
+- Phase 19A overall status: `COMPLETED`.
+- No separate deployment action is performed or authorized by this
+  post-merge governance closeout.
+- Next execution phase: `PHASE 19B — INTERVIEW COACH REFINEMENTS`.
+- Phase 19B status: `PLANNED / NOT STARTED`.
+- Starting Phase 19B implementation requires its own bounded repository
+  preflight and scope confirmation.
