@@ -1787,6 +1787,9 @@ export function ResumeWorkspace() {
             validationErrors={validationErrors}
             focusRequest={editorFocusRequest}
             onChange={(nextDraft) => {
+              if (snapshot !== undefined) {
+                setSnapshot(undefined);
+              }
               const nextFingerprint = draftFingerprint(nextDraft);
               if (
                 failedSave &&
