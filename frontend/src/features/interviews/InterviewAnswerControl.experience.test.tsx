@@ -1,0 +1,164 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+import { InterviewAnswerControl } from "./InterviewAnswerControl";
+import type {
+  EffectiveInterviewQuestionType,
+  InterviewQuestionDetail,
+} from "./types";
+
+const timestamp = "2026-08-14T00:00:00.000Z";
+
+function question(
+  questionType: EffectiveInterviewQuestionType,
+  extra: Partial<InterviewQuestionDetail> = {},
+): InterviewQuestionDetail {
+  return {
+    id: "507f1f77bcf86cd799439012",
+    sessionId: "507f1f77bcf86cd799439011",
+    source: "manual",
+    category: "General",
+    difficulty: "medium",
+    question: "A practice question.",
+    questionType,
+    ...(questionType === "multiple-choice"
+      ? {
+          multipleChoice: {
+            options: [
+              { id: "option-a", text: "First option" },
+              { id: "option-b", text: "Second option" },
+              { id: "option-c", text: "Third option" },
+            ],
+          },
+        }
+      : {}),
+    isPinned: false,
+    explanationKeyPoints: [],
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    ...extra,
+  };
+}
+
+function renderControl(
+  interviewQuestion: InterviewQuestionDetail,
+  options: {
+    textValue?: string;
+    selectedOptionId?: string;
+    onTextChange?: (value: string) => void;
+    onSelectedOptionChange?: (optionId: string) => void;
+  } = {},
+) {
+  return render(
+    <InterviewAnswerControl
+      question={interviewQuestion}
+      textValue={options.textValue ?? ""}
+      selectedOptionId={options.selectedOptionId ?? ""}
+      onTextChange={options.onTextChange ?? vi.fn()}
+      onSelectedOptionChange={options.onSelectedOptionChange ?? vi.fn()}
+      onSubmit={vi.fn()}
+    />,
+  );
+}
+
+describe("InterviewAnswerControl practice experience", () => {
+  it("renders positional MCQ badges while preserving native radio selection", async () => {
+    const onSelectedOptionChange = vi.fn();
+    const { container } = renderControl(question("multiple-choice"), {
+      onSelectedOptionChange,
+    });
+
+    expect(
+      Array.from(
+        container.querySelectorAll(".interview-answer-option__letter"),
+      ).map((node) => node.textContent),
+    ).toEqual(["A", "B", "C"]);
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("radio", { name: "Second option" }));
+    expect(onSelectedOptionChange).toHaveBeenCalledWith("option-b");
+  });
+
+  it("gives Short Answer a compact focused prompt", () => {
+    renderControl(question("short-answer"));
+
+    const textarea = screen.getByRole("textbox", {
+      name: /Your short answer/i,
+    });
+    expect(textarea.getAttribute("rows")).toBe("5");
+    expect(textarea.getAttribute("placeholder")).toContain("concise");
+    expect(screen.getByText("Answer directly.")).not.toBeNull();
+    expect(screen.getByText("Aim for 2–4 focused sentences.")).not.toBeNull();
+  });
+
+  it.each([
+    ["behavioral", ["Situation", "Task", "Action", "Result"]],
+    [
+      "scenario-based",
+      ["Assess", "Approach", "Trade-offs", "Decision"],
+    ],
+    [
+      "technical-explanation",
+      ["Concept", "How it works", "Example", "Trade-offs"],
+    ],
+  ] as const)("renders %s with its own answer-structure guidance", (type, cues) => {
+    renderControl(question(type));
+
+    for (const cue of cues) {
+      expect(screen.getByText(cue)).not.toBeNull();
+    }
+    expect(
+      screen.getByLabelText("Answer structure guidance"),
+    ).not.toBeNull();
+  });
+
+  it("renders Coding starter code and inserts it only into an empty draft", async () => {
+    const starterCode = [
+      "function solve(input) {",
+      "  // TODO",
+      "}",
+    ].join("\n");
+    const onTextChange = vi.fn();
+    const { rerender } = renderControl(
+      question("coding", { starterCode }),
+      { onTextChange },
+    );
+
+    expect(screen.getByText("Starter code")).not.toBeNull();
+    expect(screen.getByText(starterCode)).not.toBeNull();
+    const insert = screen.getByRole("button", { name: "Insert into answer" });
+    expect((insert as HTMLButtonElement).disabled).toBe(false);
+
+    await userEvent.setup().click(insert);
+    expect(onTextChange).toHaveBeenCalledWith(starterCode);
+
+    rerender(
+      <InterviewAnswerControl
+        question={question("coding", { starterCode })}
+        textValue="const existing = true;"
+        selectedOptionId=""
+        onTextChange={onTextChange}
+        onSelectedOptionChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(
+      (screen.getByRole("button", {
+        name: "Insert into answer",
+      }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(
+      screen.getByText(/Clear your current draft before inserting starter code/i),
+    ).not.toBeNull();
+  });
+
+  it("omits an empty starter-code surface for Coding questions without a scaffold", () => {
+    renderControl(question("coding"));
+    expect(screen.queryByText("Starter code")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Insert into answer" }),
+    ).toBeNull();
+  });
+});
