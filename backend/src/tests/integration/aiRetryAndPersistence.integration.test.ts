@@ -677,6 +677,8 @@ describe("AI retry classification and provider-to-persistence", () => {
           difficulty: "medium",
           question:
             "Write a function that reverses an array.",
+          starterCode:
+            "function reverseArray(values) {\n  // TODO\n}",
           modelAnswer:
             "Show a small implementation and discuss complexity.",
         },

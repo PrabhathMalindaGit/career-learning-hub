@@ -370,6 +370,8 @@ describe("Interview question type distribution", () => {
             difficulty: "medium",
             question:
               "Write a function that reverses an array.",
+            starterCode:
+              "function reverseArray(values) {\n  // TODO\n}",
             modelAnswer:
               "Discuss a simple implementation and complexity.",
           },
