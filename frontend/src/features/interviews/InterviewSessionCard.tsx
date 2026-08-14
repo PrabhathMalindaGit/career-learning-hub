@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { InterviewDeleteDialog } from "./InterviewDeleteDialog";
 import { updateInterviewSessionStatus } from "./interviewApi";
 import type {
   InterviewMode,
@@ -35,8 +36,10 @@ function differsMeaningfully(title: string, role: string): boolean {
 
 export function InterviewSessionCard({
   session,
+  onDeleted,
 }: {
   session: InterviewSessionSummary;
+  onDeleted(sessionId: string): void;
 }) {
   const navigate = useNavigate();
   const [restoreBusy, setRestoreBusy] = useState(false);
@@ -137,6 +140,7 @@ export function InterviewSessionCard({
               {restoreBusy ? "Restoring…" : "Restore session"}
             </button>
           ) : null}
+          <InterviewDeleteDialog session={session} onDeleted={onDeleted} />
           <Link
             className="interview-session-card__action"
             to={`/interviews/${session.id}`}
