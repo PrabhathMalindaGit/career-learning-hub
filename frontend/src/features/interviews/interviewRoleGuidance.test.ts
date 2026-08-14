@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  INTERVIEW_CAREER_AREAS,
   INTERVIEW_EXPERIENCE_LEVELS,
-  INTERVIEW_ROLE_OPTIONS,
-  getInterviewRoleSuggestions,
-  matchInterviewRoleFamily,
+  OTHER_CUSTOM_CAREER_AREA,
+  getInterviewCareerGuidance,
   suggestInterviewTitle,
 } from "./interviewRoleGuidance";
 
@@ -20,71 +20,80 @@ describe("interviewRoleGuidance", () => {
     ]);
   });
 
-  it("exposes all ten common roles with duplicate-free guidance", () => {
-    expect(INTERVIEW_ROLE_OPTIONS.map((option) => option.label)).toEqual([
-      "Software Engineer",
-      "Frontend Developer",
-      "Backend Developer",
-      "Full-Stack Developer",
-      "Mobile Developer",
-      "DevOps / Cloud Engineer",
-      "Data Engineer",
-      "ML / AI Engineer",
-      "Cybersecurity Engineer",
-      "QA / Test Engineer",
+  it("exposes the fourteen canonical career areas in stable order", () => {
+    expect(INTERVIEW_CAREER_AREAS.map((area) => area.label)).toEqual([
+      "Technology & IT",
+      "Business & Management",
+      "Finance & Accounting",
+      "Marketing & Sales",
+      "Human Resources",
+      "Healthcare",
+      "Engineering",
+      "Education & Training",
+      "Law & Legal Services",
+      "Design & Creative",
+      "Operations & Supply Chain",
+      "Customer Service & Hospitality",
+      "Science & Research",
+      "Public Service & Administration",
     ]);
-
-    for (const option of INTERVIEW_ROLE_OPTIONS) {
-      expect(option.focusTopics.length).toBeGreaterThan(0);
-      expect(option.skillGaps.length).toBeGreaterThan(0);
-      expect(new Set(option.focusTopics).size).toBe(option.focusTopics.length);
-      expect(new Set(option.skillGaps).size).toBe(option.skillGaps.length);
-      expect(matchInterviewRoleFamily(option.label)).toBe(option.family);
-    }
+    expect(OTHER_CUSTOM_CAREER_AREA).toBe("other-custom");
   });
 
-  it("matches representative custom roles to deterministic local families", () => {
-    expect(matchInterviewRoleFamily("MERN Developer")).toBe("full-stack");
-    expect(matchInterviewRoleFamily("React Native Engineer")).toBe("mobile");
-    expect(matchInterviewRoleFamily("LLM Engineer")).toBe("ml-ai");
-    expect(matchInterviewRoleFamily("Cloud Platform Engineer")).toBe(
-      "devops-cloud",
+  it("keeps representative roles local to each career area", () => {
+    expect(getInterviewCareerGuidance("technology-it").roles).toContain(
+      "Software Engineer",
     );
-    expect(matchInterviewRoleFamily("Penetration Tester")).toBe(
-      "cybersecurity",
+    expect(getInterviewCareerGuidance("finance-accounting").roles).toContain(
+      "Accountant",
     );
-    expect(matchInterviewRoleFamily("Unusual Internal Tools Specialist")).toBe(
-      "software-engineer",
+    expect(getInterviewCareerGuidance("healthcare").roles).toContain("Nurse");
+    expect(getInterviewCareerGuidance("engineering").roles).toContain(
+      "Civil Engineer",
+    );
+    expect(getInterviewCareerGuidance("education-training").roles).toContain(
+      "Teacher",
     );
   });
 
-  it("waits for a role and then returns role-aware suggestions locally", () => {
-    expect(getInterviewRoleSuggestions("")).toEqual({
+  it("waits for an area and gives Other / Custom generic professional guidance", () => {
+    expect(getInterviewCareerGuidance("")).toEqual({
+      roles: [],
       focusTopics: [],
       skillGaps: [],
     });
 
-    const backend = getInterviewRoleSuggestions("Backend Developer");
-    expect(backend.focusTopics).toContain("REST APIs");
-    expect(backend.skillGaps).toContain("Database Optimization");
+    const custom = getInterviewCareerGuidance("other-custom");
+    expect(custom.roles).toEqual([]);
+    expect(custom.focusTopics).toContain("Role Knowledge");
+    expect(custom.skillGaps).toContain("Interview Communication");
+    expect(custom.focusTopics).not.toContain("Software & Systems");
+  });
 
-    const builtInAi = getInterviewRoleSuggestions("ML / AI Engineer");
-    expect(builtInAi.focusTopics).toContain("Machine Learning");
-    expect(builtInAi.skillGaps).toContain("Model Evaluation");
-
-    const customAi = getInterviewRoleSuggestions("LLM Engineer");
-    expect(customAi.focusTopics).toContain("LLMs");
-    expect(customAi.skillGaps).toContain("LLM Evaluation");
+  it("keeps every canonical guidance list bounded and duplicate-free", () => {
+    for (const area of INTERVIEW_CAREER_AREAS) {
+      expect(area.roles.length).toBeGreaterThan(0);
+      expect(area.focusTopics).toHaveLength(8);
+      expect(area.skillGaps).toHaveLength(8);
+      expect(new Set(area.roles).size).toBe(area.roles.length);
+      expect(new Set(area.focusTopics).size).toBe(area.focusTopics.length);
+      expect(new Set(area.skillGaps).size).toBe(area.skillGaps.length);
+      expect(getInterviewCareerGuidance(area.id)).toEqual({
+        roles: area.roles,
+        focusTopics: area.focusTopics,
+        skillGaps: area.skillGaps,
+      });
+    }
   });
 
   it("creates a deterministic role-and-level title only when both values exist", () => {
-    expect(suggestInterviewTitle("Backend Developer", "Mid-level")).toBe(
-      "Mid-level Backend Developer Interview",
+    expect(suggestInterviewTitle("Accountant", "Mid-level")).toBe(
+      "Mid-level Accountant Interview",
     );
-    expect(suggestInterviewTitle("  Backend Developer  ", " Senior ")).toBe(
-      "Senior Backend Developer Interview",
+    expect(suggestInterviewTitle("  Nurse  ", " Senior ")).toBe(
+      "Senior Nurse Interview",
     );
     expect(suggestInterviewTitle("", "Mid-level")).toBe("");
-    expect(suggestInterviewTitle("Backend Developer", "")).toBe("");
+    expect(suggestInterviewTitle("Teacher", "")).toBe("");
   });
 });
