@@ -233,7 +233,7 @@ export function InterviewQuestionTypeControls({
 
       {distributionNotice ? (
         <p
-          className="interview-type-controls__status"
+          className="interview-type-controls__help interview-type-controls__status"
           aria-live="polite"
         >
           {distributionNotice}
