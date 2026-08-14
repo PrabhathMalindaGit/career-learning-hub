@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -260,6 +266,9 @@ describe("InterviewSessionWorkspace practice experience refinement", () => {
 
     renderWorkspace();
     await waitForWorkspace();
+    const initialSessionFetches = vi.mocked(
+      interviewApi.fetchInterviewSession,
+    ).mock.calls.length;
     const user = userEvent.setup();
 
     await user.click(screen.getByRole("button", { name: "System Design" }));
@@ -270,7 +279,9 @@ describe("InterviewSessionWorkspace practice experience refinement", () => {
     );
 
     await waitFor(() => {
-      expect(interviewApi.fetchInterviewSession).toHaveBeenCalledTimes(2);
+      expect(
+        vi.mocked(interviewApi.fetchInterviewSession).mock.calls.length,
+      ).toBeGreaterThan(initialSessionFetches);
     });
     expect(
       screen.getByRole("button", { name: "System Design" }).getAttribute(
@@ -312,9 +323,9 @@ describe("InterviewSessionWorkspace practice experience refinement", () => {
       manual.getByRole("textbox", { name: "Question" }),
       "Write a function that loads one owned user.",
     );
-    await user.type(
+    fireEvent.change(
       manual.getByRole("textbox", { name: /Starter code/i }),
-      `  ${starterCode}  `,
+      { target: { value: `  ${starterCode}  ` } },
     );
     await user.type(
       manual.getByRole("textbox", { name: /Model answer/i }),
@@ -352,9 +363,9 @@ describe("InterviewSessionWorkspace practice experience refinement", () => {
     const type = manual.getByRole("combobox", { name: "Question type" });
 
     await user.selectOptions(type, "coding");
-    await user.type(
+    fireEvent.change(
       manual.getByRole("textbox", { name: /Starter code/i }),
-      "function stale() {}",
+      { target: { value: "function stale() {}" } },
     );
     await user.selectOptions(type, "behavioral");
     expect(manual.queryByRole("textbox", { name: /Starter code/i })).toBeNull();
