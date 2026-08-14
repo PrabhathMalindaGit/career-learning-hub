@@ -679,7 +679,7 @@ describe("application routing", () => {
 
     expect(
       await screen.findByText(
-        "No interview sessions match this view. Create a private session to begin.",
+        "No interview sessions yet. Create a practice session to begin.",
       ),
     ).not.toBeNull();
     expect(

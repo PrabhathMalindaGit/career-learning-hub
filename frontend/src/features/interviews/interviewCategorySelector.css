@@ -1,0 +1,106 @@
+.interview-category-selector {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #d5e0d8;
+  border-radius: 14px;
+  background: #fbfdfb;
+}
+
+.interview-category-selector__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.interview-category-selector__heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.interview-category-selector__heading strong {
+  color: #2a4334;
+  font-size: 0.84rem;
+}
+
+.interview-category-selector__heading small,
+.interview-category-selector__empty {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.interview-category-selector__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.interview-category-chip {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid #cbd9d0;
+  border-radius: 999px;
+  color: #355443;
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.interview-category-chip[aria-pressed="true"] {
+  border-color: #6f9d7e;
+  color: #174e2d;
+  background: #eaf3ed;
+}
+
+.interview-category-chip:focus-visible {
+  outline: 3px solid rgba(42, 103, 67, 0.18);
+  outline-offset: 2px;
+}
+
+.interview-category-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.interview-category-selector__custom {
+  display: grid;
+  gap: 7px;
+}
+
+.interview-category-selector__custom > label {
+  color: #3c4a42;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.interview-category-selector__custom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.interview-category-selector__custom-row input {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .interview-category-selector__heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .interview-category-selector__custom-row {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-category-selector__custom-row .interview-secondary-button {
+    width: 100%;
+  }
+}

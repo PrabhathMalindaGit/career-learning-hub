@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { ClientSession } from "mongoose";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
@@ -18,17 +19,108 @@ import {
   type InterviewQuestionDocument,
 } from "./interviewQuestion.model.js";
 import {
+  effectiveInterviewQuestionType,
+  type InterviewMultipleChoiceStorage,
+  type InterviewQuestionType,
+  type TypedInterviewAnswer,
+} from "./interviewQuestion.types.js";
+import {
   InterviewSessionModel,
   type InterviewMode,
   type InterviewSessionDocument,
   type InterviewSessionStatus,
 } from "./interviewSession.model.js";
 
-export interface ManualQuestionInput {
-  category: string;
-  difficulty: InterviewDifficulty;
-  question: string;
+export type ManualQuestionInput =
+  | {
+      questionType: "multiple-choice";
+      category: string;
+      difficulty: InterviewDifficulty;
+      question: string;
+      multipleChoice: {
+        options: string[];
+        correctOptionIndex: number;
+      };
+    }
+  | {
+      questionType: "coding";
+      category: string;
+      difficulty: InterviewDifficulty;
+      question: string;
+      starterCode?: string;
+      modelAnswer?: string;
+    }
+  | {
+      questionType: Exclude<
+        InterviewQuestionType,
+        "multiple-choice" | "coding"
+      >;
+      category: string;
+      difficulty: InterviewDifficulty;
+      question: string;
+      modelAnswer?: string;
+    };
+
+export type RecordInterviewAttemptInput =
+  | { answerText: string }
+  | { answer: TypedInterviewAnswer };
+
+function canonicalizeManualQuestion(
+  question: ManualQuestionInput,
+): {
+  questionType: InterviewQuestionType;
+  starterCode?: string;
   modelAnswer?: string;
+  multipleChoice?: InterviewMultipleChoiceStorage;
+} {
+  if (
+    question.questionType === "multiple-choice"
+  ) {
+    const options =
+      question.multipleChoice.options.map(
+        (text) => ({
+          id: randomUUID(),
+          text,
+        }),
+      );
+
+    const correctOption =
+      options[
+        question.multipleChoice
+          .correctOptionIndex
+      ];
+
+    if (!correctOption) {
+      throw new AppError(
+        400,
+        "INTERVIEW_MCQ_CORRECT_OPTION_INVALID",
+        "The correct option must reference an existing Multiple Choice option.",
+      );
+    }
+
+    return {
+      questionType: question.questionType,
+      multipleChoice: {
+        options,
+        correctOptionId: correctOption.id,
+      },
+    };
+  }
+
+  if (question.questionType === "coding") {
+    return {
+      questionType: question.questionType,
+      ...(question.starterCode
+        ? { starterCode: question.starterCode }
+        : {}),
+      modelAnswer: question.modelAnswer,
+    };
+  }
+
+  return {
+    questionType: question.questionType,
+    modelAnswer: question.modelAnswer,
+  };
 }
 
 function assertUniqueQuestionInputs(
@@ -137,7 +229,7 @@ export async function createInterviewSession(input: {
               difficulty: question.difficulty,
               question: question.question,
               questionFingerprint: question.questionFingerprint,
-              modelAnswer: question.modelAnswer,
+              ...canonicalizeManualQuestion(question),
             })),
             { session },
           );
@@ -304,7 +396,9 @@ export async function addManualQuestion(input: {
             difficulty: input.question.difficulty,
             question: input.question.question,
             questionFingerprint,
-            modelAnswer: input.question.modelAnswer,
+            ...canonicalizeManualQuestion(
+              input.question,
+            ),
           },
         ],
         { session: mongoSession },
@@ -372,7 +466,7 @@ export async function listInterviewQuestions(
   const [questions, total] = await Promise.all([
     InterviewQuestionModel.find(filter)
       .select(
-        "-modelAnswer -explanation -explanationKeyPoints -questionFingerprint",
+        "-modelAnswer -explanation -explanationKeyPoints -questionFingerprint -starterCode",
       )
       .sort({ isPinned: -1, createdAt: 1, _id: 1 })
       .skip((input.page - 1) * input.limit)
@@ -382,7 +476,9 @@ export async function listInterviewQuestions(
   ]);
 
   return {
-    questions,
+    questions: questions.map((question) =>
+      serializeQuestionSummary(question),
+    ),
     pagination: {
       page: input.page,
       limit: input.limit,
@@ -392,20 +488,256 @@ export async function listInterviewQuestions(
   };
 }
 
-export function serializeQuestionDetail(
-  question: InterviewQuestionDocument,
-  revealAnswers = false,
-) {
-  const value = question.toObject<Record<string, unknown>>();
-  delete value.questionFingerprint;
+export interface PublicMultipleChoiceQuestion {
+  options: Array<{
+    id: string;
+    text: string;
+  }>;
+}
 
-  if (!revealAnswers) {
-    delete value.modelAnswer;
-    delete value.explanation;
-    delete value.explanationKeyPoints;
+function interviewQuestionRecord(
+  question:
+    | InterviewQuestionDocument
+    | Record<string, unknown>,
+): Record<string, unknown> {
+  if (
+    "toObject" in question &&
+    typeof question.toObject === "function"
+  ) {
+    return (
+      question as InterviewQuestionDocument
+    ).toObject<Record<string, unknown>>();
   }
 
-  return value;
+  return question as Record<string, unknown>;
+}
+
+export function serializeQuestionSummary(
+  question:
+    | InterviewQuestionDocument
+    | Record<string, unknown>,
+): Record<string, unknown> {
+  const value = interviewQuestionRecord(question);
+
+  const questionType = effectiveInterviewQuestionType({
+    questionType: value.questionType as
+      | InterviewQuestionType
+      | undefined,
+  });
+
+  const result: Record<string, unknown> = {
+    _id: value._id,
+    sessionId: value.sessionId,
+    source: value.source,
+    category: value.category,
+    difficulty: value.difficulty,
+    question: value.question,
+    questionType,
+    isPinned: value.isPinned,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+  };
+
+  if (value.userNotes !== undefined) {
+    result.userNotes = value.userNotes;
+  }
+
+  if (questionType === "multiple-choice") {
+    const multipleChoice = value.multipleChoice as
+      | {
+          options?: Array<{
+            id?: unknown;
+            text?: unknown;
+          }>;
+        }
+      | undefined;
+
+    result.multipleChoice = {
+      options: (multipleChoice?.options ?? []).map(
+        (option) => ({
+          id: String(option.id ?? ""),
+          text: String(option.text ?? ""),
+        }),
+      ),
+    } satisfies PublicMultipleChoiceQuestion;
+  }
+
+  return result;
+}
+
+export function serializeQuestionDetail(
+  question: InterviewQuestionDocument,
+  revealStudyMaterial = false,
+): Record<string, unknown> {
+  const value = interviewQuestionRecord(question);
+  const result = serializeQuestionSummary(value);
+
+  if (
+    result.questionType === "coding" &&
+    value.starterCode !== undefined
+  ) {
+    result.starterCode = value.starterCode;
+  }
+
+  if (!revealStudyMaterial) {
+    return result;
+  }
+
+  if (result.questionType === "multiple-choice") {
+    if (value.explanation !== undefined) {
+      result.explanation = value.explanation;
+      result.explanationKeyPoints =
+        value.explanationKeyPoints ?? [];
+    }
+
+    return result;
+  }
+
+  if (value.modelAnswer !== undefined) {
+    result.modelAnswer = value.modelAnswer;
+  }
+
+  if (value.explanation !== undefined) {
+    result.explanation = value.explanation;
+  }
+
+  result.explanationKeyPoints =
+    value.explanationKeyPoints ?? [];
+
+  return result;
+}
+
+function interviewAttemptRecord(
+  attempt:
+    | InterviewAttemptDocument
+    | Record<string, unknown>,
+): Record<string, unknown> {
+  if (
+    "toObject" in attempt &&
+    typeof attempt.toObject === "function"
+  ) {
+    return (
+      attempt as InterviewAttemptDocument
+    ).toObject<Record<string, unknown>>();
+  }
+
+  return attempt as Record<string, unknown>;
+}
+
+function correctOptionIdForQuestion(
+  question:
+    | InterviewQuestionDocument
+    | Record<string, unknown>
+    | undefined,
+): string | undefined {
+  if (!question) return undefined;
+
+  const value = interviewQuestionRecord(question);
+  const questionType = effectiveInterviewQuestionType({
+    questionType: value.questionType as
+      | InterviewQuestionType
+      | undefined,
+  });
+
+  if (questionType !== "multiple-choice") {
+    return undefined;
+  }
+
+  const multipleChoice = value.multipleChoice as
+    | {
+        options?: Array<{ id?: unknown }>;
+        correctOptionId?: unknown;
+      }
+    | undefined;
+
+  if (
+    typeof multipleChoice?.correctOptionId !== "string" ||
+    !multipleChoice.options?.some(
+      (option) =>
+        String(option.id ?? "") ===
+        multipleChoice.correctOptionId,
+    )
+  ) {
+    return undefined;
+  }
+
+  return multipleChoice.correctOptionId;
+}
+
+export function serializeInterviewAttempt(input: {
+  attempt:
+    | InterviewAttemptDocument
+    | Record<string, unknown>;
+  question?:
+    | InterviewQuestionDocument
+    | Record<string, unknown>;
+  revealCorrectOption: boolean;
+}): Record<string, unknown> {
+  const value = interviewAttemptRecord(input.attempt);
+
+  const result: Record<string, unknown> = {
+    _id: value._id,
+    userId: value.userId,
+    sessionId: value.sessionId,
+    questionId: value.questionId,
+    status: value.status,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+  };
+
+  if (value.answerText !== undefined) {
+    result.answerText = value.answerText;
+  }
+
+  if (value.answer !== undefined) {
+    result.answer = value.answer;
+  }
+
+  if (value.evaluation !== undefined) {
+    const evaluation = value.evaluation as {
+      kind?: unknown;
+      score?: unknown;
+      correct?: unknown;
+    };
+
+    const publicEvaluation: Record<string, unknown> = {
+      kind: evaluation.kind,
+      score: evaluation.score,
+      correct: evaluation.correct,
+    };
+
+    if (
+      input.revealCorrectOption &&
+      input.question &&
+      String(
+        interviewQuestionRecord(input.question)._id ?? "",
+      ) === String(value.questionId ?? "")
+    ) {
+      const correctOptionId =
+        correctOptionIdForQuestion(input.question);
+
+      if (correctOptionId) {
+        publicEvaluation.correctOptionId =
+          correctOptionId;
+      }
+    }
+
+    result.evaluation = publicEvaluation;
+  }
+
+  if (value.feedbackJobId !== undefined) {
+    result.feedbackJobId = value.feedbackJobId;
+  }
+
+  if (value.feedback !== undefined) {
+    result.feedback = value.feedback;
+  }
+
+  if (value.feedbackError !== undefined) {
+    result.feedbackError = value.feedbackError;
+  }
+
+  return result;
 }
 
 export async function setQuestionPinned(input: {
@@ -426,14 +758,9 @@ export async function setQuestionNotes(input: {
   return input.question;
 }
 
-export async function recordInterviewAttempt(input: {
-  userId: string;
-  session: InterviewSessionDocument;
-  question: InterviewQuestionDocument;
-  answerText: string;
-}): Promise<InterviewAttemptDocument> {
+function assertAnswerWithinLimit(answer: string): void {
   if (
-    input.answerText.length >
+    answer.length >
     env.INTERVIEW_MAX_ANSWER_CHARACTERS
   ) {
     throw new AppError(
@@ -442,12 +769,115 @@ export async function recordInterviewAttempt(input: {
       `The answer exceeds the ${env.INTERVIEW_MAX_ANSWER_CHARACTERS}-character limit.`,
     );
   }
+}
+
+function rejectAttemptTypeMismatch(): never {
+  throw new AppError(
+    409,
+    "INTERVIEW_ATTEMPT_TYPE_MISMATCH",
+    "The submitted answer does not match this interview question type.",
+  );
+}
+
+export async function recordInterviewAttempt(input: {
+  userId: string;
+  session: InterviewSessionDocument;
+  question: InterviewQuestionDocument;
+  submission: RecordInterviewAttemptInput;
+}): Promise<InterviewAttemptDocument> {
+  const effectiveType = effectiveInterviewQuestionType(
+    input.question,
+  );
+
+  let answerFields:
+    | { answerText: string }
+    | {
+        answer: TypedInterviewAnswer;
+        evaluation?: {
+          kind: "multiple-choice";
+          score: 0 | 100;
+          correct: boolean;
+        };
+      };
+
+  if (effectiveType === "legacy-open-response") {
+    if (!("answerText" in input.submission)) {
+      rejectAttemptTypeMismatch();
+    }
+
+    assertAnswerWithinLimit(
+      input.submission.answerText,
+    );
+    answerFields = {
+      answerText: input.submission.answerText,
+    };
+  } else {
+    if (!("answer" in input.submission)) {
+      rejectAttemptTypeMismatch();
+    }
+
+    const answer = input.submission.answer;
+
+    if (answer.type !== effectiveType) {
+      rejectAttemptTypeMismatch();
+    }
+
+    if (answer.type === "multiple-choice") {
+      const multipleChoice =
+        input.question.multipleChoice;
+
+      if (
+        !multipleChoice ||
+        !multipleChoice.options.some(
+          (option) =>
+            option.id ===
+            multipleChoice.correctOptionId,
+        )
+      ) {
+        throw new AppError(
+          409,
+          "INTERVIEW_MCQ_CONFIGURATION_INVALID",
+          "This Multiple Choice question is not configured correctly.",
+        );
+      }
+
+      const selectedOption =
+        multipleChoice.options.find(
+          (option) =>
+            option.id === answer.selectedOptionId,
+        );
+
+      if (!selectedOption) {
+        throw new AppError(
+          400,
+          "INTERVIEW_MCQ_OPTION_INVALID",
+          "Select one of the available Multiple Choice options.",
+        );
+      }
+
+      const correct =
+        selectedOption.id ===
+        multipleChoice.correctOptionId;
+
+      answerFields = {
+        answer,
+        evaluation: {
+          kind: "multiple-choice",
+          score: correct ? 100 : 0,
+          correct,
+        },
+      };
+    } else {
+      assertAnswerWithinLimit(answer.text);
+      answerFields = { answer };
+    }
+  }
 
   const attempt = await InterviewAttemptModel.create({
     userId: input.userId,
     sessionId: input.session._id,
     questionId: input.question._id,
-    answerText: input.answerText,
+    ...answerFields,
     status: "recorded",
   });
 
@@ -496,8 +926,40 @@ export async function listInterviewAttempts(
     InterviewAttemptModel.countDocuments(filter),
   ]);
 
+  const questionIds = [
+    ...new Set(
+      attempts.map((attempt) =>
+        String(attempt.questionId),
+      ),
+    ),
+  ];
+
+  const questions =
+    questionIds.length === 0
+      ? []
+      : await InterviewQuestionModel.find({
+          _id: { $in: questionIds },
+          userId,
+          sessionId: session._id,
+        }).lean();
+
+  const questionById = new Map(
+    questions.map((question) => [
+      String(question._id),
+      question,
+    ]),
+  );
+
   return {
-    attempts,
+    attempts: attempts.map((attempt) =>
+      serializeInterviewAttempt({
+        attempt,
+        question: questionById.get(
+          String(attempt.questionId),
+        ),
+        revealCorrectOption: true,
+      }),
+    ),
     pagination: {
       page: input.page,
       limit: input.limit,

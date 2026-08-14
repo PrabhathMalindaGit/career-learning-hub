@@ -8,6 +8,7 @@ import {
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
+import { Pager } from "../../components/Pager";
 import { JobResilienceActions } from "../jobs/JobResilienceActions";
 import {
   cancelJob,
@@ -39,16 +40,36 @@ import type {
   InterviewJobType,
   InterviewQuestionDetail,
   InterviewQuestionSummary,
+  InterviewQuestionType,
   InterviewSessionDetail,
   Pagination,
+  TypedInterviewAnswer,
 } from "./types";
 import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
+import { InterviewAnswerControl } from "./InterviewAnswerControl";
+import {
+  InterviewCategorySelector,
+  canonicalInterviewCategorySuggestions,
+} from "./InterviewCategorySelector";
+import {
+  InterviewQuestionTypeControls,
+  QUESTION_TYPE_LABELS,
+  interviewTypeCountsAreValid,
+} from "./InterviewQuestionTypeControls";
 import "./interviewCoach.css";
 
 const PAGE_SIZE = 20;
 const ANSWER_MAX_LENGTH = 12_000;
 const CANONICAL_REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{16,128}$/;
 const FEEDBACK_READY_MESSAGE = "Practice feedback is ready.";
+
+const attemptStatusLabels: Record<InterviewAttemptStatus, string> = {
+  recorded: "Saved",
+  "feedback-queued": "Feedback queued",
+  "feedback-processing": "Feedback processing",
+  "feedback-completed": "Feedback ready",
+  "feedback-failed": "Feedback unavailable",
+};
 
 type SafeError = { message: string; requestId?: string };
 type ProviderOperation = {
@@ -113,19 +134,6 @@ function SafeErrorMessage({
   );
 }
 
-function parseList(value: string): string[] {
-  const seen = new Set<string>();
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter((item) => {
-      if (!item || seen.has(item)) return false;
-      seen.add(item);
-      return true;
-    })
-    .slice(0, 50);
-}
-
 function feedbackPanel(attempt: InterviewAttempt) {
   const feedback = attempt.feedback;
   if (!feedback) return null;
@@ -171,6 +179,30 @@ function feedbackPanel(attempt: InterviewAttempt) {
   );
 }
 
+function optionText(
+  question: InterviewQuestionDetail | null,
+  optionId: string,
+): string {
+  return (
+    question?.multipleChoice?.options.find((option) => option.id === optionId)
+      ?.text ?? "Option unavailable"
+  );
+}
+
+function attemptAnswerText(
+  attempt: InterviewAttempt,
+  question: InterviewQuestionDetail | null,
+): string {
+  if ("answerText" in attempt && typeof attempt.answerText === "string") {
+    return attempt.answerText;
+  }
+  if (!attempt.answer) return "Answer unavailable";
+  if (attempt.answer.type === "multiple-choice") {
+    return optionText(question, attempt.answer.selectedOptionId);
+  }
+  return attempt.answer.text;
+}
+
 export function InterviewSessionWorkspace() {
   const { sessionId = "" } = useParams();
   const [session, setSession] = useState<InterviewSessionDetail | null>(
@@ -204,7 +236,9 @@ export function InterviewSessionWorkspace() {
   const [notesState, setNotesState] = useState<
     "clean" | "dirty" | "saving" | "saved" | "error"
   >("clean");
+  const [notesOpen, setNotesOpen] = useState(false);
   const [answerDraft, setAnswerDraft] = useState("");
+  const [selectedOptionId, setSelectedOptionId] = useState("");
   const [answerError, setAnswerError] = useState<SafeError | null>(null);
   const [answerBusy, setAnswerBusy] = useState(false);
   const [questionActionError, setQuestionActionError] =
@@ -218,7 +252,9 @@ export function InterviewSessionWorkspace() {
   const [attemptReloadKey, setAttemptReloadKey] = useState(0);
   const [attemptStatusFilter, setAttemptStatusFilter] = useState<
     InterviewAttemptStatus | ""
-  >("");
+  >(
+    "",
+  );
   const [attemptLoading, setAttemptLoading] = useState(false);
   const [attemptError, setAttemptError] = useState<SafeError | null>(
     null,
@@ -228,16 +264,31 @@ export function InterviewSessionWorkspace() {
     useState<InterviewAttempt | null>(null);
 
   const [manualOpen, setManualOpen] = useState(false);
+  const [manualQuestionType, setManualQuestionType] =
+    useState<InterviewQuestionType>("short-answer");
   const [manualCategory, setManualCategory] = useState("");
   const [manualDifficulty, setManualDifficulty] =
     useState<InterviewDifficulty>("medium");
   const [manualQuestion, setManualQuestion] = useState("");
+  const [manualStarterCode, setManualStarterCode] = useState("");
   const [manualModelAnswer, setManualModelAnswer] = useState("");
+  const [manualOptions, setManualOptions] = useState<string[]>(["", ""]);
+  const [manualCorrectOptionIndex, setManualCorrectOptionIndex] = useState<
+    number | null
+  >(null);
   const [manualBusy, setManualBusy] = useState(false);
   const [manualError, setManualError] = useState<SafeError | null>(null);
 
   const [generationCount, setGenerationCount] = useState(10);
-  const [generationCategories, setGenerationCategories] = useState("");
+  const [generationCategories, setGenerationCategories] = useState<string[]>(
+    [],
+  );
+  const [generationQuestionTypes, setGenerationQuestionTypes] = useState<
+    InterviewQuestionType[]
+  >(["short-answer"]);
+  const [generationTypeCounts, setGenerationTypeCounts] = useState<
+    Partial<Record<InterviewQuestionType, number>> | undefined
+  >();
   const [providerBusy, setProviderBusy] = useState(false);
   const [providerError, setProviderError] = useState<SafeError | null>(
     null,
@@ -249,6 +300,7 @@ export function InterviewSessionWorkspace() {
   const routeSequence = useRef(0);
   const routeEpoch = useRef(0);
   const routeIdentity = useRef("");
+  const generationCategoriesInitializedForSession = useRef("");
   const questionSequence = useRef(0);
   const questionDetailSequence = useRef(0);
   const attemptSequence = useRef(0);
@@ -405,7 +457,9 @@ export function InterviewSessionWorkspace() {
       setSelectedQuestionId(questionId);
       setSelectedQuestion(null);
       setNotesDraft("");
+      setNotesOpen(false);
       setAnswerDraft("");
+      setSelectedOptionId("");
     },
     [invalidateQuestionScope],
   );
@@ -440,6 +494,7 @@ export function InterviewSessionWorkspace() {
       pinOperation.current = null;
       providerOperation.current = null;
       providerErrorScope.current = null;
+      generationCategoriesInitializedForSession.current = "";
     }
     const sequence = ++routeSequence.current;
     const controller = new AbortController();
@@ -455,21 +510,29 @@ export function InterviewSessionWorkspace() {
       setSelectedAttemptId("");
       setSelectedAttempt(null);
       setNotesDraft("");
+      setNotesOpen(false);
       setAnswerDraft("");
+      setSelectedOptionId("");
       setAnswerError(null);
       setAnswerBusy(false);
       setNotesState("clean");
       setQuestionActionError(null);
       setPinPendingQuestionId("");
       setManualOpen(false);
+      setManualQuestionType("short-answer");
       setManualCategory("");
       setManualDifficulty("medium");
       setManualQuestion("");
+      setManualStarterCode("");
       setManualModelAnswer("");
+      setManualOptions(["", ""]);
+      setManualCorrectOptionIndex(null);
       setManualBusy(false);
       setManualError(null);
       setGenerationCount(10);
-      setGenerationCategories("");
+      setGenerationCategories([]);
+      setGenerationQuestionTypes(["short-answer"]);
+      setGenerationTypeCounts(undefined);
       setProviderBusy(false);
       setActiveJob(null);
       setProviderError(null);
@@ -488,7 +551,17 @@ export function InterviewSessionWorkspace() {
 
     void fetchInterviewSession(sessionId, controller.signal)
       .then((result) => {
-        if (sequence === routeSequence.current) setSession(result);
+        if (sequence !== routeSequence.current) return;
+        setSession(result);
+        if (generationCategoriesInitializedForSession.current !== result.id) {
+          setGenerationCategories(
+            canonicalInterviewCategorySuggestions(
+              result.focusTopics,
+              result.skillGaps,
+            ),
+          );
+          generationCategoriesInitializedForSession.current = result.id;
+        }
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted && sequence === routeSequence.current) {
@@ -580,7 +653,9 @@ export function InterviewSessionWorkspace() {
       setSelectedQuestion(null);
       setQuestionDetailLoading(false);
       setNotesDraft("");
+      setNotesOpen(false);
       setAnswerDraft("");
+      setSelectedOptionId("");
       return;
     }
     const sequence = ++questionDetailSequence.current;
@@ -592,6 +667,7 @@ export function InterviewSessionWorkspace() {
     setSelectedAttemptId("");
     setSelectedAttempt(null);
     setAnswerDraft("");
+    setSelectedOptionId("");
     void fetchInterviewQuestion(
       sessionId,
       selectedQuestionId,
@@ -609,6 +685,7 @@ export function InterviewSessionWorkspace() {
         }
         setSelectedQuestion(question);
         setNotesDraft(question.userNotes ?? "");
+        setNotesOpen(Boolean((question.userNotes ?? "").trim()));
         setNotesState("clean");
       })
       .catch((error: unknown) => {
@@ -725,12 +802,17 @@ export function InterviewSessionWorkspace() {
     const selection = attemptSelectionSequence.current;
     const expectedAttemptId = selectedAttemptId;
     const expectedQuestionId = selectedQuestionId;
+    const expectedQuestionType =
+      selectedQuestion?.id === expectedQuestionId
+        ? selectedQuestion.questionType
+        : undefined;
     const controller = new AbortController();
     void fetchInterviewAttempt(
       sessionId,
       selectedAttemptId,
       controller.signal,
       expectedQuestionId,
+      expectedQuestionType,
     )
       .then((attempt) => {
         if (
@@ -757,7 +839,7 @@ export function InterviewSessionWorkspace() {
         }
       });
     return () => controller.abort();
-  }, [selectedAttemptId, selectedQuestionId, sessionId]);
+  }, [selectedAttemptId, selectedQuestion, selectedQuestionId, sessionId]);
 
   const pollAcceptedJob = useCallback(
     async (
@@ -1021,6 +1103,11 @@ export function InterviewSessionWorkspace() {
     }
   }
 
+  function resetManualMcqDraft() {
+    setManualOptions(["", ""]);
+    setManualCorrectOptionIndex(null);
+  }
+
   async function submitManualQuestion(event: FormEvent) {
     event.preventDefault();
     if (
@@ -1034,26 +1121,74 @@ export function InterviewSessionWorkspace() {
       });
       return;
     }
+    const trimmedOptions = manualOptions.map((option) => option.trim());
+    if (manualQuestionType === "multiple-choice") {
+      if (
+        trimmedOptions.length < 2 ||
+        trimmedOptions.length > 8 ||
+        trimmedOptions.some((option) => !option)
+      ) {
+        setManualError({
+          message: "Multiple Choice requires 2–8 non-blank options.",
+        });
+        return;
+      }
+      if (new Set(trimmedOptions).size !== trimmedOptions.length) {
+        setManualError({
+          message: "Multiple Choice options must be distinct.",
+        });
+        return;
+      }
+      if (
+        manualCorrectOptionIndex === null ||
+        manualCorrectOptionIndex < 0 ||
+        manualCorrectOptionIndex >= trimmedOptions.length
+      ) {
+        setManualError({
+          message: "Select the correct answer before adding the question.",
+        });
+        return;
+      }
+    }
     const controller = makeController();
     setManualBusy(true);
     setManualError(null);
     try {
       const created = await addManualQuestion(
         sessionId,
-        {
-          category: manualCategory.trim(),
-          difficulty: manualDifficulty,
-          question: manualQuestion.trim(),
-          ...(manualModelAnswer.trim()
-            ? { modelAnswer: manualModelAnswer.trim() }
-            : {}),
-        },
+        manualQuestionType === "multiple-choice"
+          ? {
+              questionType: "multiple-choice",
+              category: manualCategory.trim(),
+              difficulty: manualDifficulty,
+              question: manualQuestion.trim(),
+              multipleChoice: {
+                options: trimmedOptions,
+                correctOptionIndex: manualCorrectOptionIndex!,
+              },
+            }
+          : {
+              questionType: manualQuestionType,
+              category: manualCategory.trim(),
+              difficulty: manualDifficulty,
+              question: manualQuestion.trim(),
+              ...(manualQuestionType === "coding" &&
+              manualStarterCode.trim()
+                ? { starterCode: manualStarterCode.trim() }
+                : {}),
+              ...(manualModelAnswer.trim()
+                ? { modelAnswer: manualModelAnswer.trim() }
+                : {}),
+            },
         controller.signal,
       );
       if (!actionIsCurrent(controller)) return;
+      setManualQuestionType("short-answer");
       setManualCategory("");
       setManualQuestion("");
+      setManualStarterCode("");
       setManualModelAnswer("");
+      resetManualMcqDraft();
       setManualOpen(false);
       setQuestionReloadKey((key) => key + 1);
       setSessionReloadKey((key) => key + 1);
@@ -1070,6 +1205,19 @@ export function InterviewSessionWorkspace() {
   async function submitGeneration(event: FormEvent) {
     event.preventDefault();
     if (providerBusy) return;
+    if (
+      !interviewTypeCountsAreValid(
+        generationCount,
+        generationQuestionTypes,
+        generationTypeCounts,
+      )
+    ) {
+      setProviderError({
+        message:
+          "Select at least one question type and make exact counts equal the Question count.",
+      });
+      return;
+    }
     const controller = makeController();
     const requestId =
       generationIntentId.current ?? crypto.randomUUID();
@@ -1088,7 +1236,11 @@ export function InterviewSessionWorkspace() {
         {
           requestId,
           count: generationCount,
-          categories: parseList(generationCategories),
+          categories: generationCategories,
+          questionTypes: generationQuestionTypes,
+          ...(generationTypeCounts === undefined
+            ? {}
+            : { typeCounts: generationTypeCounts }),
         },
         controller.signal,
       );
@@ -1275,11 +1427,43 @@ export function InterviewSessionWorkspace() {
   async function submitAttempt() {
     if (!selectedQuestion || answerBusy) return;
     const answer = answerDraft.trim();
-    if (answer.length < 1 || answer.length > ANSWER_MAX_LENGTH) {
-      setAnswerError({
-        message: `Enter an answer with 1–${ANSWER_MAX_LENGTH.toLocaleString()} characters.`,
-      });
-      return;
+    let submission:
+      | { answerText: string }
+      | { answer: TypedInterviewAnswer };
+    if (selectedQuestion.questionType === "legacy-open-response") {
+      if (answer.length < 1 || answer.length > ANSWER_MAX_LENGTH) {
+        setAnswerError({
+          message: `Enter an answer with 1–${ANSWER_MAX_LENGTH.toLocaleString()} characters.`,
+        });
+        return;
+      }
+      submission = { answerText: answer };
+    } else if (selectedQuestion.questionType === "multiple-choice") {
+      if (!selectedOptionId) {
+        setAnswerError({
+          message: "Select an answer before saving this attempt.",
+        });
+        return;
+      }
+      submission = {
+        answer: {
+          type: "multiple-choice",
+          selectedOptionId,
+        },
+      };
+    } else {
+      if (answer.length < 1 || answer.length > ANSWER_MAX_LENGTH) {
+        setAnswerError({
+          message: `Enter an answer with 1–${ANSWER_MAX_LENGTH.toLocaleString()} characters.`,
+        });
+        return;
+      }
+      submission = {
+        answer: {
+          type: selectedQuestion.questionType,
+          text: answer,
+        },
+      };
     }
     const expectedQuestionId = selectedQuestion.id;
     const selection = questionSelectionSequence.current;
@@ -1290,7 +1474,7 @@ export function InterviewSessionWorkspace() {
       const created = await recordInterviewAttempt(
         sessionId,
         expectedQuestionId,
-        answer,
+        submission,
         controller.signal,
       );
       if (
@@ -1301,11 +1485,12 @@ export function InterviewSessionWorkspace() {
         return;
       }
       setAnswerDraft("");
+      setSelectedOptionId("");
       selectAttempt(created.id);
       setSelectedAttempt(created);
       setAttemptReloadKey((key) => key + 1);
       setStatusMessage(
-        "Immutable attempt recorded. Another try will create a new record.",
+        "Attempt saved. Another submission will be saved separately.",
       );
     } catch (error) {
       if (
@@ -1327,7 +1512,13 @@ export function InterviewSessionWorkspace() {
   }
 
   async function requestFeedback(attempt: InterviewAttempt) {
-    if (providerBusy || attempt.feedback) return;
+    if (
+      providerBusy ||
+      attempt.feedback ||
+      attempt.answer?.type === "multiple-choice"
+    ) {
+      return;
+    }
     const expectedAttemptId = attempt.id;
     const expectedQuestionId = attempt.questionId;
     const selection = attemptSelectionSequence.current;
@@ -1337,11 +1528,16 @@ export function InterviewSessionWorkspace() {
     setProviderBusy(true);
     setProviderError(null);
     try {
+      const expectedQuestionType =
+        selectedQuestion?.id === expectedQuestionId
+          ? selectedQuestion.questionType
+          : undefined;
       const result = await requestAttemptFeedback(
         sessionId,
         expectedAttemptId,
         controller.signal,
         expectedQuestionId,
+        expectedQuestionType,
       );
       if (
         !actionIsCurrent(controller) ||
@@ -1429,10 +1625,21 @@ export function InterviewSessionWorkspace() {
   const editable = session.status === "active";
   const canWriteAttempt =
     editable && session.mode === "written-practice";
+  const generationContextCategories =
+    canonicalInterviewCategorySuggestions(
+      session.focusTopics,
+      session.skillGaps,
+    );
   const generationStatusPending =
     activeJob?.scope === "generation" &&
     (activeJob.job.status === "queued" ||
       activeJob.job.status === "processing");
+  const mcqExplanationLocked =
+    selectedQuestion?.questionType === "multiple-choice" &&
+    !selectedQuestion.explanation &&
+    !selectedAttempt &&
+    (attemptPagination?.total ?? attempts.length) === 0;
+  const notesResolved = notesState === "clean" || notesState === "saved";
 
   return (
     <section
@@ -1546,9 +1753,7 @@ export function InterviewSessionWorkspace() {
         </p>
       ) : null}
 
-      {workspaceError ? (
-        <SafeErrorMessage error={workspaceError} />
-      ) : null}
+      {workspaceError ? <SafeErrorMessage error={workspaceError} /> : null}
       <p className="interview-sr-status" aria-live="polite">
         {statusMessage}
       </p>
@@ -1594,21 +1799,36 @@ export function InterviewSessionWorkspace() {
                 )}
               </select>
             </label>
-            <label>
-              Categories
-              <input
-                value={generationCategories}
-                maxLength={6_000}
-                placeholder="System design, behavioral"
-                onChange={(event) =>
-                  setGenerationCategories(event.target.value)
-                }
+            <div className="interview-span-two">
+              <InterviewCategorySelector
+                contextCategories={generationContextCategories}
+                selected={generationCategories}
+                disabled={providerBusy || generationStatusPending}
+                onSelectedChange={setGenerationCategories}
               />
-            </label>
+            </div>
+            <div className="interview-span-two">
+              <InterviewQuestionTypeControls
+                count={generationCount}
+                selected={generationQuestionTypes}
+                explicitCounts={generationTypeCounts}
+                disabled={providerBusy || generationStatusPending}
+                onSelectedChange={setGenerationQuestionTypes}
+                onExplicitCountsChange={setGenerationTypeCounts}
+              />
+            </div>
             <button
               className="interview-primary-button"
               type="submit"
-              disabled={providerBusy || generationStatusPending}
+              disabled={
+                providerBusy ||
+                generationStatusPending ||
+                !interviewTypeCountsAreValid(
+                  generationCount,
+                  generationQuestionTypes,
+                  generationTypeCounts,
+                )
+              }
             >
               {providerBusy && activeJob?.scope === "generation"
                 ? "Generating…"
@@ -1628,6 +1848,31 @@ export function InterviewSessionWorkspace() {
               onSubmit={(event) => void submitManualQuestion(event)}
               noValidate
             >
+              <label>
+                Question type
+                <select
+                  value={manualQuestionType}
+                  onChange={(event) => {
+                    const next = event.target.value as InterviewQuestionType;
+                    setManualQuestionType(next);
+                    setManualError(null);
+                    if (next !== "coding") {
+                      setManualStarterCode("");
+                    }
+                    if (next !== "multiple-choice") {
+                      resetManualMcqDraft();
+                    }
+                  }}
+                >
+                  {Object.entries(QUESTION_TYPE_LABELS)
+                    .filter(([value]) => value !== "legacy-open-response")
+                    .map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                </select>
+              </label>
               <label>
                 Category
                 <input
@@ -1664,20 +1909,109 @@ export function InterviewSessionWorkspace() {
                   }
                 />
               </label>
-              <label className="interview-span-two">
-                Model answer <span>(optional)</span>
-                <textarea
-                  rows={5}
-                  maxLength={12_000}
-                  value={manualModelAnswer}
-                  onChange={(event) =>
-                    setManualModelAnswer(event.target.value)
-                  }
-                />
-              </label>
-              {manualError ? (
-                <SafeErrorMessage error={manualError} />
-              ) : null}
+              {manualQuestionType === "multiple-choice" ? (
+                <fieldset className="interview-mcq-editor">
+                  <legend>Multiple Choice options</legend>
+                  {manualOptions.map((option, index) => (
+                    <div
+                      className="interview-mcq-editor__option"
+                      key={`manual-option-${index}`}
+                    >
+                      <label className="interview-mcq-editor__correct">
+                        <input
+                          type="radio"
+                          name="manual-correct-option"
+                          checked={manualCorrectOptionIndex === index}
+                          onChange={() => setManualCorrectOptionIndex(index)}
+                        />
+                        Correct
+                      </label>
+                      <label>
+                        Option {index + 1}
+                        <input
+                          type="text"
+                          maxLength={500}
+                          value={option}
+                          onChange={(event) =>
+                            setManualOptions((current) =>
+                              current.map((value, optionIndex) =>
+                                optionIndex === index
+                                  ? event.target.value
+                                  : value,
+                              ),
+                            )
+                          }
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="interview-secondary-button"
+                        disabled={manualOptions.length <= 2}
+                        onClick={() => {
+                          setManualOptions((current) =>
+                            current.filter(
+                              (_, optionIndex) => optionIndex !== index,
+                            ),
+                          );
+                          setManualCorrectOptionIndex((current) =>
+                            current === null
+                              ? null
+                              : current === index
+                                ? null
+                                : current > index
+                                  ? current - 1
+                                  : current,
+                          );
+                        }}
+                      >
+                        Remove option {index + 1}
+                      </button>
+                    </div>
+                  ))}
+                  <div className="interview-mcq-editor__actions">
+                    <button
+                      type="button"
+                      className="interview-secondary-button"
+                      disabled={manualOptions.length >= 8}
+                      onClick={() =>
+                        setManualOptions((current) => [...current, ""])
+                      }
+                    >
+                      Add option
+                    </button>
+                  </div>
+                </fieldset>
+              ) : (
+                <>
+                  {manualQuestionType === "coding" ? (
+                    <label className="interview-span-two">
+                      Starter code <span>(optional)</span>
+                      <textarea
+                        rows={7}
+                        maxLength={12_000}
+                        value={manualStarterCode}
+                        spellCheck={false}
+                        placeholder="Add imports, a function signature, or TODO scaffold without the completed solution…"
+                        onChange={(event) =>
+                          setManualStarterCode(event.target.value)
+                        }
+                      />
+                    </label>
+                  ) : null}
+                  <label className="interview-span-two">
+                    Model answer <span>(optional)</span>
+                    <textarea
+                      rows={5}
+                      maxLength={12_000}
+                      value={manualModelAnswer}
+                      onChange={(event) =>
+                        setManualModelAnswer(event.target.value)
+                      }
+                    />
+                  </label>
+                </>
+              )}
+              {manualError ? <SafeErrorMessage error={manualError} /> : null}
               <button
                 className="interview-secondary-button"
                 type="submit"
@@ -1733,9 +2067,7 @@ export function InterviewSessionWorkspace() {
           ) : null}
         </section>
       ) : null}
-      {providerError ? (
-        <SafeErrorMessage error={providerError} />
-      ) : null}
+      {providerError ? <SafeErrorMessage error={providerError} /> : null}
 
       <div className="interview-workspace-grid">
         <section
@@ -1815,33 +2147,52 @@ export function InterviewSessionWorkspace() {
             </p>
           ) : (
             <ol className="interview-question-list">
-              {questions.map((question) => (
-                <li key={question.id}>
-                  <button
-                    type="button"
-                    className={
-                      selectedQuestionId === question.id
-                        ? "interview-question-select interview-question-select--active"
-                        : "interview-question-select"
-                    }
-                    aria-pressed={selectedQuestionId === question.id}
-                    aria-label={`${
-                      question.isPinned ? "Pinned: " : ""
-                    }${question.question}`}
-                    onClick={() => selectQuestion(question.id)}
-                  >
-                    <span>
-                      {question.category} · {question.difficulty}
-                    </span>
-                    <strong>{question.question}</strong>
-                    {question.isPinned ? (
-                      <span className="interview-pinned-label">
-                        <span aria-hidden="true">◆</span> Pinned
+              {questions.map((question, index) => {
+                const questionNumber =
+                  (questionPage - 1) * PAGE_SIZE + index + 1;
+                const questionNumberLabel = String(questionNumber).padStart(
+                  2,
+                  "0",
+                );
+                return (
+                  <li key={question.id}>
+                    <button
+                      type="button"
+                      className={
+                        selectedQuestionId === question.id
+                          ? "interview-question-select interview-question-select--active"
+                          : "interview-question-select"
+                      }
+                      aria-pressed={selectedQuestionId === question.id}
+                      aria-label={`${
+                        question.isPinned ? "Pinned: " : ""
+                      }${question.question}`}
+                      onClick={() => selectQuestion(question.id)}
+                    >
+                      <div className="interview-question-select__meta">
+                        <span
+                          className="interview-question-number"
+                          aria-hidden="true"
+                        >
+                          {questionNumberLabel}
+                        </span>
+                        <span className="interview-question-type-label">
+                          {QUESTION_TYPE_LABELS[question.questionType]}
+                        </span>
+                      </div>
+                      <span>
+                        {question.category} · {question.difficulty}
                       </span>
-                    ) : null}
-                  </button>
-                </li>
-              ))}
+                      <strong>{question.question}</strong>
+                      {question.isPinned ? (
+                        <span className="interview-pinned-label">
+                          <span aria-hidden="true">◆</span> Pinned
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
             </ol>
           )}
           <div className="interview-pagination">
@@ -1884,9 +2235,14 @@ export function InterviewSessionWorkspace() {
               </h2>
             </div>
             {selectedQuestion ? (
-              <span className="interview-chip">
-                {selectedQuestion.difficulty}
-              </span>
+              <div className="interview-context-chips">
+                <span className="interview-question-type-label">
+                  {QUESTION_TYPE_LABELS[selectedQuestion.questionType]}
+                </span>
+                <span className="interview-chip">
+                  {selectedQuestion.difficulty}
+                </span>
+              </div>
             ) : null}
           </div>
           {questionDetailLoading ? (
@@ -1963,6 +2319,10 @@ export function InterviewSessionWorkspace() {
                     </ul>
                   ) : null}
                 </section>
+              ) : editable && mcqExplanationLocked ? (
+                <p className="interview-explanation-lock">
+                  Submit an attempt to unlock the explanation.
+                </p>
               ) : editable ? (
                 <button
                   type="button"
@@ -1974,52 +2334,90 @@ export function InterviewSessionWorkspace() {
                 </button>
               ) : null}
 
-              <label className="interview-answer-field">
-                Private notes
-                <textarea
-                  rows={4}
-                  maxLength={8_000}
-                  value={notesDraft}
-                  readOnly={!editable}
-                  onChange={(event) => {
-                    setNotesDraft(event.target.value);
-                    setNotesState("dirty");
-                  }}
-                />
-              </label>
-              {editable ? (
-                <div className="interview-action-row">
-                  <button
-                    type="button"
-                    className="interview-secondary-button"
-                    disabled={
-                      notesState === "saving" ||
-                      notesDraft.length > 8_000 ||
-                      (notesState !== "dirty" && notesState !== "error")
-                    }
-                    onClick={() => void persistNotes(notesDraft)}
-                  >
-                    {notesState === "saving" ? "Saving…" : "Save notes"}
-                  </button>
-                  <button
-                    type="button"
-                    className="interview-secondary-button"
-                    disabled={notesState === "saving" || notesDraft === ""}
-                    onClick={() => void persistNotes("")}
-                  >
-                    Clear notes
-                  </button>
-                  <span role="status">
-                    {notesState === "saved"
-                      ? notesDraft === ""
-                        ? "Notes cleared."
-                        : "Notes saved."
-                      : notesState === "dirty"
-                        ? "Unsaved notes."
-                        : ""}
-                  </span>
+              <section
+                className="interview-private-notes"
+                aria-label="Private notes"
+              >
+                <div className="interview-private-notes-heading">
+                  <strong>Private notes</strong>
+                  {notesOpen ? (
+                    notesResolved ? (
+                      <button
+                        type="button"
+                        className="interview-secondary-button"
+                        aria-expanded="true"
+                        aria-controls="interview-private-notes-editor"
+                        onClick={() => setNotesOpen(false)}
+                      >
+                        Hide
+                      </button>
+                    ) : null
+                  ) : editable ? (
+                    <button
+                      type="button"
+                      className="interview-secondary-button"
+                      aria-expanded="false"
+                      aria-controls="interview-private-notes-editor"
+                      onClick={() => setNotesOpen(true)}
+                    >
+                      {notesDraft.trim() ? "Show note" : "Add note"}
+                    </button>
+                  ) : null}
                 </div>
-              ) : null}
+                {notesOpen ? (
+                  <div
+                    id="interview-private-notes-editor"
+                    className="interview-private-notes-editor"
+                  >
+                    <div className="interview-answer-field">
+                      <textarea
+                        aria-label="Private notes"
+                        rows={4}
+                        maxLength={8_000}
+                        value={notesDraft}
+                        readOnly={!editable}
+                        onChange={(event) => {
+                          setNotesDraft(event.target.value);
+                          setNotesState("dirty");
+                        }}
+                      />
+                    </div>
+                    {editable ? (
+                      <div className="interview-action-row">
+                        <button
+                          type="button"
+                          className="interview-secondary-button"
+                          disabled={
+                            notesState === "saving" ||
+                            notesDraft.length > 8_000 ||
+                            (notesState !== "dirty" && notesState !== "error")
+                          }
+                          onClick={() => void persistNotes(notesDraft)}
+                        >
+                          {notesState === "saving" ? "Saving…" : "Save notes"}
+                        </button>
+                        <button
+                          type="button"
+                          className="interview-secondary-button"
+                          disabled={notesState === "saving" || notesDraft === ""}
+                          onClick={() => void persistNotes("")}
+                        >
+                          Clear notes
+                        </button>
+                        <span role="status">
+                          {notesState === "saved"
+                            ? notesDraft === ""
+                              ? "Notes cleared."
+                              : "Notes saved."
+                            : notesState === "dirty"
+                              ? "Unsaved notes."
+                              : ""}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </section>
 
               {canWriteAttempt ? (
                 <section
@@ -2027,68 +2425,28 @@ export function InterviewSessionWorkspace() {
                   aria-labelledby="attempt-composer-title"
                 >
                   <h3 id="attempt-composer-title">
-                    Record another written attempt
+                    Save another attempt
                   </h3>
                   <p>
-                    Recording creates an immutable practice record. Another
-                    try creates a separate attempt.
+                    Each submission is saved separately so you can review your
+                    practice over time.
                   </p>
-                  <label
-                    className="field-label interview-answer-field"
-                    htmlFor="interview-written-answer"
-                  >
-                    <span>
-                      Written answer{" "}
-                      <span
-                        className="field-required"
-                        aria-hidden="true"
-                      >
-                        (required)
-                      </span>
-                    </span>
-                    <textarea
-                      id="interview-written-answer"
-                      name="writtenAnswer"
-                      className="field-control"
-                      required
-                      rows={9}
-                      maxLength={ANSWER_MAX_LENGTH}
-                      value={answerDraft}
-                      aria-invalid={Boolean(answerError)}
-                      aria-describedby={`interview-written-answer-count${
-                        answerError
-                          ? " interview-written-answer-error"
-                          : ""
-                      }`}
-                      onChange={(event) =>
-                        setAnswerDraft(event.target.value)
-                      }
-                    />
-                  </label>
-                  <small
-                    className="field-help"
-                    id="interview-written-answer-count"
-                  >
-                    {answerDraft.length.toLocaleString()} /{" "}
-                    {ANSWER_MAX_LENGTH.toLocaleString()}
-                  </small>
-                  {answerError ? (
-                    <SafeErrorMessage
-                      error={answerError}
-                      id="interview-written-answer-error"
-                    />
-                  ) : null}
-                  <button
-                    type="button"
-                    className="primary-button interview-primary-button"
-                    disabled={answerBusy || answerDraft.trim() === ""}
-                    aria-busy={answerBusy}
-                    onClick={() => void submitAttempt()}
-                  >
-                    {answerBusy
-                      ? "Recording…"
-                      : "Record immutable attempt"}
-                  </button>
+                  <InterviewAnswerControl
+                    question={selectedQuestion}
+                    textValue={answerDraft}
+                    selectedOptionId={selectedOptionId}
+                    disabled={answerBusy}
+                    error={answerError}
+                    onTextChange={(value) => {
+                      setAnswerDraft(value);
+                      if (answerError) setAnswerError(null);
+                    }}
+                    onSelectedOptionChange={(optionId) => {
+                      setSelectedOptionId(optionId);
+                      if (answerError) setAnswerError(null);
+                    }}
+                    onSubmit={() => void submitAttempt()}
+                  />
                 </section>
               ) : null}
 
@@ -2105,8 +2463,10 @@ export function InterviewSessionWorkspace() {
         >
           <div className="interview-section-heading">
             <div>
-              <p className="interview-kicker">Immutable record</p>
-              <h2 id="attempt-history-title">Attempt history</h2>
+              <h2 id="attempt-history-title">Saved attempts</h2>
+              <p className="interview-saved-attempts-copy">
+                Review each saved submission and any available feedback.
+              </p>
             </div>
             {attemptPagination ? (
               <span className="interview-chip">
@@ -2128,15 +2488,13 @@ export function InterviewSessionWorkspace() {
               }}
             >
               <option value="">All statuses</option>
-              <option value="recorded">Recorded</option>
+              <option value="recorded">Saved</option>
               <option value="feedback-queued">Feedback queued</option>
               <option value="feedback-processing">
                 Feedback processing
               </option>
-              <option value="feedback-completed">
-                Feedback completed
-              </option>
-              <option value="feedback-failed">Feedback failed</option>
+              <option value="feedback-completed">Feedback ready</option>
+              <option value="feedback-failed">Feedback unavailable</option>
             </select>
           </label>
           {attemptLoading ? (
@@ -2158,7 +2516,7 @@ export function InterviewSessionWorkspace() {
             </div>
           ) : attempts.length === 0 ? (
             <p className="interview-state">
-              No written attempts have been recorded for this question.
+              No saved attempts for this question yet.
             </p>
           ) : (
             <ol className="interview-attempt-list">
@@ -2167,57 +2525,84 @@ export function InterviewSessionWorkspace() {
                   <button
                     type="button"
                     aria-pressed={selectedAttemptId === attempt.id}
-                    aria-label={`Open attempt ${index + 1} from ${new Date(
+                    aria-label={`Review attempt ${index + 1} submitted ${new Date(
                       attempt.createdAt,
                     ).toLocaleString()}`}
                     onClick={() => selectAttempt(attempt.id)}
                   >
                     <strong>Attempt {index + 1}</strong>
-                    <span>{attempt.status.replaceAll("-", " ")}</span>
+                    <span>{attemptStatusLabels[attempt.status]}</span>
+                    {attempt.evaluation ? (
+                      <span>{attempt.evaluation.score}/100</span>
+                    ) : attempt.feedback ? (
+                      <span>{attempt.feedback.score}/100</span>
+                    ) : null}
                     <small>
-                      {new Date(attempt.createdAt).toLocaleString()}
+                      Submitted {new Date(attempt.createdAt).toLocaleString()}
                     </small>
+                    <span className="interview-attempt-list__review">
+                      Review attempt
+                    </span>
                   </button>
                 </li>
               ))}
             </ol>
           )}
-          <div className="interview-pagination">
-            <button
-              type="button"
-              disabled={attemptLoading || attemptPage <= 1}
-              onClick={() => setAttemptPage((current) => current - 1)}
-            >
-              Previous
-            </button>
-            <span>Page {attemptPage}</span>
-            <button
-              type="button"
-              disabled={
-                attemptLoading ||
-                !attemptPagination ||
-                attemptPagination.pages === 0 ||
-                attemptPage >= attemptPagination.pages
+          {attemptPagination && attemptPagination.pages > 1 ? (
+            <Pager
+              className="interview-pagination"
+              label="Saved attempt pages"
+              currentPage={`Page ${attemptPage}`}
+              previousLabel="Previous"
+              nextLabel="Next"
+              previousDisabled={attemptLoading || attemptPage <= 1}
+              nextDisabled={
+                attemptLoading || attemptPage >= attemptPagination.pages
               }
-              onClick={() => setAttemptPage((current) => current + 1)}
-            >
-              Next
-            </button>
-          </div>
+              busy={attemptLoading}
+              onPrevious={() => setAttemptPage((current) => current - 1)}
+              onNext={() => setAttemptPage((current) => current + 1)}
+            />
+          ) : null}
 
           {selectedAttempt ? (
             <article className="interview-attempt-detail">
               <div className="interview-section-heading">
-                <h3>Recorded answer</h3>
-                <span>{selectedAttempt.status.replaceAll("-", " ")}</span>
+                <h3>Saved answer</h3>
+                <span>{attemptStatusLabels[selectedAttempt.status]}</span>
               </div>
-              <p>{selectedAttempt.answerText}</p>
+              <p>{attemptAnswerText(selectedAttempt, selectedQuestion)}</p>
+              {selectedAttempt.answer?.type === "multiple-choice" &&
+              selectedAttempt.evaluation ? (
+                <div className="interview-attempt-result">
+                  <span
+                    className={
+                      selectedAttempt.evaluation.correct
+                        ? "interview-attempt-result__badge"
+                        : "interview-attempt-result__badge interview-attempt-result__badge--review"
+                    }
+                  >
+                    {selectedAttempt.evaluation.correct
+                      ? "Correct"
+                      : "Needs review"}
+                  </span>
+                  <strong>{selectedAttempt.evaluation.score}/100</strong>
+                  <span>
+                    Correct answer:{" "}
+                    {optionText(
+                      selectedQuestion,
+                      selectedAttempt.evaluation.correctOptionId,
+                    )}
+                  </span>
+                </div>
+              ) : null}
               <small>
-                Recorded{" "}
-                {new Date(selectedAttempt.createdAt).toLocaleString()}
+                Submitted {new Date(selectedAttempt.createdAt).toLocaleString()}
               </small>
               {feedbackPanel(selectedAttempt)}
-              {editable && !selectedAttempt.feedback ? (
+              {editable &&
+              !selectedAttempt.feedback &&
+              selectedAttempt.answer?.type !== "multiple-choice" ? (
                 <button
                   type="button"
                   className="interview-secondary-button"

@@ -2,6 +2,10 @@ import type { Request, Response } from "express";
 import { env } from "../../config/env.js";
 import { enqueueJob } from "../../jobs/job.queue.js";
 import { AppError } from "../../shared/appError.js";
+import { InterviewAttemptModel } from "./interviewAttempt.model.js";
+import { InterviewQuestionModel } from "./interviewQuestion.model.js";
+import { resolveQuestionTypeCounts } from "./interviewQuestionDistribution.js";
+import { effectiveInterviewQuestionType } from "./interviewQuestion.types.js";
 import {
   addManualQuestion,
   createInterviewSession,
@@ -9,11 +13,40 @@ import {
   listInterviewQuestions,
   listInterviewSessions,
   recordInterviewAttempt,
+  serializeInterviewAttempt,
   serializeQuestionDetail,
+  serializeQuestionSummary,
   setQuestionNotes,
   setQuestionPinned,
   updateInterviewSessionStatus,
 } from "./interview.service.js";
+
+async function hasOwnedAttemptForQuestion(
+  request: Request,
+): Promise<boolean> {
+  const attempt = await InterviewAttemptModel.exists({
+    userId: request.auth!.userId,
+    sessionId: request.interviewSession!._id,
+    questionId: request.interviewQuestion!._id,
+  });
+
+  return Boolean(attempt);
+}
+
+async function shouldRevealQuestionStudyMaterial(
+  request: Request,
+): Promise<boolean> {
+  const question = request.interviewQuestion!;
+
+  if (question.questionType !== "multiple-choice") {
+    return (
+      request.interviewSession!.mode === "study" ||
+      Boolean(question.explanation)
+    );
+  }
+
+  return hasOwnedAttemptForQuestion(request);
+}
 import { resolveInterviewResumeVersion } from "./interviewAi.service.js";
 
 export async function createInterviewSessionController(
@@ -37,7 +70,12 @@ export async function createInterviewSessionController(
 
   response.status(201).json({
     success: true,
-    data: result,
+    data: {
+      session: result.session,
+      questions: result.questions.map((question) =>
+        serializeQuestionSummary(question),
+      ),
+    },
   });
 }
 
@@ -99,7 +137,13 @@ export async function addManualQuestionController(
 
   response.status(201).json({
     success: true,
-    data: { question },
+    data: {
+      question: serializeQuestionDetail(
+        question,
+        request.interviewSession!.mode === "study" ||
+          Boolean(question.explanation),
+      ),
+    },
   });
 }
 
@@ -129,13 +173,15 @@ export async function getInterviewQuestionController(
   request: Request,
   response: Response,
 ): Promise<void> {
+  const revealStudyMaterial =
+    await shouldRevealQuestionStudyMaterial(request);
+
   response.status(200).json({
     success: true,
     data: {
       question: serializeQuestionDetail(
         request.interviewQuestion!,
-        request.interviewSession!.mode === "study" ||
-          Boolean(request.interviewQuestion!.explanation),
+        revealStudyMaterial,
       ),
     },
   });
@@ -150,14 +196,16 @@ export async function setQuestionPinnedController(
     isPinned: request.body.isPinned,
   });
 
+  const revealStudyMaterial =
+    await shouldRevealQuestionStudyMaterial(request);
+
   response.status(200).json({
     success: true,
     data: {
       question: serializeQuestionDetail(
-          question,
-          request.interviewSession!.mode === "study" ||
-            Boolean(question.explanation),
-        ),
+        question,
+        revealStudyMaterial,
+      ),
     },
   });
 }
@@ -171,14 +219,16 @@ export async function setQuestionNotesController(
     notes: request.body.notes,
   });
 
+  const revealStudyMaterial =
+    await shouldRevealQuestionStudyMaterial(request);
+
   response.status(200).json({
     success: true,
     data: {
       question: serializeQuestionDetail(
-          question,
-          request.interviewSession!.mode === "study" ||
-            Boolean(question.explanation),
-        ),
+        question,
+        revealStudyMaterial,
+      ),
     },
   });
 }
@@ -187,6 +237,14 @@ export async function queueQuestionGenerationController(
   request: Request,
   response: Response,
 ): Promise<void> {
+  const typeCounts =
+    resolveQuestionTypeCounts({
+      count: request.body.count,
+      questionTypes:
+        request.body.questionTypes,
+      typeCounts: request.body.typeCounts,
+    });
+
   const remainingCapacity =
     env.INTERVIEW_MAX_QUESTIONS_PER_SESSION -
     request.interviewSession!.questionCount;
@@ -215,6 +273,9 @@ export async function queueQuestionGenerationController(
       count: request.body.count,
       categories: request.body.categories,
       difficultyMix: request.body.difficultyMix,
+      questionTypes:
+        request.body.questionTypes,
+      typeCounts,
     },
     maxAttempts: env.INTERVIEW_AI_JOB_MAX_ATTEMPTS,
     idempotencyKey: [
@@ -242,12 +303,28 @@ export async function queueQuestionExplanationController(
   response: Response,
 ): Promise<void> {
   const question = request.interviewQuestion!;
+  const isMultipleChoice =
+    question.questionType === "multiple-choice";
+
+  if (
+    isMultipleChoice &&
+    !(await hasOwnedAttemptForQuestion(request))
+  ) {
+    throw new AppError(
+      409,
+      "INTERVIEW_MCQ_EXPLANATION_REQUIRES_ATTEMPT",
+      "Submit an attempt before requesting the Multiple Choice explanation.",
+    );
+  }
 
   if (question.explanation) {
     response.status(200).json({
       success: true,
       data: {
-        question: serializeQuestionDetail(question),
+        question: serializeQuestionDetail(
+          question,
+          true,
+        ),
         alreadyAvailable: true,
       },
     });
@@ -293,12 +370,18 @@ export async function recordInterviewAttemptController(
     userId: request.auth!.userId,
     session: request.interviewSession!,
     question: request.interviewQuestion!,
-    answerText: request.body.answerText,
+    submission: request.body,
   });
 
   response.status(201).json({
     success: true,
-    data: { attempt },
+    data: {
+      attempt: serializeInterviewAttempt({
+        attempt,
+        question: request.interviewQuestion!,
+        revealCorrectOption: true,
+      }),
+    },
   });
 }
 
@@ -327,10 +410,21 @@ export async function getInterviewAttemptController(
   request: Request,
   response: Response,
 ): Promise<void> {
+  const attempt = request.interviewAttempt!;
+  const question = await InterviewQuestionModel.findOne({
+    _id: attempt.questionId,
+    userId: request.auth!.userId,
+    sessionId: request.interviewSession!._id,
+  });
+
   response.status(200).json({
     success: true,
     data: {
-      attempt: request.interviewAttempt,
+      attempt: serializeInterviewAttempt({
+        attempt,
+        question: question ?? undefined,
+        revealCorrectOption: true,
+      }),
     },
   });
 }
@@ -340,19 +434,65 @@ export async function queueAttemptFeedbackController(
   response: Response,
 ): Promise<void> {
   const attempt = request.interviewAttempt!;
+  const question = await InterviewQuestionModel.findOne({
+    _id: attempt.questionId,
+    userId: request.auth!.userId,
+    sessionId: request.interviewSession!._id,
+  });
+
+  if (!question) {
+    throw new AppError(
+      404,
+      "INTERVIEW_QUESTION_NOT_FOUND",
+      "Interview question not found.",
+    );
+  }
+
+  const effectiveType =
+    effectiveInterviewQuestionType(question);
+
+  if (effectiveType === "multiple-choice") {
+    throw new AppError(
+      409,
+      "INTERVIEW_MCQ_FEEDBACK_NOT_REQUIRED",
+      "Multiple Choice correctness is already available from the saved attempt.",
+    );
+  }
 
   if (attempt.feedback) {
     response.status(200).json({
       success: true,
       data: {
-        attempt,
+        attempt: serializeInterviewAttempt({
+          attempt,
+          question,
+          revealCorrectOption: false,
+        }),
         alreadyAvailable: true,
       },
     });
     return;
   }
 
-  if (attempt.answerText.length > env.INTERVIEW_MAX_ANSWER_CHARACTERS) {
+  const answerText =
+    effectiveType === "legacy-open-response"
+      ? attempt.answerText
+      : attempt.answer?.type === effectiveType &&
+          "text" in attempt.answer
+        ? attempt.answer.text
+        : undefined;
+
+  if (!answerText) {
+    throw new AppError(
+      409,
+      "INTERVIEW_ATTEMPT_ANSWER_INVALID",
+      "The saved answer does not match the Interview question type.",
+      undefined,
+      false,
+    );
+  }
+
+  if (answerText.length > env.INTERVIEW_MAX_ANSWER_CHARACTERS) {
     throw new AppError(
       413,
       "INTERVIEW_ANSWER_TOO_LONG",

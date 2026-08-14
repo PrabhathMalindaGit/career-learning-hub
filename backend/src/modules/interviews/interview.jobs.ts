@@ -5,6 +5,10 @@ import {
   generateInterviewQuestions,
   generateQuestionExplanation,
 } from "./interviewAi.service.js";
+import {
+  interviewQuestionTypeCountsSchema,
+  interviewQuestionTypeSchema,
+} from "./interview.schemas.js";
 
 let registered = false;
 
@@ -33,6 +37,12 @@ export function registerInterviewJobHandlers(): void {
         })
         .strict()
         .optional(),
+      questionTypes: z
+        .array(interviewQuestionTypeSchema)
+        .min(1)
+        .max(6),
+      typeCounts:
+        interviewQuestionTypeCountsSchema,
     }),
     async (payload, context) => {
       await context.reportProgress(10);

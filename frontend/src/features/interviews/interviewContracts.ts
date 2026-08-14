@@ -2,6 +2,8 @@ import { ApiError } from "../../api/apiClient";
 import { parseJobResilienceMetadata } from "../jobs/jobResilience";
 import type {
   AcceptedInterviewJob,
+  EffectiveInterviewQuestionType,
+  ExplanationRequestResult,
   FeedbackRequestResult,
   InterviewAttempt,
   InterviewAttemptPage,
@@ -13,6 +15,8 @@ import type {
   InterviewJobStatus,
   InterviewJobType,
   InterviewMode,
+  InterviewMultipleChoiceEvaluation,
+  InterviewMultipleChoicePublic,
   InterviewQuestionDetail,
   InterviewQuestionPage,
   InterviewQuestionSource,
@@ -22,7 +26,7 @@ import type {
   InterviewSessionStatus,
   InterviewSessionSummary,
   Pagination,
-  ExplanationRequestResult,
+  TypedInterviewAnswer,
 } from "./types";
 
 const objectIdPattern = /^[a-f\d]{24}$/i;
@@ -64,6 +68,12 @@ function text(
     invalid();
   }
   return value;
+}
+
+function nonBlankText(value: unknown, maximum: number): string {
+  const parsed = text(value, maximum, 1);
+  if (!parsed.trim()) invalid();
+  return parsed;
 }
 
 function optionalText(
@@ -147,6 +157,76 @@ function questionSource(value: unknown): InterviewQuestionSource {
   return value;
 }
 
+export function questionType(
+  value: unknown,
+): EffectiveInterviewQuestionType {
+  if (value === undefined || value === null) {
+    return "legacy-open-response";
+  }
+  if (
+    value !== "legacy-open-response" &&
+    value !== "multiple-choice" &&
+    value !== "short-answer" &&
+    value !== "coding" &&
+    value !== "behavioral" &&
+    value !== "scenario-based" &&
+    value !== "technical-explanation"
+  ) {
+    invalid();
+  }
+  return value;
+}
+
+export function typedAnswer(value: unknown): TypedInterviewAnswer {
+  const item = record(value);
+  const type = questionType(item.type);
+  if (type === "legacy-open-response") invalid();
+
+  if (type === "multiple-choice") {
+    if (item.text !== undefined) invalid();
+    return {
+      type,
+      selectedOptionId: nonBlankText(item.selectedOptionId, 64),
+    };
+  }
+
+  if (item.selectedOptionId !== undefined) invalid();
+  return {
+    type,
+    text: nonBlankText(item.text, 50_000),
+  } as TypedInterviewAnswer;
+}
+
+export function multipleChoicePublic(
+  value: unknown,
+): InterviewMultipleChoicePublic {
+  const item = record(value);
+  if (
+    item.correctOptionId !== undefined ||
+    item.correctOptionIndex !== undefined
+  ) {
+    invalid();
+  }
+  const options = array(item.options, 8, (entry) => {
+    const option = record(entry);
+    if (
+      option.correct !== undefined ||
+      option.isCorrect !== undefined
+    ) {
+      invalid();
+    }
+    return {
+      id: nonBlankText(option.id, 64),
+      text: nonBlankText(option.text, 500),
+    };
+  });
+  if (options.length < 2) invalid();
+  if (new Set(options.map((option) => option.id)).size !== options.length) {
+    invalid();
+  }
+  return { options };
+}
+
 function attemptStatus(value: unknown): InterviewAttemptStatus {
   if (
     value !== "recorded" &&
@@ -217,7 +297,21 @@ function parseSessionSummary(value: unknown): InterviewSessionSummary {
 
 function parseQuestionSummary(value: unknown): InterviewQuestionSummary {
   const item = record(value);
+  if (item.correctOptionId !== undefined || item.correctOptionIndex !== undefined) {
+    invalid();
+  }
+  const parsedQuestionType = questionType(item.questionType);
   const userNotes = optionalText(item.userNotes, 8_000);
+  let multipleChoice: InterviewMultipleChoicePublic | undefined;
+  if (parsedQuestionType === "multiple-choice") {
+    if (item.multipleChoice === undefined || item.multipleChoice === null) {
+      invalid();
+    }
+    multipleChoice = multipleChoicePublic(item.multipleChoice);
+  } else if (item.multipleChoice !== undefined && item.multipleChoice !== null) {
+    invalid();
+  }
+
   return {
     id: id(item.id ?? item._id),
     sessionId: id(item.sessionId),
@@ -225,6 +319,8 @@ function parseQuestionSummary(value: unknown): InterviewQuestionSummary {
     category: text(item.category, 120, 1),
     difficulty: difficulty(item.difficulty),
     question: text(item.question, 2_000, 5),
+    questionType: parsedQuestionType,
+    ...(multipleChoice === undefined ? {} : { multipleChoice }),
     isPinned: boolean(item.isPinned),
     ...(userNotes === undefined ? {} : { userNotes }),
     createdAt: date(item.createdAt),
@@ -252,26 +348,84 @@ function parseFeedback(value: unknown): InterviewFeedback {
   };
 }
 
+function parseMultipleChoiceEvaluation(
+  value: unknown,
+): InterviewMultipleChoiceEvaluation {
+  const item = record(value);
+  if (item.kind !== "multiple-choice") invalid();
+  const score = integer(item.score, 0, 100);
+  if (score !== 0 && score !== 100) invalid();
+  const correct = boolean(item.correct);
+  if (correct !== (score === 100)) invalid();
+  return {
+    kind: "multiple-choice",
+    score,
+    correct,
+    correctOptionId: nonBlankText(item.correctOptionId, 64),
+  };
+}
+
 function parseAttempt(value: unknown): InterviewAttempt {
   const item = record(value);
   const feedback =
     item.feedback === undefined || item.feedback === null
       ? undefined
       : parseFeedback(item.feedback);
-  return {
+  const base = {
     id: id(item.id ?? item._id),
     sessionId: id(item.sessionId),
     questionId: id(item.questionId),
-    answerText: text(item.answerText, 50_000, 1),
     status: attemptStatus(item.status),
     ...(feedback === undefined ? {} : { feedback }),
     createdAt: date(item.createdAt),
     updatedAt: date(item.updatedAt),
   };
+  const hasAnswerText = item.answerText !== undefined && item.answerText !== null;
+  const hasAnswer = item.answer !== undefined && item.answer !== null;
+  if (hasAnswerText === hasAnswer) invalid();
+
+  if (hasAnswerText) {
+    if (item.evaluation !== undefined && item.evaluation !== null) invalid();
+    return {
+      ...base,
+      answerText: nonBlankText(item.answerText, 50_000),
+    };
+  }
+
+  const answer = typedAnswer(item.answer);
+  if (answer.type === "multiple-choice") {
+    if (item.evaluation === undefined || item.evaluation === null) invalid();
+    return {
+      ...base,
+      answer,
+      evaluation: parseMultipleChoiceEvaluation(item.evaluation),
+    };
+  }
+
+  if (item.evaluation !== undefined && item.evaluation !== null) invalid();
+  return {
+    ...base,
+    answer,
+  };
+}
+
+function attemptQuestionType(
+  attempt: InterviewAttempt,
+): EffectiveInterviewQuestionType {
+  return attempt.answer ? attempt.answer.type : "legacy-open-response";
 }
 
 function assertIdentity(expected: string, actual: string): void {
   if (expected !== actual) invalid();
+}
+
+function assertQuestionType(
+  expected: EffectiveInterviewQuestionType | undefined,
+  attempt: InterviewAttempt,
+): void {
+  if (expected !== undefined && attemptQuestionType(attempt) !== expected) {
+    invalid();
+  }
 }
 
 export function parseSessionList(value: unknown): InterviewSessionPage {
@@ -338,7 +492,14 @@ export function parseQuestionDetail(
   const summary = parseQuestionSummary(item);
   assertIdentity(expectedSessionId, summary.sessionId);
   assertIdentity(expectedQuestionId, summary.id);
+  const starterCode = optionalText(item.starterCode, 12_000);
+  if (starterCode !== undefined && summary.questionType !== "coding") {
+    invalid();
+  }
   const modelAnswer = optionalText(item.modelAnswer, 12_000);
+  if (summary.questionType === "multiple-choice" && modelAnswer !== undefined) {
+    invalid();
+  }
   const explanation = optionalText(item.explanation, 12_000);
   const explanationKeyPoints =
     item.explanationKeyPoints === undefined
@@ -348,6 +509,7 @@ export function parseQuestionDetail(
         );
   return {
     ...summary,
+    ...(starterCode === undefined ? {} : { starterCode }),
     ...(modelAnswer === undefined ? {} : { modelAnswer }),
     ...(explanation === undefined ? {} : { explanation }),
     explanationKeyPoints,
@@ -370,6 +532,7 @@ export function parseAttemptList(
   value: unknown,
   expectedSessionId: string,
   expectedQuestionId?: string,
+  expectedQuestionType?: EffectiveInterviewQuestionType,
 ): InterviewAttemptPage {
   const item = record(value);
   const attempts = array(item.attempts, 100, parseAttempt);
@@ -378,6 +541,7 @@ export function parseAttemptList(
     if (expectedQuestionId !== undefined) {
       assertIdentity(expectedQuestionId, attempt.questionId);
     }
+    assertQuestionType(expectedQuestionType, attempt);
   }
   return {
     attempts,
@@ -390,6 +554,7 @@ export function parseAttemptDetail(
   expectedSessionId: string,
   expectedAttemptId: string,
   expectedQuestionId?: string,
+  expectedQuestionType?: EffectiveInterviewQuestionType,
 ): InterviewAttempt {
   const attempt = parseAttempt(record(value).attempt);
   assertIdentity(expectedSessionId, attempt.sessionId);
@@ -397,6 +562,7 @@ export function parseAttemptDetail(
   if (expectedQuestionId !== undefined) {
     assertIdentity(expectedQuestionId, attempt.questionId);
   }
+  assertQuestionType(expectedQuestionType, attempt);
   return attempt;
 }
 
@@ -404,6 +570,7 @@ export function parseRecordedAttempt(
   value: unknown,
   expectedSessionId: string,
   expectedQuestionId: string,
+  expectedQuestionType?: EffectiveInterviewQuestionType,
 ): InterviewAttempt {
   const item = record(record(value).attempt);
   return parseAttemptDetail(
@@ -411,6 +578,7 @@ export function parseRecordedAttempt(
     expectedSessionId,
     id(item.id ?? item._id),
     expectedQuestionId,
+    expectedQuestionType,
   );
 }
 
@@ -524,6 +692,7 @@ export function parseFeedbackResponse(
   expectedSessionId: string,
   expectedAttemptId: string,
   expectedQuestionId?: string,
+  expectedQuestionType?: EffectiveInterviewQuestionType,
 ): FeedbackRequestResult {
   const item = record(value);
   if (item.alreadyAvailable === true) {
@@ -534,6 +703,7 @@ export function parseFeedbackResponse(
         expectedSessionId,
         expectedAttemptId,
         expectedQuestionId,
+        expectedQuestionType,
       ),
     };
   }

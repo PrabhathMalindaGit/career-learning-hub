@@ -28,6 +28,14 @@ export function JobResilienceActions({
     job.phase !== "persisting" &&
     onCancel !== undefined;
   const canRetry = job.canRetry && onRetry !== undefined;
+  const statusMessage =
+    job.status === "completed" && job.type === "interview.questions.generate"
+      ? "✓ Questions generated successfully"
+      : job.status === "completed" && job.type === "interview.question.explain"
+        ? "✓ Explanation ready"
+        : job.status === "completed" && job.type === "interview.attempt.feedback"
+          ? "✓ Practice feedback ready"
+          : phaseLabel(job.phase);
 
   async function runAction(
     action: "cancel" | "retry",
@@ -55,9 +63,13 @@ export function JobResilienceActions({
   }
 
   return (
-    <div className="job-resilience-actions">
+    <div
+      className="job-resilience-actions"
+      data-job-type={job.type}
+      data-job-status={job.status}
+    >
       <p role="status" aria-live="polite">
-        {phaseLabel(job.phase)}
+        {statusMessage}
       </p>
       <div className="job-resilience-actions__buttons">
         {canCancel ? (

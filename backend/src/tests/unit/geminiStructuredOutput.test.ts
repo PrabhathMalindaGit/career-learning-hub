@@ -100,6 +100,29 @@ describe("Gemini structured output", () => {
     });
   });
 
+  it("preserves the Interview typed-question union in the Gemini response schema", () => {
+    const converted =
+      toProviderJsonSchema(generatedQuestionSetSchema);
+    const serialized = JSON.stringify(converted);
+
+    expect(serialized).toMatch(
+      /"(?:anyOf|oneOf)":/,
+    );
+
+    for (const questionType of [
+      "multiple-choice",
+      "short-answer",
+      "coding",
+      "behavioral",
+      "scenario-based",
+      "technical-explanation",
+    ]) {
+      expect(serialized).toContain(
+        JSON.stringify(questionType),
+      );
+    }
+  });
+
   it("sends the exact response schema to Gemini and omits Gemini 3 sampling parameters", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       geminiResponse({
