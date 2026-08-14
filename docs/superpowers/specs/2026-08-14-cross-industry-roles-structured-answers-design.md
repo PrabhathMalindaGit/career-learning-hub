@@ -4,13 +4,13 @@
 **Phase:** 19B-3 / Task 7R extension  
 **Branch:** `task/phase-19b3-task7r-interview-layout-refinement`  
 **PR:** #13  
-**Status:** Design approved; implementation not yet authorized
+**Status:** Design approved; written spec awaiting user approval
 
 ## 1. Goal
 
-Extend the Interview Coach so that Career Learning Hub supports a broad cross-industry interview workflow instead of presenting technology roles as the default universe, and make Behavioral, Scenario-Based, and Technical Explanation answers genuinely structured in the frontend while preserving the existing backend attempt contract.
+Extend the Interview Coach so Career Learning Hub supports guided interview preparation across multiple industries rather than presenting technology roles as the default career universe, and make Behavioral, Scenario-Based, and Technical Explanation answers genuinely structured in the frontend while preserving the existing backend attempt contract.
 
-The implementation must remain the smallest secure and functional solution suitable for a university project. Reuse existing architecture and contracts. Do not add enterprise-grade complexity unless required for correctness or security.
+Build the smallest secure and functional solution suitable for a university project. Reuse existing architecture and contracts. Do not add enterprise-grade complexity unless required for correctness or security.
 
 ## 2. Non-goals
 
@@ -32,9 +32,9 @@ This refinement does **not** introduce:
 
 ## 3. Career-area model
 
-### 3.1 Approved career areas
+### 3.1 Canonical career areas
 
-Use exactly these fourteen broad career areas:
+Use exactly these fourteen canonical career areas, in this order:
 
 1. Technology & IT
 2. Business & Management
@@ -51,13 +51,41 @@ Use exactly these fourteen broad career areas:
 13. Science & Research
 14. Public Service & Administration
 
-Also expose **Other / Custom** as a utility selection for unusual careers. It is not treated as a fifteenth career area in the canonical career-area catalog.
+Also expose **Other / Custom** as a utility selection for unusual careers. It is not part of the canonical fourteen-area catalog.
 
-### 3.2 Representative role catalog
+### 3.2 Career-area state is frontend-only
 
-Each career area has a bounded local representative role list. The role list exists to accelerate selection, not to claim exhaustive occupational coverage.
+`careerArea` is a frontend authoring value used to choose representative roles and local Focus-topic / Skill-gap suggestions.
 
-#### Technology & IT
+Do **not** add `careerArea` to the existing create-session API payload or backend session schema in this refinement.
+
+The existing session payload remains conceptually:
+
+```text
+title
+targetRole
+experienceLevel
+mode
+focusTopics[]
+skillGaps[]
+jobDescription?
+```
+
+### 3.3 Career area is required and has no biased default
+
+Career area is required in the Create Interview wizard.
+
+- Initial state: no area selected.
+- The control shows a neutral placeholder such as `Choose a career area`.
+- Do not default to Technology & IT or any other area.
+- Target-role shortcuts and area-specific suggestions remain unavailable until an area is selected.
+- `Other / Custom` satisfies the Career-area requirement for unusual careers.
+
+## 4. Representative role catalog
+
+Each career area has a bounded local representative role list. The list accelerates selection; it is not an exhaustive occupational taxonomy.
+
+### Technology & IT
 
 - Software Engineer
 - Frontend Developer
@@ -72,7 +100,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Systems Administrator
 - IT Support Specialist
 
-#### Business & Management
+### Business & Management
 
 - Business Analyst
 - Project Manager
@@ -83,7 +111,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Business Development Manager
 - General Manager
 
-#### Finance & Accounting
+### Finance & Accounting
 
 - Accountant
 - Auditor
@@ -94,7 +122,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Investment Analyst
 - Risk Analyst
 
-#### Marketing & Sales
+### Marketing & Sales
 
 - Marketing Executive
 - Digital Marketing Specialist
@@ -105,7 +133,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Account Manager
 - Sales Manager
 
-#### Human Resources
+### Human Resources
 
 - HR Executive
 - Recruiter / Talent Acquisition Specialist
@@ -116,7 +144,7 @@ Each career area has a bounded local representative role list. The role list exi
 - People Operations Specialist
 - HR Manager
 
-#### Healthcare
+### Healthcare
 
 - Nurse
 - Medical Officer / Doctor
@@ -127,7 +155,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Public Health Officer
 - Healthcare Administrator
 
-#### Engineering
+### Engineering
 
 - Civil Engineer
 - Mechanical Engineer
@@ -139,7 +167,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Environmental Engineer
 - Biomedical Engineer
 
-#### Education & Training
+### Education & Training
 
 - Teacher
 - Lecturer
@@ -150,7 +178,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Training Coordinator
 - Education Administrator
 
-#### Law & Legal Services
+### Law & Legal Services
 
 - Lawyer / Attorney
 - Legal Counsel
@@ -161,7 +189,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Legal Researcher
 - Company Secretary
 
-#### Design & Creative
+### Design & Creative
 
 - Graphic Designer
 - UI / UX Designer
@@ -172,7 +200,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Copywriter
 - Content Creator
 
-#### Operations & Supply Chain
+### Operations & Supply Chain
 
 - Supply Chain Analyst
 - Procurement Officer
@@ -183,7 +211,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Demand Planner
 - Quality Officer
 
-#### Customer Service & Hospitality
+### Customer Service & Hospitality
 
 - Customer Service Representative
 - Customer Success Specialist
@@ -194,7 +222,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Travel Consultant
 - Event Coordinator
 
-#### Science & Research
+### Science & Research
 
 - Research Assistant
 - Research Scientist
@@ -205,7 +233,7 @@ Each career area has a bounded local representative role list. The role list exi
 - Environmental Scientist
 - Clinical Research Coordinator
 
-#### Public Service & Administration
+### Public Service & Administration
 
 - Administrative Officer
 - Government Officer
@@ -216,35 +244,29 @@ Each career area has a bounded local representative role list. The role list exi
 - Office Manager
 - Executive Assistant
 
-## 4. Create Interview interaction
+## 5. Create Interview interaction
 
-### 4.1 Career area
+### 5.1 Career area control
 
-Add a single-select Career area control above Target role.
+Use a compact single-select control above Target role rather than fourteen visible area chips.
 
-The recommended control is a native/select-style single choice rather than fourteen visible area chips because the modal is already vertically dense.
+The label is `Career area`.
 
-Default behavior:
+### 5.2 Target role workflow
 
-- no career area is silently inferred before the user makes a choice;
-- existing required-field semantics remain accessible;
-- `Other / Custom` is available as the escape hatch for unusual careers.
+After a Career area is selected:
 
-### 4.2 Target role
-
-After selecting a career area:
-
-- show approximately 6–12 representative role shortcuts from that area;
-- retain a searchable Target-role combobox;
+- show the representative roles for that area as visible shortcuts;
+- retain the searchable Target-role combobox;
 - allow explicit custom-role adoption;
 - only one Target role can be selected;
 - the final selected/custom value continues to populate the existing `targetRole: string` field.
 
-The UI should therefore communicate:
+Example:
 
 ```text
 Career area
-[ Finance & Accounting ]
+[ Finance & Accounting ▼ ]
 
 Suggested roles
 [ Accountant ] [ Auditor ] [ Financial Analyst ] ...
@@ -253,11 +275,30 @@ Search or enter another role
 [ Search or type a custom role… ]
 ```
 
-Do not add a remote role lookup dependency.
+### 5.3 Role search is scoped to the selected area
 
-### 4.3 Custom role behavior
+The searchable list searches only the representative roles from the currently selected Career area.
 
-If a user chooses a normal career area and enters a custom role, that selected career area remains the context for local Focus-topic and Skill-gap suggestions.
+Do not search a hidden global list across all fourteen areas because that could silently create a mismatch between Career-area guidance and the selected role.
+
+If the user wants a role that is not in the selected area’s representative list, they can explicitly adopt it as a custom role.
+
+### 5.4 Changing Career area
+
+Changing Career area:
+
+- updates the representative role shortcuts;
+- clears the currently selected Target role because that single role belongs to the previous authoring context;
+- does **not** clear a manually owned Session title;
+- does **not** delete already selected Focus topics or Skill gaps;
+- leaves Focus / Skill custom values untouched;
+- updates the available unselected Focus / Skill suggestions to the new area.
+
+If the title is still system-owned, clearing the Target role temporarily clears the smart title until a new role is selected.
+
+### 5.5 Custom role behavior
+
+If a user chooses a normal Career area and explicitly adopts a custom Target role, that selected Career area remains the source of Focus-topic and Skill-gap suggestions.
 
 Example:
 
@@ -268,19 +309,19 @@ Custom role: Occupational Therapist
 
 Use Healthcare guidance.
 
-If the user chooses `Other / Custom`, use a small generic professional-interview guidance set rather than incorrectly falling back to Software Engineering.
+If the user chooses `Other / Custom`, use the generic professional guidance catalog defined in Section 7.15 rather than falling back to Software Engineering.
 
-### 4.4 Existing title behavior
+### 5.6 Existing title behavior
 
-Preserve the approved smart title behavior:
+Preserve the approved smart-title behavior:
 
-- while the title is still system-owned, derive it from Experience level + Target role;
+- while the title is system-owned, derive it from Experience level + Target role;
 - once the user edits the title manually, never overwrite it because of later Career area, role, or experience changes;
 - clearing a manually owned title still counts as user ownership.
 
-### 4.5 Existing Experience level behavior
+### 5.7 Existing Experience level behavior
 
-Preserve the current approved values and default:
+Preserve these values and order:
 
 - Intern / Student
 - Entry-level
@@ -292,34 +333,76 @@ Preserve the current approved values and default:
 
 `Mid-level` remains the initial default.
 
-## 5. Focus topics and Skill gaps
+## 6. Focus topics and Skill gaps — common behavior
 
-### 5.1 Guidance level
+Suggestions are maintained at **Career-area level**, not per individual representative role.
 
-Suggestions are primarily maintained at **Career-area level**, not per individual role.
+This is an intentional scope constraint. It avoids maintaining hundreds of role-specific taxonomies while still giving useful guidance.
 
-This is an intentional scope constraint. It avoids building and maintaining hundreds of role-specific taxonomies while still providing useful guided values.
-
-### 5.2 Selection behavior
-
-Preserve the existing approved behavior:
+Preserve the existing approved selection behavior:
 
 - suggestions start unselected;
 - Focus topics are optional;
 - Skill gaps are optional;
 - users can add custom values;
 - selected custom values use the same selected-chip visual language as suggested values;
-- duplicate values are canonicalized case-insensitively;
-- changing Career area or Target role updates available suggestions but does **not** silently delete any previously selected Focus topics or Skill gaps;
+- duplicates are canonicalized case-insensitively;
+- changing Career area or Target role does **not** silently delete any already selected Focus topics or Skill gaps;
 - empty selections remain valid.
 
-### 5.3 Suggested guidance examples
+## 7. Exact local guidance catalogs
 
-Each career area should contain a bounded practical list, normally around eight Focus topics and eight Skill gaps.
+Use the following exact bounded catalogs. Each canonical Career area has eight Focus topics and eight Skill gaps. `Other / Custom` has its own generic set.
 
-Representative examples:
+### 7.1 Technology & IT
 
-#### Finance & Accounting
+Focus topics:
+
+- Software & Systems
+- APIs & Integration
+- Databases & Data
+- Cloud & Infrastructure
+- Security
+- Testing & Quality
+- Performance & Reliability
+- Data & AI
+
+Skill gaps:
+
+- Problem Solving
+- System Design
+- Debugging
+- Testing Strategy
+- Security Awareness
+- Performance Analysis
+- Technical Communication
+- Code Quality
+
+### 7.2 Business & Management
+
+Focus topics:
+
+- Business Strategy
+- Project Delivery
+- Stakeholder Management
+- Process Improvement
+- Decision-making
+- Leadership
+- Business Analysis
+- Change Management
+
+Skill gaps:
+
+- Strategic Thinking
+- Prioritization
+- Stakeholder Communication
+- Leadership
+- Commercial Awareness
+- Conflict Resolution
+- Presentation Skills
+- Decision-making
+
+### 7.3 Finance & Accounting
 
 Focus topics:
 
@@ -343,7 +426,55 @@ Skill gaps:
 - Compliance Knowledge
 - Analytical Reasoning
 
-#### Healthcare
+### 7.4 Marketing & Sales
+
+Focus topics:
+
+- Marketing Strategy
+- Digital Marketing
+- Brand Management
+- Customer Segmentation
+- Sales Process
+- Campaign Analysis
+- Content & Messaging
+- Customer Relationships
+
+Skill gaps:
+
+- Persuasive Communication
+- Customer Discovery
+- Campaign Measurement
+- Negotiation
+- Presentation Skills
+- CRM Discipline
+- Market Analysis
+- Objection Handling
+
+### 7.5 Human Resources
+
+Focus topics:
+
+- Recruitment & Selection
+- Employee Relations
+- Performance Management
+- Learning & Development
+- HR Policy
+- Workforce Planning
+- Employee Experience
+- Employment Compliance
+
+Skill gaps:
+
+- Difficult Conversations
+- Interviewing
+- Conflict Resolution
+- HR Analytics
+- Policy Interpretation
+- Stakeholder Communication
+- Coaching
+- Confidentiality & Judgment
+
+### 7.6 Healthcare
 
 Focus topics:
 
@@ -367,7 +498,199 @@ Skill gaps:
 - Ethical Decision-making
 - Handling Pressure
 
-#### Generic `Other / Custom`
+### 7.7 Engineering
+
+Focus topics:
+
+- Engineering Design
+- Technical Analysis
+- Safety & Standards
+- Project Delivery
+- Testing & Validation
+- Quality Control
+- Sustainability
+- Technical Documentation
+
+Skill gaps:
+
+- Engineering Judgment
+- Root-cause Analysis
+- Technical Communication
+- Safety Awareness
+- Design Trade-offs
+- Project Planning
+- Quality Methods
+- Cross-functional Collaboration
+
+### 7.8 Education & Training
+
+Focus topics:
+
+- Teaching & Facilitation
+- Lesson / Session Planning
+- Assessment
+- Learner Engagement
+- Inclusive Practice
+- Curriculum Design
+- Feedback
+- Education Technology
+
+Skill gaps:
+
+- Classroom / Group Management
+- Differentiation
+- Assessment Design
+- Learner Communication
+- Feedback Skills
+- Facilitation Confidence
+- Inclusive Teaching
+- Time Management
+
+### 7.9 Law & Legal Services
+
+Focus topics:
+
+- Legal Research
+- Case / Matter Analysis
+- Contracts
+- Compliance
+- Client Communication
+- Legal Writing
+- Risk & Ethics
+- Negotiation
+
+Skill gaps:
+
+- Legal Reasoning
+- Research Efficiency
+- Drafting
+- Client Communication
+- Attention to Detail
+- Negotiation
+- Ethical Judgment
+- Prioritization
+
+### 7.10 Design & Creative
+
+Focus topics:
+
+- Design Process
+- User / Audience Needs
+- Visual Communication
+- Creative Direction
+- Portfolio Decisions
+- Feedback & Iteration
+- Brand Consistency
+- Production Workflow
+
+Skill gaps:
+
+- Design Rationale
+- Presenting Work
+- Receiving Feedback
+- Prioritization
+- User Research
+- Creative Problem Solving
+- Production Efficiency
+- Stakeholder Communication
+
+### 7.11 Operations & Supply Chain
+
+Focus topics:
+
+- Supply Planning
+- Procurement
+- Logistics
+- Inventory Management
+- Process Improvement
+- Quality
+- Supplier Management
+- Operational Risk
+
+Skill gaps:
+
+- Demand Planning
+- Data Analysis
+- Negotiation
+- Process Mapping
+- Risk Management
+- Supplier Communication
+- Inventory Control
+- Continuous Improvement
+
+### 7.12 Customer Service & Hospitality
+
+Focus topics:
+
+- Customer Experience
+- Service Recovery
+- Complaint Handling
+- Communication
+- Team Coordination
+- Service Standards
+- Upselling / Recommendations
+- Operational Awareness
+
+Skill gaps:
+
+- De-escalation
+- Active Listening
+- Handling Pressure
+- Customer Communication
+- Problem Resolution
+- Service Recovery
+- Teamwork
+- Professionalism
+
+### 7.13 Science & Research
+
+Focus topics:
+
+- Research Methods
+- Experimental Design
+- Data Analysis
+- Scientific Communication
+- Literature Review
+- Laboratory / Field Practice
+- Research Ethics
+- Reproducibility
+
+Skill gaps:
+
+- Experimental Reasoning
+- Statistical Interpretation
+- Scientific Writing
+- Research Presentation
+- Data Quality
+- Critical Evaluation
+- Documentation
+- Research Planning
+
+### 7.14 Public Service & Administration
+
+Focus topics:
+
+- Public / Administrative Service
+- Policy & Procedures
+- Stakeholder Communication
+- Records & Documentation
+- Program Delivery
+- Governance
+- Community / Citizen Needs
+- Process Improvement
+
+Skill gaps:
+
+- Administrative Accuracy
+- Policy Interpretation
+- Written Communication
+- Public Communication
+- Prioritization
+- Stakeholder Management
+- Professional Judgment
+- Service Orientation
+
+### 7.15 Other / Custom
 
 Focus topics:
 
@@ -391,9 +714,7 @@ Skill gaps:
 - Professional Examples
 - Self-reflection
 
-The implementation plan may define equivalent bounded catalogs for all fourteen areas as long as the wording remains practical, neutral, and career-appropriate.
-
-## 6. Question-type answer experiences
+## 8. Question-type answer experiences
 
 The modern question types continue to have differentiated answer controls:
 
@@ -407,69 +728,90 @@ The modern question types continue to have differentiated answer controls:
 | Technical Explanation | New structured explanation fields |
 | Historical Open Response | Existing single textarea |
 
-## 7. Behavioral structured answer
+## 9. Behavioral structured answer
 
-Replace the current one-textarea Behavioral answer UI with four vertically stacked text fields:
+Replace the current one-textarea Behavioral UI with four vertically stacked text fields:
 
-1. **Situation** — “Describe the context…”
-2. **Task** — “What were you responsible for?”
-3. **Action** — “What did you personally do?”
-4. **Result** — “What happened? What was the impact?”
+1. **Situation** — `Describe the context…`
+2. **Task** — `What were you responsible for?`
+3. **Action** — `What did you personally do?`
+4. **Result** — `What happened? What was the impact?`
 
-The old `Situation / Task / Action / Result` cue chips should be removed because the actual fields now provide the structure.
+Remove the old `Situation / Task / Action / Result` cue chips because the real fields now provide the structure.
 
-A short guidance sentence may remain, for example: “Use the STAR structure to keep your example clear and evidence-based.”
+Keep one short guidance sentence: `Use the STAR structure to keep your example clear and evidence-based.`
 
-## 8. Scenario-Based structured answer
+## 10. Scenario-Based structured answer
 
 Replace the one-textarea Scenario-Based UI with four vertically stacked fields:
 
-1. **Assessment** — “What is happening and what matters most?”
-2. **Approach** — “What would you do?”
-3. **Trade-offs** — “What risks, alternatives, or constraints would you consider?”
-4. **Decision** — “What would you ultimately choose and why?”
+1. **Assessment** — `What is happening and what matters most?`
+2. **Approach** — `What would you do?`
+3. **Trade-offs** — `What risks, alternatives, or constraints would you consider?`
+4. **Decision** — `What would you ultimately choose and why?`
 
-Remove the redundant `Assess / Approach / Trade-offs / Decision` cue chips.
+Remove the old `Assess / Approach / Trade-offs / Decision` cue chips.
 
-## 9. Technical Explanation structured answer
+Keep one short guidance sentence: `Structure your reasoning from assessment through the final decision.`
+
+## 11. Technical Explanation structured answer
 
 Replace the one-textarea Technical Explanation UI with four vertically stacked fields:
 
-1. **Concept** — “Define the concept clearly…”
-2. **How it works** — “Explain the mechanism or process…”
-3. **Example** — “Give a practical example…”
-4. **Trade-offs / limitations** — “Explain strengths, limitations, or alternatives…”
+1. **Concept** — `Define the concept clearly…`
+2. **How it works** — `Explain the mechanism or process…`
+3. **Example** — `Give a practical example…`
+4. **Trade-offs / limitations** — `Explain strengths, limitations, or alternatives…`
 
-Remove the redundant `Concept / How it works / Example / Trade-offs` cue chips.
+Remove the old `Concept / How it works / Example / Trade-offs` cue chips.
 
-## 10. Validation semantics for structured answers
+Keep one short guidance sentence: `Explain the idea as if speaking to an interviewer.`
+
+## 12. Structured-answer validation
 
 Do **not** require every subsection.
 
-The whole answer is valid when:
+The overall answer is valid when:
 
-- at least one structured subsection contains meaningful non-whitespace text; and
-- the serialized combined answer is within the existing 12,000-character maximum.
+- at least one subsection contains meaningful non-whitespace text; and
+- the exact serialized string described in Section 14 is no longer than 12,000 characters.
 
-This prevents artificial blocking when a question naturally does not require all four dimensions.
+The 12,000-character count includes:
 
-Use one combined character counter for the whole structured answer rather than separate independent 12,000-character limits per subsection.
+- subsection headings;
+- heading punctuation;
+- preserved user text;
+- newlines and blank-line separators.
 
-## 11. Frontend state model
+This is deliberate because that exact serialized text is what the existing API receives.
 
-For Behavioral, Scenario-Based, and Technical Explanation, keep subsection values as frontend-only draft state associated with the currently selected question.
+### 12.1 Combined hard limit behavior
 
-The implementation should avoid changing the backend answer type. Before submission, serialize the subsection values into the existing text answer string.
+Use one combined counter for the structured answer.
 
-The draft-state solution must preserve the current stale-route/stale-selection safety behavior. Switching questions must not leak structured draft values from one question into another.
+When a proposed subsection edit would make the serialized answer exceed 12,000 characters, reject that edit rather than silently truncating user text. Keep the existing draft unchanged and leave the counter at or below 12,000.
 
-Do not create a large new global state framework; reuse the smallest existing component/workspace state pattern that can safely isolate per-question drafts.
+Do not give each subsection an independent 12,000-character allowance.
 
-## 12. Serialization format
+## 13. Frontend draft state
+
+For Behavioral, Scenario-Based, and Technical Explanation, subsection values are frontend-only draft state for the currently selected question.
+
+Requirements:
+
+- switching to another question must never leak subsection values into that question;
+- returning to a question is **not required** to restore an unsaved structured draft in this bounded refinement;
+- selecting a different question may clear the current unsaved structured draft, matching the existing conservative answer-draft behavior;
+- route/session changes must clear structured draft state;
+- no new global state framework or persistent draft store is introduced.
+
+Before submission, serialize the current structured fields into the existing typed text answer.
+
+## 14. Serialization format
 
 Serialize only non-empty subsections in stable display order.
 
-### Behavioral
+### 14.1 Behavioral
 
 ```text
 Situation:
@@ -485,7 +827,7 @@ Result:
 ...
 ```
 
-### Scenario-Based
+### 14.2 Scenario-Based
 
 ```text
 Assessment:
@@ -501,7 +843,7 @@ Decision:
 ...
 ```
 
-### Technical Explanation
+### 14.3 Technical Explanation
 
 ```text
 Concept:
@@ -517,21 +859,22 @@ Trade-offs / limitations:
 ...
 ```
 
-Rules:
+Serialization rules:
 
-- trim subsection edges before serialization;
+- trim leading/trailing whitespace from each subsection;
 - omit empty subsections completely;
 - separate included sections with exactly one blank line;
-- preserve user-entered line breaks inside a subsection;
-- the resulting string is the canonical attempt answer sent through the existing API.
+- preserve user-entered internal line breaks inside a subsection;
+- use the exact heading capitalization shown above;
+- the resulting serialized string is the canonical attempt answer submitted to the existing API.
 
-## 13. Existing attempt/backend contract
+## 15. Existing attempt/backend contract
 
 Preserve the existing typed attempt contract and storage path.
 
 Do not add structured JSON answer fields to the API or database.
 
-Conceptually, the frontend still submits the same text answer used today, for example:
+Conceptually the frontend still submits, for example:
 
 ```text
 { type: "behavioral", text: "Situation:\n...\n\nAction:\n..." }
@@ -539,47 +882,47 @@ Conceptually, the frontend still submits the same text answer used today, for ex
 
 The backend, persistence layer, Gemini feedback flow, and Saved Attempts continue to receive ordinary text.
 
-## 14. Saved Attempts and historical compatibility
+## 16. Saved Attempts and historical compatibility
 
 New structured answers are stored as ordinary text with headings and line breaks.
 
-Saved Attempts should preserve those line breaks so the headings remain readable.
+The Saved Attempts presentation must preserve line breaks (for example with an existing or focused `white-space: pre-wrap` treatment) so the headings remain readable.
 
-Do not build a fragile parser that attempts to convert stored text back into structured JSON.
+Do not parse stored text back into structured JSON or subsection objects.
 
-Historical attempts without headings continue to display exactly as ordinary saved text.
+Historical attempts without headings continue to display as ordinary saved text.
 
 Historical questions and the `legacy-open-response` compatibility path remain unchanged.
 
-## 15. AI feedback and explanations
+## 17. AI feedback and explanations
 
 Do not change Gemini/provider behavior.
 
-The existing backend receives the serialized answer string and may generate feedback using the current single answer path.
+The existing backend receives the serialized answer string and may generate feedback through the existing single-answer path.
 
 Do not:
 
 - make one Gemini request per subsection;
 - score subsections separately;
-- add structured AI feedback persistence;
+- add structured AI-feedback persistence;
 - change polling, retry, cancellation, UUID/idempotency, lease, or worker semantics.
 
-## 16. Accessibility and responsive behavior
+## 18. Accessibility and responsive behavior
 
 The new controls must preserve or improve existing accessibility:
 
-- Career area has a proper accessible label;
-- Target role combobox semantics remain intact;
+- Career area has a real accessible label and required state;
+- Target-role combobox semantics remain intact;
 - selected role shortcuts use accessible pressed/selected state;
 - Focus-topic and Skill-gap chips retain `aria-pressed` semantics;
 - each structured subsection has a real associated label;
-- validation/errors are connected through existing accessible error patterns;
-- the combined character counter is announced/described consistently with the current answer control;
-- structured answer fields render in one vertical column at all breakpoints;
+- validation/errors use the existing accessible error patterns;
+- the combined character counter is connected to the structured answer group;
+- structured fields render in one vertical column at every breakpoint;
 - no nested forms;
 - keyboard interaction remains usable without a mouse.
 
-## 17. Security and privacy constraints
+## 19. Security and privacy constraints
 
 This refinement does not alter authorization or ownership behavior.
 
@@ -592,51 +935,58 @@ Preserve:
 - no MCQ AI-feedback action;
 - Coding answers remain text-only and are never executed;
 - no external role-taxonomy service receives user data;
-- no new provider request is made simply to populate form suggestions.
+- no new provider request is made simply to populate Career area, role, topic, or skill-gap suggestions.
 
-## 18. Testing requirements
+## 20. Testing requirements
 
-Add focused tests for at least the following.
+### 20.1 Career-area and role guidance
 
-### Career-area / role guidance
+Tests must prove:
 
-- all fourteen canonical career areas are present in stable order;
-- Technology retains the existing representative roles;
-- representative non-technology areas expose appropriate roles;
-- switching areas changes visible role shortcuts;
-- custom role under a selected career area uses that area’s guidance;
-- `Other / Custom` uses generic professional guidance, not Software Engineering;
-- existing selected Focus topics / Skill gaps survive career-area and role changes;
+- all fourteen canonical career areas exist in stable order;
+- `Other / Custom` exists as a separate utility option;
+- no Career area is selected by default;
+- Technology retains the approved representative roles;
+- representative non-technology areas expose their approved roles;
+- role search only searches the selected area;
+- changing area clears Target role but preserves selected Focus topics / Skill gaps;
+- custom role under a selected area uses that area’s guidance;
+- `Other / Custom` uses generic professional guidance, never Software Engineering guidance;
 - suggestions start unselected;
-- custom values still canonicalize/dedupe.
+- custom Focus / Skill values still canonicalize and dedupe.
 
-### Create Interview integration
+### 20.2 Create Interview integration
 
-- Career area is selectable;
-- Target role remains searchable/customizable;
-- selected role still populates the existing create-session payload;
-- smart title ownership behavior remains intact;
-- Experience level behavior remains intact;
+Tests must prove:
+
+- Career area is required;
+- Target role remains required, searchable, and customizable after an area is chosen;
+- the selected/custom role still populates the existing create-session payload;
+- `careerArea` is **not** added to that payload;
+- smart-title ownership remains intact;
+- Experience-level behavior remains intact;
 - Focus topics / Skill gaps remain optional;
 - existing cancellation, validation-focus, duplicate-submit, request-ID, and pending-draft protections continue to pass.
 
-### Structured answers
+### 20.3 Structured answers
 
-For each of Behavioral, Scenario-Based, and Technical Explanation:
+For Behavioral, Scenario-Based, and Technical Explanation, tests must prove:
 
-- correct subsection labels render;
+- the exact approved subsection labels render;
 - old cue-chip-only presentation is removed;
-- subsection drafts update independently;
+- subsection values update independently;
 - empty subsections are omitted during serialization;
-- stable heading order is preserved;
-- at least one non-empty subsection is required before Save attempt enables;
-- combined length respects the 12,000-character limit;
+- stable heading order and exact heading text are preserved;
+- one non-empty subsection is enough to enable Save attempt;
+- zero non-empty subsections keeps Save attempt disabled;
+- combined serialization, including headings/newlines, never exceeds 12,000 characters;
+- an edit that would exceed the limit is rejected without truncating existing text;
 - serialized text is passed through the existing typed answer contract;
-- question switching does not leak subsection draft state;
+- question/session changes do not leak structured draft state;
 - Saved Attempts display serialized newlines legibly;
 - historical plain-text attempts remain compatible.
 
-### Regression
+### 20.4 Regression
 
 Retain existing focused coverage for:
 
@@ -647,17 +997,17 @@ Retain existing focused coverage for:
 - exact-count reset behavior;
 - workspace route-loading/stale-selection behavior.
 
-## 19. Verification gate
+## 21. Verification gate
 
 After implementation, verification order is:
 
-1. focused new role/catalog tests;
+1. focused Career-area / role-guidance tests;
 2. focused Create Interview tests;
 3. focused structured-answer tests;
 4. existing Task 7R focused Interview tests;
 5. frontend typecheck;
 6. user local focused verification;
-7. browser QA for the cross-industry wizard and all three structured answer types;
+7. browser QA for cross-industry wizard and all three structured answer types;
 8. full backend regression;
 9. full frontend regression;
 10. backend production build;
@@ -669,39 +1019,58 @@ After implementation, verification order is:
 
 Do not merge before all required verification is green and the user separately authorizes the merge.
 
-## 20. PR governance
+## 22. Browser acceptance checks
+
+Browser QA must include at least:
+
+- opening Create Interview with no Career area selected;
+- selecting a Technology role;
+- selecting at least one non-technology role, such as Accountant, Nurse, Teacher, or Civil Engineer;
+- verifying the role shortcuts and Focus / Skill suggestions change with Career area;
+- adopting a custom role under a normal area;
+- using `Other / Custom` and confirming generic professional suggestions;
+- verifying existing selected Focus / Skill values survive an area change;
+- Behavioral STAR field entry and submission;
+- Scenario-Based field entry and submission;
+- Technical Explanation field entry and submission;
+- a partially completed structured answer with only one subsection;
+- Saved Attempts rendering with preserved headings/newlines;
+- desktop and mobile-width layout sanity.
+
+## 23. PR governance
 
 Continue using PR #13 and base branch `phase-19b-interview-coach-refinements`.
 
-Before final review, update the PR description so it no longer incorrectly describes Task 7R as presentation-only/no-schema/Gemini refinement. The final PR body must accurately mention:
+Before final review, update the PR description so it accurately mentions:
 
 - the already-added optional Coding starter-code schema/persistence extension;
 - Gemini question-generation schema/prompt support for Coding starter code;
 - guided Create Interview wizard;
-- cross-industry career-area/role guidance;
+- cross-industry Career-area / role guidance;
 - structured frontend answer entry for Behavioral, Scenario-Based, and Technical Explanation;
-- unchanged attempt API/storage contract for those structured answers;
+- unchanged attempt API/storage contract for structured answers;
 - no code execution;
 - no extra provider call for role/topic suggestions;
 - no deployment;
 - explicit merge approval requirement.
 
-## 21. Acceptance criteria
+## 24. Acceptance criteria
 
 The refinement is acceptable when all of the following are true:
 
 - Career Learning Hub no longer presents Computer Science roles as the only guided career universe;
-- all fourteen approved career areas are available;
-- each area exposes bounded representative roles;
-- custom roles remain possible everywhere;
-- `Other / Custom` does not fall back to Software Engineering guidance;
-- Focus-topic and Skill-gap suggestions are career-appropriate and local;
-- role/area changes never silently delete existing user selections;
+- all fourteen approved Career areas are available with no biased default;
+- each area exposes the exact bounded representative role catalog;
+- custom roles remain possible after area selection;
+- `Other / Custom` uses generic professional guidance rather than Software Engineering guidance;
+- Career area remains frontend-only and does not change the session API/schema;
+- Focus-topic and Skill-gap suggestions use the exact approved area-level catalogs;
+- area/role changes never silently delete already selected Focus / Skill values;
 - Behavioral uses Situation / Task / Action / Result fields;
 - Scenario-Based uses Assessment / Approach / Trade-offs / Decision fields;
 - Technical Explanation uses Concept / How it works / Example / Trade-offs or limitations fields;
 - only one structured subsection needs meaningful text;
-- combined answer length stays within the existing 12,000-character limit;
+- the exact serialized answer, including headings and newlines, never exceeds 12,000 characters;
 - structured answers serialize into the existing text attempt contract;
 - backend/API/database/Gemini feedback architecture remains unchanged for structured answers;
 - historical attempts remain readable;
