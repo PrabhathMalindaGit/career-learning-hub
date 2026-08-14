@@ -1,0 +1,95 @@
+.interview-danger-button {
+  display: inline-flex;
+  min-height: var(--minimum-interactive-target);
+  align-items: center;
+  justify-content: center;
+  padding: 9px 13px;
+  border: 1px solid #a33b3b;
+  border-radius: 10px;
+  color: #fff;
+  background: #a33b3b;
+  font-weight: 800;
+}
+
+.interview-danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.interview-delete-trigger {
+  font-size: 0.8rem;
+}
+
+.interview-delete-dialog {
+  width: min(92vw, 560px);
+  max-height: min(88vh, 720px);
+  overflow: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.interview-delete-dialog::backdrop {
+  background: rgba(18, 31, 23, 0.48);
+}
+
+.interview-delete-form {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.interview-delete-form h2,
+.interview-delete-warning p,
+.interview-delete-error p {
+  margin: 0;
+}
+
+.interview-delete-warning {
+  display: grid;
+  gap: 8px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.interview-delete-confirmation {
+  display: grid;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.interview-delete-confirmation input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #c8d5cd;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.interview-delete-error {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff2f2;
+}
+
+.interview-delete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .interview-delete-form {
+    padding: 18px;
+  }
+
+  .interview-delete-actions > button {
+    width: 100%;
+  }
+}
