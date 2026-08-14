@@ -103,6 +103,11 @@ export function InterviewQuestionTypeControls({
     selected,
     explicitCounts,
   );
+  const distributionLabel = countsOpen
+    ? explicitCountsValid
+      ? `Exact counts · ${explicitTotal} total`
+      : `Exact counts · ${explicitTotal} of ${count}`
+    : "Balanced automatically";
 
   function toggleType(type: InterviewQuestionType, checked: boolean) {
     if (checked) {
@@ -180,7 +185,7 @@ export function InterviewQuestionTypeControls({
           {singleTypeLabel ? (
             <span>{`All ${count} ${questionNoun} will be ${singleTypeLabel}.`}</span>
           ) : (
-            <span>{countsOpen ? "Exact counts" : "Balanced automatically"}</span>
+            <span>{distributionLabel}</span>
           )}
         </div>
         {singleTypeLabel ? null : !countsOpen ? (
@@ -228,18 +233,11 @@ export function InterviewQuestionTypeControls({
               />
             </label>
           ))}
-          <p
-            className={
-              explicitCountsValid
-                ? "interview-type-counts__summary"
-                : "interview-type-controls__error"
-            }
-            role={explicitCountsValid ? undefined : "alert"}
-          >
-            {explicitCountsValid
-              ? `Exact counts total ${count}.`
-              : `Exact counts total ${explicitTotal}; they must equal Question count ${count}.`}
-          </p>
+          {!explicitCountsValid ? (
+            <p className="interview-type-controls__error" role="alert">
+              {`Exact counts total ${explicitTotal}; they must equal Question count ${count}.`}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </fieldset>
