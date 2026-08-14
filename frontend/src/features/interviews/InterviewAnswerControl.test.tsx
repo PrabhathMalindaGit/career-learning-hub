@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { InterviewAnswerControl } from "./InterviewAnswerControl";
 import type {
@@ -54,6 +55,26 @@ function renderControl(options: {
       onSelectedOptionChange={options.onSelectedOptionChange ?? vi.fn()}
       onSubmit={options.onSubmit ?? vi.fn()}
     />,
+  );
+}
+
+function StructuredParentHarness() {
+  const [textValue, setTextValue] = useState("");
+  return (
+    <>
+      <InterviewAnswerControl
+        question={question("behavioral")}
+        textValue={textValue}
+        selectedOptionId=""
+        onTextChange={setTextValue}
+        onSelectedOptionChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+      <button type="button" onClick={() => setTextValue("")}>
+        Clear parent draft
+      </button>
+      <output aria-label="Parent text draft">{textValue}</output>
+    </>
   );
 }
 
@@ -164,24 +185,14 @@ describe("InterviewAnswerControl", () => {
 
   it("clears local structured fields when the parent text draft resets", async () => {
     const user = userEvent.setup();
-    const onTextChange = vi.fn();
-    const { rerender } = renderControl({
-      questionType: "behavioral",
-      onTextChange,
-    });
+    render(<StructuredParentHarness />);
     const situation = screen.getByRole("textbox", { name: "Situation" });
     await user.type(situation, "Context");
-
-    rerender(
-      <InterviewAnswerControl
-        question={question("behavioral")}
-        textValue=""
-        selectedOptionId=""
-        onTextChange={onTextChange}
-        onSelectedOptionChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />,
+    expect(screen.getByLabelText("Parent text draft").textContent).toBe(
+      "Situation:\nContext",
     );
+
+    await user.click(screen.getByRole("button", { name: "Clear parent draft" }));
     expect((situation as HTMLTextAreaElement).value).toBe("");
   });
 
