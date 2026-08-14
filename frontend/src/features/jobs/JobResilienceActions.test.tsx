@@ -64,6 +64,26 @@ describe("JobResilienceActions", () => {
     expect(screen.getByRole("status").textContent).toContain("Saving");
   });
 
+  it("exposes safe job type and status for scoped status presentation", () => {
+    const view = render(
+      <JobResilienceActions
+        job={{
+          ...activeJob,
+          type: "interview.questions.generate",
+          status: "completed",
+          phase: "completed",
+          progress: 100,
+        }}
+      />,
+    );
+
+    const root = view.container.querySelector(".job-resilience-actions");
+    expect(root?.getAttribute("data-job-type")).toBe(
+      "interview.questions.generate",
+    );
+    expect(root?.getAttribute("data-job-status")).toBe("completed");
+  });
+
   it("announces action errors", async () => {
     render(
       <JobResilienceActions
