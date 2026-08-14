@@ -1,8 +1,33 @@
 import type { InterviewQuestionDetail } from "./types";
+import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
 import { QUESTION_TYPE_LABELS } from "./InterviewQuestionTypeControls";
 import "./interviewQuestionTypes.css";
 
 const ANSWER_MAX_LENGTH = 12_000;
+
+const TEXT_ANSWER_PRESENTATION = {
+  "short-answer": {
+    placeholder: "Give a concise, directly relevant answer…",
+    guidance: ["Answer directly.", "Aim for 2–4 focused sentences."],
+    cues: [],
+  },
+  behavioral: {
+    placeholder:
+      "Describe the situation, your responsibility, what you did, and the result…",
+    guidance: ["Focus on what you personally did and the outcome."],
+    cues: ["Situation", "Task", "Action", "Result"],
+  },
+  "scenario-based": {
+    placeholder: "Explain what you would do, the trade-offs, and why…",
+    guidance: ["Explain why you would choose your approach."],
+    cues: ["Assess", "Approach", "Trade-offs", "Decision"],
+  },
+  "technical-explanation": {
+    placeholder: "Explain the concept clearly as you would to an interviewer…",
+    guidance: ["Explain the concept as if speaking to an interviewer."],
+    cues: ["Concept", "How it works", "Example", "Trade-offs"],
+  },
+} as const;
 
 const CODING_ANSWER_PLACEHOLDER =
   "Write or paste the code you would submit in an interview…";
@@ -26,15 +51,15 @@ export interface InterviewAnswerControlProps {
 function textLabel(question: InterviewQuestionDetail): string {
   switch (question.questionType) {
     case "short-answer":
-      return "Short answer";
+      return "Your short answer";
     case "coding":
       return "Your code";
     case "behavioral":
-      return "Behavioral answer";
+      return "Your behavioral answer";
     case "scenario-based":
-      return "Scenario response";
+      return "Your scenario response";
     case "technical-explanation":
-      return "Technical explanation";
+      return "Your technical explanation";
     default:
       return "Written answer";
   }
@@ -44,6 +69,18 @@ function rowsFor(question: InterviewQuestionDetail): number {
   if (question.questionType === "short-answer") return 5;
   if (question.questionType === "coding") return 12;
   return 9;
+}
+
+function answerPresentation(question: InterviewQuestionDetail) {
+  if (
+    question.questionType === "short-answer" ||
+    question.questionType === "behavioral" ||
+    question.questionType === "scenario-based" ||
+    question.questionType === "technical-explanation"
+  ) {
+    return TEXT_ANSWER_PRESENTATION[question.questionType];
+  }
+  return undefined;
 }
 
 export function InterviewAnswerControl({
@@ -58,22 +95,29 @@ export function InterviewAnswerControl({
 }: InterviewAnswerControlProps) {
   const isMultipleChoice = question.questionType === "multiple-choice";
   const isCoding = question.questionType === "coding";
+  const presentation = answerPresentation(question);
   const trimmedLength = textValue.trim().length;
   const textInvalid = trimmedLength < 1 || trimmedLength > ANSWER_MAX_LENGTH;
-  const submitDisabled = disabled ||
-    (isMultipleChoice ? selectedOptionId === "" : textInvalid);
+  const submitDisabled =
+    disabled || (isMultipleChoice ? selectedOptionId === "" : textInvalid);
   const errorId = "interview-answer-control-error";
   const countId = "interview-written-answer-count";
+  const guidanceId = "interview-written-answer-guidance";
   const codingHelpId = "interview-coding-answer-help";
   const codingExecutionId = "interview-coding-answer-execution";
   const describedBy = [
+    ...(presentation ? [guidanceId] : []),
     ...(isCoding ? [codingHelpId, codingExecutionId] : []),
     countId,
     ...(error ? [errorId] : []),
   ].join(" ");
+  const starterCode = isCoding ? question.starterCode : undefined;
+  const insertStarterDisabled = disabled || trimmedLength > 0;
 
   return (
-    <div className="interview-answer-control">
+    <div
+      className={`interview-answer-control interview-answer-control--${question.questionType}`}
+    >
       <span className="interview-question-type-label">
         {QUESTION_TYPE_LABELS[question.questionType]}
       </span>
@@ -84,8 +128,8 @@ export function InterviewAnswerControl({
           disabled={disabled}
           aria-describedby={error ? errorId : undefined}
         >
-          <legend>Choose one answer</legend>
-          {question.multipleChoice?.options.map((option) => (
+          <legend>Choose the best answer</legend>
+          {question.multipleChoice?.options.map((option, index) => (
             <label className="interview-answer-option" key={option.id}>
               <input
                 type="radio"
@@ -94,12 +138,81 @@ export function InterviewAnswerControl({
                 checked={selectedOptionId === option.id}
                 onChange={() => onSelectedOptionChange(option.id)}
               />
-              <span>{option.text}</span>
+              <span
+                className="interview-answer-option__letter"
+                aria-hidden="true"
+              >
+                {String.fromCharCode(65 + index)}
+              </span>
+              <span className="interview-answer-option__text">
+                {option.text}
+              </span>
             </label>
           ))}
         </fieldset>
       ) : (
         <>
+          {presentation ? (
+            <div
+              className="interview-answer-guidance"
+              id={guidanceId}
+            >
+              {presentation.cues.length > 0 ? (
+                <div
+                  className="interview-answer-guidance__cues"
+                  aria-label="Answer structure guidance"
+                >
+                  {presentation.cues.map((cue) => (
+                    <span key={cue}>{cue}</span>
+                  ))}
+                </div>
+              ) : null}
+              <div className="interview-answer-guidance__copy">
+                {presentation.guidance.map((line) => (
+                  <small key={line}>{line}</small>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {starterCode ? (
+            <section
+              className="interview-starter-code"
+              aria-labelledby="interview-starter-code-title"
+            >
+              <div className="interview-starter-code__heading">
+                <div>
+                  <strong id="interview-starter-code-title">
+                    Starter code
+                  </strong>
+                  <small>Optional question scaffold</small>
+                </div>
+                <CopyInterviewTextButton
+                  label="Starter code"
+                  text={starterCode}
+                />
+              </div>
+              <pre className="interview-starter-code__code">
+                <code>{starterCode}</code>
+              </pre>
+              <div className="interview-starter-code__actions">
+                <button
+                  type="button"
+                  className="interview-secondary-button"
+                  disabled={insertStarterDisabled}
+                  onClick={() => onTextChange(starterCode)}
+                >
+                  Insert into answer
+                </button>
+                {trimmedLength > 0 ? (
+                  <small>
+                    Clear your current draft before inserting starter code.
+                  </small>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+
           <label className="field-label interview-answer-field">
             <span>
               {textLabel(question)}{" "}
@@ -118,9 +231,13 @@ export function InterviewAnswerControl({
               maxLength={ANSWER_MAX_LENGTH}
               value={textValue}
               disabled={disabled}
-              placeholder={isCoding ? CODING_ANSWER_PLACEHOLDER : undefined}
+              placeholder={
+                isCoding
+                  ? CODING_ANSWER_PLACEHOLDER
+                  : presentation?.placeholder
+              }
               spellCheck={isCoding ? false : undefined}
-              aria-invalid={Boolean(error) || textInvalid && textValue.length > 0}
+              aria-invalid={Boolean(error) || (textInvalid && textValue.length > 0)}
               aria-describedby={describedBy}
               onChange={(event) => onTextChange(event.target.value)}
             />
