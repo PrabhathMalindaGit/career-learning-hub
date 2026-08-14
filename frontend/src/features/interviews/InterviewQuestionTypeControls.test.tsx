@@ -194,12 +194,13 @@ describe("InterviewQuestionTypeControls", () => {
     expect(
       within(controls).queryByRole("spinbutton", { name: "Behavioral count" }),
     ).toBeNull();
-    expect(screen.getByText("Exact counts total 4.")).not.toBeNull();
-    expect(screen.getByText("Exact counts")).not.toBeNull();
+    expect(screen.getByText("Exact counts · 4 total")).not.toBeNull();
+    expect(screen.queryByText("Exact counts total 4.")).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Change question count" }));
+    expect(screen.getByText("Exact counts · 4 of 5")).not.toBeNull();
     expect(screen.getByRole("alert").textContent).toMatch(
-      /must equal Question count 5/i,
+      /Exact counts total 4; they must equal Question count 5/i,
     );
   });
 
@@ -212,6 +213,7 @@ describe("InterviewQuestionTypeControls", () => {
     const shortCount = screen.getByRole("spinbutton", { name: "Short Answer count" });
     await user.clear(shortCount);
     await user.type(shortCount, "3");
+    expect(screen.getByText("Exact counts · 5 of 4")).not.toBeNull();
     expect(screen.getByRole("alert").textContent).toMatch(/total 5/i);
 
     await user.click(
