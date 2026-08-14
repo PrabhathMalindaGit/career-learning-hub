@@ -346,6 +346,10 @@ export function getInterviewRoleSuggestions(targetRole: string): {
   focusTopics: readonly string[];
   skillGaps: readonly string[];
 } {
+  if (!targetRole.trim()) {
+    return { focusTopics: [], skillGaps: [] };
+  }
+
   const guidance = ROLE_GUIDANCE[matchInterviewRoleFamily(targetRole)];
   return {
     focusTopics: guidance.focusTopics,
