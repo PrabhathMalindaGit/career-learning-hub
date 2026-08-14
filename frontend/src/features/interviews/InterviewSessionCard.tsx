@@ -36,10 +36,10 @@ function differsMeaningfully(title: string, role: string): boolean {
 
 export function InterviewSessionCard({
   session,
-  onDeleted,
+  onDeleted = () => undefined,
 }: {
   session: InterviewSessionSummary;
-  onDeleted(sessionId: string): void;
+  onDeleted?(sessionId: string): void;
 }) {
   const navigate = useNavigate();
   const [restoreBusy, setRestoreBusy] = useState(false);
