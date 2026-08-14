@@ -1,7 +1,13 @@
 import type { ClientSession } from "mongoose";
+import { JobRecordModel } from "../../jobs/job.model.js";
 import { AppError } from "../../shared/appError.js";
 import { withMongoTransaction } from "../../shared/mongoTransaction.js";
 import { recordActivitySafely } from "../activity/activity.service.js";
+import {
+  deleteCascadeAssetObjectsBestEffort,
+  markOwnedAssetsDeletedForCascade,
+} from "../assets/asset.service.js";
+import { ResumeAnalysisModel } from "../resume-analysis/resumeAnalysis.model.js";
 import { ResumeModel, type ResumeDocument } from "./resume.model.js";
 import {
   ResumeVersionModel,
@@ -24,6 +30,26 @@ const defaultDesign: ResumeDesign = {
   fontFamily: "Inter",
   showProfilePhoto: false,
 };
+
+const activeResumeJobFilter = (userId: string, resumeId: string) => ({
+  userId,
+  type: "resume.analyze",
+  status: { $in: ["queued", "processing"] },
+  "payload.resumeId": resumeId,
+});
+
+const terminalResumeJobFilter = (userId: string, resumeId: string) => ({
+  userId,
+  status: { $in: ["completed", "failed", "cancelled"] },
+  $or: [
+    { type: "resume.analyze", "payload.resumeId": resumeId },
+    {
+      type: "resume.import-pdf",
+      "result.kind": "import-adopted",
+      "result.resumeId": resumeId,
+    },
+  ],
+});
 
 export async function createResume(input: {
   userId: string;
@@ -291,6 +317,85 @@ export async function createResumeVersion(input: {
   });
 
   return result;
+}
+
+export async function deleteResume(input: {
+  userId: string;
+  resumeId: string;
+}): Promise<void> {
+  const cleanupTargets = await withMongoTransaction(async (session) => {
+    const resume = await requireOwnedResume(
+      input.userId,
+      input.resumeId,
+      session,
+    );
+
+    const activeJob = await JobRecordModel.exists(
+      activeResumeJobFilter(input.userId, input.resumeId),
+    ).session(session);
+
+    if (activeJob) {
+      throw new AppError(
+        409,
+        "RESUME_DELETE_BLOCKED_BY_ACTIVE_JOB",
+        "Finish or cancel the current Resume AI work before deleting this Resume.",
+      );
+    }
+
+    const versions = await ResumeVersionModel.find({
+      userId: input.userId,
+      resumeId: resume._id,
+    })
+      .select("sourceAssetId")
+      .session(session);
+
+    const assetIds = [
+      ...(resume.candidatePhotoAssetId
+        ? [resume.candidatePhotoAssetId.toString()]
+        : []),
+      ...versions.flatMap((version) =>
+        version.sourceAssetId
+          ? [version.sourceAssetId.toString()]
+          : [],
+      ),
+    ];
+
+    const targets = await markOwnedAssetsDeletedForCascade({
+      userId: input.userId,
+      assetIds,
+      session,
+    });
+
+    await ResumeAnalysisModel.deleteMany({
+      userId: input.userId,
+      resumeId: resume._id,
+    }).session(session);
+
+    await ResumeVersionModel.deleteMany({
+      userId: input.userId,
+      resumeId: resume._id,
+    }).session(session);
+
+    await JobRecordModel.deleteMany(
+      terminalResumeJobFilter(input.userId, input.resumeId),
+    ).session(session);
+
+    await ResumeModel.deleteOne({
+      _id: resume._id,
+      userId: input.userId,
+    }).session(session);
+
+    return targets;
+  });
+
+  await deleteCascadeAssetObjectsBestEffort(cleanupTargets);
+
+  await recordActivitySafely({
+    userId: input.userId,
+    type: "resume.deleted",
+    resourceType: "resume",
+    resourceId: input.resumeId,
+  });
 }
 
 export async function updateResumeDesign(input: {
