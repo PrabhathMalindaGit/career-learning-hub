@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import "./interviewCreateGuidance.css";
 
 export interface InterviewRoleSelectorProps {
@@ -21,11 +27,16 @@ export function InterviewRoleSelector({
   onChange,
 }: InterviewRoleSelectorProps) {
   const [query, setQuery] = useState(value);
+  const preserveQueryOnSelectionClear = useRef(false);
   const trimmedQuery = query.trim();
   const normalizedQuery = roleKey(trimmedQuery);
   const selectedKey = roleKey(value);
 
   useEffect(() => {
+    if (value === "" && preserveQueryOnSelectionClear.current) {
+      preserveQueryOnSelectionClear.current = false;
+      return;
+    }
     setQuery(value);
   }, [value]);
 
@@ -43,8 +54,17 @@ export function InterviewRoleSelector({
   const showCustomAction = normalizedQuery.length > 0 && !exactBuiltIn;
 
   function adopt(next: string) {
+    preserveQueryOnSelectionClear.current = false;
     onChange(next);
     setQuery(next);
+  }
+
+  function editQuery(next: string) {
+    setQuery(next);
+    if (value && roleKey(next) !== selectedKey) {
+      preserveQueryOnSelectionClear.current = true;
+      onChange("");
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -102,7 +122,7 @@ export function InterviewRoleSelector({
           value={query}
           maxLength={200}
           placeholder="Search or type a custom role…"
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => editQuery(event.target.value)}
           onKeyDown={handleKeyDown}
         />
 
