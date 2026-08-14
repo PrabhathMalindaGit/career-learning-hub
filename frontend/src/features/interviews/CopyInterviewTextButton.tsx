@@ -6,7 +6,7 @@ export function CopyInterviewTextButton({
   label,
   text,
 }: {
-  label: "Model answer" | "Explanation";
+  label: "Model answer" | "Explanation" | "Starter code";
   text: string;
 }) {
   const [copyState, setCopyState] = useState<CopyState>("idle");
