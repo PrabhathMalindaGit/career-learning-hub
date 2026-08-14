@@ -23,6 +23,7 @@ import {
   setQuestionPinnedController,
   updateInterviewSessionStatusController,
 } from "./interview.controller.js";
+import { deleteInterviewSessionController } from "./interviewDeletion.controller.js";
 import {
   requireOwnedInterviewAttempt,
   requireOwnedInterviewQuestion,
@@ -65,6 +66,13 @@ interviewRouter.get(
   validate({ params: sessionIdParamsSchema }),
   requireOwnedInterviewSession,
   asyncHandler(getInterviewSessionController),
+);
+
+interviewRouter.delete(
+  "/:sessionId",
+  validate({ params: sessionIdParamsSchema }),
+  requireOwnedInterviewSession,
+  asyncHandler(deleteInterviewSessionController),
 );
 
 interviewRouter.patch(
