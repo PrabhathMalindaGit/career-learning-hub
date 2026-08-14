@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import type { KeyboardEvent } from "react";
 import { mergeInterviewTags } from "./InterviewTagInput";
 import "./interviewCreateGuidance.css";
 
@@ -7,11 +7,13 @@ export interface InterviewSuggestedTagInputProps {
   label: string;
   suggestions: readonly string[];
   values: string[];
+  draft: string;
   disabled?: boolean;
   placeholder: string;
   helpText: string;
   error?: string;
   onValuesChange(next: string[]): void;
+  onDraftChange(next: string): void;
   onError(next?: string): void;
 }
 
@@ -20,14 +22,15 @@ export function InterviewSuggestedTagInput({
   label,
   suggestions,
   values,
+  draft,
   disabled = false,
   placeholder,
   helpText,
   error,
   onValuesChange,
+  onDraftChange,
   onError,
 }: InterviewSuggestedTagInputProps) {
-  const [draft, setDraft] = useState("");
   const helpId = `${id}-help`;
   const errorId = `${id}-error`;
   const baseLabel = label.replace(/\s*·\s*Optional\s*$/i, "");
@@ -41,7 +44,7 @@ export function InterviewSuggestedTagInput({
     }
 
     onValuesChange(result.values);
-    setDraft("");
+    onDraftChange("");
     onError(undefined);
   }
 
@@ -117,7 +120,7 @@ export function InterviewSuggestedTagInput({
               .join(" ")}
             aria-invalid={error ? true : undefined}
             onChange={(event) => {
-              setDraft(event.target.value);
+              onDraftChange(event.target.value);
               if (error) onError(undefined);
             }}
             onKeyDown={handleKeyDown}
