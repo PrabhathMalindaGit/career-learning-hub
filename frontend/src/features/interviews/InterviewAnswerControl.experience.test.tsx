@@ -120,13 +120,15 @@ describe("InterviewAnswerControl practice experience", () => {
       "}",
     ].join("\n");
     const onTextChange = vi.fn();
-    const { rerender } = renderControl(
+    const { container, rerender } = renderControl(
       question("coding", { starterCode }),
       { onTextChange },
     );
 
     expect(screen.getByText("Starter code")).not.toBeNull();
-    expect(screen.getByText(starterCode)).not.toBeNull();
+    expect(
+      container.querySelector(".interview-starter-code__code")?.textContent,
+    ).toBe(starterCode);
     const insert = screen.getByRole("button", { name: "Insert into answer" });
     expect((insert as HTMLButtonElement).disabled).toBe(false);
 
