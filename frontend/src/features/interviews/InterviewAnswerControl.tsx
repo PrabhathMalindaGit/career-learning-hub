@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { InterviewQuestionDetail } from "./types";
 import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
 import { InterviewStructuredAnswerFields } from "./InterviewStructuredAnswerFields";
@@ -67,6 +67,7 @@ export function InterviewAnswerControl({
 }: InterviewAnswerControlProps) {
   const [structuredDraft, setStructuredDraft] =
     useState<StructuredAnswerDraft>({});
+  const previousTextValue = useRef(textValue);
   const isMultipleChoice = question.questionType === "multiple-choice";
   const isCoding = question.questionType === "coding";
   const isShortAnswer = question.questionType === "short-answer";
@@ -106,10 +107,12 @@ export function InterviewAnswerControl({
   }, [question.id, question.questionType]);
 
   useEffect(() => {
-    if (isStructured && textValue === "" && structuredText !== "") {
+    const previous = previousTextValue.current;
+    previousTextValue.current = textValue;
+    if (isStructured && previous !== "" && textValue === "") {
       setStructuredDraft({});
     }
-  }, [isStructured, structuredText, textValue]);
+  }, [isStructured, textValue]);
 
   return (
     <div
