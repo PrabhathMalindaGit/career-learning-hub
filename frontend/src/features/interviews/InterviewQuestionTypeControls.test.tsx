@@ -22,6 +22,9 @@ function Harness({ initialCount = 4 }: { initialCount?: number }) {
         Change question count
       </button>
       <output aria-label="Selected order">{selected.join(",")}</output>
+      <output aria-label="Distribution mode">
+        {explicitCounts === undefined ? "implicit" : "explicit"}
+      </output>
       <InterviewQuestionTypeControls
         count={count}
         selected={selected}
@@ -76,6 +79,28 @@ describe("InterviewQuestionTypeControls", () => {
     ).not.toBeNull();
   });
 
+  it("simplifies distribution for one selected type and tracks Question count", async () => {
+    const user = userEvent.setup();
+    render(<Harness initialCount={4} />);
+
+    expect(screen.getByText("Distribution")).not.toBeNull();
+    expect(
+      screen.getByText("All 4 questions will be Short Answer."),
+    ).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Set exact counts" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Use balanced distribution" }),
+    ).toBeNull();
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Change question count" }));
+    expect(
+      screen.getByText("All 5 questions will be Short Answer."),
+    ).not.toBeNull();
+  });
+
   it("requires at least one selected type and preserves selected order", async () => {
     const user = userEvent.setup();
     render(<Harness />);
@@ -115,6 +140,41 @@ describe("InterviewQuestionTypeControls", () => {
       "short-answer": 2,
       coding: 2,
     });
+  });
+
+  it("clears exact-count state when the selection returns to one type", async () => {
+    const user = userEvent.setup();
+    render(<Harness initialCount={4} />);
+
+    const coding = screen.getByRole("checkbox", { name: "Coding" });
+    await user.click(coding);
+    expect(screen.getByText("Balanced automatically")).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Set exact counts" }),
+    ).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Set exact counts" }));
+    expect(screen.getByLabelText("Distribution mode").textContent).toBe("explicit");
+    expect(
+      screen.getByRole("spinbutton", { name: "Short Answer count" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("spinbutton", { name: "Coding count" }),
+    ).not.toBeNull();
+
+    await user.click(coding);
+    expect(screen.getByLabelText("Selected order").textContent).toBe("short-answer");
+    expect(screen.getByLabelText("Distribution mode").textContent).toBe("implicit");
+    expect(
+      screen.getByText("All 4 questions will be Short Answer."),
+    ).not.toBeNull();
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Set exact counts" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Use balanced distribution" }),
+    ).toBeNull();
   });
 
   it("shows selected count inputs and a visible mismatch after Question count changes", async () => {
