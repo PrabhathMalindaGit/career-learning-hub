@@ -117,7 +117,7 @@ function renderWorkspace() {
 async function waitForQuestion(prompt: string) {
   await screen.findByRole("heading", { name: "Structured answer practice" });
   await screen.findByRole("button", { name: new RegExp(prompt) });
-  await screen.findByText(prompt);
+  await screen.findAllByText(prompt);
 }
 
 function setupQuestions(
@@ -177,29 +177,33 @@ describe("InterviewSessionWorkspace structured answers", () => {
       ],
       "Concept:\nCaching\n\nHow it works:\nStore reusable results\n\nExample:\nHTTP cache\n\nTrade-offs / limitations:\nStaleness",
     ],
-  ] as const)("serializes %s through the existing typed answer contract", async (type, entries, expectedText) => {
-    setupQuestions(type);
-    const created = typedAttempt(type, expectedText);
-    vi.mocked(interviewApi.recordInterviewAttempt).mockResolvedValue(created);
-
-    renderWorkspace();
-    await waitForQuestion("First structured question");
-    const user = userEvent.setup();
-
-    for (const [label, value] of entries) {
-      await user.type(screen.getByRole("textbox", { name: label }), value);
-    }
-    await user.click(screen.getByRole("button", { name: "Save attempt" }));
-
-    await waitFor(() => {
-      expect(interviewApi.recordInterviewAttempt).toHaveBeenCalledWith(
-        sessionId,
-        questionIdA,
-        { answer: { type, text: expectedText } },
-        expect.any(AbortSignal),
+  ] as const)(
+    "serializes %s through the existing typed answer contract",
+    async (type, entries, expectedText) => {
+      setupQuestions(type);
+      vi.mocked(interviewApi.recordInterviewAttempt).mockResolvedValue(
+        typedAttempt(type, expectedText),
       );
-    });
-  });
+
+      renderWorkspace();
+      await waitForQuestion("First structured question");
+      const user = userEvent.setup();
+
+      for (const [label, value] of entries) {
+        await user.type(screen.getByRole("textbox", { name: label }), value);
+      }
+      await user.click(screen.getByRole("button", { name: "Save attempt" }));
+
+      await waitFor(() => {
+        expect(interviewApi.recordInterviewAttempt).toHaveBeenCalledWith(
+          sessionId,
+          questionIdA,
+          { answer: { type, text: expectedText } },
+          expect.any(AbortSignal),
+        );
+      });
+    },
+  );
 
   it("clears an unsaved structured draft when the selected question changes", async () => {
     setupQuestions("behavioral", "scenario-based");
@@ -207,27 +211,28 @@ describe("InterviewSessionWorkspace structured answers", () => {
     await waitForQuestion("First structured question");
     const user = userEvent.setup();
 
-    await user.type(screen.getByRole("textbox", { name: "Situation" }), "Do not leak");
+    await user.type(
+      screen.getByRole("textbox", { name: "Situation" }),
+      "Do not leak",
+    );
     await user.click(
       screen.getByRole("button", { name: /Second practice question/ }),
     );
-    await screen.findByRole("textbox", { name: "Assessment" });
-    expect(
-      (screen.getByRole("textbox", { name: "Assessment" }) as HTMLTextAreaElement)
-        .value,
-    ).toBe("");
+    const assessment = await screen.findByRole("textbox", {
+      name: "Assessment",
+    });
+    expect((assessment as HTMLTextAreaElement).value).toBe("");
 
     await user.click(
       screen.getByRole("button", { name: /First structured question/ }),
     );
-    await screen.findByRole("textbox", { name: "Situation" });
-    expect(
-      (screen.getByRole("textbox", { name: "Situation" }) as HTMLTextAreaElement)
-        .value,
-    ).toBe("");
+    const situation = await screen.findByRole("textbox", {
+      name: "Situation",
+    });
+    expect((situation as HTMLTextAreaElement).value).toBe("");
   });
 
-  it("clears the structured draft after a successful saved attempt", async () => {
+  it("clears the structured fields after a successful saved attempt", async () => {
     setupQuestions("behavioral");
     vi.mocked(interviewApi.recordInterviewAttempt).mockResolvedValue(
       typedAttempt("behavioral", "Situation:\nContext"),
@@ -239,12 +244,12 @@ describe("InterviewSessionWorkspace structured answers", () => {
     const situation = screen.getByRole("textbox", { name: "Situation" });
     await user.type(situation, "Context");
     await user.click(screen.getByRole("button", { name: "Save attempt" }));
-    await waitFor(() =>
-      expect((situation as HTMLTextAreaElement).value).toBe(""),
-    );
+    await waitFor(() => {
+      expect((situation as HTMLTextAreaElement).value).toBe("");
+    });
   });
 
-  it("preserves saved structured newlines and historical plain text without parsing", async () => {
+  it("keeps structured saved-answer text exactly as stored", async () => {
     setupQuestions("behavioral");
     const structuredText = "Situation:\nContext\n\nAction:\nDid the work";
     const saved = typedAttempt("behavioral", structuredText);
@@ -256,16 +261,20 @@ describe("InterviewSessionWorkspace structured answers", () => {
 
     renderWorkspace();
     await waitForQuestion("First structured question");
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /Review attempt 1/ }));
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /Review attempt 1/ }));
 
-    const savedText = await screen.findByText((content, element) =>
-      element?.classList.contains("interview-attempt-answer-text") === true &&
-      content.includes("Situation:") &&
-      content.includes("Action:"),
-    );
-    expect(savedText.textContent).toBe(structuredText);
+    await waitFor(() => {
+      const savedText = document.querySelector(
+        ".interview-attempt-detail > p",
+      );
+      expect(savedText?.textContent).toBe(structuredText);
+    });
+  });
 
+  it("keeps historical plain-text saved answers unchanged", async () => {
+    setupQuestions("behavioral");
     const historical: InterviewAttempt = {
       id: "507f1f77bcf86cd799439075",
       sessionId,
@@ -275,9 +284,23 @@ describe("InterviewSessionWorkspace structured answers", () => {
       createdAt: timestamp,
       updatedAt: timestamp,
     };
+    vi.mocked(interviewApi.listAttemptHistory).mockResolvedValue({
+      attempts: [historical],
+      pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+    });
     vi.mocked(interviewApi.fetchInterviewAttempt).mockResolvedValue(historical);
-    await user.click(screen.getByRole("button", { name: /Review attempt 1/ }));
-    // Existing historical strings stay ordinary text; no structured parser is involved.
-    expect(savedText.className).toContain("interview-attempt-answer-text");
+
+    renderWorkspace();
+    await waitForQuestion("First structured question");
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /Review attempt 1/ }));
+
+    await waitFor(() => {
+      const savedText = document.querySelector(
+        ".interview-attempt-detail > p",
+      );
+      expect(savedText?.textContent).toBe("A normal historical answer.");
+    });
   });
 });
