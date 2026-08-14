@@ -7,8 +7,8 @@
   color: #2a4334;
 }
 
-.interview-answer-option {
-  grid-template-columns: auto auto minmax(0, 1fr);
+.interview-answer-control .interview-answer-option {
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
@@ -17,6 +17,19 @@
     background-color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
+}
+
+.interview-answer-option__control {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.interview-answer-option .interview-answer-option__control input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin: 0;
 }
 
 .interview-answer-option:hover {
@@ -211,8 +224,8 @@
 }
 
 @media (max-width: 560px) {
-  .interview-answer-option {
-    grid-template-columns: auto auto minmax(0, 1fr);
+  .interview-answer-control .interview-answer-option {
+    grid-template-columns: auto minmax(0, 1fr);
     padding: 11px 12px;
   }
 
