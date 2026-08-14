@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { InterviewAnswerControl } from "./InterviewAnswerControl";
@@ -154,6 +154,36 @@ describe("InterviewAnswerControl practice experience", () => {
     expect(
       screen.getByText(/Clear your current draft before inserting starter code/i),
     ).not.toBeNull();
+  });
+
+  it("copies exactly the Coding starter scaffold", async () => {
+    const starterCode = "function solve(input) {\n  // TODO\n}";
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const originalClipboard = Object.getOwnPropertyDescriptor(
+      navigator,
+      "clipboard",
+    );
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+
+    try {
+      renderControl(question("coding", { starterCode }));
+      await userEvent
+        .setup()
+        .click(screen.getByRole("button", { name: "Copy starter code" }));
+
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalledWith(starterCode);
+      });
+    } finally {
+      if (originalClipboard) {
+        Object.defineProperty(navigator, "clipboard", originalClipboard);
+      } else {
+        Reflect.deleteProperty(navigator, "clipboard");
+      }
+    }
   });
 
   it("omits an empty starter-code surface for Coding questions without a scaffold", () => {
