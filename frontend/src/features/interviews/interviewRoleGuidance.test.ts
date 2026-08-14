@@ -39,6 +39,7 @@ describe("interviewRoleGuidance", () => {
       expect(option.skillGaps.length).toBeGreaterThan(0);
       expect(new Set(option.focusTopics).size).toBe(option.focusTopics.length);
       expect(new Set(option.skillGaps).size).toBe(option.skillGaps.length);
+      expect(matchInterviewRoleFamily(option.label)).toBe(option.family);
     }
   });
 
@@ -66,6 +67,10 @@ describe("interviewRoleGuidance", () => {
     const backend = getInterviewRoleSuggestions("Backend Developer");
     expect(backend.focusTopics).toContain("REST APIs");
     expect(backend.skillGaps).toContain("Database Optimization");
+
+    const builtInAi = getInterviewRoleSuggestions("ML / AI Engineer");
+    expect(builtInAi.focusTopics).toContain("Machine Learning");
+    expect(builtInAi.skillGaps).toContain("Model Evaluation");
 
     const customAi = getInterviewRoleSuggestions("LLM Engineer");
     expect(customAi.focusTopics).toContain("LLMs");
