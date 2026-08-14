@@ -108,7 +108,7 @@ describe("InterviewAnswerControl", () => {
     expect(screen.getByText("Open response")).not.toBeNull();
   });
 
-  it("renders Coding as a larger monospace textarea with no execution control", () => {
+  it("renders Coding as a clearer code-entry surface with no execution control", () => {
     render(
       <InterviewAnswerControl
         question={question("coding")}
@@ -120,9 +120,21 @@ describe("InterviewAnswerControl", () => {
       />,
     );
 
-    const textarea = screen.getByRole("textbox", { name: /Coding answer/ });
+    const textarea = screen.getByRole("textbox", { name: /Your code/ });
     expect(textarea.className).toContain("interview-answer-control__coding");
     expect(textarea.getAttribute("rows")).toBe("12");
+    expect(textarea.getAttribute("placeholder")).toBe(
+      "Write or paste the code you would submit in an interview…",
+    );
+    expect(textarea.getAttribute("spellcheck")).toBe("false");
+    expect(
+      screen.getByText(
+        /Complete only the function or solution requested by the question/i,
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(/reviewed as text and is not executed/i),
+    ).not.toBeNull();
     expect(screen.queryByRole("button", { name: /run|execute/i })).toBeNull();
   });
 
