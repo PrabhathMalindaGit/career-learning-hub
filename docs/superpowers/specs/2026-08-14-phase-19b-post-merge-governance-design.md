@@ -1,9 +1,9 @@
 # Phase 19B Post-Merge Governance — Design Specification
 
-**Date:** 2026-08-14  
-**Status:** Design and written specification approved by the user on 2026-08-14  
-**Task branch:** `task/phase-19b-post-merge-governance`  
-**Base branch:** `main`  
+**Date:** 2026-08-14
+**Status:** Design and written specification approved by the user on 2026-08-14
+**Task branch:** `task/phase-19b-post-merge-governance`
+**Base branch:** `main`
 **Base commit:** `469c27f35011fb9b51e7d501d9f759fae757efb5`
 
 ## 1. Purpose
