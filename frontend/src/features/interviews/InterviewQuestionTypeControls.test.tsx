@@ -81,11 +81,11 @@ describe("InterviewQuestionTypeControls", () => {
 
   it("simplifies distribution for one selected type and tracks Question count", async () => {
     const user = userEvent.setup();
-    render(<Harness initialCount={4} />);
+    render(<Harness initialCount={1} />);
 
     expect(screen.getByText("Distribution")).not.toBeNull();
     expect(
-      screen.getByText("All 4 questions will be Short Answer."),
+      screen.getByText("All 1 question will be Short Answer."),
     ).not.toBeNull();
     expect(
       screen.queryByRole("button", { name: "Set exact counts" }),
