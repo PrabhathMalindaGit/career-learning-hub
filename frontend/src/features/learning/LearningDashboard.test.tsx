@@ -36,10 +36,12 @@ vi.mock("../auth/AuthProvider", () => ({
 
 vi.mock("./learningApi", () => ({
   fetchLearningDocument: vi.fn(),
+  fetchLearningDocumentDeletionJob: vi.fn(),
   fetchLearningDocumentSource: vi.fn(),
   fetchLearningJob: vi.fn(),
   listDocumentChunks: vi.fn(),
   listLearningDocuments: vi.fn(),
+  requestLearningDocumentDeletion: vi.fn(),
   uploadLearningDocument: vi.fn(),
 }));
 
@@ -244,7 +246,11 @@ describe("Learning document library", () => {
     renderLibrary();
 
     expect(await screen.findByText(label)).not.toBeNull();
-    expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
+    if (status === "deleting") {
+      expect(screen.queryByRole("button", { name: "Delete document" })).toBeNull();
+    } else {
+      expect(screen.getByRole("button", { name: "Delete document" })).not.toBeNull();
+    }
   });
 
   it("presents supported dossier metadata through explicit semantic actions", async () => {
@@ -269,7 +275,8 @@ describe("Learning document library", () => {
         name: "Open workspace",
       }).getAttribute("href"),
     ).toBe(`/learning/documents/${documentId}`);
-    expect(card.textContent).not.toMatch(/file size|flashcards|quizzes/i);
+    expect(screen.getByRole("button", { name: "Delete document" })).not.toBeNull();
+    expect(card.textContent).not.toMatch(/file size/i);
   });
 
   it("offers manual refresh and preserves a safe request ID on failure", async () => {
