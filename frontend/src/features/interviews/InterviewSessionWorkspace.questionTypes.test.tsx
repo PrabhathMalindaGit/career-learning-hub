@@ -270,8 +270,9 @@ describe("InterviewSessionWorkspace typed question UX", () => {
     );
   });
 
-  it("submits a modern text answer with the canonical type discriminator", async () => {
-    const saved = textAttempt("behavioral", "A structured example.");
+  it("submits a modern structured answer with the canonical type discriminator", async () => {
+    const serialized = "Situation:\nA structured example.";
+    const saved = textAttempt("behavioral", serialized);
     vi.mocked(interviewApi.recordInterviewAttempt).mockResolvedValue(saved);
     vi.mocked(interviewApi.fetchInterviewAttempt).mockResolvedValue(saved);
     renderWorkspace("behavioral");
@@ -279,7 +280,7 @@ describe("InterviewSessionWorkspace typed question UX", () => {
     const user = userEvent.setup();
 
     const answer = await screen.findByRole("textbox", {
-      name: /behavioral answer/i,
+      name: "Situation",
     });
     await user.type(answer, "  A structured example.  ");
     await user.click(screen.getByRole("button", { name: "Save attempt" }));
@@ -290,7 +291,7 @@ describe("InterviewSessionWorkspace typed question UX", () => {
       {
         answer: {
           type: "behavioral",
-          text: "A structured example.",
+          text: serialized,
         },
       },
       expect.any(AbortSignal),
