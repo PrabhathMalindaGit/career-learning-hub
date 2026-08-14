@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   EffectiveInterviewQuestionType,
   InterviewQuestionType,
@@ -90,6 +90,8 @@ export function InterviewQuestionTypeControls({
     explicitCounts !== undefined && selected.length > 1,
   );
   const [selectionError, setSelectionError] = useState(false);
+  const [distributionNotice, setDistributionNotice] = useState("");
+  const previousCountRef = useRef(count);
   const singleType = selected.length === 1 ? selected[0] : undefined;
   const singleTypeLabel = singleType
     ? QUESTION_TYPE_LABELS[singleType]
@@ -110,7 +112,21 @@ export function InterviewQuestionTypeControls({
       : `Exact counts · ${explicitTotal} of ${count}`
     : "Balanced automatically";
 
+  useEffect(() => {
+    if (previousCountRef.current === count) return;
+    previousCountRef.current = count;
+
+    if (explicitCounts !== undefined) {
+      onExplicitCountsChange(undefined);
+      setCountsOpen(false);
+      setDistributionNotice(
+        "Question count changed. Distribution reset to balanced.",
+      );
+    }
+  }, [count, explicitCounts, onExplicitCountsChange]);
+
   function toggleType(type: InterviewQuestionType, checked: boolean) {
+    setDistributionNotice("");
     if (checked) {
       if (selected.includes(type)) return;
       setSelectionError(false);
@@ -147,6 +163,7 @@ export function InterviewQuestionTypeControls({
 
   function openCounts() {
     if (selected.length < 2) return;
+    setDistributionNotice("");
     if (explicitCounts === undefined) {
       onExplicitCountsChange(balancedCounts(count, selected));
     }
@@ -206,12 +223,22 @@ export function InterviewQuestionTypeControls({
             onClick={() => {
               onExplicitCountsChange(undefined);
               setCountsOpen(false);
+              setDistributionNotice("");
             }}
           >
             Use balanced distribution
           </button>
         )}
       </div>
+
+      {distributionNotice ? (
+        <p
+          className="interview-type-controls__status"
+          aria-live="polite"
+        >
+          {distributionNotice}
+        </p>
+      ) : null}
 
       {selected.length > 1 && countsOpen && explicitCounts !== undefined ? (
         <div className="interview-type-counts">
