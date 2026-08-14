@@ -20,7 +20,7 @@
 }
 
 .interview-role-selector__heading label,
-.interview-suggested-tag-input__heading label {
+.interview-suggested-tag-input__label {
   font-size: 0.91rem;
   font-weight: 750;
 }
