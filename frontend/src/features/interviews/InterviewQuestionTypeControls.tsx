@@ -85,8 +85,15 @@ export function InterviewQuestionTypeControls({
   onSelectedChange,
   onExplicitCountsChange,
 }: InterviewQuestionTypeControlsProps) {
-  const [countsOpen, setCountsOpen] = useState(explicitCounts !== undefined);
+  const [countsOpen, setCountsOpen] = useState(
+    explicitCounts !== undefined && selected.length > 1,
+  );
   const [selectionError, setSelectionError] = useState(false);
+  const singleType = selected.length === 1 ? selected[0] : undefined;
+  const singleTypeLabel = singleType
+    ? QUESTION_TYPE_LABELS[singleType]
+    : undefined;
+  const questionNoun = count === 1 ? "question" : "questions";
   const explicitTotal = selected.reduce(
     (sum, type) => sum + (explicitCounts?.[type] ?? 0),
     0,
@@ -114,7 +121,17 @@ export function InterviewQuestionTypeControls({
     }
 
     setSelectionError(false);
-    onSelectedChange(selected.filter((value) => value !== type));
+    const nextSelected = selected.filter((value) => value !== type);
+    onSelectedChange(nextSelected);
+
+    if (nextSelected.length === 1) {
+      if (explicitCounts !== undefined) {
+        onExplicitCountsChange(undefined);
+      }
+      setCountsOpen(false);
+      return;
+    }
+
     if (explicitCounts !== undefined) {
       const next = { ...explicitCounts };
       delete next[type];
@@ -123,10 +140,7 @@ export function InterviewQuestionTypeControls({
   }
 
   function openCounts() {
-    if (selected.length < 1) {
-      setSelectionError(true);
-      return;
-    }
+    if (selected.length < 2) return;
     if (explicitCounts === undefined) {
       onExplicitCountsChange(balancedCounts(count, selected));
     }
@@ -163,9 +177,13 @@ export function InterviewQuestionTypeControls({
       <div className="interview-type-controls__distribution">
         <div>
           <strong>Distribution</strong>
-          <span>{countsOpen ? "Exact counts" : "Balanced automatically"}</span>
+          {singleTypeLabel ? (
+            <span>{`All ${count} ${questionNoun} will be ${singleTypeLabel}.`}</span>
+          ) : (
+            <span>{countsOpen ? "Exact counts" : "Balanced automatically"}</span>
+          )}
         </div>
-        {!countsOpen ? (
+        {singleTypeLabel ? null : !countsOpen ? (
           <button
             type="button"
             className="interview-secondary-button"
@@ -189,7 +207,7 @@ export function InterviewQuestionTypeControls({
         )}
       </div>
 
-      {countsOpen && explicitCounts !== undefined ? (
+      {selected.length > 1 && countsOpen && explicitCounts !== undefined ? (
         <div className="interview-type-counts">
           {selected.map((type) => (
             <label key={type}>
