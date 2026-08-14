@@ -2,7 +2,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { InterviewAnswerControl } from "./InterviewAnswerControl";
-import type { StructuredAnswerDraft } from "./interviewStructuredAnswer";
 import type {
   EffectiveInterviewQuestionType,
   InterviewQuestionDetail,
@@ -45,10 +44,8 @@ function renderControl(
   interviewQuestion: InterviewQuestionDetail,
   options: {
     textValue?: string;
-    structuredValue?: StructuredAnswerDraft;
     selectedOptionId?: string;
     onTextChange?: (value: string) => void;
-    onStructuredChange?: (value: StructuredAnswerDraft) => void;
     onSelectedOptionChange?: (optionId: string) => void;
   } = {},
 ) {
@@ -56,10 +53,8 @@ function renderControl(
     <InterviewAnswerControl
       question={interviewQuestion}
       textValue={options.textValue ?? ""}
-      structuredValue={options.structuredValue ?? {}}
       selectedOptionId={options.selectedOptionId ?? ""}
       onTextChange={options.onTextChange ?? vi.fn()}
-      onStructuredChange={options.onStructuredChange ?? vi.fn()}
       onSelectedOptionChange={options.onSelectedOptionChange ?? vi.fn()}
       onSubmit={vi.fn()}
     />,
@@ -97,7 +92,9 @@ describe("InterviewAnswerControl practice experience", () => {
 
   it("uses real STAR fields instead of Behavioral cue chips", () => {
     renderControl(question("behavioral"));
-    expect(screen.getByRole("group", { name: "Behavioral response" })).not.toBeNull();
+    expect(
+      screen.getByRole("group", { name: "Behavioral response" }),
+    ).not.toBeNull();
     for (const label of ["Situation", "Task", "Action", "Result"]) {
       expect(screen.getByRole("textbox", { name: label })).not.toBeNull();
     }
@@ -121,6 +118,23 @@ describe("InterviewAnswerControl practice experience", () => {
     ]) {
       expect(screen.getByRole("textbox", { name: label })).not.toBeNull();
     }
+  });
+
+  it("serializes a partial structured answer through onTextChange", async () => {
+    const onTextChange = vi.fn();
+    renderControl(question("scenario-based"), { onTextChange });
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByRole("textbox", { name: "Assessment" }),
+      "Urgent risk",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Decision" }),
+      "Escalate",
+    );
+    expect(onTextChange).toHaveBeenLastCalledWith(
+      "Assessment:\nUrgent risk\n\nDecision:\nEscalate",
+    );
   });
 
   it("renders Coding starter code and inserts it only into an empty draft", async () => {
@@ -149,10 +163,8 @@ describe("InterviewAnswerControl practice experience", () => {
       <InterviewAnswerControl
         question={question("coding", { starterCode })}
         textValue="const existing = true;"
-        structuredValue={{}}
         selectedOptionId=""
         onTextChange={onTextChange}
-        onStructuredChange={vi.fn()}
         onSelectedOptionChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
