@@ -37,7 +37,7 @@ import {
 } from "./interview.schemas.js";
 
 const GENERATION_PROMPT_VERSION =
-  "interview-question-generation-v2";
+  "interview-question-generation-v3";
 const EXPLANATION_PROMPT_VERSION =
   "interview-question-explanation-v2";
 const FEEDBACK_PROMPT_VERSION =
@@ -243,6 +243,14 @@ function generatedQuestionStorageFields(
     };
   }
 
+  if (question.questionType === "coding") {
+    return {
+      questionType: question.questionType,
+      starterCode: question.starterCode,
+      modelAnswer: question.modelAnswer,
+    };
+  }
+
   return {
     questionType: question.questionType,
     modelAnswer: question.modelAnswer,
@@ -359,6 +367,8 @@ export async function generateInterviewQuestions(input: {
       "Return exactly the requested question-type distribution.",
       "For Multiple Choice, return 2–8 plausible distinct options and one correctOptionIndex.",
       "For Coding, produce a text/code practice prompt only; do not require execution or hidden tests.",
+      "For Coding, return starterCode containing only useful scaffolding such as imports, signatures, parameters, minimal shapes, and TODO comments.",
+      "Do not put the completed solution in Coding starterCode.",
       "For Behavioral questions, do not invent candidate experience.",
       "For Scenario-based questions, evaluate reasoning and trade-offs rather than claiming one universal real-world answer.",
       "Questions must match the target role and stated experience level.",
