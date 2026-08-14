@@ -57,7 +57,12 @@ describe("interviewRoleGuidance", () => {
     );
   });
 
-  it("returns role-aware suggestions without a remote dependency", () => {
+  it("waits for a role and then returns role-aware suggestions locally", () => {
+    expect(getInterviewRoleSuggestions("")).toEqual({
+      focusTopics: [],
+      skillGaps: [],
+    });
+
     const backend = getInterviewRoleSuggestions("Backend Developer");
     expect(backend.focusTopics).toContain("REST APIs");
     expect(backend.skillGaps).toContain("Database Optimization");
