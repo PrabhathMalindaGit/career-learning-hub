@@ -1,8 +1,14 @@
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="queued"]
   ),
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="processing"]
   ) {
   display: grid;
   grid-template-columns: minmax(150px, auto) minmax(140px, 1fr) auto;
@@ -21,20 +27,32 @@
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="queued"]
   ) > strong,
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="processing"]
   ) > strong {
   grid-area: title;
   color: #1f5c39;
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="queued"]
   ) > span,
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="processing"]
   ) > span {
   grid-area: state;
   justify-self: end;
@@ -48,10 +66,16 @@
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="queued"]
   ) > progress,
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="processing"]
   ) > progress {
   grid-area: progress;
   width: 100%;
@@ -60,19 +84,31 @@
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="queued"]
   ) > .job-resilience-actions,
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="processing"]
   ) > .job-resilience-actions {
   display: contents;
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="queued"]
   ) > .job-resilience-actions > p[role="status"],
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="processing"]
   ) > .job-resilience-actions > p[role="status"] {
   grid-area: phase;
   margin: 0;
@@ -82,20 +118,32 @@
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="queued"]
   ) > .job-resilience-actions > .job-resilience-actions__buttons,
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="processing"]
   ) > .job-resilience-actions > .job-resilience-actions__buttons {
   grid-area: actions;
   justify-self: end;
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="queued"]
   ) .job-resilience-actions__buttons button,
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="processing"]
   ) .job-resilience-actions__buttons button {
   border-color: #aec9b7;
   color: #285f3e;
@@ -103,7 +151,10 @@
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="completed"]
   ) {
   display: flex;
   min-height: 46px;
@@ -116,19 +167,31 @@
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="completed"]
   ) > strong,
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="completed"]
   ) > span,
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="completed"]
   ) > progress {
   display: none;
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="completed"]
   ) > .job-resilience-actions {
   display: flex;
   width: 100%;
@@ -138,7 +201,10 @@
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="completed"]
   ) > .job-resilience-actions > p[role="status"] {
   margin: 0;
   color: #1d643d;
@@ -147,17 +213,32 @@
 }
 
 .interview-job-status:has(
-    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+    .job-resilience-actions:is(
+        [data-job-type="interview.questions.generate"],
+        [data-job-type="interview.question.explain"]
+      )[data-job-status="completed"]
   ) .job-resilience-actions__buttons:empty {
+  display: none;
+}
+
+.interview-workspace:has(
+    .job-resilience-actions[data-job-type="interview.question.explain"][data-job-status="completed"]
+  ) .interview-sr-status {
   display: none;
 }
 
 @media (max-width: 560px) {
   .interview-job-status:has(
-      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+      .job-resilience-actions:is(
+          [data-job-type="interview.questions.generate"],
+          [data-job-type="interview.question.explain"]
+        )[data-job-status="queued"]
     ),
   .interview-job-status:has(
-      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+      .job-resilience-actions:is(
+          [data-job-type="interview.questions.generate"],
+          [data-job-type="interview.question.explain"]
+        )[data-job-status="processing"]
     ) {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
@@ -168,20 +249,32 @@
   }
 
   .interview-job-status:has(
-      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+      .job-resilience-actions:is(
+          [data-job-type="interview.questions.generate"],
+          [data-job-type="interview.question.explain"]
+        )[data-job-status="queued"]
     ) > .job-resilience-actions > .job-resilience-actions__buttons,
   .interview-job-status:has(
-      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+      .job-resilience-actions:is(
+          [data-job-type="interview.questions.generate"],
+          [data-job-type="interview.question.explain"]
+        )[data-job-status="processing"]
     ) > .job-resilience-actions > .job-resilience-actions__buttons {
     width: 100%;
     justify-self: stretch;
   }
 
   .interview-job-status:has(
-      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+      .job-resilience-actions:is(
+          [data-job-type="interview.questions.generate"],
+          [data-job-type="interview.question.explain"]
+        )[data-job-status="queued"]
     ) .job-resilience-actions__buttons button,
   .interview-job-status:has(
-      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+      .job-resilience-actions:is(
+          [data-job-type="interview.questions.generate"],
+          [data-job-type="interview.question.explain"]
+        )[data-job-status="processing"]
     ) .job-resilience-actions__buttons button {
     width: 100%;
   }
