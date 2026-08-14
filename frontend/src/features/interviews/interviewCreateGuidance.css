@@ -1,0 +1,138 @@
+.interview-create-required-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.interview-role-selector,
+.interview-suggested-tag-input {
+  display: grid;
+  gap: 10px;
+}
+
+.interview-role-selector__heading,
+.interview-suggested-tag-input__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.interview-role-selector__heading label,
+.interview-suggested-tag-input__label {
+  font-size: 0.91rem;
+  font-weight: 750;
+}
+
+.interview-role-selector__heading small,
+.interview-role-selector__empty,
+.interview-suggested-tag-input__heading small,
+.interview-suggested-tag-input__help {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.interview-role-selector__shortcuts,
+.interview-suggested-tag-input__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.interview-role-chip,
+.interview-suggested-tag-chip {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid #cbd9d0;
+  border-radius: 999px;
+  color: #355443;
+  background: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.interview-role-chip[aria-pressed="true"],
+.interview-suggested-tag-chip[aria-pressed="true"] {
+  border-color: #6f9d7e;
+  color: #174e2d;
+  background: #eaf3ed;
+}
+
+.interview-role-selector__search,
+.interview-suggested-tag-input__custom {
+  display: grid;
+  gap: 7px;
+}
+
+.interview-role-selector__search > label,
+.interview-suggested-tag-input__custom > label {
+  color: #3c4a42;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.interview-role-selector__results {
+  display: grid;
+  max-height: 190px;
+  overflow-y: auto;
+  border: 1px solid #d5e0d8;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.interview-role-selector__results button {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid #edf2ee;
+  color: #2d4637;
+  background: transparent;
+  text-align: left;
+}
+
+.interview-role-selector__results button:last-child {
+  border-bottom: 0;
+}
+
+.interview-role-selector__results button:hover:not(:disabled),
+.interview-role-selector__results button[aria-selected="true"] {
+  background: #eef6f0;
+}
+
+.interview-role-selector__custom-action {
+  justify-self: start;
+}
+
+.interview-suggested-tag-input__custom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.interview-suggested-tag-input__custom-row input {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .interview-role-selector__heading,
+  .interview-suggested-tag-input__heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .interview-suggested-tag-input__custom-row {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-role-selector__custom-action,
+  .interview-suggested-tag-input__custom-row .interview-secondary-button {
+    width: 100%;
+  }
+}

@@ -48,6 +48,10 @@ import type {
 import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
 import { InterviewAnswerControl } from "./InterviewAnswerControl";
 import {
+  InterviewCategorySelector,
+  canonicalInterviewCategorySuggestions,
+} from "./InterviewCategorySelector";
+import {
   InterviewQuestionTypeControls,
   QUESTION_TYPE_LABELS,
   interviewTypeCountsAreValid,
@@ -128,19 +132,6 @@ function SafeErrorMessage({
       ) : null}
     </div>
   );
-}
-
-function parseList(value: string): string[] {
-  const seen = new Set<string>();
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter((item) => {
-      if (!item || seen.has(item)) return false;
-      seen.add(item);
-      return true;
-    })
-    .slice(0, 50);
 }
 
 function feedbackPanel(attempt: InterviewAttempt) {
@@ -245,6 +236,7 @@ export function InterviewSessionWorkspace() {
   const [notesState, setNotesState] = useState<
     "clean" | "dirty" | "saving" | "saved" | "error"
   >("clean");
+  const [notesOpen, setNotesOpen] = useState(false);
   const [answerDraft, setAnswerDraft] = useState("");
   const [selectedOptionId, setSelectedOptionId] = useState("");
   const [answerError, setAnswerError] = useState<SafeError | null>(null);
@@ -260,7 +252,9 @@ export function InterviewSessionWorkspace() {
   const [attemptReloadKey, setAttemptReloadKey] = useState(0);
   const [attemptStatusFilter, setAttemptStatusFilter] = useState<
     InterviewAttemptStatus | ""
-  >("");
+  >(
+    "",
+  );
   const [attemptLoading, setAttemptLoading] = useState(false);
   const [attemptError, setAttemptError] = useState<SafeError | null>(
     null,
@@ -276,6 +270,7 @@ export function InterviewSessionWorkspace() {
   const [manualDifficulty, setManualDifficulty] =
     useState<InterviewDifficulty>("medium");
   const [manualQuestion, setManualQuestion] = useState("");
+  const [manualStarterCode, setManualStarterCode] = useState("");
   const [manualModelAnswer, setManualModelAnswer] = useState("");
   const [manualOptions, setManualOptions] = useState<string[]>(["", ""]);
   const [manualCorrectOptionIndex, setManualCorrectOptionIndex] = useState<
@@ -285,7 +280,9 @@ export function InterviewSessionWorkspace() {
   const [manualError, setManualError] = useState<SafeError | null>(null);
 
   const [generationCount, setGenerationCount] = useState(10);
-  const [generationCategories, setGenerationCategories] = useState("");
+  const [generationCategories, setGenerationCategories] = useState<string[]>(
+    [],
+  );
   const [generationQuestionTypes, setGenerationQuestionTypes] = useState<
     InterviewQuestionType[]
   >(["short-answer"]);
@@ -303,6 +300,7 @@ export function InterviewSessionWorkspace() {
   const routeSequence = useRef(0);
   const routeEpoch = useRef(0);
   const routeIdentity = useRef("");
+  const generationCategoriesInitializedForSession = useRef("");
   const questionSequence = useRef(0);
   const questionDetailSequence = useRef(0);
   const attemptSequence = useRef(0);
@@ -459,6 +457,7 @@ export function InterviewSessionWorkspace() {
       setSelectedQuestionId(questionId);
       setSelectedQuestion(null);
       setNotesDraft("");
+      setNotesOpen(false);
       setAnswerDraft("");
       setSelectedOptionId("");
     },
@@ -495,6 +494,7 @@ export function InterviewSessionWorkspace() {
       pinOperation.current = null;
       providerOperation.current = null;
       providerErrorScope.current = null;
+      generationCategoriesInitializedForSession.current = "";
     }
     const sequence = ++routeSequence.current;
     const controller = new AbortController();
@@ -510,6 +510,7 @@ export function InterviewSessionWorkspace() {
       setSelectedAttemptId("");
       setSelectedAttempt(null);
       setNotesDraft("");
+      setNotesOpen(false);
       setAnswerDraft("");
       setSelectedOptionId("");
       setAnswerError(null);
@@ -522,13 +523,14 @@ export function InterviewSessionWorkspace() {
       setManualCategory("");
       setManualDifficulty("medium");
       setManualQuestion("");
+      setManualStarterCode("");
       setManualModelAnswer("");
       setManualOptions(["", ""]);
       setManualCorrectOptionIndex(null);
       setManualBusy(false);
       setManualError(null);
       setGenerationCount(10);
-      setGenerationCategories("");
+      setGenerationCategories([]);
       setGenerationQuestionTypes(["short-answer"]);
       setGenerationTypeCounts(undefined);
       setProviderBusy(false);
@@ -549,7 +551,17 @@ export function InterviewSessionWorkspace() {
 
     void fetchInterviewSession(sessionId, controller.signal)
       .then((result) => {
-        if (sequence === routeSequence.current) setSession(result);
+        if (sequence !== routeSequence.current) return;
+        setSession(result);
+        if (generationCategoriesInitializedForSession.current !== result.id) {
+          setGenerationCategories(
+            canonicalInterviewCategorySuggestions(
+              result.focusTopics,
+              result.skillGaps,
+            ),
+          );
+          generationCategoriesInitializedForSession.current = result.id;
+        }
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted && sequence === routeSequence.current) {
@@ -641,6 +653,7 @@ export function InterviewSessionWorkspace() {
       setSelectedQuestion(null);
       setQuestionDetailLoading(false);
       setNotesDraft("");
+      setNotesOpen(false);
       setAnswerDraft("");
       setSelectedOptionId("");
       return;
@@ -672,6 +685,7 @@ export function InterviewSessionWorkspace() {
         }
         setSelectedQuestion(question);
         setNotesDraft(question.userNotes ?? "");
+        setNotesOpen(Boolean((question.userNotes ?? "").trim()));
         setNotesState("clean");
       })
       .catch((error: unknown) => {
@@ -1158,6 +1172,10 @@ export function InterviewSessionWorkspace() {
               category: manualCategory.trim(),
               difficulty: manualDifficulty,
               question: manualQuestion.trim(),
+              ...(manualQuestionType === "coding" &&
+              manualStarterCode.trim()
+                ? { starterCode: manualStarterCode.trim() }
+                : {}),
               ...(manualModelAnswer.trim()
                 ? { modelAnswer: manualModelAnswer.trim() }
                 : {}),
@@ -1168,6 +1186,7 @@ export function InterviewSessionWorkspace() {
       setManualQuestionType("short-answer");
       setManualCategory("");
       setManualQuestion("");
+      setManualStarterCode("");
       setManualModelAnswer("");
       resetManualMcqDraft();
       setManualOpen(false);
@@ -1217,7 +1236,7 @@ export function InterviewSessionWorkspace() {
         {
           requestId,
           count: generationCount,
-          categories: parseList(generationCategories),
+          categories: generationCategories,
           questionTypes: generationQuestionTypes,
           ...(generationTypeCounts === undefined
             ? {}
@@ -1606,6 +1625,11 @@ export function InterviewSessionWorkspace() {
   const editable = session.status === "active";
   const canWriteAttempt =
     editable && session.mode === "written-practice";
+  const generationContextCategories =
+    canonicalInterviewCategorySuggestions(
+      session.focusTopics,
+      session.skillGaps,
+    );
   const generationStatusPending =
     activeJob?.scope === "generation" &&
     (activeJob.job.status === "queued" ||
@@ -1615,6 +1639,7 @@ export function InterviewSessionWorkspace() {
     !selectedQuestion.explanation &&
     !selectedAttempt &&
     (attemptPagination?.total ?? attempts.length) === 0;
+  const notesResolved = notesState === "clean" || notesState === "saved";
 
   return (
     <section
@@ -1728,9 +1753,7 @@ export function InterviewSessionWorkspace() {
         </p>
       ) : null}
 
-      {workspaceError ? (
-        <SafeErrorMessage error={workspaceError} />
-      ) : null}
+      {workspaceError ? <SafeErrorMessage error={workspaceError} /> : null}
       <p className="interview-sr-status" aria-live="polite">
         {statusMessage}
       </p>
@@ -1776,17 +1799,14 @@ export function InterviewSessionWorkspace() {
                 )}
               </select>
             </label>
-            <label>
-              Categories
-              <input
-                value={generationCategories}
-                maxLength={6_000}
-                placeholder="System design, behavioral"
-                onChange={(event) =>
-                  setGenerationCategories(event.target.value)
-                }
+            <div className="interview-span-two">
+              <InterviewCategorySelector
+                contextCategories={generationContextCategories}
+                selected={generationCategories}
+                disabled={providerBusy || generationStatusPending}
+                onSelectedChange={setGenerationCategories}
               />
-            </label>
+            </div>
             <div className="interview-span-two">
               <InterviewQuestionTypeControls
                 count={generationCount}
@@ -1836,6 +1856,9 @@ export function InterviewSessionWorkspace() {
                     const next = event.target.value as InterviewQuestionType;
                     setManualQuestionType(next);
                     setManualError(null);
+                    if (next !== "coding") {
+                      setManualStarterCode("");
+                    }
                     if (next !== "multiple-choice") {
                       resetManualMcqDraft();
                     }
@@ -1959,21 +1982,36 @@ export function InterviewSessionWorkspace() {
                   </div>
                 </fieldset>
               ) : (
-                <label className="interview-span-two">
-                  Model answer <span>(optional)</span>
-                  <textarea
-                    rows={5}
-                    maxLength={12_000}
-                    value={manualModelAnswer}
-                    onChange={(event) =>
-                      setManualModelAnswer(event.target.value)
-                    }
-                  />
-                </label>
+                <>
+                  {manualQuestionType === "coding" ? (
+                    <label className="interview-span-two">
+                      Starter code <span>(optional)</span>
+                      <textarea
+                        rows={7}
+                        maxLength={12_000}
+                        value={manualStarterCode}
+                        spellCheck={false}
+                        placeholder="Add imports, a function signature, or TODO scaffold without the completed solution…"
+                        onChange={(event) =>
+                          setManualStarterCode(event.target.value)
+                        }
+                      />
+                    </label>
+                  ) : null}
+                  <label className="interview-span-two">
+                    Model answer <span>(optional)</span>
+                    <textarea
+                      rows={5}
+                      maxLength={12_000}
+                      value={manualModelAnswer}
+                      onChange={(event) =>
+                        setManualModelAnswer(event.target.value)
+                      }
+                    />
+                  </label>
+                </>
               )}
-              {manualError ? (
-                <SafeErrorMessage error={manualError} />
-              ) : null}
+              {manualError ? <SafeErrorMessage error={manualError} /> : null}
               <button
                 className="interview-secondary-button"
                 type="submit"
@@ -2029,9 +2067,7 @@ export function InterviewSessionWorkspace() {
           ) : null}
         </section>
       ) : null}
-      {providerError ? (
-        <SafeErrorMessage error={providerError} />
-      ) : null}
+      {providerError ? <SafeErrorMessage error={providerError} /> : null}
 
       <div className="interview-workspace-grid">
         <section
@@ -2111,36 +2147,52 @@ export function InterviewSessionWorkspace() {
             </p>
           ) : (
             <ol className="interview-question-list">
-              {questions.map((question) => (
-                <li key={question.id}>
-                  <button
-                    type="button"
-                    className={
-                      selectedQuestionId === question.id
-                        ? "interview-question-select interview-question-select--active"
-                        : "interview-question-select"
-                    }
-                    aria-pressed={selectedQuestionId === question.id}
-                    aria-label={`${
-                      question.isPinned ? "Pinned: " : ""
-                    }${question.question}`}
-                    onClick={() => selectQuestion(question.id)}
-                  >
-                    <span className="interview-question-type-label">
-                      {QUESTION_TYPE_LABELS[question.questionType]}
-                    </span>
-                    <span>
-                      {question.category} · {question.difficulty}
-                    </span>
-                    <strong>{question.question}</strong>
-                    {question.isPinned ? (
-                      <span className="interview-pinned-label">
-                        <span aria-hidden="true">◆</span> Pinned
+              {questions.map((question, index) => {
+                const questionNumber =
+                  (questionPage - 1) * PAGE_SIZE + index + 1;
+                const questionNumberLabel = String(questionNumber).padStart(
+                  2,
+                  "0",
+                );
+                return (
+                  <li key={question.id}>
+                    <button
+                      type="button"
+                      className={
+                        selectedQuestionId === question.id
+                          ? "interview-question-select interview-question-select--active"
+                          : "interview-question-select"
+                      }
+                      aria-pressed={selectedQuestionId === question.id}
+                      aria-label={`${
+                        question.isPinned ? "Pinned: " : ""
+                      }${question.question}`}
+                      onClick={() => selectQuestion(question.id)}
+                    >
+                      <div className="interview-question-select__meta">
+                        <span
+                          className="interview-question-number"
+                          aria-hidden="true"
+                        >
+                          {questionNumberLabel}
+                        </span>
+                        <span className="interview-question-type-label">
+                          {QUESTION_TYPE_LABELS[question.questionType]}
+                        </span>
+                      </div>
+                      <span>
+                        {question.category} · {question.difficulty}
                       </span>
-                    ) : null}
-                  </button>
-                </li>
-              ))}
+                      <strong>{question.question}</strong>
+                      {question.isPinned ? (
+                        <span className="interview-pinned-label">
+                          <span aria-hidden="true">◆</span> Pinned
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
             </ol>
           )}
           <div className="interview-pagination">
@@ -2282,52 +2334,90 @@ export function InterviewSessionWorkspace() {
                 </button>
               ) : null}
 
-              <label className="interview-answer-field">
-                Private notes
-                <textarea
-                  rows={4}
-                  maxLength={8_000}
-                  value={notesDraft}
-                  readOnly={!editable}
-                  onChange={(event) => {
-                    setNotesDraft(event.target.value);
-                    setNotesState("dirty");
-                  }}
-                />
-              </label>
-              {editable ? (
-                <div className="interview-action-row">
-                  <button
-                    type="button"
-                    className="interview-secondary-button"
-                    disabled={
-                      notesState === "saving" ||
-                      notesDraft.length > 8_000 ||
-                      (notesState !== "dirty" && notesState !== "error")
-                    }
-                    onClick={() => void persistNotes(notesDraft)}
-                  >
-                    {notesState === "saving" ? "Saving…" : "Save notes"}
-                  </button>
-                  <button
-                    type="button"
-                    className="interview-secondary-button"
-                    disabled={notesState === "saving" || notesDraft === ""}
-                    onClick={() => void persistNotes("")}
-                  >
-                    Clear notes
-                  </button>
-                  <span role="status">
-                    {notesState === "saved"
-                      ? notesDraft === ""
-                        ? "Notes cleared."
-                        : "Notes saved."
-                      : notesState === "dirty"
-                        ? "Unsaved notes."
-                        : ""}
-                  </span>
+              <section
+                className="interview-private-notes"
+                aria-label="Private notes"
+              >
+                <div className="interview-private-notes-heading">
+                  <strong>Private notes</strong>
+                  {notesOpen ? (
+                    notesResolved ? (
+                      <button
+                        type="button"
+                        className="interview-secondary-button"
+                        aria-expanded="true"
+                        aria-controls="interview-private-notes-editor"
+                        onClick={() => setNotesOpen(false)}
+                      >
+                        Hide
+                      </button>
+                    ) : null
+                  ) : editable ? (
+                    <button
+                      type="button"
+                      className="interview-secondary-button"
+                      aria-expanded="false"
+                      aria-controls="interview-private-notes-editor"
+                      onClick={() => setNotesOpen(true)}
+                    >
+                      {notesDraft.trim() ? "Show note" : "Add note"}
+                    </button>
+                  ) : null}
                 </div>
-              ) : null}
+                {notesOpen ? (
+                  <div
+                    id="interview-private-notes-editor"
+                    className="interview-private-notes-editor"
+                  >
+                    <div className="interview-answer-field">
+                      <textarea
+                        aria-label="Private notes"
+                        rows={4}
+                        maxLength={8_000}
+                        value={notesDraft}
+                        readOnly={!editable}
+                        onChange={(event) => {
+                          setNotesDraft(event.target.value);
+                          setNotesState("dirty");
+                        }}
+                      />
+                    </div>
+                    {editable ? (
+                      <div className="interview-action-row">
+                        <button
+                          type="button"
+                          className="interview-secondary-button"
+                          disabled={
+                            notesState === "saving" ||
+                            notesDraft.length > 8_000 ||
+                            (notesState !== "dirty" && notesState !== "error")
+                          }
+                          onClick={() => void persistNotes(notesDraft)}
+                        >
+                          {notesState === "saving" ? "Saving…" : "Save notes"}
+                        </button>
+                        <button
+                          type="button"
+                          className="interview-secondary-button"
+                          disabled={notesState === "saving" || notesDraft === ""}
+                          onClick={() => void persistNotes("")}
+                        >
+                          Clear notes
+                        </button>
+                        <span role="status">
+                          {notesState === "saved"
+                            ? notesDraft === ""
+                              ? "Notes cleared."
+                              : "Notes saved."
+                            : notesState === "dirty"
+                              ? "Unsaved notes."
+                              : ""}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </section>
 
               {canWriteAttempt ? (
                 <section

@@ -122,6 +122,7 @@ export interface InterviewQuestionSummary {
 
 export interface InterviewQuestionDetail
   extends InterviewQuestionSummary {
+  starterCode?: string;
   modelAnswer?: string;
   explanation?: string;
   explanationKeyPoints: string[];
@@ -231,6 +232,7 @@ export interface ManualInterviewQuestionInput {
   category: string;
   difficulty: InterviewDifficulty;
   question: string;
+  starterCode?: string;
   modelAnswer?: string;
   multipleChoice?: {
     options: string[];

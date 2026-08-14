@@ -492,6 +492,10 @@ export function parseQuestionDetail(
   const summary = parseQuestionSummary(item);
   assertIdentity(expectedSessionId, summary.sessionId);
   assertIdentity(expectedQuestionId, summary.id);
+  const starterCode = optionalText(item.starterCode, 12_000);
+  if (starterCode !== undefined && summary.questionType !== "coding") {
+    invalid();
+  }
   const modelAnswer = optionalText(item.modelAnswer, 12_000);
   if (summary.questionType === "multiple-choice" && modelAnswer !== undefined) {
     invalid();
@@ -505,6 +509,7 @@ export function parseQuestionDetail(
         );
   return {
     ...summary,
+    ...(starterCode === undefined ? {} : { starterCode }),
     ...(modelAnswer === undefined ? {} : { modelAnswer }),
     ...(explanation === undefined ? {} : { explanation }),
     explanationKeyPoints,

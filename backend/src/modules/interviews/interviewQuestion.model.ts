@@ -24,6 +24,7 @@ export interface InterviewQuestion {
   questionFingerprint: string;
   questionType?: InterviewQuestionType;
   multipleChoice?: InterviewMultipleChoiceStorage;
+  starterCode?: string;
   modelAnswer?: string;
   explanation?: string;
   explanationKeyPoints: string[];
@@ -133,6 +134,12 @@ const interviewQuestionSchema = new Schema<InterviewQuestion>(
     },
     multipleChoice: {
       type: multipleChoiceSchema,
+      immutable: true,
+    },
+    starterCode: {
+      type: String,
+      trim: true,
+      maxlength: 12_000,
       immutable: true,
     },
     modelAnswer: {

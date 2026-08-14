@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   EffectiveInterviewQuestionType,
   InterviewQuestionType,
 } from "./types";
 import "./interviewQuestionTypes.css";
+import "./interviewGenerationStatus.css";
+import "./interviewQuestionIndexNotes.css";
 
 export const QUESTION_TYPE_OPTIONS: ReadonlyArray<{
   value: InterviewQuestionType;
@@ -84,8 +86,17 @@ export function InterviewQuestionTypeControls({
   onSelectedChange,
   onExplicitCountsChange,
 }: InterviewQuestionTypeControlsProps) {
-  const [countsOpen, setCountsOpen] = useState(explicitCounts !== undefined);
+  const [countsOpen, setCountsOpen] = useState(
+    explicitCounts !== undefined && selected.length > 1,
+  );
   const [selectionError, setSelectionError] = useState(false);
+  const [distributionNotice, setDistributionNotice] = useState("");
+  const previousCountRef = useRef(count);
+  const singleType = selected.length === 1 ? selected[0] : undefined;
+  const singleTypeLabel = singleType
+    ? QUESTION_TYPE_LABELS[singleType]
+    : undefined;
+  const questionNoun = count === 1 ? "question" : "questions";
   const explicitTotal = selected.reduce(
     (sum, type) => sum + (explicitCounts?.[type] ?? 0),
     0,
@@ -95,8 +106,27 @@ export function InterviewQuestionTypeControls({
     selected,
     explicitCounts,
   );
+  const distributionLabel = countsOpen
+    ? explicitCountsValid
+      ? `Exact counts · ${explicitTotal} total`
+      : `Exact counts · ${explicitTotal} of ${count}`
+    : "Balanced automatically";
+
+  useEffect(() => {
+    if (previousCountRef.current === count) return;
+    previousCountRef.current = count;
+
+    if (explicitCounts !== undefined) {
+      onExplicitCountsChange(undefined);
+      setCountsOpen(false);
+      setDistributionNotice(
+        "Question count changed. Distribution reset to balanced.",
+      );
+    }
+  }, [count, explicitCounts, onExplicitCountsChange]);
 
   function toggleType(type: InterviewQuestionType, checked: boolean) {
+    setDistributionNotice("");
     if (checked) {
       if (selected.includes(type)) return;
       setSelectionError(false);
@@ -113,7 +143,17 @@ export function InterviewQuestionTypeControls({
     }
 
     setSelectionError(false);
-    onSelectedChange(selected.filter((value) => value !== type));
+    const nextSelected = selected.filter((value) => value !== type);
+    onSelectedChange(nextSelected);
+
+    if (nextSelected.length === 1) {
+      if (explicitCounts !== undefined) {
+        onExplicitCountsChange(undefined);
+      }
+      setCountsOpen(false);
+      return;
+    }
+
     if (explicitCounts !== undefined) {
       const next = { ...explicitCounts };
       delete next[type];
@@ -122,10 +162,8 @@ export function InterviewQuestionTypeControls({
   }
 
   function openCounts() {
-    if (selected.length < 1) {
-      setSelectionError(true);
-      return;
-    }
+    if (selected.length < 2) return;
+    setDistributionNotice("");
     if (explicitCounts === undefined) {
       onExplicitCountsChange(balancedCounts(count, selected));
     }
@@ -159,15 +197,23 @@ export function InterviewQuestionTypeControls({
         </p>
       ) : null}
 
-      <div className="interview-type-controls__count-actions">
-        {!countsOpen ? (
+      <div className="interview-type-controls__distribution">
+        <div>
+          <strong>Distribution</strong>
+          {singleTypeLabel ? (
+            <span>{`All ${count} ${questionNoun} will be ${singleTypeLabel}.`}</span>
+          ) : (
+            <span>{distributionLabel}</span>
+          )}
+        </div>
+        {singleTypeLabel ? null : !countsOpen ? (
           <button
             type="button"
             className="interview-secondary-button"
             aria-expanded="false"
             onClick={openCounts}
           >
-            Set counts
+            Set exact counts
           </button>
         ) : (
           <button
@@ -177,6 +223,7 @@ export function InterviewQuestionTypeControls({
             onClick={() => {
               onExplicitCountsChange(undefined);
               setCountsOpen(false);
+              setDistributionNotice("");
             }}
           >
             Use balanced distribution
@@ -184,7 +231,16 @@ export function InterviewQuestionTypeControls({
         )}
       </div>
 
-      {countsOpen && explicitCounts !== undefined ? (
+      {distributionNotice ? (
+        <p
+          className="interview-type-controls__help interview-type-controls__status"
+          aria-live="polite"
+        >
+          {distributionNotice}
+        </p>
+      ) : null}
+
+      {selected.length > 1 && countsOpen && explicitCounts !== undefined ? (
         <div className="interview-type-counts">
           {selected.map((type) => (
             <label key={type}>
@@ -205,18 +261,11 @@ export function InterviewQuestionTypeControls({
               />
             </label>
           ))}
-          <p
-            className={
-              explicitCountsValid
-                ? "interview-type-counts__summary"
-                : "interview-type-controls__error"
-            }
-            role={explicitCountsValid ? undefined : "alert"}
-          >
-            {explicitCountsValid
-              ? `Exact counts total ${count}.`
-              : `Exact counts total ${explicitTotal}; they must equal Question count ${count}.`}
-          </p>
+          {!explicitCountsValid ? (
+            <p className="interview-type-controls__error" role="alert">
+              {`Exact counts total ${explicitTotal}; they must equal Question count ${count}.`}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </fieldset>

@@ -1006,7 +1006,7 @@ describe("InterviewSessionWorkspace", () => {
         {
           requestId: "a4d20e66-4af2-4dd2-834b-fad9fe354a6f",
           count: 10,
-          categories: [],
+          categories: ["API design", "Reliability", "Concurrency"],
           questionTypes: ["short-answer"],
         },
         expect.any(AbortSignal),
