@@ -295,6 +295,10 @@ export function matchInterviewRoleFamily(
   targetRole: string,
 ): InterviewRoleFamily {
   const normalized = normalizeRole(targetRole);
+  const exactBuiltIn = INTERVIEW_ROLE_OPTIONS.find(
+    (option) => normalizeRole(option.label) === normalized,
+  );
+  if (exactBuiltIn) return exactBuiltIn.family;
 
   if (includesAny(normalized, ["mern", "full stack", "full-stack"])) {
     return "full-stack";
