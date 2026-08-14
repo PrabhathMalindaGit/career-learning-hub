@@ -147,6 +147,10 @@
   font-weight: 700;
 }
 
+.interview-attempt-detail > p {
+  white-space: pre-wrap;
+}
+
 .interview-starter-code {
   display: grid;
   gap: 10px;
