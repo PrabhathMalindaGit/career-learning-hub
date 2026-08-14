@@ -21,7 +21,8 @@
 - Exact distribution must reset to Balanced when Question count changes while exact counts are active.
 - Context and custom generation categories must use one visible selected-state language.
 - Preserve existing validation, dialog focus management, request-ID handling, ownership/security, polling/idempotency, typed-question behavior, MCQ secrecy, and Coding no-execution policy.
-- Implementation uses GitHub connector writes. The user runs local verification after the implementation batch; browser QA follows only after automated checks are green.
+- Implementation uses GitHub connector writes. The assistant cannot execute the repository test suite locally through this connector. Following the user's established streamlined workflow, focused tests are written before production changes in each task, then the user runs the GREEN verification gate after the implementation batch. Do not claim a RED or GREEN run that was not actually observed.
+- Browser QA is required only after automated verification is green.
 
 ---
 
@@ -39,38 +40,64 @@
 
 ### Existing files to modify
 
-- `frontend/src/features/interviews/InterviewCreateDialog.tsx` — integrate role selector, predefined experience select, smart title ownership, role-aware suggested topics/gaps, and clean required/optional copy.
-- `frontend/src/features/interviews/InterviewCreateDialog.test.tsx` — update existing dialog expectations and add integrated wizard behavior coverage.
-- `frontend/src/features/interviews/InterviewQuestionTypeControls.tsx` — reset stale exact-count mode on Question count changes and announce the reset.
-- `frontend/src/features/interviews/InterviewQuestionTypeControls.test.tsx` — replace the old stale-mismatch expectation with reset-to-balanced behavior.
-- `frontend/src/features/interviews/InterviewCategorySelector.tsx` — render custom selections as the same pressed/toggle chips as selected context categories.
-- `frontend/src/features/interviews/InterviewCategorySelector.test.tsx` — assert unified selected state/removal/counter behavior.
-- `frontend/src/features/interviews/interviewCategorySelector.css` — remove the weaker custom-chip treatment and let custom selections reuse `.interview-category-chip`.
-- `frontend/src/features/interviews/InterviewSessionWorkspace.practiceExperience.test.tsx` — retain the integrated generation-category payload checks and update only selectors/assertions affected by the unified category presentation.
+- `frontend/src/features/interviews/InterviewCreateDialog.tsx`
+- `frontend/src/features/interviews/InterviewCreateDialog.test.tsx`
+- `frontend/src/features/interviews/InterviewQuestionTypeControls.tsx`
+- `frontend/src/features/interviews/InterviewQuestionTypeControls.test.tsx`
+- `frontend/src/features/interviews/InterviewCategorySelector.tsx`
+- `frontend/src/features/interviews/InterviewCategorySelector.test.tsx`
+- `frontend/src/features/interviews/interviewCategorySelector.css`
+- `frontend/src/features/interviews/InterviewSessionWorkspace.practiceExperience.test.tsx` only if unified category selectors require assertion updates.
 
 ---
 
-### Task 1: Local role guidance and title helpers
+### Task 1: Local role guidance and smart-title helpers
 
 **Files:**
 - Create: `frontend/src/features/interviews/interviewRoleGuidance.ts`
 - Create: `frontend/src/features/interviews/interviewRoleGuidance.test.ts`
 
 **Interfaces:**
-- Produces:
-  - `INTERVIEW_EXPERIENCE_LEVELS: readonly string[]`
-  - `INTERVIEW_ROLE_OPTIONS: readonly InterviewRoleGuidance[]`
-  - `type InterviewRoleFamily = "software-engineer" | "frontend" | "backend" | "full-stack" | "mobile" | "devops-cloud" | "data" | "ml-ai" | "cybersecurity" | "qa-test"`
-  - `matchInterviewRoleFamily(targetRole: string): InterviewRoleFamily`
-  - `getInterviewRoleSuggestions(targetRole: string): { focusTopics: readonly string[]; skillGaps: readonly string[] }`
-  - `suggestInterviewTitle(targetRole: string, experienceLevel: string): string`
-
-- [ ] **Step 1: Write failing pure-helper tests**
-
-Cover exactly:
 
 ```ts
-expect(INTERVIEW_EXPERIENCE_LEVELS).toEqual([
+export type InterviewRoleFamily =
+  | "software-engineer"
+  | "frontend"
+  | "backend"
+  | "full-stack"
+  | "mobile"
+  | "devops-cloud"
+  | "data"
+  | "ml-ai"
+  | "cybersecurity"
+  | "qa-test";
+
+export interface InterviewRoleGuidance {
+  family: InterviewRoleFamily;
+  label: string;
+  focusTopics: readonly string[];
+  skillGaps: readonly string[];
+}
+
+export const INTERVIEW_EXPERIENCE_LEVELS: readonly string[];
+export const INTERVIEW_ROLE_OPTIONS: readonly InterviewRoleGuidance[];
+export function matchInterviewRoleFamily(targetRole: string): InterviewRoleFamily;
+export function getInterviewRoleSuggestions(targetRole: string): {
+  focusTopics: readonly string[];
+  skillGaps: readonly string[];
+};
+export function suggestInterviewTitle(
+  targetRole: string,
+  experienceLevel: string,
+): string;
+```
+
+- [ ] **Step 1: Add the focused helper tests first**
+
+Tests must assert the exact Experience options:
+
+```ts
+[
   "Intern / Student",
   "Entry-level",
   "Junior",
@@ -78,37 +105,29 @@ expect(INTERVIEW_EXPERIENCE_LEVELS).toEqual([
   "Senior",
   "Lead / Staff",
   "Manager",
-]);
+]
+```
 
+They must also assert:
+
+```ts
 expect(matchInterviewRoleFamily("MERN Developer")).toBe("full-stack");
 expect(matchInterviewRoleFamily("React Native Engineer")).toBe("mobile");
 expect(matchInterviewRoleFamily("LLM Engineer")).toBe("ml-ai");
 expect(matchInterviewRoleFamily("Cloud Platform Engineer")).toBe("devops-cloud");
 expect(matchInterviewRoleFamily("Penetration Tester")).toBe("cybersecurity");
-expect(matchInterviewRoleFamily("Unusual Internal Tools Specialist")).toBe("software-engineer");
-
+expect(matchInterviewRoleFamily("Unusual Internal Tools Specialist")).toBe(
+  "software-engineer",
+);
 expect(suggestInterviewTitle("Backend Developer", "Mid-level")).toBe(
   "Mid-level Backend Developer Interview",
 );
 expect(suggestInterviewTitle("", "Mid-level")).toBe("");
 ```
 
-Also assert every built-in role has non-empty, duplicate-free Focus topic and Skill gap arrays.
+Every built-in role must have non-empty, duplicate-free Focus topic and Skill gap arrays.
 
-- [ ] **Step 2: Verify the tests are RED locally when the user next runs them**
-
-Command:
-
-```bash
-npm run test --workspace @career-learning-hub/web -- \
-  src/features/interviews/interviewRoleGuidance.test.ts
-```
-
-Expected before implementation: module-not-found / missing-export failure for the new helper module.
-
-- [ ] **Step 3: Implement the smallest static role catalog**
-
-Use these built-in labels/families:
+- [ ] **Step 2: Implement the exact built-in role set**
 
 ```ts
 [
@@ -125,7 +144,7 @@ Use these built-in labels/families:
 ]
 ```
 
-Keep each family to a practical local list. Use these Focus topic catalogs:
+Use these Focus topic catalogs:
 
 ```ts
 software-engineer: ["Data Structures", "Algorithms", "APIs", "Databases", "Testing", "System Design", "Security", "Performance"]
@@ -155,11 +174,24 @@ cybersecurity: ["Threat Modeling", "Secure Architecture", "Web Security", "Cloud
 qa-test: ["Automation Design", "Test Strategy", "API Testing", "Performance Testing", "Flaky Test Diagnosis", "CI Integration", "Risk-based Testing", "Test Data Design"]
 ```
 
-Custom-role matching should normalize case and whitespace, then apply small keyword checks in specific-first order. Include keywords such as `mern|full stack|full-stack` → full-stack, `react native|ios|android|mobile` → mobile, `llm|machine learning|ml engineer|artificial intelligence|ai engineer` → ml-ai, `devops|cloud|platform engineer|sre` → devops-cloud, `penetration|cyber|security` → cybersecurity, `data engineer|etl|warehouse` → data, `frontend|front-end|react developer` → frontend, `backend|back-end|api developer` → backend, `qa|test engineer|quality assurance` → qa-test; otherwise software-engineer.
+- [ ] **Step 3: Implement deterministic custom-role family matching**
 
-- [ ] **Step 4: Keep title formatting deterministic**
+Normalize case/whitespace and apply specific-first keyword groups:
 
-Implementation rule:
+```text
+mern | full stack | full-stack                         -> full-stack
+react native | ios | android | mobile                 -> mobile
+llm | machine learning | ml engineer | ai engineer    -> ml-ai
+devops | cloud | platform engineer | sre              -> devops-cloud
+penetration | cyber | security                         -> cybersecurity
+data engineer | etl | warehouse                        -> data
+frontend | front-end | react developer                 -> frontend
+backend | back-end | api developer                     -> backend
+qa | test engineer | quality assurance                 -> qa-test
+otherwise                                               -> software-engineer
+```
+
+- [ ] **Step 4: Implement deterministic title formatting**
 
 ```ts
 export function suggestInterviewTitle(role: string, level: string): string {
@@ -170,9 +202,7 @@ export function suggestInterviewTitle(role: string, level: string): string {
 }
 ```
 
-- [ ] **Step 5: Commit the helper task**
-
-Commit message:
+- [ ] **Step 5: Commit**
 
 ```text
 feat: add local interview role guidance
@@ -185,14 +215,12 @@ feat: add local interview role guidance
 **Files:**
 - Create: `frontend/src/features/interviews/InterviewRoleSelector.tsx`
 - Create: `frontend/src/features/interviews/InterviewRoleSelector.test.tsx`
-- Create/extend: `frontend/src/features/interviews/interviewCreateGuidance.css`
+- Create: `frontend/src/features/interviews/interviewCreateGuidance.css`
 
 **Interfaces:**
-- Consumes: `INTERVIEW_ROLE_OPTIONS` from Task 1.
-- Produces:
 
 ```ts
-interface InterviewRoleSelectorProps {
+export interface InterviewRoleSelectorProps {
   value: string;
   disabled?: boolean;
   error?: string;
@@ -200,25 +228,25 @@ interface InterviewRoleSelectorProps {
 }
 ```
 
-- [ ] **Step 1: Write failing interaction tests**
+- [ ] **Step 1: Add selector tests first**
 
-Tests must prove:
+Prove:
 
-1. all ten common-role shortcut buttons are discoverable;
-2. typing `backend` filters the suggestion list to Backend Developer;
+1. all ten common-role shortcut buttons are visible;
+2. typing `backend` filters the result list to Backend Developer;
 3. clicking Backend Developer calls `onChange("Backend Developer")`;
-4. typing `Solutions Architect` exposes an explicit `Use “Solutions Architect”` action;
-5. clicking that action calls `onChange("Solutions Architect")`;
-6. selecting one role replaces the previous role rather than accumulating values;
-7. the search input exposes `role="combobox"`, `aria-autocomplete="list"`, `aria-controls`, and an accessible `Target role` name;
-8. keyboard Enter chooses an exact filtered built-in option, while custom text requires the explicit Use action;
-9. disabled state disables shortcuts/search/custom adoption.
+4. typing `Solutions Architect` exposes `Use “Solutions Architect”`;
+5. clicking that action adopts the custom role;
+6. only one authoritative role value exists at a time;
+7. the search input has accessible name `Target role`, `role="combobox"`, `aria-autocomplete="list"`, `aria-controls`, and meaningful expanded state;
+8. Enter selects an exact built-in match; non-matching custom text requires the explicit Use action;
+9. disabled state disables shortcuts, search, and custom adoption.
 
-- [ ] **Step 2: Implement the smallest controlled selector**
+- [ ] **Step 2: Implement a controlled role selector without a new dependency**
 
-State owned inside the component should be only the current search draft/open state. The authoritative selected role remains `props.value`.
+The authoritative selected role is `props.value`. Internal state is limited to search draft/open state. Keep the result set bounded to the ten local roles.
 
-Interaction model:
+Interaction:
 
 ```text
 Target role
@@ -226,26 +254,15 @@ Common roles
 [Software Engineer] [Frontend Developer] ...
 Search or enter another role
 [search input]
-(filtered list when search text is present)
-[Use “custom text”] only when trimmed text is non-empty and is not an exact built-in label
+(filtered built-in results)
+[Use “custom text”] when there is no exact built-in match
 ```
 
-Do not add a dependency for combobox behavior. Keep filtered options bounded to the ten local roles.
+- [ ] **Step 3: Add focused responsive CSS**
 
-- [ ] **Step 3: Add focused responsive styling**
+`interviewCreateGuidance.css` must cover wrapping shortcut chips/cards, clear `aria-pressed="true"` selection, full-width search field, bounded result surface, existing focus-ring conventions, and mobile stacking below approximately 560px.
 
-Use `interviewCreateGuidance.css` for:
-
-- wrapping role shortcut chips/cards;
-- clear selected state using `aria-pressed="true"`;
-- a bounded filtered-result surface;
-- full-width search field;
-- mobile stacking below ~560px;
-- existing focus-ring variables/conventions.
-
-- [ ] **Step 4: Commit the selector task**
-
-Commit message:
+- [ ] **Step 4: Commit**
 
 ```text
 feat: add guided interview role selector
@@ -259,12 +276,12 @@ feat: add guided interview role selector
 - Create: `frontend/src/features/interviews/InterviewSuggestedTagInput.tsx`
 - Create: `frontend/src/features/interviews/InterviewSuggestedTagInput.test.tsx`
 - Modify: `frontend/src/features/interviews/interviewCreateGuidance.css`
-- Reuse: `frontend/src/features/interviews/InterviewTagInput.tsx` exports `INTERVIEW_TAG_MAX_ITEMS`, `INTERVIEW_TAG_MAX_LENGTH`, and `mergeInterviewTags`.
+- Reuse from `InterviewTagInput.tsx`: `INTERVIEW_TAG_MAX_ITEMS`, `INTERVIEW_TAG_MAX_LENGTH`, `mergeInterviewTags`.
 
 **Interfaces:**
 
 ```ts
-interface InterviewSuggestedTagInputProps {
+export interface InterviewSuggestedTagInputProps {
   id: string;
   label: string;
   suggestions: readonly string[];
@@ -278,23 +295,13 @@ interface InterviewSuggestedTagInputProps {
 }
 ```
 
-- [ ] **Step 1: Write failing tests for the approved interaction**
+- [ ] **Step 1: Add focused tests first**
 
-Cover:
-
-- suggestions render unselected with `aria-pressed="false"`;
-- clicking one suggestion selects it and changes to `aria-pressed="true"`;
-- clicking a selected suggestion removes it;
-- custom text can be added with Enter or Add button and appears as the same pressed selected-chip style;
-- clicking a selected custom value removes it;
-- when `suggestions` prop changes, already-selected values not in the new suggestion set remain visible/selected;
-- max 50 values and max 120 characters reuse the existing constants/error messages;
-- empty selection remains valid;
-- duplicate additions do not create duplicate visible selected values.
+Prove suggestions start with `aria-pressed="false"`; clicking selects/deselects; custom text added by Enter or Add appears with the same selected-chip treatment; clicking selected custom values removes them; changing suggestion sets preserves prior selected values; max 50 / max 120 constraints reuse current messages; empty selection is valid; duplicate values do not render twice.
 
 - [ ] **Step 2: Implement as a focused component, not a rewrite of `InterviewTagInput`**
 
-Use the existing merge/limit helper for custom input validation. Build the visible chip set as:
+Build visible choices as current suggestions plus selected values not present in the current suggestion list:
 
 ```ts
 const visible = [
@@ -303,15 +310,13 @@ const visible = [
 ];
 ```
 
-Render every visible value as one button using `aria-pressed={values.includes(value)}`. Suggested-but-unselected values remain available; selected custom/retained values disappear only when explicitly deselected and are not in the current suggestion catalog.
+Each visible choice is one toggle button with `aria-pressed={values.includes(value)}`. Suggested-but-unselected values remain visible. Selected custom/retained values disappear after explicit deselection only when they are not in the current suggestion catalog.
 
-- [ ] **Step 3: Add custom input behavior without nested forms**
+- [ ] **Step 3: Keep custom entry safe inside the outer dialog form**
 
-The component must render a `div`/control group, never its own `<form>`, because it lives inside `InterviewCreateDialog`'s form. Use `type="button"` for Add. Enter/comma in the custom input commits locally with `preventDefault()` so it cannot submit the outer dialog.
+Never render a nested `<form>`. Use a control group plus `type="button"` Add action. Enter/comma commits locally with `preventDefault()` so it cannot submit the outer Create Interview form.
 
-- [ ] **Step 4: Commit the suggested-tag task**
-
-Commit message:
+- [ ] **Step 4: Commit**
 
 ```text
 feat: add guided interview topic selectors
@@ -319,41 +324,39 @@ feat: add guided interview topic selectors
 
 ---
 
-### Task 4: Integrate the guided Create Interview wizard
+### Task 4: Integrate the Create Interview wizard
 
 **Files:**
 - Modify: `frontend/src/features/interviews/InterviewCreateDialog.tsx`
 - Modify: `frontend/src/features/interviews/InterviewCreateDialog.test.tsx`
 - Modify: `frontend/src/features/interviews/interviewCreateGuidance.css`
 
-**Interfaces:**
-- Consumes: `InterviewRoleSelector`, `InterviewSuggestedTagInput`, `INTERVIEW_EXPERIENCE_LEVELS`, `getInterviewRoleSuggestions`, `suggestInterviewTitle`.
-- Produces: unchanged `createInterviewSession(...)` payload.
+**Consumes:** `InterviewRoleSelector`, `InterviewSuggestedTagInput`, `INTERVIEW_EXPERIENCE_LEVELS`, `getInterviewRoleSuggestions`, `suggestInterviewTitle`.
 
-- [ ] **Step 1: Update failing dialog tests before production integration**
+**Produces:** unchanged `createInterviewSession(...)` payload.
 
-Replace old assumptions that Target role and Experience level are textboxes. Add/adjust tests to prove:
+- [ ] **Step 1: Update dialog tests first**
 
-1. Experience level is a combobox/select with exactly the seven approved options and defaults to `Mid-level`;
-2. selecting `Backend Developer` while title is untouched sets `Mid-level Backend Developer Interview`;
-3. changing experience to Senior before manual title edit updates it to `Senior Backend Developer Interview`;
-4. manually editing or clearing Session title marks it user-owned and later role/level changes do not overwrite it;
-5. Backend Developer reveals Backend focus/gap suggestions, all initially unselected;
-6. selecting REST APIs and System Design adds them to the outgoing arrays;
-7. switching role to ML / AI Engineer changes the available suggestions while preserving already-selected REST APIs/System Design;
-8. a custom role such as `LLM Engineer` uses ML/AI suggestions through local family matching;
-9. Focus topics and Skill gaps can remain empty and session creation still succeeds;
-10. custom topic/gap entry still respects existing limits and is sent in the current arrays;
-11. visible `(required)` strings are absent;
-12. the form-level note reads `Required: Session title, Target role, Experience level and Practice mode.`;
-13. labels show `Focus topics · Optional`, `Skill gaps · Optional`, and `Additional context · Optional`;
-14. existing Cancel/Escape/reset/focus, pending-submit lock, API-error/request-ID, validation summary, and `onCreated` tests remain green.
+Add/adjust tests for:
+
+- Experience is a select with exactly seven options and defaults to Mid-level;
+- selecting Backend Developer while title is untouched creates `Mid-level Backend Developer Interview`;
+- changing Experience to Senior before title ownership creates `Senior Backend Developer Interview`;
+- manually editing or clearing title prevents later role/level overwrites;
+- Backend role exposes Backend topic/gap suggestions, all initially unselected;
+- selecting REST APIs/System Design reaches outgoing arrays;
+- changing role to ML / AI Engineer updates suggestions but preserves prior selections;
+- custom `LLM Engineer` receives ML/AI suggestions via local family matching;
+- Focus topics and Skill gaps may both remain empty;
+- custom topic/gap values still obey existing bounds and submit through existing arrays;
+- visible `(required)` strings are absent;
+- one note reads `Required: Session title, Target role, Experience level and Practice mode.`;
+- labels use `Focus topics · Optional`, `Skill gaps · Optional`, `Additional context · Optional`;
+- existing Cancel/Escape/reset/focus, pending-submit lock, request-ID error, validation summary, and `onCreated` behavior remain green.
 
 - [ ] **Step 2: Add smart-title ownership state**
 
-Use a boolean/ref such as `titleIsUserOwned` initialized `false` and reset to `false` in `resetForm()`.
-
-Rules:
+Use `titleIsUserOwned` initialized/reset to `false`.
 
 ```ts
 function adoptRole(nextRole: string) {
@@ -376,37 +379,25 @@ function handleTitleChange(nextTitle: string) {
 }
 ```
 
-Do not auto-regenerate a title after the user manually clears it.
+Manual clearing counts as ownership; never regenerate afterward unless the whole form is reset.
 
 - [ ] **Step 3: Replace Target role and Experience free text controls**
 
-- Target role → `InterviewRoleSelector`.
-- Experience level → native `<select>` populated from `INTERVIEW_EXPERIENCE_LEVELS`.
-- Preserve existing field IDs/error mapping where practical so validation-summary anchor/focus behavior remains stable.
+Target role becomes `InterviewRoleSelector`. Experience becomes a native `<select>` populated from `INTERVIEW_EXPERIENCE_LEVELS`. Preserve existing error IDs/focus anchors where practical.
 
-- [ ] **Step 4: Replace raw tag inputs with role-aware suggested controls**
-
-Compute:
+- [ ] **Step 4: Add role-aware optional topic/gap controls**
 
 ```ts
 const roleSuggestions = getInterviewRoleSuggestions(targetRole);
 ```
 
-Then feed `roleSuggestions.focusTopics` and `roleSuggestions.skillGaps` into two `InterviewSuggestedTagInput` controls. Do not reset `focusTopics` or `skillGaps` when `targetRole` changes.
+Feed `roleSuggestions.focusTopics` / `skillGaps` into the new suggested tag controls. Never clear selected arrays when role changes.
 
-- [ ] **Step 5: Clean required/optional copy**
+- [ ] **Step 5: Clean required/optional copy without weakening semantics**
 
-Insert one form-level note near the top of the body:
+Add the one form-level note. Remove visible `(required)` spans. Keep `required`, validation functions, `aria-invalid`, validation summary, focus-to-error behavior, and dialog focus management. Use the approved `· Optional` copy.
 
-```text
-Required: Session title, Target role, Experience level and Practice mode.
-```
-
-Remove visible `(required)` spans from required labels. Keep actual HTML/accessibility validation. Change visible optional labels to the approved `· Optional` form while preserving the existing job-description collapsed details behavior.
-
-- [ ] **Step 6: Preserve submit canonicalization**
-
-Continue sending trimmed strings and arrays through the existing call:
+- [ ] **Step 6: Preserve the exact existing API contract**
 
 ```ts
 createInterviewSession({
@@ -420,11 +411,9 @@ createInterviewSession({
 }, signal)
 ```
 
-No API/backend edit is allowed.
+No backend edit.
 
-- [ ] **Step 7: Commit the wizard integration**
-
-Commit message:
+- [ ] **Step 7: Commit**
 
 ```text
 feat: refine interview creation wizard
@@ -432,36 +421,37 @@ feat: refine interview creation wizard
 
 ---
 
-### Task 5: Reset stale Exact distribution on Question count changes
+### Task 5: Reset stale Exact distribution when Question count changes
 
 **Files:**
 - Modify: `frontend/src/features/interviews/InterviewQuestionTypeControls.tsx`
 - Modify: `frontend/src/features/interviews/InterviewQuestionTypeControls.test.tsx`
 
-**Interfaces:**
-- Existing props remain unchanged.
+**Interfaces:** Existing props remain unchanged.
 
-- [ ] **Step 1: Change the existing stale-count regression test to the approved behavior**
+- [ ] **Step 1: Replace the current stale-mismatch test with the approved reset behavior**
 
-The current test named roughly `shows selected count inputs and a visible mismatch after Question count changes` must instead assert:
+After entering Exact mode and changing count, assert:
 
 ```ts
-await user.click(screen.getByRole("button", { name: "Change question count" }));
-
 expect(screen.getByLabelText("Distribution mode").textContent).toBe("implicit");
 expect(screen.queryByRole("spinbutton")).toBeNull();
 expect(screen.getByText("Balanced automatically")).not.toBeNull();
 expect(screen.queryByText(/Exact counts · 4 of 5/)).toBeNull();
 expect(screen.queryByText(/must equal Question count 5/i)).toBeNull();
-expect(screen.getByText("Question count changed. Distribution reset to balanced.")).not.toBeNull();
-expect(screen.getByLabelText("Selected order").textContent).toBe("short-answer,coding");
+expect(
+  screen.getByText("Question count changed. Distribution reset to balanced."),
+).not.toBeNull();
+expect(screen.getByLabelText("Selected order").textContent).toBe(
+  "short-answer,coding",
+);
 ```
 
-Also test that changing count while already Balanced does not create the reset announcement.
+Also prove a count change while already Balanced does not announce a reset.
 
-- [ ] **Step 2: Implement previous-count tracking inside the control**
+- [ ] **Step 2: Implement previous-count tracking**
 
-Use `useRef(count)` to remember the previous count and `useEffect` to react only to a real count change. If `explicitCounts !== undefined` when count changes:
+Use `useRef(count)` and `useEffect`. On a real count change, if `explicitCounts !== undefined`:
 
 ```ts
 onExplicitCountsChange(undefined);
@@ -471,26 +461,17 @@ setDistributionNotice(
 );
 ```
 
-Always update the previous-count ref. Do not change selected Question Types.
+Always update the previous-count ref. Never change selected Question Types.
 
-- [ ] **Step 3: Render the reset message as a non-blocking polite status**
+- [ ] **Step 3: Define notice lifecycle explicitly**
 
-Use a small `<p aria-live="polite">`/status treatment, not `role="alert"`, and do not reuse validation-error styling.
+Render the reset notice as a non-blocking `aria-live="polite"` status, not `role="alert"`. Clear `distributionNotice` when the user explicitly opens Exact counts again or explicitly chooses Balanced distribution, so a previous automatic-reset message cannot linger during a later distribution choice.
 
-- [ ] **Step 4: Verify reopening Exact counts uses the new count**
+- [ ] **Step 4: Prove reopening Exact mode uses the new count**
 
-Extend the test:
+For count 5 with Short Answer + Coding, reopening Exact must start at 3 / 2 and show `Exact counts · 5 total`.
 
-```ts
-await user.click(screen.getByRole("button", { name: "Set exact counts" }));
-expect(screen.getByRole("spinbutton", { name: "Short Answer count" })).toHaveValue(3);
-expect(screen.getByRole("spinbutton", { name: "Coding count" })).toHaveValue(2);
-expect(screen.getByText("Exact counts · 5 total")).not.toBeNull();
-```
-
-- [ ] **Step 5: Commit the distribution fix**
-
-Commit message:
+- [ ] **Step 5: Commit**
 
 ```text
 fix: reset stale interview exact counts
@@ -504,52 +485,34 @@ fix: reset stale interview exact counts
 - Modify: `frontend/src/features/interviews/InterviewCategorySelector.tsx`
 - Modify: `frontend/src/features/interviews/InterviewCategorySelector.test.tsx`
 - Modify: `frontend/src/features/interviews/interviewCategorySelector.css`
-- Modify only if selectors require it: `frontend/src/features/interviews/InterviewSessionWorkspace.practiceExperience.test.tsx`
+- Modify only if query mechanics require it: `frontend/src/features/interviews/InterviewSessionWorkspace.practiceExperience.test.tsx`
 
-**Interfaces:**
-- Existing `InterviewCategorySelectorProps` remains unchanged.
-- Existing `categories: string[]` generation payload remains unchanged.
+**Interfaces:** Existing selector props and `categories: string[]` payload remain unchanged.
 
-- [ ] **Step 1: Write/adjust failing category tests**
+- [ ] **Step 1: Add/adjust category tests first**
 
 Prove:
 
-1. after adding `API Security`, it renders as a `.interview-category-chip` button with `aria-pressed="true"`, not as a separate `value ×` tag;
-2. the selected counter becomes 3 when two context suggestions plus one custom category are selected;
-3. clicking the selected custom category removes it and decrements the count;
-4. clicking a selected context category leaves that context suggestion rendered with `aria-pressed="false"`;
-5. adding `mongodb` when `MongoDB` exists selects canonical `MongoDB` and does not create a duplicate;
-6. zero categories selected remains valid.
+- after adding `API Security`, it is a `.interview-category-chip` button with `aria-pressed="true"`, not a separate `value ×` tag;
+- selected counter reflects two context categories + one custom as 3;
+- clicking selected custom removes it and decrements the counter;
+- clicking selected context leaves the suggestion visible with `aria-pressed="false"`;
+- entering `mongodb` when `MongoDB` exists selects canonical `MongoDB` without duplicate;
+- zero categories selected remains valid.
 
 - [ ] **Step 2: Render one shared chip surface**
 
-When either context suggestions or selected custom categories exist, render one suggestions/chip container. Render context categories first, then selected custom categories. Both use:
+Render context suggestions first and selected custom categories after them. Both use `.interview-category-chip`. Custom selections are always pressed and clicking them calls `removeCustom(category)`. Context categories retain their existing pressed toggle behavior.
 
-```tsx
-<button
-  type="button"
-  className="interview-category-chip"
-  aria-pressed={true /* for custom selections */}
-  onClick={() => removeCustom(category)}
->
-  <span aria-hidden="true">✓</span>
-  {category}
-</button>
-```
+- [ ] **Step 3: Remove the weaker custom-chip CSS path**
 
-Context categories keep their existing `aria-pressed` toggle semantics. Custom categories disappear after deselection because they are not persistent suggestions.
+Delete unused `.interview-category-selector__custom-list`, `.interview-category-selector__custom-chip`, and nested remove-button styling. Reuse the existing category-chip focus/disabled styles.
 
-- [ ] **Step 3: Delete the weaker custom-chip CSS rules**
+- [ ] **Step 4: Preserve generation payload semantics**
 
-Remove `.interview-category-selector__custom-list`, `.interview-category-selector__custom-chip`, and its nested remove-button treatment if no longer used. Reuse `.interview-category-chip` focus/disabled styling for both origins.
+`InterviewSessionWorkspace.practiceExperience.test.tsx` must continue proving that final user selection reaches `generateInterviewQuestions(... categories: string[])`. Only UI queries may change.
 
-- [ ] **Step 4: Keep generation payload tests unchanged semantically**
-
-`InterviewSessionWorkspace.practiceExperience.test.tsx` must still prove the user's final selected array is sent exactly through `categories`. Only query/assertion mechanics may change to match the unified chip presentation.
-
-- [ ] **Step 5: Commit the category refinement**
-
-Commit message:
+- [ ] **Step 5: Commit**
 
 ```text
 fix: unify interview category selection state
@@ -557,19 +520,15 @@ fix: unify interview category selection state
 
 ---
 
-### Task 7: Focused regression and integration review
+### Task 7: Verification, browser acceptance, and PR accuracy
 
-**Files:**
-- Test-only edits only if a legitimate stale expectation is exposed by the approved UI changes.
-- No unrelated production refactors.
+**Production changes:** None unless a verification failure reveals a root cause inside this approved scope.
 
-- [ ] **Step 1: Review the branch diff against the approved spec**
+- [ ] **Step 1: Review the implementation diff**
 
-Confirm the implementation changed only the planned Interview frontend surface plus new focused helper/component/test/style files. Specifically verify there are no backend/Gemini/provider changes in this refinement batch.
+Verify this refinement batch contains only the planned Interview frontend helpers/components/tests/styles and no backend/Gemini/provider modifications.
 
-- [ ] **Step 2: Prepare the focused verification command**
-
-The user runs:
+- [ ] **Step 2: User runs the focused GREEN gate**
 
 ```bash
 npm run test --workspace @career-learning-hub/web -- \
@@ -588,7 +547,7 @@ git diff --check origin/phase-19b-interview-coach-refinements...HEAD
 
 Expected: all focused tests PASS, typecheck PASS, diff check no output.
 
-- [ ] **Step 3: If focused verification is green, prepare the full gate**
+- [ ] **Step 3: If focused GREEN, user runs full regression/build gate**
 
 ```bash
 npm run test --workspace @career-learning-hub/api
@@ -601,24 +560,14 @@ git status --short
 
 Expected: all tests/builds PASS, diff check no output, clean working tree.
 
-- [ ] **Step 4: Browser QA after automated GREEN only**
+- [ ] **Step 4: Browser QA only after automated GREEN**
 
-Human browser acceptance must verify:
-
-1. Create Interview desktop/intermediate/mobile layout remains usable;
-2. common role shortcuts + search/custom fallback work;
-3. Experience options are correct;
-4. smart title updates then becomes user-owned after manual edit;
-5. role-aware topics/gaps start unselected, can be selected/customized, and survive role changes;
-6. repeated `(required)` noise is gone and optional labels are clear;
-7. changing Question count during Exact mode immediately returns to Balanced with no `10 of 6` stale state;
-8. custom generation categories look exactly like selected context categories and can be toggled off;
-9. a fresh Coding question still shows generated Starter code, Copy, and safe Insert behavior.
+Verify desktop/intermediate/mobile Create Interview layout; common role shortcuts/search/custom fallback; exact Experience options; smart-title ownership; role-aware optional suggestions and preserved selections; clean required/optional copy; Exact-count automatic reset; unified custom category selection; and fresh Coding starter-code Copy/Insert behavior.
 
 - [ ] **Step 5: Update PR #13 description before final review**
 
-The PR body must stop claiming there are no schema/Gemini changes in the whole Task 7R branch. It must accurately summarize the already-approved Coding `starterCode` storage/generation extension plus these final frontend wizard/briefing refinements, while still stating no code execution, extra provider call, deployment, or `main` change.
+Correct the stale PR body so it accurately includes the already-approved Coding `starterCode` storage/generation extension and these wizard/briefing refinements. Keep explicit statements that there is no code execution, extra provider call, deployment, or `main` change.
 
 - [ ] **Step 6: Stop before merge**
 
-Do not mark ready/merge until focused + full automated verification, browser QA, final review, and explicit user merge approval are all complete.
+Do not mark ready or merge until focused + full automated verification, browser QA, final review, and explicit user merge approval are complete.
