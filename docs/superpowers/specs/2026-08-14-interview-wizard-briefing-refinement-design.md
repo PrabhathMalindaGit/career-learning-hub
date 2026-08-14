@@ -43,6 +43,10 @@ No backend schema or endpoint change is required for this refinement.
 
 The Session title begins as an editable suggestion derived from selected Target role and Experience level.
 
+The canonical generated format is:
+
+`<Experience level> <Target role> Interview`
+
 Example:
 
 - Target role: `Backend Developer`
@@ -54,13 +58,14 @@ Rules:
 1. Before the user manually edits the title, changing Target role or Experience level updates the suggestion automatically.
 2. Once the user changes the title value themselves, including clearing it, the title becomes user-owned.
 3. After the title becomes user-owned, later role/experience changes must not overwrite it.
-4. Existing title validation limits and error/focus handling remain unchanged.
+4. Do not generate a title until a non-empty Target role exists.
+5. Existing title validation limits and error/focus handling remain unchanged.
 
 ## 1.3 Target role — searchable common roles plus custom fallback
 
 Replace the plain free-text Target role field with a single-select searchable combobox plus visible common-role shortcuts.
 
-Initial built-in roles:
+Built-in roles are exactly:
 
 - Software Engineer
 - Frontend Developer
@@ -76,11 +81,13 @@ Initial built-in roles:
 Interaction requirements:
 
 1. Common roles are visibly available without requiring the user to know what to type.
-2. Typing filters/searches the common-role list.
+2. Search/filter matching is case-insensitive against the built-in role labels.
 3. Clicking a common role selects exactly one target role.
-4. If typed text does not exactly match a common role, the user can explicitly choose that text as a custom role.
-5. The final selected/custom value is still submitted as the existing `targetRole: string`.
-6. The selector remains keyboard accessible and has a clear accessible label/state.
+4. A trimmed non-empty typed value that is not an exact case-insensitive built-in match can be explicitly accepted as a custom role.
+5. An exact case-insensitive built-in match resolves to that built-in role's canonical spelling rather than creating a custom duplicate.
+6. The existing 200-character Target role limit remains authoritative.
+7. The final selected/custom value is still submitted as the existing `targetRole: string`.
+8. The selector remains keyboard accessible and exposes a clear accessible label/state.
 
 ## 1.4 Experience level — predefined values only
 
@@ -94,7 +101,7 @@ Replace the free-text Experience level field with a single-choice selector conta
 - Lead / Staff
 - Manager
 
-`Mid-level` remains the initial default unless existing product behavior requires another already-established default.
+`Mid-level` is the initial default.
 
 No custom experience-level text is allowed in the new UI. The selected value is still submitted through the existing `experienceLevel: string` contract.
 
@@ -104,7 +111,7 @@ Focus topics remain optional.
 
 The UI shows a local, deterministic suggestion catalog derived from the selected target-role family. Suggestions start unselected.
 
-Example Backend Developer suggestions may include:
+Example Backend Developer suggestions:
 
 - REST APIs
 - Authentication
@@ -118,19 +125,20 @@ Example Backend Developer suggestions may include:
 Requirements:
 
 1. Suggestions are multi-select.
-2. Suggestions start unselected for a new role selection.
+2. Suggestions start unselected for a new session. If a preserved prior selection also appears in a newly displayed role catalog, it renders selected rather than being duplicated.
 3. Selected suggestions use a clear selected-chip state.
 4. Users can add custom focus topics.
 5. Custom selected topics use the same selected-chip visual language as suggested topics.
 6. Clicking a selected custom topic removes it.
-7. Existing maximum-item and maximum-length constraints from the shared tag logic remain enforced.
-8. The final values continue to submit as `focusTopics: string[]`.
+7. Custom values are trimmed and deduplicated case-insensitively against both current selections and role suggestions; when matching a suggestion, preserve the suggestion's canonical spelling.
+8. Existing maximum-item and maximum-length constraints from the shared tag logic remain enforced.
+9. The final values continue to submit as `focusTopics: string[]`.
 
 ## 1.6 Skill gaps — optional, role-aware suggestions plus custom gaps
 
 Skill gaps remain optional and use the same interaction model as Focus topics.
 
-Example Backend Developer suggestions may include:
+Example Backend Developer suggestions:
 
 - System Design
 - Database Optimization
@@ -143,23 +151,24 @@ Example Backend Developer suggestions may include:
 
 Requirements mirror Focus topics:
 
-1. suggestions start unselected;
+1. suggestions start unselected for a new session;
 2. multi-select;
 3. custom values allowed;
 4. custom selections use the same selected-chip style;
 5. clicking a selected custom value removes it;
-6. existing tag limits remain enforced;
-7. final values continue to submit as `skillGaps: string[]`.
+6. custom values are trimmed and deduplicated case-insensitively, using canonical suggestion spelling when matched;
+7. existing tag limits remain enforced;
+8. final values continue to submit as `skillGaps: string[]`.
 
 ## 1.7 Role-aware suggestion families
 
 Suggestion catalogs must be static/local frontend data. No Gemini request is permitted just to populate the wizard.
 
-Each built-in role family gets a small, practical topic/gap catalog. The implementation should keep this data easy to inspect and test rather than introducing a large taxonomy system.
+Each built-in role family gets a small practical topic/gap catalog. The implementation should keep this data as a straightforward inspectable/testable constant map, not a taxonomy service or separate infrastructure layer.
 
-Custom roles are deterministically matched to the nearest built-in family using small local keyword rules.
+Custom roles are deterministically matched to the nearest built-in family using a small ordered local keyword map.
 
-Examples:
+Required examples:
 
 - `MERN Developer` → Full-Stack Developer
 - `React Native Engineer` → Mobile Developer
@@ -167,9 +176,15 @@ Examples:
 - `Cloud Platform Engineer` → DevOps / Cloud Engineer
 - `Penetration Tester` → Cybersecurity Engineer
 
-If no useful local match exists, fall back to a small generic Software Engineering suggestion catalog.
+Matching precedence is:
 
-The matching system must stay intentionally simple and deterministic. It must not attempt semantic embeddings, remote search, or AI classification.
+1. exact built-in role match;
+2. first matching custom-role keyword family from the ordered local map;
+3. generic Software Engineering fallback.
+
+If no useful local match exists, use a small generic Software Engineering topic/gap catalog.
+
+The matching system must stay intentionally simple and deterministic. It must not use semantic embeddings, remote search, or AI classification.
 
 ## 1.8 Changing Target role must not destroy user selections
 
@@ -179,7 +194,8 @@ When Target role changes:
 2. already-selected Focus topics remain selected;
 3. already-selected Skill gaps remain selected;
 4. custom topics/gaps remain selected;
-5. the user must explicitly remove prior selections if they no longer apply.
+5. if an existing selection appears in the new suggestion catalog, render one canonical selected chip rather than a duplicate;
+6. the user must explicitly remove prior selections if they no longer apply.
 
 This prevents silent loss of user input and supports cross-role concepts such as APIs or System Design.
 
@@ -187,11 +203,11 @@ This prevents silent loss of user input and supports cross-role concepts such as
 
 Remove repeated visible `(required)` text from individual required field labels.
 
-Near the start of the form, show one concise form-level note identifying the required core fields, for example:
+Near the start of the form, show one concise form-level note:
 
 `Required: Session title, Target role, Experience level and Practice mode.`
 
-Labels should then remain visually clean:
+Labels remain visually clean:
 
 - Session title
 - Target role
@@ -201,12 +217,12 @@ Labels should then remain visually clean:
 - Skill gaps · Optional
 - Additional context · Optional
 
-The exact punctuation/style can follow existing Interview visual conventions, but the repeated `(required)` wording must disappear.
+The exact punctuation/style may follow existing Interview visual conventions, but repeated `(required)` wording must disappear.
 
 Existing semantics must remain:
 
-- HTML required constraints where already applicable;
-- current validation functions;
+- HTML required constraints where applicable;
+- current validation functions and API-side validation;
 - `aria-invalid`;
 - field-level errors;
 - validation summary;
@@ -239,15 +255,12 @@ When Question count changes while Exact counts are active:
 2. clear `explicitCounts`;
 3. close the exact-count editor;
 4. immediately return Distribution to `Balanced automatically`;
-5. do not invent or proportionally recalculate a new exact allocation.
+5. do not invent or proportionally recalculate a new exact allocation;
+6. announce the automatic reset through a non-blocking `aria-live="polite"` status such as `Question count changed. Distribution reset to balanced.`
 
-When already in Balanced mode, changing Question count must not create any extra reset behavior.
+When already in Balanced mode, changing Question count must not produce the reset announcement or any extra state transition.
 
-A small non-blocking `aria-live="polite"` status may communicate the automatic change, for example:
-
-`Question count changed. Distribution reset to balanced.`
-
-The message must not be a blocking validation error.
+The reset message is informational, not a blocking validation error.
 
 ## 2.3 Reopening Exact counts
 
@@ -281,8 +294,8 @@ Examples:
 Requirements:
 
 1. selected context and selected custom categories share the same selected appearance;
-2. the selected counter must always correspond to what is visibly selected;
-3. custom categories must no longer use a separate weak `value ×` visual treatment;
+2. the selected counter always corresponds to what is visibly selected;
+3. custom categories no longer use a separate weak `value ×` visual treatment;
 4. clicking a selected custom category removes it completely;
 5. clicking a selected context category deselects it but leaves the context suggestion available;
 6. unselected context suggestions remain visibly available for reselection;
@@ -339,34 +352,37 @@ Preserve:
 
 Implementation must add focused tests before production behavior changes where a regression can be expressed automatically.
 
-Minimum focused coverage:
-
-## Create Interview wizard
+## 5.1 Create Interview wizard coverage
 
 - common Target role selection;
-- searchable/filterable role interaction;
-- custom Target role submission;
-- exact Experience level options and submission;
-- smart title updates before manual edit;
-- smart title stops updating after manual edit/clear;
+- case-insensitive searchable/filterable role interaction;
+- custom Target role acceptance/submission;
+- built-in-role canonicalization for case-insensitive exact matches;
+- exact Experience level options, Mid-level default, and submission;
+- smart title generation and updates before manual edit;
+- no title generation before a role exists;
+- smart title stops updating after manual edit or manual clear;
 - role-aware Focus topic suggestions;
 - role-aware Skill gap suggestions;
 - suggestions start unselected;
 - selected values survive role changes;
-- custom role local-family matching and generic fallback;
+- overlapping preserved values do not duplicate when the role catalog changes;
+- custom-role local-family matching and generic fallback;
+- case-insensitive custom topic/gap canonicalization;
 - custom topic/gap selection/removal;
 - optional empty Focus topics and Skill gaps remain valid;
 - repeated `(required)` text is absent while validation/accessibility behavior remains;
 - existing dialog focus/error handling remains green.
 
-## Exact distribution
+## 5.2 Exact distribution coverage
 
 - changing Question count while exact counts are active clears exact counts and returns to Balanced;
 - selected Question Types remain unchanged;
-- changing Question count while already Balanced does not create unnecessary state changes;
+- the reset is announced through a polite status;
+- changing Question count while already Balanced does not create a reset announcement or unnecessary state transition;
 - reopening Exact counts initializes from the new count.
 
-## Categories
+## 5.3 Categories coverage
 
 - context and custom selected categories use the same selected-state semantics;
 - custom category click removes it;
@@ -375,13 +391,13 @@ Minimum focused coverage:
 - case-insensitive custom/context canonicalization remains intact;
 - empty category selection still submits `[]`.
 
-## Verification gate
+## 5.4 Verification gate
 
 Before Task 7R can be considered complete:
 
 1. focused new/affected frontend tests pass;
 2. frontend typecheck passes;
-3. backend focused/full verification remains green where affected by the broader Task 7R extension;
+3. backend focused/full verification remains green for the broader Task 7R extension;
 4. full frontend regression passes;
 5. backend and frontend production builds pass;
 6. `git diff --check` is clean;
@@ -415,10 +431,10 @@ The design is complete when all of the following are true:
 1. A user can create an Interview session without manually typing common Target role or Experience level values.
 2. A custom Target role remains possible.
 3. Focus topics and Skill gaps provide useful local role-aware suggestions but remain optional and unselected by default.
-4. Changing Target role never silently deletes already-selected topics/gaps.
-5. Session title receives a useful role/experience default but stops auto-changing after user edits it.
+4. Changing Target role never silently deletes already-selected topics/gaps or creates duplicate selected values.
+5. Session title receives a useful role/experience default but stops auto-changing after user edits or clears it.
 6. Repeated visible `(required)` labels are removed without weakening validation/accessibility.
-7. Question count changes cannot leave stale Exact counts such as `10 of 6`; Exact mode resets to Balanced automatically.
+7. Question count changes cannot leave stale Exact counts such as `10 of 6`; Exact mode resets to Balanced automatically and announces the reset accessibly.
 8. Custom categories look and behave like real selected categories.
 9. Selected-category count matches visible selected state.
 10. Existing Interview API contracts, Gemini architecture, security properties, typed-question behavior, and no-code-execution policy remain intact.
