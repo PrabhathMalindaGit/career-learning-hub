@@ -181,9 +181,9 @@ describe("InterviewSessionWorkspace structured answers", () => {
     "serializes %s through the existing typed answer contract",
     async (type, entries, expectedText) => {
       setupQuestions(type);
-      vi.mocked(interviewApi.recordInterviewAttempt).mockResolvedValue(
-        typedAttempt(type, expectedText),
-      );
+      const created = typedAttempt(type, expectedText);
+      vi.mocked(interviewApi.recordInterviewAttempt).mockResolvedValue(created);
+      vi.mocked(interviewApi.fetchInterviewAttempt).mockResolvedValue(created);
 
       renderWorkspace();
       await waitForQuestion("First structured question");
@@ -234,9 +234,9 @@ describe("InterviewSessionWorkspace structured answers", () => {
 
   it("clears the structured fields after a successful saved attempt", async () => {
     setupQuestions("behavioral");
-    vi.mocked(interviewApi.recordInterviewAttempt).mockResolvedValue(
-      typedAttempt("behavioral", "Situation:\nContext"),
-    );
+    const created = typedAttempt("behavioral", "Situation:\nContext");
+    vi.mocked(interviewApi.recordInterviewAttempt).mockResolvedValue(created);
+    vi.mocked(interviewApi.fetchInterviewAttempt).mockResolvedValue(created);
     renderWorkspace();
     await waitForQuestion("First structured question");
     const user = userEvent.setup();
