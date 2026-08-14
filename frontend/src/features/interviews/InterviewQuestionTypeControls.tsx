@@ -4,6 +4,7 @@ import type {
   InterviewQuestionType,
 } from "./types";
 import "./interviewQuestionTypes.css";
+import "./interviewGenerationStatus.css";
 
 export const QUESTION_TYPE_OPTIONS: ReadonlyArray<{
   value: InterviewQuestionType;
