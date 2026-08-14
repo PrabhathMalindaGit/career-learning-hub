@@ -30,7 +30,7 @@ const timestamp = "2026-08-12T08:00:00.000Z";
 const createdSession = {
   id: sessionId,
   title: "Platform interview preparation",
-  targetRole: "Backend Engineer",
+  targetRole: "Backend Developer",
   experienceLevel: "Mid-level",
   focusTopics: ["API design"],
   skillGaps: ["Concurrency"],
@@ -108,22 +108,31 @@ function Harness({
   );
 }
 
-async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(
-    screen.getByRole("textbox", { name: "Session title" }),
-    "Platform interview preparation",
-  );
-  await user.type(
-    screen.getByRole("textbox", { name: "Target role" }),
-    "Backend Engineer",
-  );
+async function chooseBackendRole(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "Backend Developer" }));
 }
 
-function inputValue(name: string): string {
+async function setManualTitle(
+  user: ReturnType<typeof userEvent.setup>,
+  value: string,
+) {
+  const title = screen.getByRole("textbox", { name: "Session title" });
+  await user.clear(title);
+  if (value) await user.type(title, value);
+}
+
+async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
+  await chooseBackendRole(user);
+  await setManualTitle(user, "Platform interview preparation");
+}
+
+function textboxValue(name: string | RegExp): string {
+  return (screen.getByRole("textbox", { name }) as HTMLInputElement).value;
+}
+
+function comboboxValue(name: string | RegExp): string {
   return (
-    screen.getByRole("textbox", { name }) as
-      | HTMLInputElement
-      | HTMLTextAreaElement
+    screen.getByRole("combobox", { name }) as HTMLInputElement | HTMLSelectElement
   ).value;
 }
 
@@ -139,7 +148,7 @@ describe("InterviewCreateDialog", () => {
     );
   });
 
-  it("opens as a modal, focuses Session title, exposes only approved modes, and keeps optional context collapsed", async () => {
+  it("opens accessibly with clean required copy, approved experience levels and modes", async () => {
     render(<Harness />);
 
     const dialog = screen.getByRole("dialog", { name: "Create interview" });
@@ -148,19 +157,39 @@ describe("InterviewCreateDialog", () => {
     const title = screen.getByRole("textbox", { name: "Session title" });
     await waitFor(() => expect(document.activeElement).toBe(title));
 
+    expect(
+      screen.getByText(
+        "Required: Session title, Target role, Experience level and Practice mode.",
+      ),
+    ).not.toBeNull();
+    expect(document.body.textContent).not.toContain("(required)");
+
+    const experience = screen.getByRole("combobox", {
+      name: "Experience level",
+    });
+    expect(
+      within(experience)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual([
+      "Intern / Student",
+      "Entry-level",
+      "Junior",
+      "Mid-level",
+      "Senior",
+      "Lead / Staff",
+      "Manager",
+    ]);
+    expect((experience as HTMLSelectElement).value).toBe("Mid-level");
+
     const mode = screen.getByRole("combobox", { name: "Practice mode" });
     expect(
       within(mode)
         .getAllByRole("option")
         .map((option) => option.textContent),
     ).toEqual(["Written practice", "Study"]);
-    expect(
-      screen.queryByRole("option", { name: /mock interview/i }),
-    ).toBeNull();
 
-    const additionalContext = screen.getByText(
-      "Additional context (optional)",
-    );
+    const additionalContext = screen.getByText("Additional context · Optional");
     const details = additionalContext.closest("details") as
       | HTMLDetailsElement
       | null;
@@ -168,27 +197,104 @@ describe("InterviewCreateDialog", () => {
     expect(details?.open).toBe(false);
   });
 
-  it("Cancel resets the form, closes the dialog, and returns focus to the invoking control", async () => {
+  it("suggests a role-and-level title until the user takes ownership", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await chooseBackendRole(user);
+    expect(textboxValue("Session title")).toBe(
+      "Mid-level Backend Developer Interview",
+    );
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Experience level" }),
+      "Senior",
+    );
+    expect(textboxValue("Session title")).toBe(
+      "Senior Backend Developer Interview",
+    );
+
+    await setManualTitle(user, "My focused interview");
+    await user.click(screen.getByRole("button", { name: "Frontend Developer" }));
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Experience level" }),
+      "Junior",
+    );
+    expect(textboxValue("Session title")).toBe("My focused interview");
+  });
+
+  it("shows unselected role-aware topics and preserves chosen values across role changes", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await chooseBackendRole(user);
+
+    const focus = screen.getByRole("group", { name: "Focus topics · Optional" });
+    const gaps = screen.getByRole("group", { name: "Skill gaps · Optional" });
+    const restApis = within(focus).getByRole("button", { name: "REST APIs" });
+    const databaseOptimization = within(gaps).getByRole("button", {
+      name: "Database Optimization",
+    });
+    expect(restApis.getAttribute("aria-pressed")).toBe("false");
+    expect(databaseOptimization.getAttribute("aria-pressed")).toBe("false");
+
+    await user.click(restApis);
+    await user.click(databaseOptimization);
+    await user.click(screen.getByRole("button", { name: "ML / AI Engineer" }));
+
+    expect(
+      within(focus).getByRole("button", { name: "REST APIs" }).getAttribute(
+        "aria-pressed",
+      ),
+    ).toBe("true");
+    expect(
+      within(focus).getByRole("button", { name: "Machine Learning" }).getAttribute(
+        "aria-pressed",
+      ),
+    ).toBe("false");
+    expect(
+      within(gaps)
+        .getByRole("button", { name: "Database Optimization" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      within(gaps).getByRole("button", { name: "Model Evaluation" }).getAttribute(
+        "aria-pressed",
+      ),
+    ).toBe("false");
+  });
+
+  it("uses local family matching for an explicitly adopted custom role", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    const role = screen.getByRole("combobox", { name: "Target role" });
+    await user.type(role, "LLM Engineer");
+    await user.click(screen.getByRole("button", { name: "Use “LLM Engineer”" }));
+
+    expect(comboboxValue("Target role")).toBe("LLM Engineer");
+    expect(textboxValue("Session title")).toBe("Mid-level LLM Engineer Interview");
+    expect(
+      within(
+        screen.getByRole("group", { name: "Focus topics · Optional" }),
+      ).getByRole("button", { name: "LLMs" }),
+    ).not.toBeNull();
+  });
+
+  it("Cancel resets the form, closes the dialog, and returns focus", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
     await fillRequiredFields(user);
-    await user.clear(
-      screen.getByRole("textbox", { name: "Experience level" }),
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: "Experience level" }),
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Experience level" }),
       "Senior",
     );
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Practice mode" }),
       "study",
     );
-    await user.type(
-      screen.getByRole("textbox", { name: "Focus topics" }),
-      "API design",
-    );
-    await user.keyboard("{Enter}");
+    const focus = screen.getByRole("group", { name: "Focus topics · Optional" });
+    await user.click(within(focus).getByRole("button", { name: "REST APIs" }));
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
@@ -202,17 +308,16 @@ describe("InterviewCreateDialog", () => {
 
     await user.click(openButton);
     await screen.findByRole("dialog", { name: "Create interview" });
-    expect(inputValue("Session title")).toBe("");
-    expect(inputValue("Target role")).toBe("");
-    expect(inputValue("Experience level")).toBe("Mid-level");
+    expect(textboxValue("Session title")).toBe("");
+    expect(comboboxValue("Target role")).toBe("");
+    expect(comboboxValue("Experience level")).toBe("Mid-level");
+    expect(comboboxValue("Practice mode")).toBe("written-practice");
     expect(
-      (screen.getByRole("combobox", {
-        name: "Practice mode",
-      }) as HTMLSelectElement).value,
-    ).toBe("written-practice");
-    expect(
-      screen.queryByRole("button", { name: "Remove API design" }),
-    ).toBeNull();
+      screen.getByRole("button", { name: "Backend Developer" }).getAttribute(
+        "aria-pressed",
+      ),
+    ).toBe("false");
+    expect(screen.queryByRole("button", { name: "REST APIs" })).toBeNull();
   });
 
   it("a native cancel event models Escape: it resets, closes, and restores focus", async () => {
@@ -235,17 +340,15 @@ describe("InterviewCreateDialog", () => {
     ).toBeNull();
 
     await user.click(openButton);
-    expect(inputValue("Session title")).toBe("");
+    expect(textboxValue("Session title")).toBe("");
   });
 
   it("focuses the only invalid field and does not call the API", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    await user.type(
-      screen.getByRole("textbox", { name: "Target role" }),
-      "Backend Engineer",
-    );
+    await chooseBackendRole(user);
+    await setManualTitle(user, "");
     await user.click(
       screen.getByRole("button", { name: "Create interview" }),
     );
@@ -256,13 +359,10 @@ describe("InterviewCreateDialog", () => {
     expect(interviewApi.createInterviewSession).not.toHaveBeenCalled();
   });
 
-  it("focuses an accessible validation summary when several fields are invalid", async () => {
+  it("focuses an accessible validation summary when title and role are missing", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    await user.clear(
-      screen.getByRole("textbox", { name: "Experience level" }),
-    );
     await user.click(
       screen.getByRole("button", { name: "Create interview" }),
     );
@@ -272,7 +372,7 @@ describe("InterviewCreateDialog", () => {
     expect(summary.textContent).toMatch(/review the highlighted fields/i);
     expect(within(summary).getByText("Session title")).not.toBeNull();
     expect(within(summary).getByText("Target role")).not.toBeNull();
-    expect(within(summary).getByText("Experience level")).not.toBeNull();
+    expect(within(summary).queryByText("Experience level")).toBeNull();
     expect(interviewApi.createInterviewSession).not.toHaveBeenCalled();
   });
 
@@ -289,11 +389,11 @@ describe("InterviewCreateDialog", () => {
     render(<Harness />);
 
     await fillRequiredFields(user);
+    const focus = screen.getByRole("group", { name: "Focus topics · Optional" });
     await user.type(
-      screen.getByRole("textbox", { name: "Focus topics" }),
-      "Reliability",
+      within(focus).getByRole("textbox", { name: "Custom Focus topics" }),
+      "Reliability{Enter}",
     );
-    await user.keyboard("{Enter}");
     await user.click(
       screen.getByRole("button", { name: "Create interview" }),
     );
@@ -303,16 +403,15 @@ describe("InterviewCreateDialog", () => {
       "The interview session could not be created.",
     );
     expect(error.textContent).toContain("req-create-dialog-1234");
-    expect(inputValue("Session title")).toBe(
+    expect(textboxValue("Session title")).toBe(
       "Platform interview preparation",
     );
-    expect(inputValue("Target role")).toBe("Backend Engineer");
+    expect(comboboxValue("Target role")).toBe("Backend Developer");
     expect(
-      screen.getByRole("button", { name: "Remove Reliability" }),
-    ).not.toBeNull();
-    expect(
-      screen.getByRole("dialog", { name: "Create interview" }),
-    ).not.toBeNull();
+      within(focus).getByRole("button", { name: "Reliability" }).getAttribute(
+        "aria-pressed",
+      ),
+    ).toBe("true");
   });
 
   it("prevents duplicate submission while the create request is pending", async () => {
@@ -361,36 +460,48 @@ describe("InterviewCreateDialog", () => {
     expect(dialog.hasAttribute("open")).toBe(true);
   });
 
-  it("commits pending tag drafts, trims canonical fields, and calls onCreated exactly once", async () => {
+  it("keeps optional topics empty when the user intentionally selects none", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await chooseBackendRole(user);
+    await user.click(
+      screen.getByRole("button", { name: "Create interview" }),
+    );
+
+    await waitFor(() => {
+      expect(interviewApi.createInterviewSession).toHaveBeenCalledTimes(1);
+    });
+    expect(interviewApi.createInterviewSession).toHaveBeenCalledWith(
+      expect.objectContaining({ focusTopics: [], skillGaps: [] }),
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("commits pending custom drafts, trims canonical fields, and calls onCreated once", async () => {
     const user = userEvent.setup();
     const onCreated = vi.fn();
     render(<Harness onCreated={onCreated} />);
 
-    await user.type(
-      screen.getByRole("textbox", { name: "Session title" }),
-      "  Platform interview preparation  ",
+    await chooseBackendRole(user);
+    await setManualTitle(user, "  Platform interview preparation  ");
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Experience level" }),
+      "Senior",
     );
+
+    const focus = screen.getByRole("group", { name: "Focus topics · Optional" });
+    const gaps = screen.getByRole("group", { name: "Skill gaps · Optional" });
     await user.type(
-      screen.getByRole("textbox", { name: "Target role" }),
-      "  Backend Engineer  ",
-    );
-    await user.clear(
-      screen.getByRole("textbox", { name: "Experience level" }),
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: "Experience level" }),
-      "  Senior  ",
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: "Focus topics" }),
+      within(focus).getByRole("textbox", { name: "Custom Focus topics" }),
       "API design",
     );
     await user.type(
-      screen.getByRole("textbox", { name: "Skill gaps" }),
+      within(gaps).getByRole("textbox", { name: "Custom Skill gaps" }),
       "Concurrency, Testing strategy",
     );
 
-    await user.click(screen.getByText("Additional context (optional)"));
+    await user.click(screen.getByText("Additional context · Optional"));
     await user.type(
       screen.getByRole("textbox", { name: /^Job description/i }),
       "  Build reliable platform services.  ",
@@ -406,7 +517,7 @@ describe("InterviewCreateDialog", () => {
     expect(interviewApi.createInterviewSession).toHaveBeenCalledWith(
       {
         title: "Platform interview preparation",
-        targetRole: "Backend Engineer",
+        targetRole: "Backend Developer",
         experienceLevel: "Senior",
         focusTopics: ["API design"],
         skillGaps: ["Concurrency", "Testing strategy"],
