@@ -2,6 +2,7 @@ import type { InterviewQuestionDetail } from "./types";
 import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
 import { QUESTION_TYPE_LABELS } from "./InterviewQuestionTypeControls";
 import "./interviewQuestionTypes.css";
+import "./interviewAnswerExperience.css";
 
 const ANSWER_MAX_LENGTH = 12_000;
 
