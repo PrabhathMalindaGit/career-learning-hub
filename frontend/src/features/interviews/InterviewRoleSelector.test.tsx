@@ -76,7 +76,7 @@ describe("InterviewRoleSelector", () => {
     );
   });
 
-  it("uses Enter for a single area-scoped match but not custom text", async () => {
+  it("clears a prior selection when search text diverges and keeps custom text unselected until explicit adoption", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
@@ -89,9 +89,17 @@ describe("InterviewRoleSelector", () => {
 
     await user.clear(search);
     await user.type(search, "Solutions Architect");
+    expect((search as HTMLInputElement).value).toBe("Solutions Architect");
+    expect(screen.getByLabelText("Selected role").textContent).toBe("");
+
     await user.keyboard("{Enter}");
+    expect(screen.getByLabelText("Selected role").textContent).toBe("");
+
+    await user.click(
+      screen.getByRole("button", { name: "Use “Solutions Architect”" }),
+    );
     expect(screen.getByLabelText("Selected role").textContent).toBe(
-      "Accountant",
+      "Solutions Architect",
     );
   });
 
