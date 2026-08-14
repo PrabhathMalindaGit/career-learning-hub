@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { InterviewAnswerControl } from "./InterviewAnswerControl";
+import type { StructuredAnswerDraft } from "./interviewStructuredAnswer";
 import type {
   EffectiveInterviewQuestionType,
   InterviewQuestionDetail,
@@ -44,8 +45,10 @@ function renderControl(
   interviewQuestion: InterviewQuestionDetail,
   options: {
     textValue?: string;
+    structuredValue?: StructuredAnswerDraft;
     selectedOptionId?: string;
     onTextChange?: (value: string) => void;
+    onStructuredChange?: (value: StructuredAnswerDraft) => void;
     onSelectedOptionChange?: (optionId: string) => void;
   } = {},
 ) {
@@ -53,8 +56,10 @@ function renderControl(
     <InterviewAnswerControl
       question={interviewQuestion}
       textValue={options.textValue ?? ""}
+      structuredValue={options.structuredValue ?? {}}
       selectedOptionId={options.selectedOptionId ?? ""}
       onTextChange={options.onTextChange ?? vi.fn()}
+      onStructuredChange={options.onStructuredChange ?? vi.fn()}
       onSelectedOptionChange={options.onSelectedOptionChange ?? vi.fn()}
       onSubmit={vi.fn()}
     />,
@@ -67,7 +72,6 @@ describe("InterviewAnswerControl practice experience", () => {
     const { container } = renderControl(question("multiple-choice"), {
       onSelectedOptionChange,
     });
-
     expect(
       Array.from(
         container.querySelectorAll(".interview-answer-option__letter"),
@@ -82,7 +86,6 @@ describe("InterviewAnswerControl practice experience", () => {
 
   it("gives Short Answer a compact focused prompt", () => {
     renderControl(question("short-answer"));
-
     const textarea = screen.getByRole("textbox", {
       name: /Your short answer/i,
     });
@@ -92,25 +95,32 @@ describe("InterviewAnswerControl practice experience", () => {
     expect(screen.getByText("Aim for 2–4 focused sentences.")).not.toBeNull();
   });
 
-  it.each([
-    ["behavioral", ["Situation", "Task", "Action", "Result"]],
-    [
-      "scenario-based",
-      ["Assess", "Approach", "Trade-offs", "Decision"],
-    ],
-    [
-      "technical-explanation",
-      ["Concept", "How it works", "Example", "Trade-offs"],
-    ],
-  ] as const)("renders %s with its own answer-structure guidance", (type, cues) => {
-    renderControl(question(type));
-
-    for (const cue of cues) {
-      expect(screen.getByText(cue)).not.toBeNull();
+  it("uses real STAR fields instead of Behavioral cue chips", () => {
+    renderControl(question("behavioral"));
+    expect(screen.getByRole("group", { name: "Behavioral response" })).not.toBeNull();
+    for (const label of ["Situation", "Task", "Action", "Result"]) {
+      expect(screen.getByRole("textbox", { name: label })).not.toBeNull();
     }
-    expect(
-      screen.getByLabelText("Answer structure guidance"),
-    ).not.toBeNull();
+    expect(screen.queryByLabelText("Answer structure guidance")).toBeNull();
+  });
+
+  it("uses real reasoning fields for Scenario-Based", () => {
+    renderControl(question("scenario-based"));
+    for (const label of ["Assessment", "Approach", "Trade-offs", "Decision"]) {
+      expect(screen.getByRole("textbox", { name: label })).not.toBeNull();
+    }
+  });
+
+  it("uses real explanation fields for Technical Explanation", () => {
+    renderControl(question("technical-explanation"));
+    for (const label of [
+      "Concept",
+      "How it works",
+      "Example",
+      "Trade-offs / limitations",
+    ]) {
+      expect(screen.getByRole("textbox", { name: label })).not.toBeNull();
+    }
   });
 
   it("renders Coding starter code and inserts it only into an empty draft", async () => {
@@ -139,8 +149,10 @@ describe("InterviewAnswerControl practice experience", () => {
       <InterviewAnswerControl
         question={question("coding", { starterCode })}
         textValue="const existing = true;"
+        structuredValue={{}}
         selectedOptionId=""
         onTextChange={onTextChange}
+        onStructuredChange={vi.fn()}
         onSelectedOptionChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
@@ -173,7 +185,6 @@ describe("InterviewAnswerControl practice experience", () => {
       await userEvent
         .setup()
         .click(screen.getByRole("button", { name: "Copy starter code" }));
-
       await waitFor(() => {
         expect(writeText).toHaveBeenCalledWith(starterCode);
       });
