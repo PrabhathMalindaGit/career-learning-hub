@@ -1,4 +1,7 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ApiError } from "../../api/apiClient";
+import { updateInterviewSessionStatus } from "./interviewApi";
 import type {
   InterviewMode,
   InterviewSessionStatus,
@@ -35,6 +38,9 @@ export function InterviewSessionCard({
 }: {
   session: InterviewSessionSummary;
 }) {
+  const navigate = useNavigate();
+  const [restoreBusy, setRestoreBusy] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
   const updatedLabel = new Date(session.updatedAt).toLocaleDateString(
     undefined,
     {
@@ -43,6 +49,29 @@ export function InterviewSessionCard({
       year: "numeric",
     },
   );
+
+  async function restoreSession() {
+    if (restoreBusy || session.status !== "archived") return;
+    const controller = new AbortController();
+    setRestoreBusy(true);
+    setRestoreError(null);
+    try {
+      await updateInterviewSessionStatus(
+        session.id,
+        "active",
+        controller.signal,
+      );
+      navigate(`/interviews/${session.id}`);
+    } catch (error) {
+      setRestoreError(
+        error instanceof ApiError
+          ? error.message
+          : "The archived session could not be restored. Try again.",
+      );
+    } finally {
+      setRestoreBusy(false);
+    }
+  }
 
   return (
     <li
@@ -76,6 +105,12 @@ export function InterviewSessionCard({
           <span>{modeLabels[session.mode]}</span>
         </div>
 
+        {restoreError ? (
+          <p className="interview-field-error" role="alert">
+            {restoreError}
+          </p>
+        ) : null}
+
         <div className="interview-session-card__footer">
           <div
             className="interview-session-card__count"
@@ -92,6 +127,16 @@ export function InterviewSessionCard({
             <span>Last updated</span>
             <time dateTime={session.updatedAt}>{updatedLabel}</time>
           </p>
+          {session.status === "archived" ? (
+            <button
+              type="button"
+              className="interview-secondary-button"
+              disabled={restoreBusy}
+              onClick={() => void restoreSession()}
+            >
+              {restoreBusy ? "Restoring…" : "Restore session"}
+            </button>
+          ) : null}
           <Link
             className="interview-session-card__action"
             to={`/interviews/${session.id}`}
