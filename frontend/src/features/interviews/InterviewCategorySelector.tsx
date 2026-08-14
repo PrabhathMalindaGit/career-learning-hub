@@ -45,6 +45,8 @@ export function InterviewCategorySelector({
   const customSelected = selected.filter(
     (category) => !contextByKey.has(categoryKey(category)),
   );
+  const hasVisibleCategories =
+    contextCategories.length > 0 || customSelected.length > 0;
 
   function toggleContext(category: string) {
     const key = categoryKey(category);
@@ -97,10 +99,10 @@ export function InterviewCategorySelector({
         </small>
       </div>
 
-      {contextCategories.length > 0 ? (
+      {hasVisibleCategories ? (
         <div
           className="interview-category-selector__suggestions"
-          aria-label="Session-context category suggestions"
+          aria-label="Category choices"
         >
           {contextCategories.map((category) => {
             const pressed = selectedKeys.has(categoryKey(category));
@@ -118,6 +120,19 @@ export function InterviewCategorySelector({
               </button>
             );
           })}
+          {customSelected.map((category) => (
+            <button
+              key={categoryKey(category)}
+              type="button"
+              className="interview-category-chip"
+              aria-pressed="true"
+              disabled={disabled}
+              onClick={() => removeCustom(category)}
+            >
+              <span aria-hidden="true">✓</span>
+              {category}
+            </button>
+          ))}
         </div>
       ) : (
         <small className="interview-category-selector__empty">
@@ -154,30 +169,6 @@ export function InterviewCategorySelector({
           </button>
         </div>
       </div>
-
-      {customSelected.length > 0 ? (
-        <div
-          className="interview-category-selector__custom-list"
-          aria-label="Custom categories"
-        >
-          {customSelected.map((category) => (
-            <span
-              className="interview-category-selector__custom-chip"
-              key={categoryKey(category)}
-            >
-              {category}
-              <button
-                type="button"
-                aria-label={`Remove ${category}`}
-                disabled={disabled}
-                onClick={() => removeCustom(category)}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-      ) : null}
     </section>
   );
 }
