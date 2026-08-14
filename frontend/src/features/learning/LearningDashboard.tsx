@@ -16,6 +16,7 @@ import {
   normalizeSafeJob,
   retryJob,
 } from "../jobs/jobResilience";
+import { LearningDocumentDeletion } from "./LearningDocumentDeletion";
 import {
   fetchLearningJob,
   listLearningDocuments,
@@ -830,6 +831,22 @@ export function LearningDashboard() {
                   >
                     Open workspace
                   </Link>
+                  {document.status !== "deleting" ? (
+                    <LearningDocumentDeletion
+                      accountId={accountId}
+                      document={document}
+                      onDeletionAccepted={() => {
+                        setDocuments((current) =>
+                          current.map((item) =>
+                            item.id === document.id
+                              ? { ...item, status: "deleting" }
+                              : item,
+                          ),
+                        );
+                        refresh();
+                      }}
+                    />
+                  ) : null}
                 </footer>
               </article>
             </li>
