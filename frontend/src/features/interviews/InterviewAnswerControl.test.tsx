@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { InterviewAnswerControl } from "./InterviewAnswerControl";
-import type { StructuredAnswerDraft } from "./interviewStructuredAnswer";
 import type {
   EffectiveInterviewQuestionType,
   InterviewQuestionDetail,
@@ -41,10 +40,8 @@ function question(
 function renderControl(options: {
   questionType: EffectiveInterviewQuestionType;
   textValue?: string;
-  structuredValue?: StructuredAnswerDraft;
   selectedOptionId?: string;
   onTextChange?: (value: string) => void;
-  onStructuredChange?: (value: StructuredAnswerDraft) => void;
   onSelectedOptionChange?: (optionId: string) => void;
   onSubmit?: () => void;
 }) {
@@ -52,10 +49,8 @@ function renderControl(options: {
     <InterviewAnswerControl
       question={question(options.questionType)}
       textValue={options.textValue ?? ""}
-      structuredValue={options.structuredValue ?? {}}
       selectedOptionId={options.selectedOptionId ?? ""}
       onTextChange={options.onTextChange ?? vi.fn()}
-      onStructuredChange={options.onStructuredChange ?? vi.fn()}
       onSelectedOptionChange={options.onSelectedOptionChange ?? vi.fn()}
       onSubmit={options.onSubmit ?? vi.fn()}
     />,
@@ -87,10 +82,8 @@ describe("InterviewAnswerControl", () => {
       <InterviewAnswerControl
         question={question("multiple-choice")}
         textValue=""
-        structuredValue={{}}
         selectedOptionId="option-b"
         onTextChange={vi.fn()}
-        onStructuredChange={vi.fn()}
         onSelectedOptionChange={onSelectedOptionChange}
         onSubmit={onSubmit}
       />,
@@ -112,10 +105,8 @@ describe("InterviewAnswerControl", () => {
       <InterviewAnswerControl
         question={question("legacy-open-response")}
         textValue="answer"
-        structuredValue={{}}
         selectedOptionId=""
         onTextChange={vi.fn()}
-        onStructuredChange={vi.fn()}
         onSelectedOptionChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
@@ -146,49 +137,62 @@ describe("InterviewAnswerControl", () => {
     ],
   ] as const)("renders %s as structured fields rather than one generic textarea", (type, groupName, fields) => {
     renderControl({ questionType: type });
-    const group = screen.getByRole("group", { name: groupName });
+    expect(screen.getByRole("group", { name: groupName })).not.toBeNull();
     for (const field of fields) {
       expect(screen.getByRole("textbox", { name: field })).not.toBeNull();
     }
-    expect(group).not.toBeNull();
     expect(screen.queryByLabelText("Answer structure guidance")).toBeNull();
   });
 
-  it("enables Save attempt when one structured subsection has content", () => {
-    const { rerender } = renderControl({ questionType: "behavioral" });
+  it("serializes structured edits through the existing text callback and enables Save", async () => {
+    const user = userEvent.setup();
+    const onTextChange = vi.fn();
+    renderControl({ questionType: "behavioral", onTextChange });
+
     expect(
       (screen.getByRole("button", { name: "Save attempt" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
 
-    rerender(
-      <InterviewAnswerControl
-        question={question("behavioral")}
-        textValue=""
-        structuredValue={{ situation: "Context" }}
-        selectedOptionId=""
-        onTextChange={vi.fn()}
-        onStructuredChange={vi.fn()}
-        onSelectedOptionChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />,
-    );
+    await user.type(screen.getByRole("textbox", { name: "Situation" }), "Context");
+    expect(onTextChange).toHaveBeenLastCalledWith("Situation:\nContext");
     expect(
       (screen.getByRole("button", { name: "Save attempt" }) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
   });
 
-  it("shows safe errors without changing structured draft ownership", () => {
-    render(
+  it("clears local structured fields when the parent text draft resets", async () => {
+    const user = userEvent.setup();
+    const onTextChange = vi.fn();
+    const { rerender } = renderControl({
+      questionType: "behavioral",
+      onTextChange,
+    });
+    const situation = screen.getByRole("textbox", { name: "Situation" });
+    await user.type(situation, "Context");
+
+    rerender(
       <InterviewAnswerControl
         question={question("behavioral")}
         textValue=""
-        structuredValue={{ situation: "Context" }}
+        selectedOptionId=""
+        onTextChange={onTextChange}
+        onSelectedOptionChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+    expect((situation as HTMLTextAreaElement).value).toBe("");
+  });
+
+  it("shows safe errors without changing structured field ownership", () => {
+    render(
+      <InterviewAnswerControl
+        question={question("behavioral")}
+        textValue="Situation:\nContext"
         selectedOptionId=""
         error={{ message: "Answer could not be saved.", requestId: "request-id-00000001" }}
         onTextChange={vi.fn()}
-        onStructuredChange={vi.fn()}
         onSelectedOptionChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
