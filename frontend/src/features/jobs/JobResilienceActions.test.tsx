@@ -87,6 +87,27 @@ describe("JobResilienceActions", () => {
     );
   });
 
+  it("announces a compact completed explanation success state", () => {
+    const view = render(
+      <JobResilienceActions
+        job={{
+          ...activeJob,
+          type: "interview.question.explain",
+          status: "completed",
+          phase: "completed",
+          progress: 100,
+        }}
+      />,
+    );
+
+    const root = view.container.querySelector(".job-resilience-actions");
+    expect(root?.getAttribute("data-job-type")).toBe(
+      "interview.question.explain",
+    );
+    expect(root?.getAttribute("data-job-status")).toBe("completed");
+    expect(screen.getByRole("status").textContent).toBe("✓ Explanation ready");
+  });
+
   it("announces action errors", async () => {
     render(
       <JobResilienceActions
