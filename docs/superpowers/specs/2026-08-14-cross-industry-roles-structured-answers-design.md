@@ -1,9 +1,9 @@
 # Cross-Industry Interview Roles and Structured Answers — Design Spec
 
-**Project:** Career Learning Hub  
-**Phase:** 19B-3 / Task 7R extension  
-**Branch:** `task/phase-19b3-task7r-interview-layout-refinement`  
-**PR:** #13  
+**Project:** Career Learning Hub
+**Phase:** 19B-3 / Task 7R extension
+**Branch:** `task/phase-19b3-task7r-interview-layout-refinement`
+**PR:** #13
 **Status:** Design approved; written spec awaiting user approval
 
 ## 1. Goal
