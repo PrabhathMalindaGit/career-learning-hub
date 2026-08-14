@@ -98,10 +98,11 @@ async function requestParsed<T>(
 
 type LegacyManualInterviewQuestionInput = Omit<
   ManualInterviewQuestionInput,
-  "questionType" | "multipleChoice"
+  "questionType" | "multipleChoice" | "starterCode"
 > & {
   questionType?: never;
   multipleChoice?: never;
+  starterCode?: never;
 };
 
 type GenerateInterviewQuestionsInput = {
@@ -257,6 +258,10 @@ export async function addManualQuestion(
     questionType === undefined
       ? undefined
       : (input as ManualInterviewQuestionInput);
+  const starterCode =
+    typedInput?.questionType === "coding"
+      ? typedInput.starterCode?.trim()
+      : undefined;
   const multipleChoice =
     typedInput?.questionType === "multiple-choice" &&
     typedInput.multipleChoice
@@ -281,9 +286,10 @@ export async function addManualQuestion(
         difficulty: input.difficulty,
         question: input.question.trim(),
         ...(multipleChoice === undefined
-          ? modelAnswer
-            ? { modelAnswer }
-            : {}
+          ? {
+              ...(starterCode ? { starterCode } : {}),
+              ...(modelAnswer ? { modelAnswer } : {}),
+            }
           : { multipleChoice }),
       },
     },
