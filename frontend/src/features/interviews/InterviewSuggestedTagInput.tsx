@@ -71,9 +71,12 @@ export function InterviewSuggestedTagInput({
       aria-labelledby={`${id}-label`}
     >
       <div className="interview-suggested-tag-input__heading">
-        <label id={`${id}-label`} htmlFor={`${id}-custom`}>
+        <span
+          id={`${id}-label`}
+          className="interview-suggested-tag-input__label"
+        >
           {label}
-        </label>
+        </span>
         <small>{values.length} selected</small>
       </div>
 
