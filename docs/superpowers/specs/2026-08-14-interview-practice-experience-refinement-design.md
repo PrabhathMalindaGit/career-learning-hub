@@ -85,7 +85,7 @@ Rules:
 - optional for backward compatibility;
 - only valid for canonical `questionType === "coding"`;
 - immutable after question creation, matching other core question content;
-- bounded to a reasonable text length; use the smallest limit consistent with existing question/model-answer bounds and practical interview scaffolds;
+- maximum length: **12,000 characters**, reusing the existing model-answer bound rather than introducing a separate arbitrary limit;
 - no migration is required for historical questions;
 - historical Coding questions without `starterCode` continue to behave exactly as before;
 - non-Coding questions must not persist starter code.
@@ -99,6 +99,7 @@ Do **not** make a second Gemini call.
 For new AI-generated Coding questions:
 
 - `starterCode` is required in the Coding structured-output branch;
+- the field must be a non-empty string of at most 12,000 characters after schema normalization;
 - the prompt must instruct Gemini that starter code is scaffolding only;
 - generated starter code may include function/class signatures, required imports, parameters, minimal shapes, and TODO/comments;
 - it must not intentionally contain the completed solution;
@@ -118,7 +119,7 @@ starterCode?: string;
 Rules:
 
 - optional;
-- trimmed/bounded by schema;
+- trimmed/bounded to at most 12,000 characters by schema;
 - accepted only when `questionType === "coding"`;
 - non-Coding manual-question schemas remain strict and reject `starterCode`;
 - the manual Coding form shows `Starter code (optional)`;
@@ -130,7 +131,8 @@ Rules:
 
 For Coding questions with stored starter code:
 
-- question summary/detail serialization may expose `starterCode` to the owner;
+- expose `starterCode` only in the owned **question-detail** response used by the Practice Desk;
+- do **not** include starter code in Question Index/list summaries because the list does not need the scaffold and may contain up to a full page of questions;
 - it must not affect MCQ serialization or MCQ answer-key secrecy;
 - `correctOptionId` remains private before submission and remains governed by the existing deterministic MCQ evaluation path;
 - `modelAnswer` privacy rules remain unchanged;
@@ -170,7 +172,7 @@ Enhance each option with a display-only letter badge derived from its visible po
 
 - first option `A`;
 - second `B`;
-- continue alphabetically for the supported 2–8 options.
+- continue alphabetically through the supported maximum of eight options (`H`).
 
 Presentation requirements:
 
@@ -200,7 +202,7 @@ Purpose: evidence-based response about the candidate's experience.
 
 Keep one textarea.
 
-Show non-interactive guidance cues:
+Show **non-interactive** guidance cues rendered as text/chips, not buttons:
 
 - `Situation`
 - `Task`
@@ -217,7 +219,7 @@ Purpose: hypothetical reasoning and decision-making.
 
 Keep one textarea.
 
-Show non-interactive guidance cues:
+Show **non-interactive** guidance cues rendered as text/chips, not buttons:
 
 - `Assess`
 - `Approach`
@@ -234,7 +236,7 @@ Purpose: explain a technical concept clearly.
 
 Keep one textarea.
 
-Show non-interactive guidance cues:
+Show **non-interactive** guidance cues rendered as text/chips, not buttons:
 
 - `Concept`
 - `How it works`
@@ -276,12 +278,12 @@ Normalize for display/selection by:
 
 - trimming whitespace;
 - dropping blank values;
-- deduplicating using a normalized comparison while preserving the first meaningful display spelling;
+- deduplicating with a case-insensitive normalized comparison while preserving the first meaningful display spelling;
 - preserving session-context order, with focus topics before additional skill-gap values.
 
-### 6.2 Default selection
+### 6.2 Default selection and lifecycle
 
-Every derived session-context category starts selected when the session workspace loads.
+Every derived session-context category starts selected when a **new session route** is loaded.
 
 Example:
 
@@ -294,6 +296,13 @@ Build the Briefing initially shows both selected.
 
 The user may deselect either or both.
 
+Initialization must occur once for that session-route identity. After initialization:
+
+- generation completion must not silently reselect a category the user deselected;
+- session refetch/reload within the same route must not reset category choices;
+- generation retry must retain the user's current category choices;
+- navigating to a different Interview session resets the category state and initializes from that new session's context.
+
 ### 6.3 Custom categories
 
 Keep the ability to add custom categories.
@@ -304,9 +313,11 @@ Rules:
 
 - trim custom input;
 - ignore blank additions;
-- avoid duplicates against selected/unselected context suggestions and existing custom categories using the same normalized comparison;
+- avoid duplicates against selected/unselected context suggestions and existing custom categories using the same case-insensitive normalized comparison;
+- preserve the first meaningful display spelling;
 - custom categories can be removed/deselected;
-- respect the existing backend category count/length constraints;
+- custom category state follows the same session-route lifecycle as context selections;
+- respect the existing backend maximum of 50 categories and 120 characters per category;
 - do not create hidden categories or persist briefing-only guidance outside the generation request.
 
 ### 6.4 Generation request
@@ -372,7 +383,7 @@ The existing Task 3–7 security invariants remain mandatory, including:
 Starter-code-specific invariants:
 
 - `starterCode` is not an answer key;
-- it must be available only on owned question responses through the existing ownership boundary;
+- it must be available only on owned question-detail responses through the existing ownership boundary;
 - it must not weaken MCQ secret-field filtering;
 - it must not create an execution path;
 - feedback/explanation prompts must never claim starter or submitted code was executed.
@@ -410,12 +421,14 @@ An empty category selection remains valid and submits `categories: []`.
 Add focused coverage that proves:
 
 - AI Coding generated schema accepts required starter code;
+- AI Coding generated schema rejects missing/empty/oversized starter code;
 - non-Coding generated objects reject starter code;
 - generated Coding starter code is persisted atomically with the question;
 - historical Coding records without starter code serialize safely;
 - manual Coding accepts optional starter code;
 - non-Coding manual inputs reject starter code;
-- public Coding serialization exposes starter code without exposing MCQ secrets;
+- Question Index/list serialization does not include starter code;
+- owned Coding question-detail serialization exposes starter code without exposing MCQ secrets;
 - existing question generation distribution/idempotency/security behavior remains green.
 
 ### 10.2 Frontend Coding tests
@@ -438,6 +451,7 @@ Prove:
 - Behavioral shows STAR guidance;
 - Scenario-based shows Assess/Approach/Trade-offs/Decision guidance;
 - Technical Explanation shows Concept/How it works/Example/Trade-offs guidance;
+- guidance chips are non-interactive presentation, not extra form fields;
 - all text types still submit the canonical typed text answer;
 - accessibility labels/focus semantics remain valid.
 
@@ -446,9 +460,11 @@ Prove:
 Prove:
 
 - suggestions derive from `focusTopics + skillGaps`;
-- duplicate context values are deduplicated;
-- all context suggestions start selected;
+- duplicate context values are deduplicated case-insensitively while preserving first display spelling;
+- all context suggestions start selected for a newly loaded session;
 - user can deselect suggestions;
+- a same-session refetch/generation completion does not reselect user-deselected values;
+- navigating to a new session initializes from the new session context;
 - user can add/remove custom categories;
 - duplicates are not added;
 - empty selection is valid;
@@ -468,7 +484,7 @@ Before Task 7R can be declared complete:
 - working tree is clean;
 - browser QA covers all six modern question types and responsive layouts.
 
-The current branch has a separately observed timing-sensitive failure in the existing test `clears question-detail loading when the next route has no questions`. The latest user run reached 969/970 frontend tests while focused Question Index/notes tests, typecheck, and production build passed. This issue must be reverified/resolved separately and must not be disguised as part of the new feature implementation.
+The current branch has a separately observed suite-only/timing-sensitive failure in the existing test `clears question-detail loading when the next route has no questions`. The latest user run reached 969/970 frontend tests while the focused Question Index/notes tests, frontend typecheck, and production build passed. The cause has not yet been adjudicated; it must be reverified/resolved separately and must not be disguised as part of the new feature implementation.
 
 ## 11. Out of scope
 
@@ -507,11 +523,12 @@ The design is satisfied when:
 
 1. New AI Coding questions carry safe question-specific starter scaffolding in the same structured generation call.
 2. Manual Coding questions can optionally store starter code.
-3. Starter code is displayed/copyable/insertable without overwriting an existing answer and without any execution feature.
+3. Starter code is returned only with owned Coding question detail and is displayed/copyable/insertable without overwriting an existing answer and without any execution feature.
 4. Multiple Choice, Short Answer, Coding, Behavioral, Scenario-based, and Technical Explanation have clearly distinguishable answering experiences.
 5. Text-answer types retain the current one-textarea typed contract.
-6. Build the Briefing starts with deduplicated Focus topics + Skill gaps selected as categories and still supports custom categories.
-7. Generation still sends the existing canonical `categories: string[]` request.
-8. Historical questions remain compatible without migration.
-9. Existing MCQ secrecy and deterministic scoring invariants remain intact.
-10. Full verification, browser QA, PR review, and explicit merge approval are completed before merge.
+6. Build the Briefing initializes deduplicated Focus topics + Skill gaps as selected categories once per session route and still supports custom categories.
+7. User category choices persist through same-session generation/refetches and reset only for a different session route.
+8. Generation still sends the existing canonical `categories: string[]` request.
+9. Historical questions remain compatible without migration.
+10. Existing MCQ secrecy and deterministic scoring invariants remain intact.
+11. Full verification, browser QA, PR review, and explicit merge approval are completed before merge.
