@@ -252,9 +252,94 @@
   font-size: 0.8rem;
 }
 
+/* Task 7R workspace hierarchy overrides. These intentionally use higher
+   specificity than the legacy three-column rules in interviewCoach.css so
+   the visual refinement remains presentation-only. */
+.interview-workspace .interview-workspace-grid {
+  grid-template-columns: minmax(280px, 0.38fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 18px 20px;
+  align-items: start;
+}
+
+.interview-workspace .interview-question-index {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: start;
+}
+
+.interview-workspace .interview-practice-desk {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.interview-workspace .interview-history {
+  grid-column: 2;
+  grid-row: 2;
+  align-content: start;
+}
+
+.interview-workspace .interview-question-list {
+  max-height: min(68vh, 760px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+.interview-workspace .interview-question-select {
+  gap: 4px;
+  padding: 11px 12px;
+}
+
+.interview-workspace .interview-question-select strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-height: 1.45;
+}
+
+.interview-workspace .interview-history .interview-attempt-list {
+  margin-top: 4px;
+}
+
+.interview-workspace .interview-history .interview-attempt-detail,
+.interview-workspace .interview-history .interview-feedback-panel {
+  min-width: 0;
+}
+
+@media (max-width: 1080px) {
+  .interview-workspace .interview-workspace-grid {
+    grid-template-columns: minmax(240px, 0.42fr) minmax(0, 1fr);
+  }
+
+  .interview-workspace .interview-history {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
 @media (max-width: 900px) {
   .interview-type-controls__options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .interview-workspace .interview-workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .interview-workspace .interview-question-index,
+  .interview-workspace .interview-practice-desk,
+  .interview-workspace .interview-history {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .interview-workspace .interview-question-list {
+    max-height: 520px;
   }
 }
 
