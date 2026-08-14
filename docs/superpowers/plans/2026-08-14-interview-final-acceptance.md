@@ -56,27 +56,192 @@
 
 ### Task 1: Baseline Preflight and Focused Interview Automation
 
-[unchanged from approved plan]
+**Files:**
+- Read: `package.json`
+- Read: `backend/package.json`
+- Read: `frontend/package.json`
+- Test: `backend/src/tests/unit/interviewQuestionDistribution.test.ts`
+- Test: `backend/src/tests/unit/interviewQuestionTypes.test.ts`
+- Test: `backend/src/tests/integration/interviewQuestionTypes.integration.test.ts`
+- Test: `backend/src/tests/integration/interviewFeedbackTypes.integration.test.ts`
+- Test: `backend/src/tests/integration/interviewStarterCode.integration.test.ts`
+- Test: `backend/src/tests/integration/crossUserAccess.integration.test.ts`
+- Test: `frontend/src/features/interviews/*.test.ts`
+- Test: `frontend/src/features/interviews/*.test.tsx`
+- Test: `frontend/src/features/jobs/JobResilienceActions.test.tsx`
+
+**Interfaces:**
+- Consumes: merged Phase 19B Interview implementation at base commit `6d7093072d6723180720db91b6480a4d04e8eeb0` plus Task 8 documentation commits.
+- Produces: a focused GREEN/FAIL classification for the six modern question types, typed attempts, MCQ evaluation/secrecy, starter code, feedback, role/category/distribution UX, resilience actions, and ownership boundaries.
+
+- [ ] **Step 1: Verify branch, ancestry, and clean tree**
+
+Run from the repository root:
+
+```bash
+cd "/Users/prabhathmalinda/Documents/Projects/Career Learning Hub"
+
+git fetch origin
+git switch task/phase-19b3-task8-interview-final-acceptance
+git pull --ff-only
+
+echo "===== TASK 8 BASELINE ====="
+git branch --show-current
+git rev-parse HEAD
+git merge-base --is-ancestor \
+  6d7093072d6723180720db91b6480a4d04e8eeb0 \
+  HEAD && echo "PHASE_BASE_ANCESTOR=PASS"
+git status --short
+```
+
+Expected:
+- branch is `task/phase-19b3-task8-interview-final-acceptance`;
+- `PHASE_BASE_ANCESTOR=PASS`;
+- `git status --short` prints nothing.
+
+- [ ] **Step 2: Run the focused backend Interview acceptance set**
+
+```bash
+npm run test --workspace @career-learning-hub/api -- \
+  src/tests/unit/interviewQuestionDistribution.test.ts \
+  src/tests/unit/interviewQuestionTypes.test.ts \
+  src/tests/integration/interviewQuestionTypes.integration.test.ts \
+  src/tests/integration/interviewFeedbackTypes.integration.test.ts \
+  src/tests/integration/interviewStarterCode.integration.test.ts \
+  src/tests/integration/crossUserAccess.integration.test.ts
+```
+
+Expected: every selected test file and test passes. Do not continue past a deterministic failure.
+
+- [ ] **Step 3: Run the focused frontend Interview acceptance set**
+
+```bash
+npm run test --workspace @career-learning-hub/web -- \
+  src/features/interviews \
+  src/features/jobs/JobResilienceActions.test.tsx
+```
+
+Expected: every Interview feature test plus the shared resilience-action test passes.
+
+- [ ] **Step 4: Classify warnings without weakening failures**
+
+If Vitest prints warnings but exits successfully, record the warning text and owning feature. A warning from unrelated Resume/Learning code may be deferred only if its tests still pass and it does not affect Interview correctness/security. A failing test must be investigated even if it initially appears unrelated.
+
+- [ ] **Step 5: Check the tree again**
+
+```bash
+git status --short
+```
+
+Expected: no output. Automated verification must not mutate tracked repository files.
 
 ---
 
 ### Task 2: Security, Ownership, Idempotency, and Resilience Acceptance
 
-[unchanged from approved plan]
+**Files:**
+- Test: `backend/src/tests/integration/crossUserAccess.integration.test.ts`
+- Test: `backend/src/tests/integration/interviewQuestionTypes.integration.test.ts`
+- Test: `backend/src/tests/integration/interviewStarterCode.integration.test.ts`
+- Test: `backend/src/tests/integration/jobExecutionFence.integration.test.ts`
+- Test: `backend/src/tests/integration/jobResponse.integration.test.ts`
+- Test: `backend/src/tests/integration/aiRetryAndPersistence.integration.test.ts`
+- Test: `frontend/src/features/interviews/InterviewSessionWorkspace.test.tsx`
+- Test: `frontend/src/features/interviews/interviewPolling.test.ts`
+- Test: `frontend/src/features/jobs/jobResilience.test.ts`
+- Test: `frontend/src/features/jobs/JobResilienceActions.test.tsx`
+
+**Interfaces:**
+- Consumes: existing auth/ownership filters, typed Interview schemas, job fences, polling helpers, and stale-route/selection guards.
+- Produces: negative acceptance evidence for cross-user isolation, MCQ secrecy/evaluation, malformed/generated Coding starter-code validation, stale async suppression, and retry/cancel/idempotency behavior.
+
+- [ ] **Step 1: Run backend negative/resilience coverage**
+
+```bash
+npm run test --workspace @career-learning-hub/api -- \
+  src/tests/integration/crossUserAccess.integration.test.ts \
+  src/tests/integration/interviewQuestionTypes.integration.test.ts \
+  src/tests/integration/interviewStarterCode.integration.test.ts \
+  src/tests/integration/jobExecutionFence.integration.test.ts \
+  src/tests/integration/jobResponse.integration.test.ts \
+  src/tests/integration/aiRetryAndPersistence.integration.test.ts
+```
+
+Expected: PASS. Relevant assertions must continue to prove cross-user denial, bounded schema validation, deterministic MCQ behavior, and job execution fences.
+
+- [ ] **Step 2: Run frontend stale-response/polling/resilience coverage**
+
+```bash
+npm run test --workspace @career-learning-hub/web -- \
+  src/features/interviews/InterviewSessionWorkspace.test.tsx \
+  src/features/interviews/interviewPolling.test.ts \
+  src/features/jobs/jobResilience.test.ts \
+  src/features/jobs/JobResilienceActions.test.tsx
+```
+
+Expected: PASS, including the route/question/attempt stale-response guards and UUID/polling/cancel/retry expectations already encoded in the suite.
+
+- [ ] **Step 3: Inspect the pre-submit MCQ boundary if automated evidence is ambiguous**
+
+Only if the focused tests do not clearly demonstrate the property, inspect the existing serializer/API contract and verify that list/detail responses before the allowed post-attempt context do not expose the private correct answer material. Do not add a duplicate test when the existing integration test already proves the invariant.
+
+- [ ] **Step 4: Stop on any blocking security mismatch**
+
+If cross-user access, MCQ secrecy, deterministic MCQ scoring, unsafe Coding execution, or stale-response entity binding fails, do not proceed to live Gemini acceptance. Enter the defect-repair loop first.
 
 ---
 
 ### Task 3: Start the Local Runtime for Live Acceptance
 
-**Status: GREEN — verified 2026-08-14**
+**Files:**
+- Read: `backend/.env`
+- Reference only: `backend/.env.example`
+- No tracked-file modification planned.
 
-- MongoDB port `127.0.0.1:27017`: OPEN
-- Backend connected to `career_learning_hub` and started on port `8000`
-- Job worker enabled
-- Gemini provider configured
-- Frontend Vite server started on `http://localhost:5173/`
-- Normal authenticated API requests returned successful responses
-- No credentials or secrets recorded in acceptance evidence
+**Interfaces:**
+- Consumes: the user's existing local MongoDB and approved Gemini credential/settings configuration.
+- Produces: a healthy local application at frontend `http://localhost:5173` and backend `http://localhost:8000`, with the in-process worker available for Gemini jobs.
+
+- [ ] **Step 1: Verify local configuration without printing secrets**
+
+Do **not** run `cat backend/.env`. Confirm manually that the local environment contains valid development values for MongoDB, JWT/auth, asset signing, and the existing Gemini/BYOK path. The repository example uses:
+
+```text
+PORT=8000
+MONGODB_URI=mongodb://127.0.0.1:27017/career_learning_hub
+CLIENT_ORIGINS=http://localhost:5173
+GEMINI_MODEL=gemini-3.6-flash
+AI_ROUTING_FOUNDATION_ENABLED=true
+JOB_WORKER_ENABLED=true
+```
+
+The actual credential must remain private.
+
+- [ ] **Step 2: Ensure MongoDB is running**
+
+Use the user's normal local MongoDB startup method. Verify availability without exposing data or credentials. If MongoDB is already running, do not restart it unnecessarily.
+
+- [ ] **Step 3: Start the backend dev server in Terminal A**
+
+```bash
+cd "/Users/prabhathmalinda/Documents/Projects/Career Learning Hub"
+npm run dev:backend
+```
+
+Expected: backend starts on the configured local port and the worker initializes according to current configuration. Keep Terminal A running for Tasks 4 and 5.
+
+- [ ] **Step 4: Start the frontend dev server in Terminal B**
+
+```bash
+cd "/Users/prabhathmalinda/Documents/Projects/Career Learning Hub"
+npm run dev:frontend
+```
+
+Expected: Vite serves the frontend, normally at `http://localhost:5173`. Keep Terminal B running for Tasks 4 and 5.
+
+- [ ] **Step 5: Open the application and authenticate through the normal UI**
+
+Use the existing local development account. Do not paste credentials into chat. If the app requests Gemini setup, use the application's approved Settings/credential flow rather than placing a key into a URL, console command, screenshot, or message.
 
 ---
 
@@ -189,4 +354,314 @@ Do not record credential values, auth tokens, raw cookies, or private user data.
 
 ### Task 5: Human Browser QA Across Career Areas and Answer Experiences
 
-[continues in approved plan]
+**Files:**
+- Exercise: `frontend/src/features/interviews/InterviewCreateDialog.tsx`
+- Exercise: `frontend/src/features/interviews/InterviewRoleSelector.tsx`
+- Exercise: `frontend/src/features/interviews/InterviewQuestionTypeControls.tsx`
+- Exercise: `frontend/src/features/interviews/InterviewCategorySelector.tsx`
+- Exercise: `frontend/src/features/interviews/InterviewAnswerControl.tsx`
+- Exercise: `frontend/src/features/interviews/InterviewStructuredAnswerFields.tsx`
+- Exercise: `frontend/src/features/interviews/InterviewSessionWorkspace.tsx`
+- No source edit planned.
+
+**Interfaces:**
+- Consumes: live local frontend/backend runtime.
+- Produces: human evidence for usability, visual integrity, responsive layout, canonical role authoring, structured answers, notes/attempts/lifecycle, and archive/restore behavior.
+
+- [ ] **Step 1: Verify representative Career areas in Create Interview**
+
+Open Create Interview and check these areas without necessarily creating a session for each:
+
+```text
+Technology & IT
+Finance & Accounting
+Healthcare
+Education & Training
+Engineering
+Other / Custom
+```
+
+For each relevant area, verify scoped representative roles and local Focus/Skill suggestions.
+
+- [ ] **Step 2: Verify role-authoring state rules**
+
+Confirm:
+- initial Career area is empty;
+- Target role is unavailable until an area is selected;
+- selecting a built-in role creates one canonical selected role;
+- typing a divergent custom role clears the previous selected role;
+- custom role is selected only after explicit `Use “…”` adoption;
+- changing Career area clears selected role and uncommitted role query;
+- a user-owned title survives area changes;
+- Focus/Skill suggestions remain optional;
+- already selected Focus/Skill values are preserved as approved;
+- Mid-level is the default experience level.
+
+- [ ] **Step 3: Verify Build the Briefing authoring**
+
+Confirm:
+- session-context categories are initially suggested/preselected as approved;
+- selected custom categories have equal chip treatment;
+- all categories can intentionally be deselected;
+- Question Type tiles remain readable/responsive;
+- Balanced vs Exact behavior is understandable;
+- changing Question count clears stale explicit exact counts;
+- invalid exact totals cannot be submitted.
+
+- [ ] **Step 4: Verify Behavioral structured answer**
+
+Open a Behavioral question and verify Situation, Task, Action, Result fields. Enter at least one meaningful field and save. Confirm the saved attempt preserves the structured headings/newlines and remains a separate record.
+
+- [ ] **Step 5: Verify Scenario-Based structured answer**
+
+Open a Scenario-Based question and verify Assessment, Approach, Trade-offs, Decision fields. Enter a partial or complete answer and confirm the existing typed-text serialization behaves meaningfully.
+
+- [ ] **Step 6: Verify Technical Explanation structured answer**
+
+Open a Technical Explanation question and verify Concept, How it works, Example, Trade-offs / limitations fields. Confirm the combined character limit and saved newline-preserving representation behave correctly.
+
+- [ ] **Step 7: Verify Question Index, notes, pinning, and attempts**
+
+Confirm:
+- Question Index is bounded/scrollable when content requires it;
+- visible question numbering is correct;
+- truncated index prompt never replaces the full Practice Desk prompt;
+- Private notes expand/collapse correctly;
+- dirty notes cannot be accidentally hidden;
+- pin/unpin remains bound to the selected question;
+- Saved Attempts remain separate historical records;
+- structured saved text keeps line breaks.
+
+- [ ] **Step 8: Verify lifecycle and restore behavior**
+
+Use a disposable Task 8 session if needed. Verify completed/archived states have the approved read-mostly/read-only behavior and that an archived session can be restored using the existing list/card Restore action.
+
+- [ ] **Step 9: Verify responsive sanity**
+
+Check normal desktop width and one narrow/mobile-like width. Acceptance requires no Task 7R Interview-induced horizontal overflow, sensible stacking, readable MCQ cards, usable structured fields, and visible primary actions.
+
+- [ ] **Step 10: Capture browser QA evidence**
+
+Provide screenshots only where they prove a visual or interaction requirement. Do not expose secrets. At minimum, retain evidence for:
+- one cross-industry wizard state;
+- all-six-type generated session summary/index;
+- Coding starter code;
+- MCQ pre/post-attempt state;
+- one structured-answer screen;
+- narrow/mobile-like sanity if any layout concern exists.
+
+---
+
+### Task 6: Full Final Regression, Typechecks, and Production Builds
+
+**Files:**
+- Test/build through repository scripts only.
+- No source modification planned.
+
+**Interfaces:**
+- Consumes: green focused automation and green live/browser acceptance.
+- Produces: final repository-wide release-candidate evidence at one exact Task 8 head SHA.
+
+- [ ] **Step 1: Stop development servers if they are no longer needed**
+
+After live/browser acceptance is complete, stop the frontend/backend dev processes cleanly. MongoDB may remain running if the normal test environment needs or tolerates it; existing automated tests use their configured test setup.
+
+- [ ] **Step 2: Record the exact verification head**
+
+```bash
+cd "/Users/prabhathmalinda/Documents/Projects/Career Learning Hub"
+
+echo "===== TASK 8 FINAL HEAD ====="
+git branch --show-current
+git rev-parse HEAD
+git status --short
+```
+
+Expected: Task 8 branch and clean tree.
+
+- [ ] **Step 3: Run the full backend regression**
+
+```bash
+npm run test --workspace @career-learning-hub/api
+```
+
+Expected: all backend tests pass.
+
+- [ ] **Step 4: Run backend source + test typechecks**
+
+```bash
+npm run typecheck:all --workspace @career-learning-hub/api
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Run the backend production build**
+
+```bash
+npm run build --workspace @career-learning-hub/api
+```
+
+Expected: PASS.
+
+- [ ] **Step 6: Run the full frontend regression**
+
+```bash
+npm run test --workspace @career-learning-hub/web
+```
+
+Expected: all frontend test files and tests pass. Record exact counts from Vitest output.
+
+- [ ] **Step 7: Run frontend typecheck**
+
+```bash
+npm run typecheck --workspace @career-learning-hub/web
+```
+
+Expected: PASS.
+
+- [ ] **Step 8: Run the frontend production build**
+
+```bash
+npm run build --workspace @career-learning-hub/web
+```
+
+Expected: PASS. Existing non-fatal Vite chunk-size or dynamic-import warnings may be recorded if the build exits successfully and they are unrelated to Interview correctness.
+
+- [ ] **Step 9: Run final diff and tree checks**
+
+```bash
+echo "===== FINAL DIFF CHECK ====="
+git diff --check origin/phase-19b-interview-coach-refinements...HEAD
+
+echo "===== FINAL TREE ====="
+git branch --show-current
+git rev-parse HEAD
+git status --short
+```
+
+Expected:
+- no `git diff --check` output;
+- correct Task 8 branch;
+- final head recorded;
+- clean tree.
+
+---
+
+### Task 7: Final Review, Evidence Closeout, and Merge Gate
+
+**Files:**
+- Modify PR metadata only: PR #14 body.
+- Review: all Task 8 changed files relative to `phase-19b-interview-coach-refinements`.
+- No deployment or branch deletion.
+
+**Interfaces:**
+- Consumes: complete evidence from Tasks 1–6 and any defect-repair commits.
+- Produces: an auditable final Task 8 verdict and a separate merge-approval gate.
+
+- [ ] **Step 1: Compare the final branch to the phase branch**
+
+Use GitHub compare/PR review to verify that the branch contains only:
+- Task 8 spec/plan documentation;
+- any acceptance evidence metadata/documentation intentionally committed;
+- any narrowly justified defect repair plus focused regression coverage.
+
+Any unrelated source change is a blocker until removed or separately authorized.
+
+- [ ] **Step 2: Review every production patch if defects were repaired**
+
+For each production change, verify:
+- it corresponds to a reproduced acceptance defect;
+- a focused regression test proves the repair;
+- architecture/security invariants are preserved;
+- no opportunistic refactor or extra feature entered Task 8.
+
+If Task 8 required no production repair, explicitly record `PRODUCTION_CODE_CHANGES: NONE`.
+
+- [ ] **Step 3: Update PR #14 body with final evidence**
+
+The PR body must state exact values for:
+
+```text
+FINAL_HEAD_SHA: <actual Task 8 head>
+FOCUSED_INTERVIEW_BACKEND: PASS with counts
+FOCUSED_INTERVIEW_FRONTEND: PASS with counts
+SECURITY_OWNERSHIP_RESILIENCE: PASS
+FULL_BACKEND: PASS with counts
+FULL_FRONTEND: PASS with counts
+BACKEND_TYPECHECK: PASS
+FRONTEND_TYPECHECK: PASS
+BACKEND_BUILD: PASS
+FRONTEND_BUILD: PASS
+LIVE_GEMINI_GENERATION: PASS
+LIVE_SIX_TYPE_DISTRIBUTION: PASS
+LIVE_CODING_STARTER_CODE: PASS
+MCQ_PRE_SUBMIT_SECRECY: PASS
+MCQ_DETERMINISTIC_RESULT: PASS
+LIVE_EXPLANATION: PASS
+LIVE_FEEDBACK: PASS
+BROWSER_QA: PASS
+RESPONSIVE_QA: PASS
+DIFF_CHECK: PASS
+WORKING_TREE: CLEAN
+PRODUCTION_CODE_CHANGES: NONE or exact repair summary
+NON_BLOCKING_WARNINGS: exact known warnings or NONE
+DEPLOYMENT: NOT AUTHORIZED / NOT PERFORMED BY TASK 8
+MAIN_BRANCH: UNCHANGED
+```
+
+Replace every value with actual evidence before closeout; do not leave angle-bracket placeholders in the final PR body.
+
+- [ ] **Step 4: Check GitHub PR state and external statuses**
+
+Verify PR #14 remains open/unmerged and targets `phase-19b-interview-coach-refinements`. Classify external deployment/build statuses by evidence. A provider quota/rate-limit status must not be described as an application regression, but Task 8 itself does not authorize a deployment retry.
+
+- [ ] **Step 5: Perform final code review**
+
+No unresolved Blocking or Important Task 8 issue may remain. If a new issue is found, return to the defect-repair loop and rerun the affected acceptance gate plus the final gate as needed.
+
+- [ ] **Step 6: Present the Task 8 acceptance verdict to the user**
+
+State one of:
+
+```text
+TASK_8_ACCEPTANCE: APPROVED_FOR_MERGE
+```
+
+or
+
+```text
+TASK_8_ACCEPTANCE: BLOCKED
+REASON: <specific evidence-backed blocker>
+```
+
+- [ ] **Step 7: Keep merge authorization separate**
+
+Even after `APPROVED_FOR_MERGE`, do not merge automatically. Require the user's explicit separate Task 8 merge approval. Merge only into `phase-19b-interview-coach-refinements`. Do not merge to `main`, deploy, or delete the task branch.
+
+---
+
+## Defect-Repair Loop Used by Any Task
+
+This loop is conditional and is invoked only when an acceptance gate produces reproducible failure evidence.
+
+1. Stop the current acceptance sequence.
+2. Invoke `superpowers:systematic-debugging`.
+3. Re-run the smallest failing test or browser reproduction until the failure is understood.
+4. Trace the failing state/data flow to its source.
+5. If the defect is real, retain or add one focused failing regression test that demonstrates the bug.
+6. Invoke `superpowers:test-driven-development` for the repair.
+7. Change the smallest production surface that fixes the root cause.
+8. Run the focused regression to GREEN.
+9. Run adjacent Interview tests affected by the repair.
+10. Run typecheck/build if production TypeScript changed.
+11. Commit the repair on the Task 8 branch with a narrow message.
+12. Update PR #14 scope/evidence so it accurately records the defect and repair.
+13. Resume the acceptance plan at the gate that failed.
+14. Before final closeout, rerun the full Task 6 gate at the final repaired head.
+
+## Plan Self-Review Result
+
+- **Spec coverage:** Tasks 1–7 cover baseline, focused automation, security/negative acceptance, live Gemini generation, all six modern types, Coding starter code, MCQ secrecy/evaluation, explanation, feedback, resilience, cross-industry/browser QA, structured answers, lifecycle/restore, responsive QA, full regression/builds, evidence, final review, and separate merge approval.
+- **Placeholder scan:** no implementation placeholder remains. The only variable values are runtime evidence that must be replaced with actual observed values during PR closeout; the plan explicitly prohibits leaving them unresolved in the final PR body.
+- **Type/interface consistency:** this plan introduces no new production API or type. It consumes the existing Interview/session/question/attempt/job contracts only.
+- **Scope check:** Task 8 remains one bounded acceptance/closeout task. Any discovered production defect is handled as a narrow repair loop rather than expanding the planned feature scope.
