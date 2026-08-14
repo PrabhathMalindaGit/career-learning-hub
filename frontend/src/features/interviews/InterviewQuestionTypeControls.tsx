@@ -159,7 +159,11 @@ export function InterviewQuestionTypeControls({
         </p>
       ) : null}
 
-      <div className="interview-type-controls__count-actions">
+      <div className="interview-type-controls__distribution">
+        <div>
+          <strong>Distribution</strong>
+          <span>{countsOpen ? "Exact counts" : "Balanced automatically"}</span>
+        </div>
         {!countsOpen ? (
           <button
             type="button"
@@ -167,7 +171,7 @@ export function InterviewQuestionTypeControls({
             aria-expanded="false"
             onClick={openCounts}
           >
-            Set counts
+            Set exact counts
           </button>
         ) : (
           <button
