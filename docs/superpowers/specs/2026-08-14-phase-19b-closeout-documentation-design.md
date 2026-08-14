@@ -6,7 +6,7 @@
 **Task branch:** `task/phase-19b-closeout-documentation`
 **Base branch:** `phase-19b-interview-coach-refinements`
 **Starting phase commit:** `5da65534e1f07f7905310d70272af068c71c4d42`
-**Status:** Design direction approved by the user on 2026-08-14; written specification awaiting user review
+**Status:** Design direction and written specification approved by the user on 2026-08-14
 
 ## 1. Goal
 
