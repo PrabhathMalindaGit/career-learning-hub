@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import "./interviewCategorySelector.css";
 
 function categoryKey(value: string): string {
@@ -57,8 +57,7 @@ export function InterviewCategorySelector({
     onSelectedChange([...selected, category].slice(0, 50));
   }
 
-  function addCustom(event: FormEvent) {
-    event.preventDefault();
+  function addCustom() {
     const value = customDraft.trim();
     if (!value) return;
 
@@ -126,10 +125,7 @@ export function InterviewCategorySelector({
         </small>
       )}
 
-      <form
-        className="interview-category-selector__custom"
-        onSubmit={addCustom}
-      >
+      <div className="interview-category-selector__custom">
         <label htmlFor="interview-custom-category">Custom categories</label>
         <div className="interview-category-selector__custom-row">
           <input
@@ -139,18 +135,25 @@ export function InterviewCategorySelector({
             disabled={disabled || selected.length >= 50}
             placeholder="Add a category…"
             onChange={(event) => setCustomDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                addCustom();
+              }
+            }}
           />
           <button
-            type="submit"
+            type="button"
             className="interview-secondary-button"
             disabled={
               disabled || selected.length >= 50 || !customDraft.trim()
             }
+            onClick={addCustom}
           >
             Add
           </button>
         </div>
-      </form>
+      </div>
 
       {customSelected.length > 0 ? (
         <div
