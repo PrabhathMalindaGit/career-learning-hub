@@ -43,9 +43,17 @@ export type ManualQuestionInput =
       };
     }
   | {
+      questionType: "coding";
+      category: string;
+      difficulty: InterviewDifficulty;
+      question: string;
+      starterCode?: string;
+      modelAnswer?: string;
+    }
+  | {
       questionType: Exclude<
         InterviewQuestionType,
-        "multiple-choice"
+        "multiple-choice" | "coding"
       >;
       category: string;
       difficulty: InterviewDifficulty;
@@ -61,6 +69,7 @@ function canonicalizeManualQuestion(
   question: ManualQuestionInput,
 ): {
   questionType: InterviewQuestionType;
+  starterCode?: string;
   modelAnswer?: string;
   multipleChoice?: InterviewMultipleChoiceStorage;
 } {
@@ -95,6 +104,16 @@ function canonicalizeManualQuestion(
         options,
         correctOptionId: correctOption.id,
       },
+    };
+  }
+
+  if (question.questionType === "coding") {
+    return {
+      questionType: question.questionType,
+      ...(question.starterCode
+        ? { starterCode: question.starterCode }
+        : {}),
+      modelAnswer: question.modelAnswer,
     };
   }
 
@@ -447,7 +466,7 @@ export async function listInterviewQuestions(
   const [questions, total] = await Promise.all([
     InterviewQuestionModel.find(filter)
       .select(
-        "-modelAnswer -explanation -explanationKeyPoints -questionFingerprint",
+        "-modelAnswer -explanation -explanationKeyPoints -questionFingerprint -starterCode",
       )
       .sort({ isPinned: -1, createdAt: 1, _id: 1 })
       .skip((input.page - 1) * input.limit)
@@ -552,6 +571,13 @@ export function serializeQuestionDetail(
 ): Record<string, unknown> {
   const value = interviewQuestionRecord(question);
   const result = serializeQuestionSummary(value);
+
+  if (
+    result.questionType === "coding" &&
+    value.starterCode !== undefined
+  ) {
+    result.starterCode = value.starterCode;
+  }
 
   if (!revealStudyMaterial) {
     return result;
