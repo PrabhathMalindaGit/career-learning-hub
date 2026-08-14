@@ -48,6 +48,10 @@ import type {
 import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
 import { InterviewAnswerControl } from "./InterviewAnswerControl";
 import {
+  InterviewCategorySelector,
+  canonicalInterviewCategorySuggestions,
+} from "./InterviewCategorySelector";
+import {
   InterviewQuestionTypeControls,
   QUESTION_TYPE_LABELS,
   interviewTypeCountsAreValid,
@@ -128,19 +132,6 @@ function SafeErrorMessage({
       ) : null}
     </div>
   );
-}
-
-function parseList(value: string): string[] {
-  const seen = new Set<string>();
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter((item) => {
-      if (!item || seen.has(item)) return false;
-      seen.add(item);
-      return true;
-    })
-    .slice(0, 50);
 }
 
 function feedbackPanel(attempt: InterviewAttempt) {
@@ -279,6 +270,7 @@ export function InterviewSessionWorkspace() {
   const [manualDifficulty, setManualDifficulty] =
     useState<InterviewDifficulty>("medium");
   const [manualQuestion, setManualQuestion] = useState("");
+  const [manualStarterCode, setManualStarterCode] = useState("");
   const [manualModelAnswer, setManualModelAnswer] = useState("");
   const [manualOptions, setManualOptions] = useState<string[]>(["", ""]);
   const [manualCorrectOptionIndex, setManualCorrectOptionIndex] = useState<
@@ -288,7 +280,9 @@ export function InterviewSessionWorkspace() {
   const [manualError, setManualError] = useState<SafeError | null>(null);
 
   const [generationCount, setGenerationCount] = useState(10);
-  const [generationCategories, setGenerationCategories] = useState("");
+  const [generationCategories, setGenerationCategories] = useState<string[]>(
+    [],
+  );
   const [generationQuestionTypes, setGenerationQuestionTypes] = useState<
     InterviewQuestionType[]
   >(["short-answer"]);
@@ -306,6 +300,7 @@ export function InterviewSessionWorkspace() {
   const routeSequence = useRef(0);
   const routeEpoch = useRef(0);
   const routeIdentity = useRef("");
+  const generationCategoriesInitializedForSession = useRef("");
   const questionSequence = useRef(0);
   const questionDetailSequence = useRef(0);
   const attemptSequence = useRef(0);
@@ -499,6 +494,7 @@ export function InterviewSessionWorkspace() {
       pinOperation.current = null;
       providerOperation.current = null;
       providerErrorScope.current = null;
+      generationCategoriesInitializedForSession.current = "";
     }
     const sequence = ++routeSequence.current;
     const controller = new AbortController();
@@ -527,13 +523,14 @@ export function InterviewSessionWorkspace() {
       setManualCategory("");
       setManualDifficulty("medium");
       setManualQuestion("");
+      setManualStarterCode("");
       setManualModelAnswer("");
       setManualOptions(["", ""]);
       setManualCorrectOptionIndex(null);
       setManualBusy(false);
       setManualError(null);
       setGenerationCount(10);
-      setGenerationCategories("");
+      setGenerationCategories([]);
       setGenerationQuestionTypes(["short-answer"]);
       setGenerationTypeCounts(undefined);
       setProviderBusy(false);
@@ -554,7 +551,17 @@ export function InterviewSessionWorkspace() {
 
     void fetchInterviewSession(sessionId, controller.signal)
       .then((result) => {
-        if (sequence === routeSequence.current) setSession(result);
+        if (sequence !== routeSequence.current) return;
+        setSession(result);
+        if (generationCategoriesInitializedForSession.current !== result.id) {
+          setGenerationCategories(
+            canonicalInterviewCategorySuggestions(
+              result.focusTopics,
+              result.skillGaps,
+            ),
+          );
+          generationCategoriesInitializedForSession.current = result.id;
+        }
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted && sequence === routeSequence.current) {
@@ -1165,6 +1172,10 @@ export function InterviewSessionWorkspace() {
               category: manualCategory.trim(),
               difficulty: manualDifficulty,
               question: manualQuestion.trim(),
+              ...(manualQuestionType === "coding" &&
+              manualStarterCode.trim()
+                ? { starterCode: manualStarterCode.trim() }
+                : {}),
               ...(manualModelAnswer.trim()
                 ? { modelAnswer: manualModelAnswer.trim() }
                 : {}),
@@ -1175,6 +1186,7 @@ export function InterviewSessionWorkspace() {
       setManualQuestionType("short-answer");
       setManualCategory("");
       setManualQuestion("");
+      setManualStarterCode("");
       setManualModelAnswer("");
       resetManualMcqDraft();
       setManualOpen(false);
@@ -1224,7 +1236,7 @@ export function InterviewSessionWorkspace() {
         {
           requestId,
           count: generationCount,
-          categories: parseList(generationCategories),
+          categories: generationCategories,
           questionTypes: generationQuestionTypes,
           ...(generationTypeCounts === undefined
             ? {}
@@ -1613,6 +1625,11 @@ export function InterviewSessionWorkspace() {
   const editable = session.status === "active";
   const canWriteAttempt =
     editable && session.mode === "written-practice";
+  const generationContextCategories =
+    canonicalInterviewCategorySuggestions(
+      session.focusTopics,
+      session.skillGaps,
+    );
   const generationStatusPending =
     activeJob?.scope === "generation" &&
     (activeJob.job.status === "queued" ||
@@ -1782,17 +1799,14 @@ export function InterviewSessionWorkspace() {
                 )}
               </select>
             </label>
-            <label>
-              Categories
-              <input
-                value={generationCategories}
-                maxLength={6_000}
-                placeholder="System design, behavioral"
-                onChange={(event) =>
-                  setGenerationCategories(event.target.value)
-                }
+            <div className="interview-span-two">
+              <InterviewCategorySelector
+                contextCategories={generationContextCategories}
+                selected={generationCategories}
+                disabled={providerBusy || generationStatusPending}
+                onSelectedChange={setGenerationCategories}
               />
-            </label>
+            </div>
             <div className="interview-span-two">
               <InterviewQuestionTypeControls
                 count={generationCount}
@@ -1842,6 +1856,9 @@ export function InterviewSessionWorkspace() {
                     const next = event.target.value as InterviewQuestionType;
                     setManualQuestionType(next);
                     setManualError(null);
+                    if (next !== "coding") {
+                      setManualStarterCode("");
+                    }
                     if (next !== "multiple-choice") {
                       resetManualMcqDraft();
                     }
@@ -1965,17 +1982,34 @@ export function InterviewSessionWorkspace() {
                   </div>
                 </fieldset>
               ) : (
-                <label className="interview-span-two">
-                  Model answer <span>(optional)</span>
-                  <textarea
-                    rows={5}
-                    maxLength={12_000}
-                    value={manualModelAnswer}
-                    onChange={(event) =>
-                      setManualModelAnswer(event.target.value)
-                    }
-                  />
-                </label>
+                <>
+                  {manualQuestionType === "coding" ? (
+                    <label className="interview-span-two">
+                      Starter code <span>(optional)</span>
+                      <textarea
+                        rows={7}
+                        maxLength={12_000}
+                        value={manualStarterCode}
+                        spellCheck={false}
+                        placeholder="Add imports, a function signature, or TODO scaffold without the completed solution…"
+                        onChange={(event) =>
+                          setManualStarterCode(event.target.value)
+                        }
+                      />
+                    </label>
+                  ) : null}
+                  <label className="interview-span-two">
+                    Model answer <span>(optional)</span>
+                    <textarea
+                      rows={5}
+                      maxLength={12_000}
+                      value={manualModelAnswer}
+                      onChange={(event) =>
+                        setManualModelAnswer(event.target.value)
+                      }
+                    />
+                  </label>
+                </>
               )}
               {manualError ? <SafeErrorMessage error={manualError} /> : null}
               <button
