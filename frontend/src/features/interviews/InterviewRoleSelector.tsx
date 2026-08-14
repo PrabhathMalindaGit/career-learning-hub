@@ -84,6 +84,7 @@ export function InterviewRoleSelector({
           className="field-control"
           type="search"
           role="combobox"
+          required
           aria-label="Target role"
           aria-autocomplete="list"
           aria-controls="interview-role-options"
