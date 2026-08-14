@@ -47,9 +47,7 @@ describe("InterviewQuestionTypeControls", () => {
       />,
     );
 
-    expect(
-      QUESTION_TYPE_OPTIONS.map((option) => option.label),
-    ).toEqual([
+    expect(QUESTION_TYPE_OPTIONS.map((option) => option.label)).toEqual([
       "Multiple Choice",
       "Short Answer",
       "Coding",
@@ -58,7 +56,9 @@ describe("InterviewQuestionTypeControls", () => {
       "Technical Explanation",
     ]);
     for (const option of QUESTION_TYPE_OPTIONS) {
-      expect(screen.getByRole("checkbox", { name: option.label })).not.toBeNull();
+      expect(
+        screen.getByRole("checkbox", { name: option.label }),
+      ).not.toBeNull();
     }
   });
 
@@ -95,7 +95,9 @@ describe("InterviewQuestionTypeControls", () => {
     ).toBeNull();
     expect(screen.queryByRole("spinbutton")).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Change question count" }));
+    await user.click(
+      screen.getByRole("button", { name: "Change question count" }),
+    );
     expect(
       screen.getByText("All 5 questions will be Short Answer."),
     ).not.toBeNull();
@@ -154,7 +156,9 @@ describe("InterviewQuestionTypeControls", () => {
     ).not.toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Set exact counts" }));
-    expect(screen.getByLabelText("Distribution mode").textContent).toBe("explicit");
+    expect(screen.getByLabelText("Distribution mode").textContent).toBe(
+      "explicit",
+    );
     expect(
       screen.getByRole("spinbutton", { name: "Short Answer count" }),
     ).not.toBeNull();
@@ -163,8 +167,12 @@ describe("InterviewQuestionTypeControls", () => {
     ).not.toBeNull();
 
     await user.click(coding);
-    expect(screen.getByLabelText("Selected order").textContent).toBe("short-answer");
-    expect(screen.getByLabelText("Distribution mode").textContent).toBe("implicit");
+    expect(screen.getByLabelText("Selected order").textContent).toBe(
+      "short-answer",
+    );
+    expect(screen.getByLabelText("Distribution mode").textContent).toBe(
+      "implicit",
+    );
     expect(
       screen.getByText("All 4 questions will be Short Answer."),
     ).not.toBeNull();
@@ -177,7 +185,7 @@ describe("InterviewQuestionTypeControls", () => {
     ).toBeNull();
   });
 
-  it("shows selected count inputs and a visible mismatch after Question count changes", async () => {
+  it("resets exact counts to balanced when Question count changes", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
@@ -191,17 +199,60 @@ describe("InterviewQuestionTypeControls", () => {
     expect(
       within(controls).getByRole("spinbutton", { name: "Coding count" }),
     ).not.toBeNull();
-    expect(
-      within(controls).queryByRole("spinbutton", { name: "Behavioral count" }),
-    ).toBeNull();
     expect(screen.getByText("Exact counts · 4 total")).not.toBeNull();
-    expect(screen.queryByText("Exact counts total 4.")).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Change question count" }));
-    expect(screen.getByText("Exact counts · 4 of 5")).not.toBeNull();
-    expect(screen.getByRole("alert").textContent).toMatch(
-      /Exact counts total 4; they must equal Question count 5/i,
+    await user.click(
+      screen.getByRole("button", { name: "Change question count" }),
     );
+
+    expect(screen.getByLabelText("Distribution mode").textContent).toBe(
+      "implicit",
+    );
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+    expect(screen.getByText("Balanced automatically")).not.toBeNull();
+    expect(screen.queryByText(/Exact counts · 4 of 5/)).toBeNull();
+    expect(
+      screen.queryByText(/must equal Question count 5/i),
+    ).toBeNull();
+    expect(
+      screen.getByText(
+        "Question count changed. Distribution reset to balanced.",
+      ),
+    ).not.toBeNull();
+    expect(screen.getByLabelText("Selected order").textContent).toBe(
+      "short-answer,coding",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Set exact counts" }));
+    expect(
+      screen.getByRole("spinbutton", { name: "Short Answer count" }),
+    ).toHaveValue(3);
+    expect(
+      screen.getByRole("spinbutton", { name: "Coding count" }),
+    ).toHaveValue(2);
+    expect(screen.getByText("Exact counts · 5 total")).not.toBeNull();
+    expect(
+      screen.queryByText(
+        "Question count changed. Distribution reset to balanced.",
+      ),
+    ).toBeNull();
+  });
+
+  it("does not announce a distribution reset when count changes in balanced mode", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await user.click(screen.getByRole("checkbox", { name: "Coding" }));
+    await user.click(
+      screen.getByRole("button", { name: "Change question count" }),
+    );
+
+    expect(screen.getByText("Balanced automatically")).not.toBeNull();
+    expect(
+      screen.queryByText(
+        "Question count changed. Distribution reset to balanced.",
+      ),
+    ).toBeNull();
   });
 
   it("updates exact counts with native number inputs and can return to balanced mode", async () => {
@@ -210,7 +261,9 @@ describe("InterviewQuestionTypeControls", () => {
 
     await user.click(screen.getByRole("checkbox", { name: "Coding" }));
     await user.click(screen.getByRole("button", { name: "Set exact counts" }));
-    const shortCount = screen.getByRole("spinbutton", { name: "Short Answer count" });
+    const shortCount = screen.getByRole("spinbutton", {
+      name: "Short Answer count",
+    });
     await user.clear(shortCount);
     await user.type(shortCount, "3");
     expect(screen.getByText("Exact counts · 5 of 4")).not.toBeNull();
