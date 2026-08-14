@@ -1,0 +1,188 @@
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+  ),
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+  ) {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) minmax(140px, 1fr) auto;
+  grid-template-areas:
+    "title progress state"
+    "phase progress actions";
+  gap: 6px 14px;
+  align-items: center;
+  padding: 12px 14px;
+  border-color: #c7dacf;
+  color: #274b36;
+  background:
+    linear-gradient(110deg, rgba(231, 242, 235, 0.74), transparent 72%),
+    #fbfdfb;
+  box-shadow: 0 8px 20px rgba(26, 68, 43, 0.055);
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+  ) > strong,
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+  ) > strong {
+  grid-area: title;
+  color: #1f5c39;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+  ) > span,
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+  ) > span {
+  grid-area: state;
+  justify-self: end;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #2f6747;
+  background: #e7f1ea;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+  ) > progress,
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+  ) > progress {
+  grid-area: progress;
+  width: 100%;
+  height: 7px;
+  accent-color: #2f7d4f;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+  ) > .job-resilience-actions,
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+  ) > .job-resilience-actions {
+  display: contents;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+  ) > .job-resilience-actions > p[role="status"],
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+  ) > .job-resilience-actions > p[role="status"] {
+  grid-area: phase;
+  margin: 0;
+  color: #50675a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+  ) > .job-resilience-actions > .job-resilience-actions__buttons,
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+  ) > .job-resilience-actions > .job-resilience-actions__buttons {
+  grid-area: actions;
+  justify-self: end;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+  ) .job-resilience-actions__buttons button,
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+  ) .job-resilience-actions__buttons button {
+  border-color: #aec9b7;
+  color: #285f3e;
+  background: #fff;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+  ) {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  padding: 10px 14px;
+  border-color: #b9d7c3;
+  color: #1d643d;
+  background: #edf7f0;
+  box-shadow: none;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+  ) > strong,
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+  ) > span,
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+  ) > progress {
+  display: none;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+  ) > .job-resilience-actions {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+  ) > .job-resilience-actions > p[role="status"] {
+  margin: 0;
+  color: #1d643d;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.interview-job-status:has(
+    .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="completed"]
+  ) .job-resilience-actions__buttons:empty {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .interview-job-status:has(
+      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    ),
+  .interview-job-status:has(
+      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    ) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "title state"
+      "phase phase"
+      "progress progress"
+      "actions actions";
+  }
+
+  .interview-job-status:has(
+      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    ) > .job-resilience-actions > .job-resilience-actions__buttons,
+  .interview-job-status:has(
+      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    ) > .job-resilience-actions > .job-resilience-actions__buttons {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .interview-job-status:has(
+      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="queued"]
+    ) .job-resilience-actions__buttons button,
+  .interview-job-status:has(
+      .job-resilience-actions[data-job-type="interview.questions.generate"][data-job-status="processing"]
+    ) .job-resilience-actions__buttons button {
+    width: 100%;
+  }
+}
