@@ -2,11 +2,23 @@
 
 ## Status
 
-`COMPLETED / FINAL ACCEPTANCE PASSED / READY FOR MAIN INTEGRATION`
+`COMPLETED / MERGED TO MAIN / CLOSED`
 
-Phase 19B is functionally complete and accepted on the phase integration branch `phase-19b-interview-coach-refinements`. Task 8 final acceptance was completed, user-approved, and merged into the phase branch through PR #14. This closeout records the completed scope, final evidence, preserved security/architecture boundaries, and release-control state before the separate Phase 19B-to-`main` integration pull request.
+Phase 19B is functionally complete and accepted. Task 8 final acceptance was completed, user-approved, and merged into the phase branch through PR #14. This closeout originally recorded the completed scope, final evidence, preserved security/architecture boundaries, and release-control state before the separate Phase 19B-to-`main` integration pull request. It now also records the completed post-main integration state after PR #16.
 
-Phase 19B is **not yet merged to `main`**. This closeout authorizes no deployment and no task-branch deletion.
+## Post-main integration state
+
+- Status: `COMPLETED / MERGED TO MAIN / CLOSED`.
+- Phase 19B integration PR: `#16 — MERGED / CLOSED`.
+- Merged Phase 19B branch head: `ea4acb059ba18f0db9d55baff7ed183b0b14a286`.
+- Main merge commit: `469c27f35011fb9b51e7d501d9f759fae757efb5`.
+- Phase 19B main-integration review: `PASS`.
+- Manual deployment: `NOT AUTHORIZED / NOT PERFORMED BY THIS INTEGRATION WORKFLOW`.
+- Branch deletion: `NOT AUTHORIZED / NOT PERFORMED`.
+- Phase 19C and later phases: `PLANNED / INACTIVE`.
+- Next governance gate: `SEPARATELY REVIEW AND AUTHORIZE THE NEXT PHASE`.
+
+The pre-main closeout material below remains preserved as historical acceptance evidence and should be read in its original temporal context. At the time of that pre-main closeout, Phase 19B had not yet been merged to `main`; PR #16 later completed that integration.
 
 ## Identity
 
@@ -16,9 +28,12 @@ Phase 19B is **not yet merged to `main`**. This closeout authorizes no deploymen
 - Task 8 PR: `#14 — MERGED / CLOSED`
 - Task 8 final accepted head: `7c740e19db3fb834f0cbde609c2c503f8f22de66`
 - Task 8 merge commit into Phase 19B: `5da65534e1f07f7905310d70272af068c71c4d42`
-- Main integration: `NOT YET PERFORMED`
-- Deployment: `NOT AUTHORIZED BY THIS CLOSEOUT`
-- Task-branch deletion: `NOT AUTHORIZED BY THIS CLOSEOUT`
+- Phase 19B integration PR: `#16 — MERGED / CLOSED`
+- Final Phase 19B branch head merged to `main`: `ea4acb059ba18f0db9d55baff7ed183b0b14a286`
+- Main integration: `COMPLETE`
+- Main merge commit: `469c27f35011fb9b51e7d501d9f759fae757efb5`
+- Manual deployment: `NOT AUTHORIZED / NOT PERFORMED BY THIS INTEGRATION WORKFLOW`
+- Task-branch deletion: `NOT AUTHORIZED / NOT PERFORMED`
 
 The executable Task 8 acceptance checkpoint is intentionally distinguished from later documentation-only closeout commits. The full backend/frontend regression, typechecks, and production builds were run before the final Task 8 documentation-only corrections; final diff/tree checks were then rerun at the final accepted Task 8 head.
 
@@ -151,12 +166,13 @@ The user separately authorized the merge. PR #14 was merged only into `phase-19b
 
 ## Release control
 
-- Phase 19B functional and acceptance work is `COMPLETED` on `phase-19b-interview-coach-refinements`.
-- Task 8 is `MERGED / CLOSED` on the Phase 19B branch.
-- Phase 19B is `READY FOR MAIN INTEGRATION` after this governance closeout is merged into the phase branch.
-- Phase 19B is **not yet merged to `main`**.
-- No deployment is authorized or performed by this closeout.
-- No task branch is deleted by this closeout.
-- Phase 19C and later phases remain inactive.
-- The next governance action is a separate PR from `phase-19b-interview-coach-refinements` to `main`.
-- That phase-level PR requires its own review and separate explicit merge approval.
+- Phase 19B: `COMPLETED / MERGED TO MAIN / CLOSED`.
+- Task 8: `MERGED / CLOSED` on the Phase 19B branch.
+- Phase 19B integration PR: `#16 — MERGED / CLOSED`.
+- Final Phase 19B branch head merged to `main`: `ea4acb059ba18f0db9d55baff7ed183b0b14a286`.
+- Main merge commit: `469c27f35011fb9b51e7d501d9f759fae757efb5`.
+- Phase 19B main-integration review: `PASS`.
+- Manual deployment: `NOT AUTHORIZED / NOT PERFORMED BY THIS INTEGRATION WORKFLOW`.
+- Branch deletion: `NOT AUTHORIZED / NOT PERFORMED`.
+- Phase 19C and later phases remain `PLANNED / INACTIVE`.
+- Next governance action: `SEPARATELY REVIEW AND AUTHORIZE THE NEXT PHASE`.
