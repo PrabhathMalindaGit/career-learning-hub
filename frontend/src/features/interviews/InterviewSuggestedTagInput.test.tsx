@@ -6,6 +6,7 @@ import { InterviewSuggestedTagInput } from "./InterviewSuggestedTagInput";
 
 function Harness() {
   const [values, setValues] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([
     "REST APIs",
     "Databases",
@@ -25,13 +26,16 @@ function Harness() {
         label="Focus topics · Optional"
         suggestions={suggestions}
         values={values}
+        draft={draft}
         placeholder="Add custom topic…"
         helpText="Choose suggestions or add your own."
         error={error}
         onValuesChange={setValues}
+        onDraftChange={setDraft}
         onError={setError}
       />
       <output aria-label="Selected values">{values.join("|")}</output>
+      <output aria-label="Current draft">{draft}</output>
     </form>
   );
 }
@@ -69,8 +73,10 @@ describe("InterviewSuggestedTagInput", () => {
     const custom = screen.getByRole("button", { name: "GraphQL" });
     expect(custom.getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByLabelText("Selected values").textContent).toBe("GraphQL");
+    expect(screen.getByLabelText("Current draft").textContent).toBe("");
 
     await user.type(input, "Caching");
+    expect(screen.getByLabelText("Current draft").textContent).toBe("Caching");
     await user.click(screen.getByRole("button", { name: "Add" }));
     expect(screen.getByLabelText("Selected values").textContent).toBe(
       "GraphQL|Caching",
@@ -120,9 +126,9 @@ describe("InterviewSuggestedTagInput", () => {
     await user.type(input, "x".repeat(121));
     await user.keyboard("{Enter}");
 
-    expect(
-      screen.getByRole("alert").textContent,
-    ).toContain("Each item must be 120 characters or fewer.");
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Each item must be 120 characters or fewer.",
+    );
     expect(screen.getByLabelText("Selected values").textContent).toBe("");
   });
 
@@ -134,10 +140,12 @@ describe("InterviewSuggestedTagInput", () => {
         label="Skill gaps · Optional"
         suggestions={["System Design"]}
         values={[]}
+        draft=""
         disabled
         placeholder="Add custom skill gap…"
         helpText="Choose suggestions or add your own."
         onValuesChange={onValuesChange}
+        onDraftChange={vi.fn()}
         onError={vi.fn()}
       />,
     );
