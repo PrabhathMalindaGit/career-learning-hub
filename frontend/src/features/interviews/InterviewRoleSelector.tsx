@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
-import { INTERVIEW_ROLE_OPTIONS } from "./interviewRoleGuidance";
 import "./interviewCreateGuidance.css";
 
 export interface InterviewRoleSelectorProps {
+  roleOptions: readonly string[];
   value: string;
   disabled?: boolean;
   error?: string;
@@ -14,6 +14,7 @@ function roleKey(value: string): string {
 }
 
 export function InterviewRoleSelector({
+  roleOptions,
   value,
   disabled = false,
   error,
@@ -30,13 +31,13 @@ export function InterviewRoleSelector({
 
   const filtered = useMemo(() => {
     if (!normalizedQuery) return [];
-    return INTERVIEW_ROLE_OPTIONS.filter((option) =>
-      roleKey(option.label).includes(normalizedQuery),
+    return roleOptions.filter((option) =>
+      roleKey(option).includes(normalizedQuery),
     );
-  }, [normalizedQuery]);
+  }, [normalizedQuery, roleOptions]);
 
-  const exactBuiltIn = INTERVIEW_ROLE_OPTIONS.find(
-    (option) => roleKey(option.label) === normalizedQuery,
+  const exactBuiltIn = roleOptions.find(
+    (option) => roleKey(option) === normalizedQuery,
   );
   const showResults = normalizedQuery.length > 0 && filtered.length > 0;
   const showCustomAction = normalizedQuery.length > 0 && !exactBuiltIn;
@@ -49,7 +50,7 @@ export function InterviewRoleSelector({
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter" || filtered.length !== 1) return;
     event.preventDefault();
-    adopt(filtered[0]!.label);
+    adopt(filtered[0]!);
   }
 
   return (
@@ -59,23 +60,29 @@ export function InterviewRoleSelector({
         {value ? <small>Selected: {value}</small> : <small>Choose one role</small>}
       </div>
 
-      <div
-        className="interview-role-selector__shortcuts"
-        aria-label="Common target roles"
-      >
-        {INTERVIEW_ROLE_OPTIONS.map((option) => (
-          <button
-            key={option.family}
-            type="button"
-            className="interview-role-chip"
-            aria-pressed={selectedKey === roleKey(option.label)}
-            disabled={disabled}
-            onClick={() => adopt(option.label)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      {roleOptions.length > 0 ? (
+        <div
+          className="interview-role-selector__shortcuts"
+          aria-label="Suggested roles"
+        >
+          {roleOptions.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className="interview-role-chip"
+              aria-pressed={selectedKey === roleKey(option)}
+              disabled={disabled}
+              onClick={() => adopt(option)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <small className="interview-role-selector__empty">
+          Enter the role you want to practise for.
+        </small>
+      )}
 
       <div className="interview-role-selector__search">
         <label htmlFor="interview-target-role">Search or enter another role</label>
@@ -108,14 +115,14 @@ export function InterviewRoleSelector({
           >
             {filtered.map((option) => (
               <button
-                key={option.family}
+                key={option}
                 type="button"
                 role="option"
-                aria-selected={selectedKey === roleKey(option.label)}
+                aria-selected={selectedKey === roleKey(option)}
                 disabled={disabled}
-                onClick={() => adopt(option.label)}
+                onClick={() => adopt(option)}
               >
-                {option.label}
+                {option}
               </button>
             ))}
           </div>
