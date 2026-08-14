@@ -3,6 +3,7 @@ import { ApiError } from "../../api/apiClient";
 import { Dialog } from "../../components/Dialog";
 import { deleteResume } from "./resumeApi";
 import type { ResumeRecord } from "./types";
+import "./resumeDeletion.css";
 
 type SafeError = {
   message: string;
