@@ -63,7 +63,10 @@ A Resume owns or is referenced by the following current records:
 - `ResumeAnalysis` — `resumeId` and `resumeVersionId`;
 - Candidate Photo Asset — referenced by `Resume.candidatePhotoAssetId`, with `metadata.resumeId` on the Asset;
 - imported Resume source Assets — referenced by `ResumeVersion.sourceAssetId` and promoted with Resume metadata after confirmed import;
-- Resume analysis jobs — job payload includes `resumeId` and optional version context.
+- Resume analysis jobs — `resume.analyze` payload includes `resumeId` and optional version context;
+- confirmed Resume import jobs — after adoption, the terminal `resume.import-pdf` result records the adopted `resumeId`/version identity.
+
+An in-flight import job that has not yet been confirmed does not yet own an existing Resume and therefore is not treated as an active job of a Resume that is being deleted.
 
 The existing Asset service prevents deleting an attached active Resume Photo directly, which means whole-Resume deletion must perform a deliberate cascade rather than calling the public photo-delete route blindly.
 
@@ -171,7 +174,7 @@ Requirements:
 - existing Resume ID validation;
 - owner-scoped lookup; another user's Resume must remain indistinguishable from an absent resource under existing ownership conventions;
 - no title is trusted from the client for authorization or cascade selection;
-- successful deletion returns `204 No Content` unless existing API response conventions make a small `200` success envelope materially safer for frontend handling. The implementation plan must choose one convention and test it consistently;
+- successful canonical deletion returns `204 No Content`; the existing frontend API client already handles 204 responses;
 - repeated deletion after canonical removal returns the existing not-found behavior rather than silently targeting another record.
 
 ### 6.2 Interview
@@ -180,13 +183,13 @@ Add:
 
 `DELETE /api/v1/interview-sessions/:sessionId`
 
-Requirements mirror Resume:
+Requirements:
 
-- authenticated;
+- authenticated request;
 - validated params;
-- `requireOwnedInterviewSession` or equivalent owner-scoped service check;
-- deterministic successful deletion response;
+- `requireOwnedInterviewSession` or an equivalent owner-scoped service check;
 - no client-supplied cascade IDs;
+- successful canonical deletion returns `204 No Content`;
 - repeated/foreign deletion receives established not-found behavior.
 
 ### 6.3 Learning
@@ -204,13 +207,15 @@ The cascade must remove:
 3. all owned `ResumeAnalysis` records with that `resumeId`;
 4. the current Candidate Photo Asset referenced by `candidatePhotoAssetId`, if present and owned;
 5. owned imported source Assets referenced by the deleted Resume's `ResumeVersion.sourceAssetId` values;
-6. non-active resource-scoped JobRecords whose payload identifies this Resume, where those jobs are part of current Resume analysis/import lifecycle and can be matched without broad payload guessing.
+6. terminal/cancelled `resume.analyze` JobRecords whose typed payload contains this `resumeId`;
+7. terminal confirmed `resume.import-pdf` JobRecords whose typed adopted result identifies this `resumeId`.
 
 The cascade must not delete:
 
 - another user's record or Asset;
 - Assets merely because they share a generic purpose;
 - unrelated Resume exports/thumbnails unless a direct current Resume association is proven by repository fields/metadata during implementation;
+- unconfirmed import jobs that do not yet belong to an existing Resume;
 - historical ActivityEvents.
 
 ### 7.1 Resume asset handling
@@ -221,9 +226,10 @@ Implementation should reuse the current Asset storage/provider abstractions. Bec
 
 - never report successful Resume deletion while the canonical Resume/dependent database records still exist;
 - never use client-provided Asset IDs for cascade selection;
-- ensure any Asset record successfully included in the cascade is marked `deleted` with `deletedAt` and is no longer eligible for signed access;
-- attempt physical object removal through the existing storage provider;
-- if physical cleanup fails after canonical database deletion, retain enough deleted Asset metadata for diagnosis/cleanup and log only sanitized identifiers/error information. Do not restore the deleted Resume merely to compensate for an external storage failure.
+- collect only owned server-derived Asset identity/provider/storage metadata needed for cleanup;
+- ensure any Asset record included in the canonical database cascade is marked `deleted` with `deletedAt` and is no longer eligible for signed access;
+- after canonical database deletion, attempt physical object removal through the existing storage provider using only the previously verified server-derived storage identity;
+- if physical cleanup fails after canonical database deletion, retain enough deleted Asset metadata for diagnosis/manual cleanup and log only sanitized identifiers/error information. Do not restore the deleted Resume merely to compensate for an external storage failure.
 
 This bounded best-effort physical cleanup is acceptable for the academic MVP; a durable object-deletion retry subsystem is explicitly out of scope.
 
@@ -234,7 +240,7 @@ The Interview deletion service must remove, for the owned session:
 1. all owned `InterviewAttempt` records with the session ID;
 2. all owned `InterviewQuestion` records with the session ID;
 3. the owned `InterviewSession` record;
-4. non-active Interview JobRecords whose typed payload contains that session ID.
+4. terminal/cancelled Interview JobRecords whose typed payload contains that session ID.
 
 The operation must not modify source Resume records referenced by `sourceResumeId` or `sourceResumeVersionId`. Those are optional source references, not children of the Interview session.
 
@@ -246,18 +252,21 @@ Resume and Interview use AI jobs that can persist results back into feature reco
 
 ### Selected policy
 
-Before the destructive database cascade, query only jobs owned by the same user and directly associated with the target Resume/session through the typed job payload.
+Before the destructive database cascade, query only jobs owned by the same user and directly associated with the target resource through typed current job fields:
+
+- Resume: active `resume.analyze` jobs whose payload contains the target `resumeId`;
+- Interview: active Interview jobs whose payload contains the target `sessionId`.
 
 If any matching job is currently `queued` or `processing`:
 
 - do not partially delete the feature record;
-- return HTTP `409` with a feature-specific safe error such as `RESUME_DELETE_BLOCKED_BY_ACTIVE_JOB` or `INTERVIEW_DELETE_BLOCKED_BY_ACTIVE_JOB`;
+- return HTTP `409` with a feature-specific safe error: `RESUME_DELETE_BLOCKED_BY_ACTIVE_JOB` or `INTERVIEW_DELETE_BLOCKED_BY_ACTIVE_JOB`;
 - tell the frontend that AI work must finish or be cancelled before permanent deletion;
 - preserve the record unchanged.
 
 Why: this reuses the application's existing job lifecycle and avoids introducing deletion tombstones or a second asynchronous deletion system.
 
-After the active-job check passes, the cascade may delete terminal/cancelled matching JobRecords together with the feature's dependent database state.
+After the active-job check passes, the cascade deletes matching terminal/cancelled JobRecords as defined above. Confirmed Resume import history is matched by its typed terminal adopted result, not by broad free-form payload inspection.
 
 ### Race invariant
 
@@ -274,21 +283,23 @@ Expected transactional database scope:
 ### Resume
 
 - verify owned Resume still exists;
-- re-check/block matching active jobs as close as practical to mutation;
-- collect server-derived associated Asset IDs;
+- re-check/block matching active `resume.analyze` jobs as close as practical to mutation;
+- collect server-derived associated Asset IDs and cleanup metadata;
 - delete ResumeAnalysis records;
 - delete ResumeVersion records;
-- delete terminal/cancelled matching JobRecords;
+- delete matching terminal/cancelled Resume JobRecords;
 - delete the Resume;
-- mark directly associated Asset records deleted/inaccessible as appropriate to the chosen storage-cleanup ordering.
+- mark directly associated Asset records deleted/inaccessible.
+
+After commit, perform bounded best-effort physical cleanup of the previously verified Asset storage objects.
 
 ### Interview
 
 - verify owned InterviewSession still exists;
-- re-check/block matching active jobs;
+- re-check/block matching active Interview jobs;
 - delete InterviewAttempts;
 - delete InterviewQuestions;
-- delete terminal/cancelled matching Interview JobRecords;
+- delete matching terminal/cancelled Interview JobRecords;
 - delete InterviewSession.
 
 If the Mongo transaction fails, the API must fail without claiming successful canonical deletion.
@@ -317,12 +328,12 @@ Required user-facing cases:
 
 - `404`/established absent-resource behavior: record does not exist or is not owned;
 - `409` active-job block: wait for or cancel current AI work before deleting;
-- storage cleanup warning/failure must follow the final implementation ordering without exposing storage details;
-- network/5xx failure: keep the dialog/error surface actionable and do not optimistically claim deletion unless canonical success was received;
+- network/5xx failure before canonical success: keep the dialog/error surface actionable and do not optimistically claim deletion;
+- physical Asset cleanup failure after canonical Resume deletion: the Resume remains deleted, the affected Asset record remains marked deleted/inaccessible, and only sanitized cleanup diagnostics are logged;
 - duplicate clicks: one request at a time from each UI control;
 - after uncertain network failure, reloading the canonical collection is the authority for whether the record still exists.
 
-No automatic destructive retry loop is authorized.
+No automatic destructive retry loop and no durable storage-cleanup retry subsystem are authorized.
 
 ## 13. Frontend implementation boundaries
 
@@ -353,8 +364,9 @@ Cover at minimum:
 - directly associated Candidate Photo/import Assets become deleted/inaccessible and physical delete is invoked through the storage abstraction where testable;
 - unrelated user/Resume/assets remain untouched;
 - foreign/missing Resume cannot be deleted;
-- active related queued/processing job returns `409` and no partial cascade occurs;
-- terminal/cancelled matching jobs are removed as specified;
+- active related queued/processing `resume.analyze` job returns `409` and no partial cascade occurs;
+- matching terminal/cancelled analysis jobs and confirmed adopted import job history are removed as specified;
+- unconfirmed import job not associated with the Resume is untouched;
 - transaction failure does not report success;
 - no deleted record can be resurrected by the tested worker/persistence path.
 
