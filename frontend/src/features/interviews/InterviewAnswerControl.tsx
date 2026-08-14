@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { InterviewQuestionDetail } from "./types";
 import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
 import { InterviewStructuredAnswerFields } from "./InterviewStructuredAnswerFields";
@@ -29,12 +30,10 @@ type AnswerControlError = {
 export interface InterviewAnswerControlProps {
   question: InterviewQuestionDetail;
   textValue: string;
-  structuredValue: StructuredAnswerDraft;
   selectedOptionId: string;
   disabled?: boolean;
   error?: AnswerControlError | null;
   onTextChange(value: string): void;
-  onStructuredChange(value: StructuredAnswerDraft): void;
   onSelectedOptionChange(optionId: string): void;
   onSubmit(): void;
 }
@@ -59,21 +58,21 @@ function rowsFor(question: InterviewQuestionDetail): number {
 export function InterviewAnswerControl({
   question,
   textValue,
-  structuredValue,
   selectedOptionId,
   disabled = false,
   error,
   onTextChange,
-  onStructuredChange,
   onSelectedOptionChange,
   onSubmit,
 }: InterviewAnswerControlProps) {
+  const [structuredDraft, setStructuredDraft] =
+    useState<StructuredAnswerDraft>({});
   const isMultipleChoice = question.questionType === "multiple-choice";
   const isCoding = question.questionType === "coding";
   const isShortAnswer = question.questionType === "short-answer";
   const isStructured = isStructuredInterviewQuestionType(question.questionType);
   const structuredText = isStructured
-    ? serializeStructuredAnswer(question.questionType, structuredValue)
+    ? serializeStructuredAnswer(question.questionType, structuredDraft)
     : "";
   const trimmedLength = textValue.trim().length;
   const textInvalid = trimmedLength < 1 || trimmedLength > ANSWER_MAX_LENGTH;
@@ -101,6 +100,16 @@ export function InterviewAnswerControl({
   ].join(" ");
   const starterCode = isCoding ? question.starterCode : undefined;
   const insertStarterDisabled = disabled || trimmedLength > 0;
+
+  useEffect(() => {
+    setStructuredDraft({});
+  }, [question.id, question.questionType]);
+
+  useEffect(() => {
+    if (isStructured && textValue === "" && structuredText !== "") {
+      setStructuredDraft({});
+    }
+  }, [isStructured, structuredText, textValue]);
 
   return (
     <div
@@ -141,9 +150,12 @@ export function InterviewAnswerControl({
       ) : isStructured ? (
         <InterviewStructuredAnswerFields
           questionType={question.questionType}
-          value={structuredValue}
+          value={structuredDraft}
           disabled={disabled}
-          onChange={onStructuredChange}
+          onChange={(next) => {
+            setStructuredDraft(next);
+            onTextChange(serializeStructuredAnswer(question.questionType, next));
+          }}
         />
       ) : (
         <>
