@@ -103,6 +103,24 @@ describe("InterviewRoleSelector", () => {
     );
   });
 
+  it("clears uncommitted search text when the supplied career-area roles change", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<Harness />);
+
+    const search = screen.getByRole("combobox", { name: "Target role" });
+    await user.click(screen.getByRole("button", { name: "Accountant" }));
+    await user.clear(search);
+    await user.type(search, "Solutions Architect");
+    expect((search as HTMLInputElement).value).toBe("Solutions Architect");
+    expect(screen.getByLabelText("Selected role").textContent).toBe("");
+
+    rerender(<Harness roleOptions={["Nurse", "Pharmacist"]} />);
+
+    expect((screen.getByRole("combobox", { name: "Target role" }) as HTMLInputElement).value).toBe("");
+    expect(screen.getByLabelText("Selected role").textContent).toBe("");
+    expect(screen.getByRole("button", { name: "Nurse" })).not.toBeNull();
+  });
+
   it("keeps the custom input usable when an area has no representative roles", async () => {
     const user = userEvent.setup();
     const { container } = render(<Harness roleOptions={[]} />);
