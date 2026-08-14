@@ -4,11 +4,20 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { InterviewRoleSelector } from "./InterviewRoleSelector";
 
-function Harness({ disabled = false }: { disabled?: boolean }) {
+const financeRoles = ["Accountant", "Auditor", "Financial Analyst"];
+
+function Harness({
+  disabled = false,
+  roleOptions = financeRoles,
+}: {
+  disabled?: boolean;
+  roleOptions?: readonly string[];
+}) {
   const [value, setValue] = useState("");
   return (
     <>
       <InterviewRoleSelector
+        roleOptions={roleOptions}
         value={value}
         disabled={disabled}
         onChange={setValue}
@@ -19,42 +28,33 @@ function Harness({ disabled = false }: { disabled?: boolean }) {
 }
 
 describe("InterviewRoleSelector", () => {
-  it("shows the ten approved common roles as direct choices", () => {
+  it("shows only the supplied area roles as direct choices", () => {
     render(<Harness />);
 
-    for (const label of [
-      "Software Engineer",
-      "Frontend Developer",
-      "Backend Developer",
-      "Full-Stack Developer",
-      "Mobile Developer",
-      "DevOps / Cloud Engineer",
-      "Data Engineer",
-      "ML / AI Engineer",
-      "Cybersecurity Engineer",
-      "QA / Test Engineer",
-    ]) {
+    for (const label of financeRoles) {
       expect(screen.getByRole("button", { name: label })).not.toBeNull();
     }
+    expect(
+      screen.queryByRole("button", { name: "Backend Developer" }),
+    ).toBeNull();
   });
 
-  it("filters common roles and adopts one selected role", async () => {
+  it("filters only supplied roles and adopts one selected role", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
     const search = screen.getByRole("combobox", { name: "Target role" });
-    await user.type(search, "backend");
+    await user.type(search, "aud");
 
-    const listbox = screen.getByRole("listbox", { name: "Matching roles" });
-    expect(screen.getByRole("option", { name: "Backend Developer" })).not.toBeNull();
-    expect(listbox.textContent).not.toContain("Frontend Developer");
-
-    await user.click(screen.getByRole("option", { name: "Backend Developer" }));
-    expect(screen.getByLabelText("Selected role").textContent).toBe(
-      "Backend Developer",
-    );
+    expect(screen.getByRole("option", { name: "Auditor" })).not.toBeNull();
     expect(
-      screen.getByRole("button", { name: "Backend Developer" }).getAttribute(
+      screen.queryByRole("option", { name: "Backend Developer" }),
+    ).toBeNull();
+
+    await user.click(screen.getByRole("option", { name: "Auditor" }));
+    expect(screen.getByLabelText("Selected role").textContent).toBe("Auditor");
+    expect(
+      screen.getByRole("button", { name: "Auditor" }).getAttribute(
         "aria-pressed",
       ),
     ).toBe("true");
@@ -76,22 +76,39 @@ describe("InterviewRoleSelector", () => {
     );
   });
 
-  it("uses Enter for a single filtered built-in match but not custom text", async () => {
+  it("uses Enter for a single area-scoped match but not custom text", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
     const search = screen.getByRole("combobox", { name: "Target role" });
-    await user.type(search, "backend");
+    await user.type(search, "accountant");
     await user.keyboard("{Enter}");
     expect(screen.getByLabelText("Selected role").textContent).toBe(
-      "Backend Developer",
+      "Accountant",
     );
 
     await user.clear(search);
     await user.type(search, "Solutions Architect");
     await user.keyboard("{Enter}");
     expect(screen.getByLabelText("Selected role").textContent).toBe(
-      "Backend Developer",
+      "Accountant",
+    );
+  });
+
+  it("keeps the custom input usable when an area has no representative roles", async () => {
+    const user = userEvent.setup();
+    render(<Harness roleOptions={[]} />);
+
+    expect(screen.queryByLabelText("Suggested roles")).toBeNull();
+    expect(screen.getByText(/enter the role you want to practise for/i)).not.toBeNull();
+
+    const search = screen.getByRole("combobox", { name: "Target role" });
+    await user.type(search, "Marine Surveyor");
+    await user.click(
+      screen.getByRole("button", { name: "Use “Marine Surveyor”" }),
+    );
+    expect(screen.getByLabelText("Selected role").textContent).toBe(
+      "Marine Surveyor",
     );
   });
 
@@ -104,20 +121,25 @@ describe("InterviewRoleSelector", () => {
     expect(search.getAttribute("aria-controls")).toBe("interview-role-options");
     expect(search.getAttribute("aria-expanded")).toBe("false");
 
-    await user.click(screen.getByRole("button", { name: "Frontend Developer" }));
+    await user.click(screen.getByRole("button", { name: "Accountant" }));
     expect(screen.getByLabelText("Selected role").textContent).toBe(
-      "Frontend Developer",
+      "Accountant",
     );
-    await user.click(screen.getByRole("button", { name: "Data Engineer" }));
+    await user.click(screen.getByRole("button", { name: "Financial Analyst" }));
     expect(screen.getByLabelText("Selected role").textContent).toBe(
-      "Data Engineer",
+      "Financial Analyst",
     );
   });
 
   it("disables all adoption controls when disabled", () => {
     const onChange = vi.fn();
     render(
-      <InterviewRoleSelector value="" disabled onChange={onChange} />,
+      <InterviewRoleSelector
+        roleOptions={financeRoles}
+        value=""
+        disabled
+        onChange={onChange}
+      />,
     );
 
     expect(
@@ -125,7 +147,7 @@ describe("InterviewRoleSelector", () => {
         .disabled,
     ).toBe(true);
     expect(
-      (screen.getByRole("button", { name: "Backend Developer" }) as HTMLButtonElement)
+      (screen.getByRole("button", { name: "Accountant" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
     expect(onChange).not.toHaveBeenCalled();
