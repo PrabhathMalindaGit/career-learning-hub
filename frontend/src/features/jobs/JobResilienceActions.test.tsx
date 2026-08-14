@@ -108,6 +108,29 @@ describe("JobResilienceActions", () => {
     expect(screen.getByRole("status").textContent).toBe("✓ Explanation ready");
   });
 
+  it("announces a compact completed practice feedback success state", () => {
+    const view = render(
+      <JobResilienceActions
+        job={{
+          ...activeJob,
+          type: "interview.attempt.feedback",
+          status: "completed",
+          phase: "completed",
+          progress: 100,
+        }}
+      />,
+    );
+
+    const root = view.container.querySelector(".job-resilience-actions");
+    expect(root?.getAttribute("data-job-type")).toBe(
+      "interview.attempt.feedback",
+    );
+    expect(root?.getAttribute("data-job-status")).toBe("completed");
+    expect(screen.getByRole("status").textContent).toBe(
+      "✓ Practice feedback ready",
+    );
+  });
+
   it("announces action errors", async () => {
     render(
       <JobResilienceActions
