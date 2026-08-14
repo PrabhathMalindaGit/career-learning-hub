@@ -29,9 +29,11 @@ export function JobResilienceActions({
     onCancel !== undefined;
   const canRetry = job.canRetry && onRetry !== undefined;
   const statusMessage =
-    job.type === "interview.questions.generate" && job.status === "completed"
+    job.status === "completed" && job.type === "interview.questions.generate"
       ? "✓ Questions generated successfully"
-      : phaseLabel(job.phase);
+      : job.status === "completed" && job.type === "interview.question.explain"
+        ? "✓ Explanation ready"
+        : phaseLabel(job.phase);
 
   async function runAction(
     action: "cancel" | "retry",
