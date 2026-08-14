@@ -279,7 +279,7 @@ describe("InterviewSessionWorkspace typed question UX", () => {
     const user = userEvent.setup();
 
     const answer = await screen.findByRole("textbox", {
-      name: /Behavioral answer/,
+      name: /behavioral answer/i,
     });
     await user.type(answer, "  A structured example.  ");
     await user.click(screen.getByRole("button", { name: "Save attempt" }));
