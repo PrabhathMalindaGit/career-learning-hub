@@ -37,6 +37,20 @@ describe("InterviewCategorySelector", () => {
     ).toEqual(["MongoDB", "Node.js", "System Design", "API Security"]);
   });
 
+  it("does not render a nested form when used inside the generation form", () => {
+    const { container } = render(
+      <form>
+        <InterviewCategorySelector
+          contextCategories={["MongoDB"]}
+          selected={["MongoDB"]}
+          onSelectedChange={vi.fn()}
+        />
+      </form>,
+    );
+
+    expect(container.querySelector("form form")).toBeNull();
+  });
+
   it("renders supplied context selections as accessible pressed chips", () => {
     const categories = ["MongoDB", "System Design"];
     render(
