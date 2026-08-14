@@ -33,7 +33,9 @@ export function JobResilienceActions({
       ? "✓ Questions generated successfully"
       : job.status === "completed" && job.type === "interview.question.explain"
         ? "✓ Explanation ready"
-        : phaseLabel(job.phase);
+        : job.status === "completed" && job.type === "interview.attempt.feedback"
+          ? "✓ Practice feedback ready"
+          : phaseLabel(job.phase);
 
   async function runAction(
     action: "cancel" | "retry",
