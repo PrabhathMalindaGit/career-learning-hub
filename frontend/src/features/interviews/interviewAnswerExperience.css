@@ -71,25 +71,6 @@
   background: #fafcfb;
 }
 
-.interview-answer-guidance__cues {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.interview-answer-guidance__cues span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 4px 9px;
-  border: 1px solid #d1ddd5;
-  border-radius: 999px;
-  color: #3c5a48;
-  background: #fff;
-  font-size: 0.72rem;
-  font-weight: 800;
-}
-
 .interview-answer-guidance__copy {
   display: grid;
   gap: 2px;
@@ -101,11 +82,69 @@
   min-height: 138px;
 }
 
-.interview-answer-control--behavioral .interview-answer-field textarea,
-.interview-answer-control--scenario-based .interview-answer-field textarea,
-.interview-answer-control--technical-explanation
-  .interview-answer-field textarea {
-  min-height: 230px;
+.interview-structured-answer {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #d8e3dc;
+  border-radius: 14px;
+  background: #fafcfb;
+}
+
+.interview-structured-answer__guidance {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.interview-structured-answer__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.interview-structured-answer__field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: #34483c;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.interview-structured-answer__field textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 112px;
+  resize: vertical;
+  padding: 11px 12px;
+  border: 1px solid #c8d6cd;
+  border-radius: 10px;
+  color: #1f3529;
+  background: #fff;
+  line-height: 1.55;
+}
+
+.interview-structured-answer__field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(42, 103, 67, 0.1);
+  outline: none;
+}
+
+.interview-structured-answer__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.interview-structured-answer__footer [role="status"] {
+  color: var(--error-text);
+  font-weight: 700;
 }
 
 .interview-starter-code {
@@ -171,6 +210,19 @@
   .interview-answer-option {
     grid-template-columns: auto auto minmax(0, 1fr);
     padding: 11px 12px;
+  }
+
+  .interview-structured-answer {
+    padding: 12px;
+  }
+
+  .interview-structured-answer__field textarea {
+    min-height: 104px;
+  }
+
+  .interview-structured-answer__footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .interview-starter-code__heading {
