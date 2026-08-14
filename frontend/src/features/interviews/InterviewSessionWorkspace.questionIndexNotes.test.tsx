@@ -123,7 +123,7 @@ describe("InterviewSessionWorkspace question index and notes refinement", () => 
   it("shows display-only question numbers and continues from the page offset", async () => {
     vi.mocked(interviewApi.listInterviewQuestions).mockImplementation(
       async (_requestedSessionId, options) =>
-        options.page === 2
+        options?.page === 2
           ? {
               questions: [
                 questionSummary(
@@ -219,10 +219,14 @@ describe("InterviewSessionWorkspace question index and notes refinement", () => 
     );
 
     renderWorkspace();
-    expect(
-      await screen.findByRole("textbox", { name: "Private notes" }),
-    ).toHaveValue("Saved canonical note.");
-    expect(screen.getByRole("button", { name: "Hide" })).toBeEnabled();
+    const notes = (await screen.findByRole("textbox", {
+      name: "Private notes",
+    })) as HTMLTextAreaElement;
+    expect(notes.value).toBe("Saved canonical note.");
+    const hideButton = screen.getByRole("button", {
+      name: "Hide",
+    }) as HTMLButtonElement;
+    expect(hideButton.disabled).toBe(false);
 
     await userEvent.setup().click(
       screen.getByRole("button", { name: /How would you handle a retry storm/ }),
