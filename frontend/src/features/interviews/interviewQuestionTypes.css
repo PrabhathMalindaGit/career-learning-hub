@@ -308,6 +308,66 @@
   min-width: 0;
 }
 
+/* Task 7R Interview Briefing lifecycle actions. Keep status behavior in React
+   unchanged while giving the primary completion action stronger hierarchy. */
+.interview-workspace .interview-lifecycle-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.interview-workspace .interview-lifecycle-actions button {
+  min-width: 124px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid #b8cbbf;
+  border-radius: 12px;
+  color: #245e3c;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(24, 66, 40, 0.05);
+  font-weight: 800;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.interview-workspace .interview-lifecycle-actions button:hover:not(:disabled) {
+  border-color: #7da68a;
+  background: #f3f8f5;
+  box-shadow: 0 7px 16px rgba(24, 66, 40, 0.09);
+  transform: translateY(-1px);
+}
+
+.interview-workspace
+  .interview-lifecycle-actions:has(button + button)
+  button:first-child {
+  border-color: var(--accent);
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 8px 18px rgba(42, 103, 67, 0.18);
+}
+
+.interview-workspace
+  .interview-lifecycle-actions:has(button + button)
+  button:first-child:hover:not(:disabled) {
+  border-color: var(--accent-dark);
+  background: var(--accent-dark);
+  box-shadow: 0 10px 22px rgba(42, 103, 67, 0.22);
+}
+
+.interview-workspace .interview-lifecycle-actions button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.interview-workspace .interview-lifecycle-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+}
+
 @media (max-width: 1080px) {
   .interview-workspace .interview-workspace-grid {
     grid-template-columns: minmax(240px, 0.42fr) minmax(0, 1fr);
@@ -341,6 +401,10 @@
   .interview-workspace .interview-question-list {
     max-height: 520px;
   }
+
+  .interview-workspace .interview-lifecycle-actions {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 640px) {
@@ -365,6 +429,16 @@
   }
 
   .interview-type-controls__distribution .interview-secondary-button {
+    width: 100%;
+  }
+
+  .interview-workspace .interview-lifecycle-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .interview-workspace .interview-lifecycle-actions button {
     width: 100%;
   }
 }
