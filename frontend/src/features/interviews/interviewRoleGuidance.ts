@@ -1,18 +1,30 @@
-export type InterviewRoleFamily =
-  | "software-engineer"
-  | "frontend"
-  | "backend"
-  | "full-stack"
-  | "mobile"
-  | "devops-cloud"
-  | "data"
-  | "ml-ai"
-  | "cybersecurity"
-  | "qa-test";
+export type InterviewCareerAreaId =
+  | "technology-it"
+  | "business-management"
+  | "finance-accounting"
+  | "marketing-sales"
+  | "human-resources"
+  | "healthcare"
+  | "engineering"
+  | "education-training"
+  | "law-legal"
+  | "design-creative"
+  | "operations-supply-chain"
+  | "customer-service-hospitality"
+  | "science-research"
+  | "public-service-administration";
 
-export interface InterviewRoleGuidance {
-  family: InterviewRoleFamily;
+export const OTHER_CUSTOM_CAREER_AREA = "other-custom" as const;
+
+export type InterviewCareerAreaSelection =
+  | InterviewCareerAreaId
+  | typeof OTHER_CUSTOM_CAREER_AREA
+  | "";
+
+export interface InterviewCareerGuidance {
+  id: InterviewCareerAreaId;
   label: string;
+  roles: readonly string[];
   focusTopics: readonly string[];
   skillGaps: readonly string[];
 }
@@ -27,338 +39,537 @@ export const INTERVIEW_EXPERIENCE_LEVELS = [
   "Manager",
 ] as const;
 
-const ROLE_GUIDANCE: Record<InterviewRoleFamily, InterviewRoleGuidance> = {
-  "software-engineer": {
-    family: "software-engineer",
-    label: "Software Engineer",
+export const INTERVIEW_CAREER_AREAS: readonly InterviewCareerGuidance[] = [
+  {
+    id: "technology-it",
+    label: "Technology & IT",
+    roles: [
+      "Software Engineer",
+      "Frontend Developer",
+      "Backend Developer",
+      "Full-Stack Developer",
+      "Mobile Developer",
+      "DevOps / Cloud Engineer",
+      "Data Engineer",
+      "ML / AI Engineer",
+      "Cybersecurity Engineer",
+      "QA / Test Engineer",
+      "Systems Administrator",
+      "IT Support Specialist",
+    ],
     focusTopics: [
-      "Data Structures",
-      "Algorithms",
-      "APIs",
-      "Databases",
-      "Testing",
-      "System Design",
+      "Software & Systems",
+      "APIs & Integration",
+      "Databases & Data",
+      "Cloud & Infrastructure",
       "Security",
-      "Performance",
+      "Testing & Quality",
+      "Performance & Reliability",
+      "Data & AI",
     ],
     skillGaps: [
       "Problem Solving",
       "System Design",
-      "Testing Strategy",
       "Debugging",
-      "Code Quality",
-      "Performance",
-      "Security",
-      "Communication",
-    ],
-  },
-  frontend: {
-    family: "frontend",
-    label: "Frontend Developer",
-    focusTopics: [
-      "React",
-      "TypeScript",
-      "State Management",
-      "Accessibility",
-      "Responsive Design",
-      "Testing",
-      "Browser APIs",
-      "Frontend Architecture",
-    ],
-    skillGaps: [
-      "State Management",
-      "React Performance",
-      "Accessibility",
-      "Testing",
-      "TypeScript",
-      "Responsive Design",
-      "Browser APIs",
-      "Frontend Architecture",
-    ],
-  },
-  backend: {
-    family: "backend",
-    label: "Backend Developer",
-    focusTopics: [
-      "REST APIs",
-      "Authentication",
-      "Databases",
-      "System Design",
-      "Caching",
-      "Testing",
-      "Performance",
-      "Security",
-    ],
-    skillGaps: [
-      "System Design",
-      "Database Optimization",
-      "API Security",
-      "Caching Strategies",
-      "Testing",
-      "Observability",
-      "Concurrency",
-      "Performance Tuning",
-    ],
-  },
-  "full-stack": {
-    family: "full-stack",
-    label: "Full-Stack Developer",
-    focusTopics: [
-      "Frontend Architecture",
-      "REST APIs",
-      "Authentication",
-      "Databases",
-      "State Management",
-      "Testing",
-      "Deployment",
-      "System Design",
-    ],
-    skillGaps: [
-      "System Design",
-      "Frontend Performance",
-      "API Design",
-      "Database Optimization",
-      "Authentication",
       "Testing Strategy",
-      "Deployment",
-      "Cross-layer Debugging",
+      "Security Awareness",
+      "Performance Analysis",
+      "Technical Communication",
+      "Code Quality",
     ],
   },
-  mobile: {
-    family: "mobile",
-    label: "Mobile Developer",
+  {
+    id: "business-management",
+    label: "Business & Management",
+    roles: [
+      "Business Analyst",
+      "Project Manager",
+      "Product Manager",
+      "Operations Manager",
+      "Management Consultant",
+      "Strategy Analyst",
+      "Business Development Manager",
+      "General Manager",
+    ],
     focusTopics: [
-      "Mobile Architecture",
-      "State Management",
-      "Networking",
-      "Offline Data",
-      "Performance",
-      "Testing",
-      "Platform APIs",
-      "App Lifecycle",
+      "Business Strategy",
+      "Project Delivery",
+      "Stakeholder Management",
+      "Process Improvement",
+      "Decision-making",
+      "Leadership",
+      "Business Analysis",
+      "Change Management",
     ],
     skillGaps: [
-      "Mobile Architecture",
-      "Performance Profiling",
-      "Offline Synchronization",
-      "Testing",
-      "Platform APIs",
-      "Memory Management",
-      "Networking",
-      "Release Engineering",
+      "Strategic Thinking",
+      "Prioritization",
+      "Stakeholder Communication",
+      "Leadership",
+      "Commercial Awareness",
+      "Conflict Resolution",
+      "Presentation Skills",
+      "Decision-making",
     ],
   },
-  "devops-cloud": {
-    family: "devops-cloud",
-    label: "DevOps / Cloud Engineer",
+  {
+    id: "finance-accounting",
+    label: "Finance & Accounting",
+    roles: [
+      "Accountant",
+      "Auditor",
+      "Financial Analyst",
+      "Management Accountant",
+      "Tax Associate",
+      "Banking Officer",
+      "Investment Analyst",
+      "Risk Analyst",
+    ],
     focusTopics: [
-      "CI/CD",
-      "Containers",
-      "Cloud Architecture",
-      "Infrastructure as Code",
-      "Observability",
-      "Networking",
-      "Security",
-      "Reliability",
+      "Financial Reporting",
+      "Accounting Principles",
+      "Budgeting",
+      "Financial Analysis",
+      "Audit & Controls",
+      "Taxation",
+      "Risk Management",
+      "Regulatory Compliance",
     ],
     skillGaps: [
-      "Cloud Architecture",
-      "Incident Response",
-      "Observability",
-      "Infrastructure as Code",
-      "Container Security",
-      "Networking",
-      "Cost Awareness",
-      "Reliability Engineering",
+      "Financial Statement Analysis",
+      "Excel / Financial Modelling",
+      "Attention to Detail",
+      "Risk Assessment",
+      "Commercial Awareness",
+      "Communication",
+      "Compliance Knowledge",
+      "Analytical Reasoning",
     ],
   },
-  data: {
-    family: "data",
-    label: "Data Engineer",
+  {
+    id: "marketing-sales",
+    label: "Marketing & Sales",
+    roles: [
+      "Marketing Executive",
+      "Digital Marketing Specialist",
+      "Brand Manager",
+      "Content Marketer",
+      "SEO Specialist",
+      "Sales Executive",
+      "Account Manager",
+      "Sales Manager",
+    ],
     focusTopics: [
-      "SQL",
-      "Data Modeling",
-      "ETL / ELT",
-      "Data Warehousing",
-      "Streaming",
+      "Marketing Strategy",
+      "Digital Marketing",
+      "Brand Management",
+      "Customer Segmentation",
+      "Sales Process",
+      "Campaign Analysis",
+      "Content & Messaging",
+      "Customer Relationships",
+    ],
+    skillGaps: [
+      "Persuasive Communication",
+      "Customer Discovery",
+      "Campaign Measurement",
+      "Negotiation",
+      "Presentation Skills",
+      "CRM Discipline",
+      "Market Analysis",
+      "Objection Handling",
+    ],
+  },
+  {
+    id: "human-resources",
+    label: "Human Resources",
+    roles: [
+      "HR Executive",
+      "Recruiter / Talent Acquisition Specialist",
+      "HR Business Partner",
+      "Learning & Development Specialist",
+      "Compensation & Benefits Specialist",
+      "Employee Relations Specialist",
+      "People Operations Specialist",
+      "HR Manager",
+    ],
+    focusTopics: [
+      "Recruitment & Selection",
+      "Employee Relations",
+      "Performance Management",
+      "Learning & Development",
+      "HR Policy",
+      "Workforce Planning",
+      "Employee Experience",
+      "Employment Compliance",
+    ],
+    skillGaps: [
+      "Difficult Conversations",
+      "Interviewing",
+      "Conflict Resolution",
+      "HR Analytics",
+      "Policy Interpretation",
+      "Stakeholder Communication",
+      "Coaching",
+      "Confidentiality & Judgment",
+    ],
+  },
+  {
+    id: "healthcare",
+    label: "Healthcare",
+    roles: [
+      "Nurse",
+      "Medical Officer / Doctor",
+      "Pharmacist",
+      "Physiotherapist",
+      "Medical Laboratory Scientist",
+      "Radiographer",
+      "Public Health Officer",
+      "Healthcare Administrator",
+    ],
+    focusTopics: [
+      "Patient Care",
+      "Clinical Communication",
+      "Safety & Quality",
+      "Documentation",
+      "Ethics",
+      "Teamwork",
+      "Evidence-based Practice",
+      "Service Improvement",
+    ],
+    skillGaps: [
+      "Clinical Reasoning",
+      "Patient Communication",
+      "Documentation Quality",
+      "Time Management",
+      "Safety Awareness",
+      "Team Collaboration",
+      "Ethical Decision-making",
+      "Handling Pressure",
+    ],
+  },
+  {
+    id: "engineering",
+    label: "Engineering",
+    roles: [
+      "Civil Engineer",
+      "Mechanical Engineer",
+      "Electrical Engineer",
+      "Electronics Engineer",
+      "Chemical Engineer",
+      "Industrial Engineer",
+      "Mechatronics Engineer",
+      "Environmental Engineer",
+      "Biomedical Engineer",
+    ],
+    focusTopics: [
+      "Engineering Design",
+      "Technical Analysis",
+      "Safety & Standards",
+      "Project Delivery",
+      "Testing & Validation",
+      "Quality Control",
+      "Sustainability",
+      "Technical Documentation",
+    ],
+    skillGaps: [
+      "Engineering Judgment",
+      "Root-cause Analysis",
+      "Technical Communication",
+      "Safety Awareness",
+      "Design Trade-offs",
+      "Project Planning",
+      "Quality Methods",
+      "Cross-functional Collaboration",
+    ],
+  },
+  {
+    id: "education-training",
+    label: "Education & Training",
+    roles: [
+      "Teacher",
+      "Lecturer",
+      "Tutor",
+      "Academic Advisor",
+      "Instructional Designer",
+      "Curriculum Developer",
+      "Training Coordinator",
+      "Education Administrator",
+    ],
+    focusTopics: [
+      "Teaching & Facilitation",
+      "Lesson / Session Planning",
+      "Assessment",
+      "Learner Engagement",
+      "Inclusive Practice",
+      "Curriculum Design",
+      "Feedback",
+      "Education Technology",
+    ],
+    skillGaps: [
+      "Classroom / Group Management",
+      "Differentiation",
+      "Assessment Design",
+      "Learner Communication",
+      "Feedback Skills",
+      "Facilitation Confidence",
+      "Inclusive Teaching",
+      "Time Management",
+    ],
+  },
+  {
+    id: "law-legal",
+    label: "Law & Legal Services",
+    roles: [
+      "Lawyer / Attorney",
+      "Legal Counsel",
+      "Paralegal",
+      "Legal Assistant",
+      "Compliance Officer",
+      "Contract Specialist",
+      "Legal Researcher",
+      "Company Secretary",
+    ],
+    focusTopics: [
+      "Legal Research",
+      "Case / Matter Analysis",
+      "Contracts",
+      "Compliance",
+      "Client Communication",
+      "Legal Writing",
+      "Risk & Ethics",
+      "Negotiation",
+    ],
+    skillGaps: [
+      "Legal Reasoning",
+      "Research Efficiency",
+      "Drafting",
+      "Client Communication",
+      "Attention to Detail",
+      "Negotiation",
+      "Ethical Judgment",
+      "Prioritization",
+    ],
+  },
+  {
+    id: "design-creative",
+    label: "Design & Creative",
+    roles: [
+      "Graphic Designer",
+      "UI / UX Designer",
+      "Product Designer",
+      "Video Editor",
+      "Animator / Motion Designer",
+      "Photographer",
+      "Copywriter",
+      "Content Creator",
+    ],
+    focusTopics: [
+      "Design Process",
+      "User / Audience Needs",
+      "Visual Communication",
+      "Creative Direction",
+      "Portfolio Decisions",
+      "Feedback & Iteration",
+      "Brand Consistency",
+      "Production Workflow",
+    ],
+    skillGaps: [
+      "Design Rationale",
+      "Presenting Work",
+      "Receiving Feedback",
+      "Prioritization",
+      "User Research",
+      "Creative Problem Solving",
+      "Production Efficiency",
+      "Stakeholder Communication",
+    ],
+  },
+  {
+    id: "operations-supply-chain",
+    label: "Operations & Supply Chain",
+    roles: [
+      "Supply Chain Analyst",
+      "Procurement Officer",
+      "Logistics Coordinator",
+      "Inventory Planner",
+      "Warehouse Manager",
+      "Operations Analyst",
+      "Demand Planner",
+      "Quality Officer",
+    ],
+    focusTopics: [
+      "Supply Planning",
+      "Procurement",
+      "Logistics",
+      "Inventory Management",
+      "Process Improvement",
+      "Quality",
+      "Supplier Management",
+      "Operational Risk",
+    ],
+    skillGaps: [
+      "Demand Planning",
+      "Data Analysis",
+      "Negotiation",
+      "Process Mapping",
+      "Risk Management",
+      "Supplier Communication",
+      "Inventory Control",
+      "Continuous Improvement",
+    ],
+  },
+  {
+    id: "customer-service-hospitality",
+    label: "Customer Service & Hospitality",
+    roles: [
+      "Customer Service Representative",
+      "Customer Success Specialist",
+      "Call Center Agent",
+      "Hotel Front Office Executive",
+      "Guest Relations Officer",
+      "Restaurant Supervisor",
+      "Travel Consultant",
+      "Event Coordinator",
+    ],
+    focusTopics: [
+      "Customer Experience",
+      "Service Recovery",
+      "Complaint Handling",
+      "Communication",
+      "Team Coordination",
+      "Service Standards",
+      "Upselling / Recommendations",
+      "Operational Awareness",
+    ],
+    skillGaps: [
+      "De-escalation",
+      "Active Listening",
+      "Handling Pressure",
+      "Customer Communication",
+      "Problem Resolution",
+      "Service Recovery",
+      "Teamwork",
+      "Professionalism",
+    ],
+  },
+  {
+    id: "science-research",
+    label: "Science & Research",
+    roles: [
+      "Research Assistant",
+      "Research Scientist",
+      "Laboratory Technician",
+      "Biologist",
+      "Chemist",
+      "Physicist",
+      "Environmental Scientist",
+      "Clinical Research Coordinator",
+    ],
+    focusTopics: [
+      "Research Methods",
+      "Experimental Design",
+      "Data Analysis",
+      "Scientific Communication",
+      "Literature Review",
+      "Laboratory / Field Practice",
+      "Research Ethics",
+      "Reproducibility",
+    ],
+    skillGaps: [
+      "Experimental Reasoning",
+      "Statistical Interpretation",
+      "Scientific Writing",
+      "Research Presentation",
       "Data Quality",
-      "Python",
-      "Pipeline Design",
-    ],
-    skillGaps: [
-      "Data Modeling",
-      "Query Optimization",
-      "Pipeline Reliability",
-      "Streaming Systems",
-      "Data Quality",
-      "Warehouse Design",
-      "Orchestration",
-      "Scalability",
+      "Critical Evaluation",
+      "Documentation",
+      "Research Planning",
     ],
   },
-  "ml-ai": {
-    family: "ml-ai",
-    label: "ML / AI Engineer",
+  {
+    id: "public-service-administration",
+    label: "Public Service & Administration",
+    roles: [
+      "Administrative Officer",
+      "Government Officer",
+      "Policy Analyst",
+      "Program Officer",
+      "Community Development Officer",
+      "Public Relations Officer",
+      "Office Manager",
+      "Executive Assistant",
+    ],
     focusTopics: [
-      "Machine Learning",
-      "Deep Learning",
-      "Model Evaluation",
-      "Feature Engineering",
-      "LLMs",
-      "MLOps",
-      "Python",
-      "Data Processing",
+      "Public / Administrative Service",
+      "Policy & Procedures",
+      "Stakeholder Communication",
+      "Records & Documentation",
+      "Program Delivery",
+      "Governance",
+      "Community / Citizen Needs",
+      "Process Improvement",
     ],
     skillGaps: [
-      "Model Evaluation",
-      "Feature Engineering",
-      "ML System Design",
-      "MLOps",
-      "Data Leakage",
-      "LLM Evaluation",
-      "Experiment Design",
-      "Production Monitoring",
+      "Administrative Accuracy",
+      "Policy Interpretation",
+      "Written Communication",
+      "Public Communication",
+      "Prioritization",
+      "Stakeholder Management",
+      "Professional Judgment",
+      "Service Orientation",
     ],
   },
-  cybersecurity: {
-    family: "cybersecurity",
-    label: "Cybersecurity Engineer",
-    focusTopics: [
-      "Application Security",
-      "Network Security",
-      "Threat Modeling",
-      "Authentication",
-      "Secure Coding",
-      "Vulnerability Assessment",
-      "Incident Response",
-      "Cloud Security",
-    ],
-    skillGaps: [
-      "Threat Modeling",
-      "Secure Architecture",
-      "Web Security",
-      "Cloud Security",
-      "Incident Response",
-      "Vulnerability Analysis",
-      "Identity and Access",
-      "Security Testing",
-    ],
-  },
-  "qa-test": {
-    family: "qa-test",
-    label: "QA / Test Engineer",
-    focusTopics: [
-      "Test Strategy",
-      "Automation",
-      "API Testing",
-      "UI Testing",
-      "Performance Testing",
-      "Regression Testing",
-      "CI Quality Gates",
-      "Defect Analysis",
-    ],
-    skillGaps: [
-      "Automation Design",
-      "Test Strategy",
-      "API Testing",
-      "Performance Testing",
-      "Flaky Test Diagnosis",
-      "CI Integration",
-      "Risk-based Testing",
-      "Test Data Design",
-    ],
-  },
+];
+
+const OTHER_CUSTOM_GUIDANCE = {
+  roles: [] as readonly string[],
+  focusTopics: [
+    "Role Knowledge",
+    "Communication",
+    "Problem Solving",
+    "Teamwork",
+    "Customer / Stakeholder Needs",
+    "Planning & Prioritization",
+    "Professional Judgment",
+    "Continuous Improvement",
+  ] as const,
+  skillGaps: [
+    "Interview Communication",
+    "Structured Problem Solving",
+    "Confidence",
+    "Prioritization",
+    "Stakeholder Communication",
+    "Decision-making",
+    "Professional Examples",
+    "Self-reflection",
+  ] as const,
 };
 
-export const INTERVIEW_ROLE_OPTIONS = [
-  ROLE_GUIDANCE["software-engineer"],
-  ROLE_GUIDANCE.frontend,
-  ROLE_GUIDANCE.backend,
-  ROLE_GUIDANCE["full-stack"],
-  ROLE_GUIDANCE.mobile,
-  ROLE_GUIDANCE["devops-cloud"],
-  ROLE_GUIDANCE.data,
-  ROLE_GUIDANCE["ml-ai"],
-  ROLE_GUIDANCE.cybersecurity,
-  ROLE_GUIDANCE["qa-test"],
-] as const;
+const EMPTY_GUIDANCE = {
+  roles: [] as readonly string[],
+  focusTopics: [] as readonly string[],
+  skillGaps: [] as readonly string[],
+};
 
-function normalizeRole(value: string): string {
-  return value.trim().toLocaleLowerCase().replace(/\s+/g, " ");
-}
-
-function includesAny(value: string, terms: readonly string[]): boolean {
-  return terms.some((term) => value.includes(term));
-}
-
-export function matchInterviewRoleFamily(
-  targetRole: string,
-): InterviewRoleFamily {
-  const normalized = normalizeRole(targetRole);
-  const exactBuiltIn = INTERVIEW_ROLE_OPTIONS.find(
-    (option) => normalizeRole(option.label) === normalized,
-  );
-  if (exactBuiltIn) return exactBuiltIn.family;
-
-  if (includesAny(normalized, ["mern", "full stack", "full-stack"])) {
-    return "full-stack";
-  }
-  if (includesAny(normalized, ["react native", "ios", "android", "mobile"])) {
-    return "mobile";
-  }
-  if (
-    includesAny(normalized, [
-      "llm",
-      "machine learning",
-      "ml engineer",
-      "artificial intelligence",
-      "ai engineer",
-    ])
-  ) {
-    return "ml-ai";
-  }
-  if (
-    includesAny(normalized, [
-      "devops",
-      "cloud",
-      "platform engineer",
-      "sre",
-    ])
-  ) {
-    return "devops-cloud";
-  }
-  if (includesAny(normalized, ["penetration", "cyber", "security"])) {
-    return "cybersecurity";
-  }
-  if (includesAny(normalized, ["data engineer", "etl", "warehouse"])) {
-    return "data";
-  }
-  if (includesAny(normalized, ["frontend", "front-end", "react developer"])) {
-    return "frontend";
-  }
-  if (includesAny(normalized, ["backend", "back-end", "api developer"])) {
-    return "backend";
-  }
-  if (includesAny(normalized, ["qa", "test engineer", "quality assurance"])) {
-    return "qa-test";
-  }
-
-  return "software-engineer";
-}
-
-export function getInterviewRoleSuggestions(targetRole: string): {
+export function getInterviewCareerGuidance(
+  area: InterviewCareerAreaSelection,
+): {
+  roles: readonly string[];
   focusTopics: readonly string[];
   skillGaps: readonly string[];
 } {
-  if (!targetRole.trim()) {
-    return { focusTopics: [], skillGaps: [] };
-  }
-
-  const guidance = ROLE_GUIDANCE[matchInterviewRoleFamily(targetRole)];
-  return {
-    focusTopics: guidance.focusTopics,
-    skillGaps: guidance.skillGaps,
-  };
+  if (!area) return EMPTY_GUIDANCE;
+  if (area === OTHER_CUSTOM_CAREER_AREA) return OTHER_CUSTOM_GUIDANCE;
+  const guidance = INTERVIEW_CAREER_AREAS.find((item) => item.id === area);
+  return guidance
+    ? {
+        roles: guidance.roles,
+        focusTopics: guidance.focusTopics,
+        skillGaps: guidance.skillGaps,
+      }
+    : EMPTY_GUIDANCE;
 }
 
 export function suggestInterviewTitle(
