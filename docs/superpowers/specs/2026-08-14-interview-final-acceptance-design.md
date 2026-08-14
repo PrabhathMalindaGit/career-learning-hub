@@ -1,11 +1,11 @@
 # Phase 19B-3 Task 8 — Interview Coach Final Acceptance Design
 
-**Project:** Career Learning Hub  
-**Phase:** 19B-3  
-**Task:** 8 — Interview Coach Final Acceptance  
-**Branch:** `task/phase-19b3-task8-interview-final-acceptance`  
-**Base:** `phase-19b-interview-coach-refinements`  
-**Starting base commit:** `6d7093072d6723180720db91b6480a4d04e8eeb0`  
+**Project:** Career Learning Hub
+**Phase:** 19B-3
+**Task:** 8 — Interview Coach Final Acceptance
+**Branch:** `task/phase-19b3-task8-interview-final-acceptance`
+**Base:** `phase-19b-interview-coach-refinements`
+**Starting base commit:** `6d7093072d6723180720db91b6480a4d04e8eeb0`
 **Status:** Design approved in chat; written spec awaiting user review
 
 ## 1. Goal
