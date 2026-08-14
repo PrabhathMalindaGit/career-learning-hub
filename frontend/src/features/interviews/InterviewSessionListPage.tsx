@@ -115,6 +115,26 @@ export function InterviewSessionListPage() {
     setPage(1);
   }
 
+  function handleSessionDeleted(sessionId: string) {
+    const deletingLastVisibleSession =
+      sessions.length === 1 && sessions[0]?.id === sessionId;
+
+    setSessions((current) =>
+      current.filter((session) => session.id !== sessionId),
+    );
+    setPagination((current) =>
+      current
+        ? { ...current, total: Math.max(0, current.total - 1) }
+        : current,
+    );
+
+    if (deletingLastVisibleSession && page > 1) {
+      setPage((current) => Math.max(1, current - 1));
+      return;
+    }
+    setReloadKey((key) => key + 1);
+  }
+
   return (
     <section
       className="interview-list-page"
@@ -205,7 +225,11 @@ export function InterviewSessionListPage() {
             aria-label="Interview sessions"
           >
             {sessions.map((session) => (
-              <InterviewSessionCard key={session.id} session={session} />
+              <InterviewSessionCard
+                key={session.id}
+                session={session}
+                onDeleted={handleSessionDeleted}
+              />
             ))}
           </ul>
         )}
