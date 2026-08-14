@@ -4,6 +4,9 @@ import "./interviewQuestionTypes.css";
 
 const ANSWER_MAX_LENGTH = 12_000;
 
+const CODING_ANSWER_PLACEHOLDER =
+  "Write or paste the code you would submit in an interview…";
+
 type AnswerControlError = {
   message: string;
   requestId?: string;
@@ -25,7 +28,7 @@ function textLabel(question: InterviewQuestionDetail): string {
     case "short-answer":
       return "Short answer";
     case "coding":
-      return "Coding answer";
+      return "Your code";
     case "behavioral":
       return "Behavioral answer";
     case "scenario-based":
@@ -54,11 +57,20 @@ export function InterviewAnswerControl({
   onSubmit,
 }: InterviewAnswerControlProps) {
   const isMultipleChoice = question.questionType === "multiple-choice";
+  const isCoding = question.questionType === "coding";
   const trimmedLength = textValue.trim().length;
   const textInvalid = trimmedLength < 1 || trimmedLength > ANSWER_MAX_LENGTH;
   const submitDisabled = disabled ||
     (isMultipleChoice ? selectedOptionId === "" : textInvalid);
   const errorId = "interview-answer-control-error";
+  const countId = "interview-written-answer-count";
+  const codingHelpId = "interview-coding-answer-help";
+  const codingExecutionId = "interview-coding-answer-execution";
+  const describedBy = [
+    ...(isCoding ? [codingHelpId, codingExecutionId] : []),
+    countId,
+    ...(error ? [errorId] : []),
+  ].join(" ");
 
   return (
     <div className="interview-answer-control">
@@ -87,37 +99,48 @@ export function InterviewAnswerControl({
           ))}
         </fieldset>
       ) : (
-        <label className="field-label interview-answer-field">
-          <span>
-            {textLabel(question)}{" "}
-            <span className="field-required" aria-hidden="true">
-              (required)
+        <>
+          <label className="field-label interview-answer-field">
+            <span>
+              {textLabel(question)}{" "}
+              <span className="field-required" aria-hidden="true">
+                (required)
+              </span>
             </span>
-          </span>
-          <textarea
-            id="interview-written-answer"
-            name="writtenAnswer"
-            className={`field-control${
-              question.questionType === "coding"
-                ? " interview-answer-control__coding"
-                : ""
-            }`}
-            required
-            rows={rowsFor(question)}
-            maxLength={ANSWER_MAX_LENGTH}
-            value={textValue}
-            disabled={disabled}
-            aria-invalid={Boolean(error) || textInvalid && textValue.length > 0}
-            aria-describedby={`interview-written-answer-count${
-              error ? ` ${errorId}` : ""
-            }`}
-            onChange={(event) => onTextChange(event.target.value)}
-          />
-        </label>
+            <textarea
+              id="interview-written-answer"
+              name="writtenAnswer"
+              className={`field-control${
+                isCoding ? " interview-answer-control__coding" : ""
+              }`}
+              required
+              rows={rowsFor(question)}
+              maxLength={ANSWER_MAX_LENGTH}
+              value={textValue}
+              disabled={disabled}
+              placeholder={isCoding ? CODING_ANSWER_PLACEHOLDER : undefined}
+              spellCheck={isCoding ? false : undefined}
+              aria-invalid={Boolean(error) || textInvalid && textValue.length > 0}
+              aria-describedby={describedBy}
+              onChange={(event) => onTextChange(event.target.value)}
+            />
+          </label>
+          {isCoding ? (
+            <div className="interview-answer-control__coding-guidance">
+              <small id={codingHelpId}>
+                Complete only the function or solution requested by the question.
+                You do not need unrelated application boilerplate.
+              </small>
+              <small id={codingExecutionId}>
+                Your submission is reviewed as text and is not executed.
+              </small>
+            </div>
+          ) : null}
+        </>
       )}
 
       {!isMultipleChoice ? (
-        <small className="field-help" id="interview-written-answer-count">
+        <small className="field-help" id={countId}>
           {textValue.length.toLocaleString()} /{" "}
           {ANSWER_MAX_LENGTH.toLocaleString()}
         </small>
