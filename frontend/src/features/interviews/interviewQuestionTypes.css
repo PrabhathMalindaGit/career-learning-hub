@@ -213,9 +213,43 @@
 }
 
 .interview-answer-control__coding {
-  min-height: 220px;
+  min-height: 260px;
+  padding: 14px 16px;
+  border-color: #b9cec0;
+  border-radius: 12px;
+  background: #f8fbf9;
+  box-shadow: inset 4px 0 0 #6f9f80;
+  color: #173425;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
   tab-size: 2;
+}
+
+.interview-answer-control__coding::placeholder {
+  color: #789084;
+}
+
+.interview-answer-control__coding:focus {
+  border-color: var(--accent);
+  box-shadow:
+    inset 4px 0 0 var(--accent),
+    0 0 0 3px rgba(42, 103, 67, 0.1);
+  outline: none;
+}
+
+.interview-answer-control__coding-guidance {
+  display: grid;
+  gap: 3px;
+  margin-top: -2px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.interview-answer-control__coding-guidance small:last-child {
+  color: #456152;
+  font-weight: 700;
 }
 
 .interview-attempt-result {
