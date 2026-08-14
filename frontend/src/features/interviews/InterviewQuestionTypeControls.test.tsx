@@ -224,12 +224,14 @@ describe("InterviewQuestionTypeControls", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Set exact counts" }));
-    expect(
-      screen.getByRole("spinbutton", { name: "Short Answer count" }),
-    ).toHaveValue(3);
-    expect(
-      screen.getByRole("spinbutton", { name: "Coding count" }),
-    ).toHaveValue(2);
+    const shortAnswerCount = screen.getByRole("spinbutton", {
+      name: "Short Answer count",
+    }) as HTMLInputElement;
+    const codingCount = screen.getByRole("spinbutton", {
+      name: "Coding count",
+    }) as HTMLInputElement;
+    expect(shortAnswerCount.value).toBe("3");
+    expect(codingCount.value).toBe("2");
     expect(screen.getByText("Exact counts · 5 total")).not.toBeNull();
     expect(
       screen.queryByText(
