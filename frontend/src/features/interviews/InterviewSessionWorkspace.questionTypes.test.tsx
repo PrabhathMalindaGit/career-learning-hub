@@ -216,7 +216,7 @@ describe("InterviewSessionWorkspace typed question UX", () => {
         {
           requestId: "a4d20e66-4af2-4dd2-834b-fad9fe354a6f",
           count: 10,
-          categories: [],
+          categories: ["APIs"],
           questionTypes: ["short-answer"],
         },
         expect.any(AbortSignal),
