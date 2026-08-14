@@ -1,0 +1,71 @@
+.resume-record-delete-action {
+  min-height: var(--minimum-interactive-target);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+}
+
+.resume-delete-dialog {
+  width: min(92vw, 560px);
+  max-height: min(88vh, 720px);
+  overflow: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.resume-delete-dialog::backdrop {
+  background: rgba(18, 31, 23, 0.48);
+}
+
+.resume-delete-form {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.resume-delete-form h2,
+.resume-delete-warning p,
+.resume-delete-form .resume-state {
+  margin: 0;
+}
+
+.resume-delete-warning {
+  display: grid;
+  gap: 8px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.resume-delete-confirmation {
+  display: grid;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.resume-delete-confirmation input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #c8d5cd;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.resume-delete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .resume-delete-form {
+    padding: 18px;
+  }
+
+  .resume-delete-actions > button {
+    width: 100%;
+  }
+}
