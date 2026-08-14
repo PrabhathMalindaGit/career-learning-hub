@@ -1,33 +1,21 @@
 import type { InterviewQuestionDetail } from "./types";
 import { CopyInterviewTextButton } from "./CopyInterviewTextButton";
+import { InterviewStructuredAnswerFields } from "./InterviewStructuredAnswerFields";
 import { QUESTION_TYPE_LABELS } from "./InterviewQuestionTypeControls";
+import {
+  STRUCTURED_ANSWER_MAX_LENGTH,
+  isStructuredInterviewQuestionType,
+  serializeStructuredAnswer,
+  type StructuredAnswerDraft,
+} from "./interviewStructuredAnswer";
 import "./interviewQuestionTypes.css";
 import "./interviewAnswerExperience.css";
 
 const ANSWER_MAX_LENGTH = 12_000;
 
-const TEXT_ANSWER_PRESENTATION = {
-  "short-answer": {
-    placeholder: "Give a concise, directly relevant answer…",
-    guidance: ["Answer directly.", "Aim for 2–4 focused sentences."],
-    cues: [],
-  },
-  behavioral: {
-    placeholder:
-      "Describe the situation, your responsibility, what you did, and the result…",
-    guidance: ["Focus on what you personally did and the outcome."],
-    cues: ["Situation", "Task", "Action", "Result"],
-  },
-  "scenario-based": {
-    placeholder: "Explain what you would do, the trade-offs, and why…",
-    guidance: ["Explain why you would choose your approach."],
-    cues: ["Assess", "Approach", "Trade-offs", "Decision"],
-  },
-  "technical-explanation": {
-    placeholder: "Explain the concept clearly as you would to an interviewer…",
-    guidance: ["Explain the concept as if speaking to an interviewer."],
-    cues: ["Concept", "How it works", "Example", "Trade-offs"],
-  },
+const SHORT_ANSWER_PRESENTATION = {
+  placeholder: "Give a concise, directly relevant answer…",
+  guidance: ["Answer directly.", "Aim for 2–4 focused sentences."],
 } as const;
 
 const CODING_ANSWER_PLACEHOLDER =
@@ -41,10 +29,12 @@ type AnswerControlError = {
 export interface InterviewAnswerControlProps {
   question: InterviewQuestionDetail;
   textValue: string;
+  structuredValue: StructuredAnswerDraft;
   selectedOptionId: string;
   disabled?: boolean;
   error?: AnswerControlError | null;
   onTextChange(value: string): void;
+  onStructuredChange(value: StructuredAnswerDraft): void;
   onSelectedOptionChange(optionId: string): void;
   onSubmit(): void;
 }
@@ -55,12 +45,6 @@ function textLabel(question: InterviewQuestionDetail): string {
       return "Your short answer";
     case "coding":
       return "Your code";
-    case "behavioral":
-      return "Your behavioral answer";
-    case "scenario-based":
-      return "Your scenario response";
-    case "technical-explanation":
-      return "Your technical explanation";
     default:
       return "Written answer";
   }
@@ -72,42 +56,45 @@ function rowsFor(question: InterviewQuestionDetail): number {
   return 9;
 }
 
-function answerPresentation(question: InterviewQuestionDetail) {
-  if (
-    question.questionType === "short-answer" ||
-    question.questionType === "behavioral" ||
-    question.questionType === "scenario-based" ||
-    question.questionType === "technical-explanation"
-  ) {
-    return TEXT_ANSWER_PRESENTATION[question.questionType];
-  }
-  return undefined;
-}
-
 export function InterviewAnswerControl({
   question,
   textValue,
+  structuredValue,
   selectedOptionId,
   disabled = false,
   error,
   onTextChange,
+  onStructuredChange,
   onSelectedOptionChange,
   onSubmit,
 }: InterviewAnswerControlProps) {
   const isMultipleChoice = question.questionType === "multiple-choice";
   const isCoding = question.questionType === "coding";
-  const presentation = answerPresentation(question);
+  const isShortAnswer = question.questionType === "short-answer";
+  const isStructured = isStructuredInterviewQuestionType(question.questionType);
+  const structuredText = isStructured
+    ? serializeStructuredAnswer(question.questionType, structuredValue)
+    : "";
   const trimmedLength = textValue.trim().length;
   const textInvalid = trimmedLength < 1 || trimmedLength > ANSWER_MAX_LENGTH;
+  const structuredInvalid =
+    isStructured &&
+    (structuredText.length < 1 ||
+      structuredText.length > STRUCTURED_ANSWER_MAX_LENGTH);
   const submitDisabled =
-    disabled || (isMultipleChoice ? selectedOptionId === "" : textInvalid);
+    disabled ||
+    (isMultipleChoice
+      ? selectedOptionId === ""
+      : isStructured
+        ? structuredInvalid
+        : textInvalid);
   const errorId = "interview-answer-control-error";
   const countId = "interview-written-answer-count";
-  const guidanceId = "interview-written-answer-guidance";
+  const shortGuidanceId = "interview-short-answer-guidance";
   const codingHelpId = "interview-coding-answer-help";
   const codingExecutionId = "interview-coding-answer-execution";
   const describedBy = [
-    ...(presentation ? [guidanceId] : []),
+    ...(isShortAnswer ? [shortGuidanceId] : []),
     ...(isCoding ? [codingHelpId, codingExecutionId] : []),
     countId,
     ...(error ? [errorId] : []),
@@ -151,25 +138,19 @@ export function InterviewAnswerControl({
             </label>
           ))}
         </fieldset>
+      ) : isStructured ? (
+        <InterviewStructuredAnswerFields
+          questionType={question.questionType}
+          value={structuredValue}
+          disabled={disabled}
+          onChange={onStructuredChange}
+        />
       ) : (
         <>
-          {presentation ? (
-            <div
-              className="interview-answer-guidance"
-              id={guidanceId}
-            >
-              {presentation.cues.length > 0 ? (
-                <div
-                  className="interview-answer-guidance__cues"
-                  aria-label="Answer structure guidance"
-                >
-                  {presentation.cues.map((cue) => (
-                    <span key={cue}>{cue}</span>
-                  ))}
-                </div>
-              ) : null}
+          {isShortAnswer ? (
+            <div className="interview-answer-guidance" id={shortGuidanceId}>
               <div className="interview-answer-guidance__copy">
-                {presentation.guidance.map((line) => (
+                {SHORT_ANSWER_PRESENTATION.guidance.map((line) => (
                   <small key={line}>{line}</small>
                 ))}
               </div>
@@ -235,7 +216,9 @@ export function InterviewAnswerControl({
               placeholder={
                 isCoding
                   ? CODING_ANSWER_PLACEHOLDER
-                  : presentation?.placeholder
+                  : isShortAnswer
+                    ? SHORT_ANSWER_PRESENTATION.placeholder
+                    : undefined
               }
               spellCheck={isCoding ? false : undefined}
               aria-invalid={Boolean(error) || (textInvalid && textValue.length > 0)}
@@ -254,15 +237,13 @@ export function InterviewAnswerControl({
               </small>
             </div>
           ) : null}
+
+          <small className="field-help" id={countId}>
+            {textValue.length.toLocaleString()} /{" "}
+            {ANSWER_MAX_LENGTH.toLocaleString()}
+          </small>
         </>
       )}
-
-      {!isMultipleChoice ? (
-        <small className="field-help" id={countId}>
-          {textValue.length.toLocaleString()} /{" "}
-          {ANSWER_MAX_LENGTH.toLocaleString()}
-        </small>
-      ) : null}
 
       {error ? (
         <div className="interview-field-error" id={errorId} role="alert">
