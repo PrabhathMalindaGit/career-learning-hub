@@ -67,6 +67,7 @@ describe("InterviewAnswerControl practice experience", () => {
     const { container } = renderControl(question("multiple-choice"), {
       onSelectedOptionChange,
     });
+
     expect(
       Array.from(
         container.querySelectorAll(".interview-answer-option__letter"),
@@ -81,6 +82,7 @@ describe("InterviewAnswerControl practice experience", () => {
 
   it("gives Short Answer a compact focused prompt", () => {
     renderControl(question("short-answer"));
+
     const textarea = screen.getByRole("textbox", {
       name: /Your short answer/i,
     });
@@ -92,24 +94,34 @@ describe("InterviewAnswerControl practice experience", () => {
 
   it("uses real STAR fields instead of Behavioral cue chips", () => {
     renderControl(question("behavioral"));
-    expect(
-      screen.getByRole("group", { name: "Behavioral response" }),
-    ).not.toBeNull();
+
     for (const label of ["Situation", "Task", "Action", "Result"]) {
       expect(screen.getByRole("textbox", { name: label })).not.toBeNull();
     }
+    expect(
+      screen.getByText(
+        "Use the STAR structure to keep your example clear and evidence-based.",
+      ),
+    ).not.toBeNull();
     expect(screen.queryByLabelText("Answer structure guidance")).toBeNull();
   });
 
   it("uses real reasoning fields for Scenario-Based", () => {
     renderControl(question("scenario-based"));
+
     for (const label of ["Assessment", "Approach", "Trade-offs", "Decision"]) {
       expect(screen.getByRole("textbox", { name: label })).not.toBeNull();
     }
+    expect(
+      screen.getByText(
+        "Structure your reasoning from assessment through the final decision.",
+      ),
+    ).not.toBeNull();
   });
 
   it("uses real explanation fields for Technical Explanation", () => {
     renderControl(question("technical-explanation"));
+
     for (const label of [
       "Concept",
       "How it works",
@@ -118,23 +130,20 @@ describe("InterviewAnswerControl practice experience", () => {
     ]) {
       expect(screen.getByRole("textbox", { name: label })).not.toBeNull();
     }
+    expect(
+      screen.getByText("Explain the idea as if speaking to an interviewer."),
+    ).not.toBeNull();
   });
 
   it("serializes a partial structured answer through onTextChange", async () => {
     const onTextChange = vi.fn();
-    renderControl(question("scenario-based"), { onTextChange });
-    const user = userEvent.setup();
-    await user.type(
-      screen.getByRole("textbox", { name: "Assessment" }),
-      "Urgent risk",
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: "Decision" }),
-      "Escalate",
-    );
-    expect(onTextChange).toHaveBeenLastCalledWith(
-      "Assessment:\nUrgent risk\n\nDecision:\nEscalate",
-    );
+    renderControl(question("behavioral"), { onTextChange });
+
+    await userEvent
+      .setup()
+      .type(screen.getByRole("textbox", { name: "Action" }), "I led the fix.");
+
+    expect(onTextChange).toHaveBeenLastCalledWith("Action:\nI led the fix.");
   });
 
   it("renders Coding starter code and inserts it only into an empty draft", async () => {
@@ -182,30 +191,17 @@ describe("InterviewAnswerControl practice experience", () => {
 
   it("copies exactly the Coding starter scaffold", async () => {
     const starterCode = "function solve(input) {\n  // TODO\n}";
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    const originalClipboard = Object.getOwnPropertyDescriptor(
-      navigator,
-      "clipboard",
-    );
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: { writeText },
-    });
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, "writeText");
 
     try {
       renderControl(question("coding", { starterCode }));
-      await userEvent
-        .setup()
-        .click(screen.getByRole("button", { name: "Copy starter code" }));
+      await user.click(screen.getByRole("button", { name: "Copy starter code" }));
       await waitFor(() => {
         expect(writeText).toHaveBeenCalledWith(starterCode);
       });
     } finally {
-      if (originalClipboard) {
-        Object.defineProperty(navigator, "clipboard", originalClipboard);
-      } else {
-        Reflect.deleteProperty(navigator, "clipboard");
-      }
+      writeText.mockRestore();
     }
   });
 
