@@ -245,6 +245,7 @@ export function InterviewSessionWorkspace() {
   const [notesState, setNotesState] = useState<
     "clean" | "dirty" | "saving" | "saved" | "error"
   >("clean");
+  const [notesOpen, setNotesOpen] = useState(false);
   const [answerDraft, setAnswerDraft] = useState("");
   const [selectedOptionId, setSelectedOptionId] = useState("");
   const [answerError, setAnswerError] = useState<SafeError | null>(null);
@@ -260,7 +261,9 @@ export function InterviewSessionWorkspace() {
   const [attemptReloadKey, setAttemptReloadKey] = useState(0);
   const [attemptStatusFilter, setAttemptStatusFilter] = useState<
     InterviewAttemptStatus | ""
-  >("");
+  >(
+    "",
+  );
   const [attemptLoading, setAttemptLoading] = useState(false);
   const [attemptError, setAttemptError] = useState<SafeError | null>(
     null,
@@ -459,6 +462,7 @@ export function InterviewSessionWorkspace() {
       setSelectedQuestionId(questionId);
       setSelectedQuestion(null);
       setNotesDraft("");
+      setNotesOpen(false);
       setAnswerDraft("");
       setSelectedOptionId("");
     },
@@ -510,6 +514,7 @@ export function InterviewSessionWorkspace() {
       setSelectedAttemptId("");
       setSelectedAttempt(null);
       setNotesDraft("");
+      setNotesOpen(false);
       setAnswerDraft("");
       setSelectedOptionId("");
       setAnswerError(null);
@@ -641,6 +646,7 @@ export function InterviewSessionWorkspace() {
       setSelectedQuestion(null);
       setQuestionDetailLoading(false);
       setNotesDraft("");
+      setNotesOpen(false);
       setAnswerDraft("");
       setSelectedOptionId("");
       return;
@@ -672,6 +678,7 @@ export function InterviewSessionWorkspace() {
         }
         setSelectedQuestion(question);
         setNotesDraft(question.userNotes ?? "");
+        setNotesOpen(Boolean((question.userNotes ?? "").trim()));
         setNotesState("clean");
       })
       .catch((error: unknown) => {
@@ -1615,6 +1622,7 @@ export function InterviewSessionWorkspace() {
     !selectedQuestion.explanation &&
     !selectedAttempt &&
     (attemptPagination?.total ?? attempts.length) === 0;
+  const notesResolved = notesState === "clean" || notesState === "saved";
 
   return (
     <section
@@ -1728,9 +1736,7 @@ export function InterviewSessionWorkspace() {
         </p>
       ) : null}
 
-      {workspaceError ? (
-        <SafeErrorMessage error={workspaceError} />
-      ) : null}
+      {workspaceError ? <SafeErrorMessage error={workspaceError} /> : null}
       <p className="interview-sr-status" aria-live="polite">
         {statusMessage}
       </p>
@@ -1971,9 +1977,7 @@ export function InterviewSessionWorkspace() {
                   />
                 </label>
               )}
-              {manualError ? (
-                <SafeErrorMessage error={manualError} />
-              ) : null}
+              {manualError ? <SafeErrorMessage error={manualError} /> : null}
               <button
                 className="interview-secondary-button"
                 type="submit"
@@ -2029,9 +2033,7 @@ export function InterviewSessionWorkspace() {
           ) : null}
         </section>
       ) : null}
-      {providerError ? (
-        <SafeErrorMessage error={providerError} />
-      ) : null}
+      {providerError ? <SafeErrorMessage error={providerError} /> : null}
 
       <div className="interview-workspace-grid">
         <section
@@ -2111,36 +2113,52 @@ export function InterviewSessionWorkspace() {
             </p>
           ) : (
             <ol className="interview-question-list">
-              {questions.map((question) => (
-                <li key={question.id}>
-                  <button
-                    type="button"
-                    className={
-                      selectedQuestionId === question.id
-                        ? "interview-question-select interview-question-select--active"
-                        : "interview-question-select"
-                    }
-                    aria-pressed={selectedQuestionId === question.id}
-                    aria-label={`${
-                      question.isPinned ? "Pinned: " : ""
-                    }${question.question}`}
-                    onClick={() => selectQuestion(question.id)}
-                  >
-                    <span className="interview-question-type-label">
-                      {QUESTION_TYPE_LABELS[question.questionType]}
-                    </span>
-                    <span>
-                      {question.category} · {question.difficulty}
-                    </span>
-                    <strong>{question.question}</strong>
-                    {question.isPinned ? (
-                      <span className="interview-pinned-label">
-                        <span aria-hidden="true">◆</span> Pinned
+              {questions.map((question, index) => {
+                const questionNumber =
+                  (questionPage - 1) * PAGE_SIZE + index + 1;
+                const questionNumberLabel = String(questionNumber).padStart(
+                  2,
+                  "0",
+                );
+                return (
+                  <li key={question.id}>
+                    <button
+                      type="button"
+                      className={
+                        selectedQuestionId === question.id
+                          ? "interview-question-select interview-question-select--active"
+                          : "interview-question-select"
+                      }
+                      aria-pressed={selectedQuestionId === question.id}
+                      aria-label={`${
+                        question.isPinned ? "Pinned: " : ""
+                      }${question.question}`}
+                      onClick={() => selectQuestion(question.id)}
+                    >
+                      <div className="interview-question-select__meta">
+                        <span
+                          className="interview-question-number"
+                          aria-hidden="true"
+                        >
+                          {questionNumberLabel}
+                        </span>
+                        <span className="interview-question-type-label">
+                          {QUESTION_TYPE_LABELS[question.questionType]}
+                        </span>
+                      </div>
+                      <span>
+                        {question.category} · {question.difficulty}
                       </span>
-                    ) : null}
-                  </button>
-                </li>
-              ))}
+                      <strong>{question.question}</strong>
+                      {question.isPinned ? (
+                        <span className="interview-pinned-label">
+                          <span aria-hidden="true">◆</span> Pinned
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
             </ol>
           )}
           <div className="interview-pagination">
@@ -2282,52 +2300,90 @@ export function InterviewSessionWorkspace() {
                 </button>
               ) : null}
 
-              <label className="interview-answer-field">
-                Private notes
-                <textarea
-                  rows={4}
-                  maxLength={8_000}
-                  value={notesDraft}
-                  readOnly={!editable}
-                  onChange={(event) => {
-                    setNotesDraft(event.target.value);
-                    setNotesState("dirty");
-                  }}
-                />
-              </label>
-              {editable ? (
-                <div className="interview-action-row">
-                  <button
-                    type="button"
-                    className="interview-secondary-button"
-                    disabled={
-                      notesState === "saving" ||
-                      notesDraft.length > 8_000 ||
-                      (notesState !== "dirty" && notesState !== "error")
-                    }
-                    onClick={() => void persistNotes(notesDraft)}
-                  >
-                    {notesState === "saving" ? "Saving…" : "Save notes"}
-                  </button>
-                  <button
-                    type="button"
-                    className="interview-secondary-button"
-                    disabled={notesState === "saving" || notesDraft === ""}
-                    onClick={() => void persistNotes("")}
-                  >
-                    Clear notes
-                  </button>
-                  <span role="status">
-                    {notesState === "saved"
-                      ? notesDraft === ""
-                        ? "Notes cleared."
-                        : "Notes saved."
-                      : notesState === "dirty"
-                        ? "Unsaved notes."
-                        : ""}
-                  </span>
+              <section
+                className="interview-private-notes"
+                aria-label="Private notes"
+              >
+                <div className="interview-private-notes-heading">
+                  <strong>Private notes</strong>
+                  {notesOpen ? (
+                    notesResolved ? (
+                      <button
+                        type="button"
+                        className="interview-secondary-button"
+                        aria-expanded="true"
+                        aria-controls="interview-private-notes-editor"
+                        onClick={() => setNotesOpen(false)}
+                      >
+                        Hide
+                      </button>
+                    ) : null
+                  ) : editable ? (
+                    <button
+                      type="button"
+                      className="interview-secondary-button"
+                      aria-expanded="false"
+                      aria-controls="interview-private-notes-editor"
+                      onClick={() => setNotesOpen(true)}
+                    >
+                      {notesDraft.trim() ? "Show note" : "Add note"}
+                    </button>
+                  ) : null}
                 </div>
-              ) : null}
+                {notesOpen ? (
+                  <div
+                    id="interview-private-notes-editor"
+                    className="interview-private-notes-editor"
+                  >
+                    <div className="interview-answer-field">
+                      <textarea
+                        aria-label="Private notes"
+                        rows={4}
+                        maxLength={8_000}
+                        value={notesDraft}
+                        readOnly={!editable}
+                        onChange={(event) => {
+                          setNotesDraft(event.target.value);
+                          setNotesState("dirty");
+                        }}
+                      />
+                    </div>
+                    {editable ? (
+                      <div className="interview-action-row">
+                        <button
+                          type="button"
+                          className="interview-secondary-button"
+                          disabled={
+                            notesState === "saving" ||
+                            notesDraft.length > 8_000 ||
+                            (notesState !== "dirty" && notesState !== "error")
+                          }
+                          onClick={() => void persistNotes(notesDraft)}
+                        >
+                          {notesState === "saving" ? "Saving…" : "Save notes"}
+                        </button>
+                        <button
+                          type="button"
+                          className="interview-secondary-button"
+                          disabled={notesState === "saving" || notesDraft === ""}
+                          onClick={() => void persistNotes("")}
+                        >
+                          Clear notes
+                        </button>
+                        <span role="status">
+                          {notesState === "saved"
+                            ? notesDraft === ""
+                              ? "Notes cleared."
+                              : "Notes saved."
+                            : notesState === "dirty"
+                              ? "Unsaved notes."
+                              : ""}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </section>
 
               {canWriteAttempt ? (
                 <section
