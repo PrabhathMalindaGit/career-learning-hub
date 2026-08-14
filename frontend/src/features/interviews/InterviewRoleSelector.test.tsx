@@ -97,9 +97,9 @@ describe("InterviewRoleSelector", () => {
 
   it("keeps the custom input usable when an area has no representative roles", async () => {
     const user = userEvent.setup();
-    render(<Harness roleOptions={[]} />);
+    const { container } = render(<Harness roleOptions={[]} />);
 
-    expect(screen.queryByLabelText("Suggested roles")).toBeNull();
+    expect(container.querySelector('[aria-label="Suggested roles"]')).toBeNull();
     expect(screen.getByText(/enter the role you want to practise for/i)).not.toBeNull();
 
     const search = screen.getByRole("combobox", { name: "Target role" });
