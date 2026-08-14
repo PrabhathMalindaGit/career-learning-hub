@@ -7,11 +7,16 @@ import {
 } from "react";
 import { ApiError } from "../../api/apiClient";
 import { createInterviewSession } from "./interviewApi";
+import { InterviewRoleSelector } from "./InterviewRoleSelector";
 import {
-  InterviewTagInput,
-  mergeInterviewTags,
-} from "./InterviewTagInput";
+  INTERVIEW_EXPERIENCE_LEVELS,
+  getInterviewRoleSuggestions,
+  suggestInterviewTitle,
+} from "./interviewRoleGuidance";
+import { InterviewSuggestedTagInput } from "./InterviewSuggestedTagInput";
+import { mergeInterviewTags } from "./InterviewTagInput";
 import type { CreateInterviewMode } from "./types";
+import "./interviewCreateGuidance.css";
 
 type SafeError = { message: string; requestId?: string };
 type FieldErrors = Partial<
@@ -31,8 +36,8 @@ const fieldIdByError: Record<FieldErrorKey, string> = {
   title: "interview-title",
   targetRole: "interview-target-role",
   experienceLevel: "interview-experience",
-  focusTopics: "interview-focus-topics",
-  skillGaps: "interview-skill-gaps",
+  focusTopics: "interview-focus-topics-custom",
+  skillGaps: "interview-skill-gaps-custom",
   jobDescription: "interview-job-description",
 };
 
@@ -98,6 +103,7 @@ export function InterviewCreateDialog({
   const createBusyRef = useRef(false);
 
   const [title, setTitle] = useState("");
+  const [titleIsUserOwned, setTitleIsUserOwned] = useState(false);
   const [targetRole, setTargetRole] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("Mid-level");
   const [mode, setMode] =
@@ -113,8 +119,11 @@ export function InterviewCreateDialog({
   const [createError, setCreateError] = useState<SafeError | null>(null);
   const [createBusy, setCreateBusy] = useState(false);
 
+  const roleSuggestions = getInterviewRoleSuggestions(targetRole);
+
   function resetForm() {
     setTitle("");
+    setTitleIsUserOwned(false);
     setTargetRole("");
     setExperienceLevel("Mid-level");
     setMode("written-practice");
@@ -127,6 +136,20 @@ export function InterviewCreateDialog({
     setJobDescription("");
     setFieldErrors({});
     setCreateError(null);
+  }
+
+  function adoptRole(nextRole: string) {
+    setTargetRole(nextRole);
+    if (!titleIsUserOwned) {
+      setTitle(suggestInterviewTitle(nextRole, experienceLevel));
+    }
+  }
+
+  function adoptExperienceLevel(nextLevel: string) {
+    setExperienceLevel(nextLevel);
+    if (!titleIsUserOwned) {
+      setTitle(suggestInterviewTitle(targetRole, nextLevel));
+    }
   }
 
   function requestClose() {
@@ -280,19 +303,17 @@ export function InterviewCreateDialog({
               ) : null}
               {fieldErrors.focusTopics ? (
                 <li>
-                  <a href="#interview-focus-topics">Focus topics</a>
+                  <a href="#interview-focus-topics-custom">Focus topics</a>
                 </li>
               ) : null}
               {fieldErrors.skillGaps ? (
                 <li>
-                  <a href="#interview-skill-gaps">Skill gaps</a>
+                  <a href="#interview-skill-gaps-custom">Skill gaps</a>
                 </li>
               ) : null}
               {fieldErrors.jobDescription ? (
                 <li>
-                  <a href="#interview-job-description">
-                    Job description
-                  </a>
+                  <a href="#interview-job-description">Job description</a>
                 </li>
               ) : null}
             </ul>
@@ -300,8 +321,13 @@ export function InterviewCreateDialog({
         ) : null}
 
         <div className="interview-create-dialog__body interview-form">
+          <p className="interview-create-required-note">
+            Required: Session title, Target role, Experience level and Practice
+            mode.
+          </p>
+
           <label className="field-label" htmlFor="interview-title">
-            Session title <span aria-hidden="true">(required)</span>
+            Session title
             <input
               ref={titleRef}
               className="field-control"
@@ -313,7 +339,10 @@ export function InterviewCreateDialog({
               aria-describedby={
                 fieldErrors.title ? "interview-title-error" : undefined
               }
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setTitleIsUserOwned(true);
+                setTitle(event.target.value);
+              }}
             />
           </label>
           {fieldErrors.title ? (
@@ -325,41 +354,20 @@ export function InterviewCreateDialog({
             </p>
           ) : null}
 
-          <label className="field-label" htmlFor="interview-target-role">
-            Target role <span aria-hidden="true">(required)</span>
-            <input
-              className="field-control"
-              id="interview-target-role"
-              required
-              value={targetRole}
-              maxLength={200}
-              aria-invalid={Boolean(fieldErrors.targetRole)}
-              aria-describedby={
-                fieldErrors.targetRole
-                  ? "interview-target-role-error"
-                  : undefined
-              }
-              onChange={(event) => setTargetRole(event.target.value)}
-            />
-          </label>
-          {fieldErrors.targetRole ? (
-            <p
-              className="field-error interview-field-error"
-              id="interview-target-role-error"
-            >
-              {fieldErrors.targetRole}
-            </p>
-          ) : null}
+          <InterviewRoleSelector
+            value={targetRole}
+            error={fieldErrors.targetRole}
+            onChange={adoptRole}
+          />
 
           <div className="interview-form-row">
             <label className="field-label" htmlFor="interview-experience">
-              Experience level <span aria-hidden="true">(required)</span>
-              <input
+              Experience level
+              <select
                 className="field-control"
                 id="interview-experience"
                 required
                 value={experienceLevel}
-                maxLength={100}
                 aria-invalid={Boolean(fieldErrors.experienceLevel)}
                 aria-describedby={
                   fieldErrors.experienceLevel
@@ -367,9 +375,15 @@ export function InterviewCreateDialog({
                     : undefined
                 }
                 onChange={(event) =>
-                  setExperienceLevel(event.target.value)
+                  adoptExperienceLevel(event.target.value)
                 }
-              />
+              >
+                {INTERVIEW_EXPERIENCE_LEVELS.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className="field-label" htmlFor="interview-mode">
@@ -396,14 +410,15 @@ export function InterviewCreateDialog({
             </p>
           ) : null}
 
-          <InterviewTagInput
+          <InterviewSuggestedTagInput
             id="interview-focus-topics"
-            label="Focus topics"
+            label="Focus topics · Optional"
+            suggestions={roleSuggestions.focusTopics}
             values={focusTopics}
             draft={focusDraft}
             error={focusError ?? fieldErrors.focusTopics}
-            placeholder="Add a focus topic"
-            helpText="Press Enter or comma to add a topic."
+            placeholder="Add custom topic…"
+            helpText="Choose useful topics for this interview, or add your own."
             onValuesChange={setFocusTopics}
             onDraftChange={setFocusDraft}
             onError={(next) => {
@@ -417,14 +432,15 @@ export function InterviewCreateDialog({
             }}
           />
 
-          <InterviewTagInput
+          <InterviewSuggestedTagInput
             id="interview-skill-gaps"
-            label="Skill gaps"
+            label="Skill gaps · Optional"
+            suggestions={roleSuggestions.skillGaps}
             values={skillGaps}
             draft={skillDraft}
             error={skillError ?? fieldErrors.skillGaps}
-            placeholder="Add a skill gap"
-            helpText="Press Enter or comma to add a skill gap."
+            placeholder="Add custom skill gap…"
+            helpText="Choose areas you want the interview to challenge, or add your own."
             onValuesChange={setSkillGaps}
             onDraftChange={setSkillDraft}
             onError={(next) => {
@@ -439,12 +455,12 @@ export function InterviewCreateDialog({
           />
 
           <details className="interview-create-dialog__context">
-            <summary>Additional context (optional)</summary>
+            <summary>Additional context · Optional</summary>
             <label
               className="field-label"
               htmlFor="interview-job-description"
             >
-              Job description <span>(optional)</span>
+              Job description · Optional
               <textarea
                 className="field-control"
                 id="interview-job-description"
