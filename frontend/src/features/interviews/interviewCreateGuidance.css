@@ -26,6 +26,7 @@
 }
 
 .interview-role-selector__heading small,
+.interview-role-selector__empty,
 .interview-suggested-tag-input__heading small,
 .interview-suggested-tag-input__help {
   color: var(--text-muted);
