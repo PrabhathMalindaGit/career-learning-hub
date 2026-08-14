@@ -59,6 +59,23 @@ describe("InterviewQuestionTypeControls", () => {
     }
   });
 
+  it("presents balanced distribution as part of the Question types control", () => {
+    render(
+      <InterviewQuestionTypeControls
+        count={6}
+        selected={["multiple-choice", "short-answer"]}
+        onSelectedChange={vi.fn()}
+        onExplicitCountsChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Distribution")).not.toBeNull();
+    expect(screen.getByText("Balanced automatically")).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Set exact counts" }),
+    ).not.toBeNull();
+  });
+
   it("requires at least one selected type and preserves selected order", async () => {
     const user = userEvent.setup();
     render(<Harness />);
@@ -93,7 +110,7 @@ describe("InterviewQuestionTypeControls", () => {
     );
 
     expect(screen.queryByRole("spinbutton")).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Set counts" }));
+    await user.click(screen.getByRole("button", { name: "Set exact counts" }));
     expect(onExplicitCountsChange).toHaveBeenCalledWith({
       "short-answer": 2,
       coding: 2,
@@ -105,7 +122,7 @@ describe("InterviewQuestionTypeControls", () => {
     render(<Harness />);
 
     await user.click(screen.getByRole("checkbox", { name: "Coding" }));
-    await user.click(screen.getByRole("button", { name: "Set counts" }));
+    await user.click(screen.getByRole("button", { name: "Set exact counts" }));
 
     const controls = screen.getByRole("group", { name: "Question types" });
     expect(
@@ -118,6 +135,7 @@ describe("InterviewQuestionTypeControls", () => {
       within(controls).queryByRole("spinbutton", { name: "Behavioral count" }),
     ).toBeNull();
     expect(screen.getByText("Exact counts total 4.")).not.toBeNull();
+    expect(screen.getByText("Exact counts")).not.toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Change question count" }));
     expect(screen.getByRole("alert").textContent).toMatch(
@@ -130,7 +148,7 @@ describe("InterviewQuestionTypeControls", () => {
     render(<Harness initialCount={4} />);
 
     await user.click(screen.getByRole("checkbox", { name: "Coding" }));
-    await user.click(screen.getByRole("button", { name: "Set counts" }));
+    await user.click(screen.getByRole("button", { name: "Set exact counts" }));
     const shortCount = screen.getByRole("spinbutton", { name: "Short Answer count" });
     await user.clear(shortCount);
     await user.type(shortCount, "3");
@@ -140,5 +158,6 @@ describe("InterviewQuestionTypeControls", () => {
       screen.getByRole("button", { name: "Use balanced distribution" }),
     );
     expect(screen.queryByRole("spinbutton")).toBeNull();
+    expect(screen.getByText("Balanced automatically")).not.toBeNull();
   });
 });
