@@ -40,6 +40,12 @@ export function InterviewRoleSelector({
     setQuery(value);
   }, [value]);
 
+  useEffect(() => {
+    if (value !== "") return;
+    preserveQueryOnSelectionClear.current = false;
+    setQuery("");
+  }, [roleOptions]);
+
   const filtered = useMemo(() => {
     if (!normalizedQuery) return [];
     return roleOptions.filter((option) =>
