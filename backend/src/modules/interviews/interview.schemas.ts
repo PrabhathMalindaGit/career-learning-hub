@@ -189,6 +189,11 @@ const manualQuestionBaseSchema =
       .object({
         questionType: z.literal("coding"),
         ...manualQuestionCommonShape,
+        starterCode: z
+          .string()
+          .trim()
+          .max(12_000)
+          .optional(),
         modelAnswer: z
           .string()
           .trim()
@@ -598,6 +603,11 @@ const generatedQuestionSchema =
       .object({
         questionType: z.literal("coding"),
         ...generatedCommonShape,
+        starterCode: z
+          .string()
+          .trim()
+          .min(1)
+          .max(12_000),
       })
       .strict(),
     z
