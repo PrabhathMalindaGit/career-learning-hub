@@ -71,21 +71,25 @@ export function InterviewAnswerControl({
   const isMultipleChoice = question.questionType === "multiple-choice";
   const isCoding = question.questionType === "coding";
   const isShortAnswer = question.questionType === "short-answer";
-  const isStructured = isStructuredInterviewQuestionType(question.questionType);
-  const structuredText = isStructured
-    ? serializeStructuredAnswer(question.questionType, structuredDraft)
+  const structuredQuestionType = isStructuredInterviewQuestionType(
+    question.questionType,
+  )
+    ? question.questionType
+    : null;
+  const structuredText = structuredQuestionType
+    ? serializeStructuredAnswer(structuredQuestionType, structuredDraft)
     : "";
   const trimmedLength = textValue.trim().length;
   const textInvalid = trimmedLength < 1 || trimmedLength > ANSWER_MAX_LENGTH;
   const structuredInvalid =
-    isStructured &&
+    structuredQuestionType !== null &&
     (structuredText.length < 1 ||
       structuredText.length > STRUCTURED_ANSWER_MAX_LENGTH);
   const submitDisabled =
     disabled ||
     (isMultipleChoice
       ? selectedOptionId === ""
-      : isStructured
+      : structuredQuestionType
         ? structuredInvalid
         : textInvalid);
   const errorId = "interview-answer-control-error";
@@ -109,10 +113,10 @@ export function InterviewAnswerControl({
   useEffect(() => {
     const previous = previousTextValue.current;
     previousTextValue.current = textValue;
-    if (isStructured && previous !== "" && textValue === "") {
+    if (structuredQuestionType && previous !== "" && textValue === "") {
       setStructuredDraft({});
     }
-  }, [isStructured, textValue]);
+  }, [structuredQuestionType, textValue]);
 
   return (
     <div
@@ -150,14 +154,14 @@ export function InterviewAnswerControl({
             </label>
           ))}
         </fieldset>
-      ) : isStructured ? (
+      ) : structuredQuestionType ? (
         <InterviewStructuredAnswerFields
-          questionType={question.questionType}
+          questionType={structuredQuestionType}
           value={structuredDraft}
           disabled={disabled}
           onChange={(next) => {
             setStructuredDraft(next);
-            onTextChange(serializeStructuredAnswer(question.questionType, next));
+            onTextChange(serializeStructuredAnswer(structuredQuestionType, next));
           }}
         />
       ) : (
