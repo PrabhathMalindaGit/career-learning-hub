@@ -82,6 +82,9 @@ describe("JobResilienceActions", () => {
       "interview.questions.generate",
     );
     expect(root?.getAttribute("data-job-status")).toBe("completed");
+    expect(screen.getByRole("status").textContent).toContain(
+      "Questions generated successfully",
+    );
   });
 
   it("announces action errors", async () => {
