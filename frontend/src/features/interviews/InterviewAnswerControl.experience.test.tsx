@@ -62,17 +62,34 @@ function renderControl(
 }
 
 describe("InterviewAnswerControl practice experience", () => {
-  it("renders positional MCQ badges while preserving native radio selection", async () => {
+  it("renders each MCQ radio and positional badge in one compact leading cluster", async () => {
     const onSelectedOptionChange = vi.fn();
     const { container } = renderControl(question("multiple-choice"), {
       onSelectedOptionChange,
     });
 
+    const optionCards = Array.from(
+      container.querySelectorAll(".interview-answer-option"),
+    );
+    const controlClusters = Array.from(
+      container.querySelectorAll(".interview-answer-option__control"),
+    );
+
+    expect(optionCards).toHaveLength(3);
+    expect(controlClusters).toHaveLength(3);
     expect(
-      Array.from(
-        container.querySelectorAll(".interview-answer-option__letter"),
-      ).map((node) => node.textContent),
+      controlClusters.map((cluster) =>
+        cluster.querySelector(".interview-answer-option__letter")?.textContent,
+      ),
     ).toEqual(["A", "B", "C"]);
+    for (const cluster of controlClusters) {
+      expect(cluster.querySelector('input[type="radio"]')).not.toBeNull();
+    }
+    for (const card of optionCards) {
+      expect(
+        card.querySelector(":scope > .interview-answer-option__text"),
+      ).not.toBeNull();
+    }
 
     await userEvent
       .setup()
@@ -141,17 +158,13 @@ describe("InterviewAnswerControl practice experience", () => {
 
     await userEvent
       .setup()
-      .type(screen.getByRole("textbox", { name: "Action" }), "I led the fix.");
+      .type(screen.getByRole("textbox", { name: "Situation" }), "Context");
 
-    expect(onTextChange).toHaveBeenLastCalledWith("Action:\nI led the fix.");
+    expect(onTextChange).toHaveBeenLastCalledWith("Situation:\nContext");
   });
 
   it("renders Coding starter code and inserts it only into an empty draft", async () => {
-    const starterCode = [
-      "function solve(input) {",
-      "  // TODO",
-      "}",
-    ].join("\n");
+    const starterCode = "function solve(input) {\n  // TODO\n}";
     const onTextChange = vi.fn();
     const { container, rerender } = renderControl(
       question("coding", { starterCode }),
@@ -191,18 +204,14 @@ describe("InterviewAnswerControl practice experience", () => {
 
   it("copies exactly the Coding starter scaffold", async () => {
     const starterCode = "function solve(input) {\n  // TODO\n}";
+    renderControl(question("coding", { starterCode }));
     const user = userEvent.setup();
     const writeText = vi.spyOn(navigator.clipboard, "writeText");
 
-    try {
-      renderControl(question("coding", { starterCode }));
-      await user.click(screen.getByRole("button", { name: "Copy starter code" }));
-      await waitFor(() => {
-        expect(writeText).toHaveBeenCalledWith(starterCode);
-      });
-    } finally {
-      writeText.mockRestore();
-    }
+    await user.click(screen.getByRole("button", { name: "Copy starter code" }));
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(starterCode);
+    });
   });
 
   it("omits an empty starter-code surface for Coding questions without a scaffold", () => {
