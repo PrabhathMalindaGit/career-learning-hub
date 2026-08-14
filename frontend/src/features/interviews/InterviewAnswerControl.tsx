@@ -135,18 +135,20 @@ export function InterviewAnswerControl({
           <legend>Choose the best answer</legend>
           {question.multipleChoice?.options.map((option, index) => (
             <label className="interview-answer-option" key={option.id}>
-              <input
-                type="radio"
-                name={`interview-answer-${question.id}`}
-                value={option.id}
-                checked={selectedOptionId === option.id}
-                onChange={() => onSelectedOptionChange(option.id)}
-              />
-              <span
-                className="interview-answer-option__letter"
-                aria-hidden="true"
-              >
-                {String.fromCharCode(65 + index)}
+              <span className="interview-answer-option__control">
+                <input
+                  type="radio"
+                  name={`interview-answer-${question.id}`}
+                  value={option.id}
+                  checked={selectedOptionId === option.id}
+                  onChange={() => onSelectedOptionChange(option.id)}
+                />
+                <span
+                  className="interview-answer-option__letter"
+                  aria-hidden="true"
+                >
+                  {String.fromCharCode(65 + index)}
+                </span>
               </span>
               <span className="interview-answer-option__text">
                 {option.text}
