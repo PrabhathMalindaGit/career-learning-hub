@@ -82,6 +82,7 @@ export function LearningDocumentDeletion({
 }) {
   const navigate = useNavigate();
   const identity = `${accountId}:${document.id}`;
+  const deletionTitleId = `learning-deletion-title-${document.id}`;
   const [state, setState] = useState<DeletionState>(() =>
     initialState(document),
   );
@@ -658,7 +659,7 @@ export function LearningDocumentDeletion({
       <dialog
         ref={dialogRef}
         className="learning-deletion-dialog"
-        aria-labelledby="learning-deletion-title"
+        aria-labelledby={deletionTitleId}
         onCancel={(event) => {
           event.preventDefault();
           closeConfirmation();
@@ -670,7 +671,7 @@ export function LearningDocumentDeletion({
           onSubmit={acceptDeletion}
         >
           <p className="learning-kicker">Permanent action</p>
-          <h2 id="learning-deletion-title">
+          <h2 id={deletionTitleId}>
             Permanently delete document
           </h2>
           <p>
