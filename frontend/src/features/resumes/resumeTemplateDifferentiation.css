@@ -118,7 +118,10 @@
   break-inside: avoid-page;
 }
 
-.resume-paper [data-resume-identity="classic"] .resume-paper-identity {
+.resume-template-ats-classic .resume-paper-identity,
+.resume-template-modern-professional .resume-paper-identity,
+.resume-template-compact-technical .resume-paper-identity {
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
 }
 
@@ -134,9 +137,8 @@
 }
 
 .resume-template-modern-professional [data-resume-identity="modern"] {
-  margin: calc(clamp(28px, 4.8vw, 46px) * -1);
   margin-bottom: 1.35rem;
-  padding: 1.35rem clamp(28px, 4.8vw, 46px) 1.2rem;
+  padding: 1.15rem 1.2rem 1.05rem;
   border-top: 6px solid var(--resume-heading);
   border-bottom: 1px solid color-mix(in srgb, var(--resume-rule) 72%, white);
   background: color-mix(in srgb, var(--resume-heading) 5%, var(--resume-background));
