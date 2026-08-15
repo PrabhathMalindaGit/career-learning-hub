@@ -34,7 +34,7 @@ export function ResumeDeleteDialog({
 }) {
   const headingId = useId();
   const descriptionId = useId();
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const controllerRef = useRef<AbortController | null>(null);
   const [open, setOpen] = useState(false);
