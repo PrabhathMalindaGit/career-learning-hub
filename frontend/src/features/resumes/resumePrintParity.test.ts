@@ -30,39 +30,22 @@ describe("Resume template print parity", () => {
     );
   });
 
-  it("makes Modern Professional sections fragmentable instead of one tall body grid row", () => {
+  it("uses independent Modern Professional print columns", () => {
     expect(printParityCss).toMatch(
-      /\.resume-template-modern-professional\s+\.resume-modern-columns\s*\{[^}]*break-inside:\s*auto;/s,
+      /\.resume-template-modern-professional\s+\.resume-modern-columns\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*flex-start;[^}]*break-inside:\s*auto;/s,
     );
     expect(printParityCss).toMatch(
-      /\.resume-template-modern-professional\s+\.resume-modern-content,\s*\.resume-template-modern-professional\s+\.resume-modern-sidebar\s*\{[^}]*display:\s*contents;/s,
+      /\.resume-template-modern-professional\s+\.resume-modern-content\s*\{[^}]*flex:\s*2\.08\s+1\s+0;[^}]*break-inside:\s*auto;/s,
     );
     expect(printParityCss).toMatch(
-      /\.resume-modern-content\s*>\s*\[data-resume-section\][^{]*\{[^}]*grid-column:\s*1;/s,
-    );
-    expect(printParityCss).toMatch(
-      /\.resume-modern-sidebar\s*>\s*\[data-resume-section\][^{]*\{[^}]*grid-column:\s*2;/s,
+      /\.resume-template-modern-professional\s+\.resume-modern-sidebar\s*\{[^}]*flex:\s*0\.92\s+1\s+0;[^}]*break-inside:\s*auto;/s,
     );
   });
 
-  it("keeps Modern Professional section placement deterministic across print rows", () => {
-    for (const [section, row] of [
-      ["summary", "1"],
-      ["experience", "2"],
-      ["projects", "3"],
-      ["skills", "1"],
-      ["education", "2"],
-      ["certifications", "3"],
-      ["languages", "4"],
-      ["interests", "5"],
-    ] as const) {
-      expect(printParityCss).toMatch(
-        new RegExp(
-          `data-resume-section=\\"${section}\\"\\][^}]*\\{[^}]*grid-row:\\s*${row};`,
-          "s",
-        ),
-      );
-    }
+  it("does not synchronize Modern sections into print grid rows", () => {
+    expect(printParityCss).not.toContain("display: contents");
+    expect(printParityCss).not.toContain("grid-row:");
+    expect(printParityCss).not.toContain("grid-column:");
   });
 
   it("contains only print-media overrides", () => {
