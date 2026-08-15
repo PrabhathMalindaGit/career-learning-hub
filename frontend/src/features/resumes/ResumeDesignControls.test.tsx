@@ -13,9 +13,7 @@ const approvedDesign: ResumeDesign = {
 };
 
 function renderControls(
-  overrides: Partial<
-    React.ComponentProps<typeof ResumeDesignControls>
-  > = {},
+  overrides: Partial<React.ComponentProps<typeof ResumeDesignControls>> = {},
 ) {
   const props: React.ComponentProps<typeof ResumeDesignControls> = {
     design: approvedDesign,
@@ -37,12 +35,8 @@ describe("ResumeDesignControls", () => {
     renderControls();
     const user = userEvent.setup();
 
-    expect(
-      screen.getByRole("group", { name: "Resume appearance" }),
-    ).not.toBeNull();
-    expect(
-      screen.getByText("ATS Classic • Inter • Slate • A4"),
-    ).not.toBeNull();
+    expect(screen.getByRole("group", { name: "Resume appearance" })).not.toBeNull();
+    expect(screen.getByText("ATS Classic • Inter • Slate • A4")).not.toBeNull();
     const customize = screen.getByRole("button", { name: "Customize" });
     expect(customize.getAttribute("aria-expanded")).toBe("false");
     expect(customize.getAttribute("aria-controls")).toBe(
@@ -62,9 +56,8 @@ describe("ResumeDesignControls", () => {
       Array.from(templateChoices, (choice) => choice.getAttribute("value")),
     ).toEqual(["ats-classic", "modern-professional", "compact-technical"]);
     expect(
-      (screen.getByRole("radio", {
-        name: /ATS Classic/i,
-      }) as HTMLInputElement).checked,
+      (screen.getByRole("radio", { name: /ATS Classic/i }) as HTMLInputElement)
+        .checked,
     ).toBe(true);
     expect(
       (screen.getByRole("radio", {
@@ -78,17 +71,17 @@ describe("ResumeDesignControls", () => {
     ).toBe(false);
     expect(
       screen.getByText(
-        "A familiar single-column structure with clear section hierarchy.",
+        "Traditional single-column layout optimized for clear scanning and conservative applications.",
       ),
     ).not.toBeNull();
     expect(
       screen.getByText(
-        "A restrained single-column layout with stronger visual dividers.",
+        "Polished two-column presentation with a strong header and structured professional sidebar.",
       ),
     ).not.toBeNull();
     expect(
       screen.getByText(
-        "A denser single-column layout for detailed technical experience.",
+        "Dense technical layout prioritizing skills, tools, projects, and efficient use of page space.",
       ),
     ).not.toBeNull();
     expect(document.querySelectorAll("[data-template-preview]")).toHaveLength(3);
@@ -96,12 +89,10 @@ describe("ResumeDesignControls", () => {
     expect(document.querySelectorAll("[data-palette-preview]")).toHaveLength(3);
     expect(screen.queryAllByText("Selected")).toHaveLength(0);
     expect(
-      (screen.getByRole("radio", { name: /Inter/i }) as HTMLInputElement)
-        .checked,
+      (screen.getByRole("radio", { name: /Inter/i }) as HTMLInputElement).checked,
     ).toBe(true);
     expect(
-      (screen.getByRole("radio", { name: /Slate/i }) as HTMLInputElement)
-        .checked,
+      (screen.getByRole("radio", { name: /Slate/i }) as HTMLInputElement).checked,
     ).toBe(true);
     expect(
       Array.from(
@@ -115,9 +106,7 @@ describe("ResumeDesignControls", () => {
         (choice) => choice.getAttribute("value"),
       ),
     ).toEqual(["slate", "forest", "navy"]);
-    expect(screen.getAllByText("Shape the work. Show the impact.")).toHaveLength(
-      3,
-    );
+    expect(screen.getAllByText("Shape the work. Show the impact.")).toHaveLength(3);
     expect(document.body.textContent).not.toMatch(
       /line spacing|custom font|custom color|ats score|ats certified|guaranteed ats/i,
     );
@@ -140,8 +129,12 @@ describe("ResumeDesignControls", () => {
       onPreviewChange,
     });
 
-    expect(screen.getByText(/saved design choices are no longer available/i)).not.toBeNull();
-    expect(screen.getByText(/preview uses ats classic, slate, and inter/i)).not.toBeNull();
+    expect(
+      screen.getByText(/saved design choices are no longer available/i),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(/preview uses ats classic, slate, and inter/i),
+    ).not.toBeNull();
     expect(document.body.textContent).not.toContain("unknown-template");
     expect(document.body.textContent).not.toContain("unknown-palette");
     expect(document.body.textContent).not.toContain("unknown-font");
@@ -149,9 +142,11 @@ describe("ResumeDesignControls", () => {
     expect(onPreviewChange).not.toHaveBeenCalled();
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Customize" }));
-    expect(screen.getAllByRole("radio").every((choice) =>
-      !(choice as HTMLInputElement).checked
-    )).toBe(true);
+    expect(
+      screen
+        .getAllByRole("radio")
+        .every((choice) => !(choice as HTMLInputElement).checked),
+    ).toBe(true);
     expect(
       (screen.getByRole("button", {
         name: "Save design",
@@ -175,15 +170,9 @@ describe("ResumeDesignControls", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Customize" }));
 
-    await user.click(
-      screen.getByRole("radio", { name: /Modern Professional/i }),
-    );
-    await user.click(
-      screen.getByRole("radio", { name: /Georgia/i }),
-    );
-    await user.click(
-      screen.getByRole("radio", { name: /Navy/i }),
-    );
+    await user.click(screen.getByRole("radio", { name: /Modern Professional/i }));
+    await user.click(screen.getByRole("radio", { name: /Georgia/i }));
+    await user.click(screen.getByRole("radio", { name: /Navy/i }));
 
     expect(onPreviewChange).toHaveBeenLastCalledWith({
       templateId: "modern-professional",
@@ -209,12 +198,8 @@ describe("ResumeDesignControls", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Customize" }));
 
-    await user.click(
-      screen.getByRole("radio", { name: /Compact Technical/i }),
-    );
-    await user.click(
-      screen.getByRole("radio", { name: /Arial/i }),
-    );
+    await user.click(screen.getByRole("radio", { name: /Compact Technical/i }));
+    await user.click(screen.getByRole("radio", { name: /Arial/i }));
     await user.click(screen.getByRole("button", { name: "Reset changes" }));
 
     expect(onPreviewChange).toHaveBeenLastCalledWith({
@@ -223,9 +208,8 @@ describe("ResumeDesignControls", () => {
       colorPaletteId: "slate",
     });
     expect(
-      (screen.getByRole("radio", {
-        name: /ATS Classic/i,
-      }) as HTMLInputElement).checked,
+      (screen.getByRole("radio", { name: /ATS Classic/i }) as HTMLInputElement)
+        .checked,
     ).toBe(true);
     expect(
       (screen.getByRole("button", {
@@ -259,9 +243,9 @@ describe("ResumeDesignControls", () => {
 
     expect(screen.getByText("Saving resume design…")).not.toBeNull();
     expect(
-      screen.getAllByRole("radio").every(
-        (control) => (control as HTMLInputElement).disabled,
-      ),
+      screen
+        .getAllByRole("radio")
+        .every((control) => (control as HTMLInputElement).disabled),
     ).toBe(true);
 
     rerender(

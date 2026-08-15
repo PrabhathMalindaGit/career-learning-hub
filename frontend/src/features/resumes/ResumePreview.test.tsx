@@ -20,6 +20,13 @@ const resumeRefinementCss = readFileSync(
   ),
   "utf8",
 );
+const templateCss = readFileSync(
+  resolve(
+    process.cwd(),
+    "src/features/resumes/resumeTemplateDifferentiation.css",
+  ),
+  "utf8",
+);
 
 function content(): ResumeContent {
   return {
@@ -346,6 +353,19 @@ describe("ResumePreview", () => {
     expect(skillKeywordsRule).toContain("overflow-wrap: anywhere;");
     expect(resumeRefinementCss).not.toMatch(
       /\.resume-paper-skills dt::after/,
+    );
+  });
+
+  it("keeps print pagination rules bounded to entries and compact groups", () => {
+    expect(templateCss).toContain("@media print");
+    expect(templateCss).toMatch(
+      /\.resume-preview-entry\s*\{[^}]*break-inside:\s*avoid-page;/s,
+    );
+    expect(templateCss).not.toMatch(
+      /\.resume-paper\s+section\s*\{[^}]*break-inside:\s*avoid/s,
+    );
+    expect(templateCss).toContain(
+      ".resume-template-modern-professional .resume-modern-columns",
     );
   });
 });
