@@ -31,6 +31,8 @@ The post-PR-#20 implementation has these relevant boundaries:
 - `resumePrint.ts` uses the native browser print path; no server-side PDF renderer exists or is needed.
 - Candidate Photo is already optional, privately stored, validated, and rendered through the existing Resume design state.
 
+The current template registry itself describes Modern Professional as a restrained single-column layout and Compact Technical as a denser single-column layout, confirming that the existing template distinction is intentionally shallow rather than structurally different.
+
 The user-provided exports also demonstrate a pagination weakness: a short **Certifications** section can be pushed to a mostly empty second page. This task should improve normal page-flow behavior without promising that every Resume will fit on one page.
 
 ## 4. Locked Template Identities
@@ -95,7 +97,7 @@ If `showProfilePhoto` is enabled and a valid Candidate Photo exists, ATS Classic
 - Candidate Photo, when enabled, is integrated intentionally into the header rather than looking appended to a generic single-column layout;
 - restrained palette-derived accent treatment may be used.
 
-**Main column presentation:**
+**Main content presentation:**
 
 1. Summary
 2. Experience
@@ -123,7 +125,7 @@ Sections with no content simply do not render; the remaining content closes the 
 
 **Semantic / accessibility requirement:**
 
-The layout must remain real HTML text. Do not convert the Resume into an image, canvas, or absolutely positioned graphic. Use semantic regions (`main`, `aside`, `section`, headings, lists, links) with a logical source order. Keyboard and assistive-technology reading must remain understandable even though the visual layout uses columns.
+The layout must remain real HTML text. Do not convert the Resume into an image, canvas, or absolutely positioned graphic. Use ordinary divisions/sections plus an optional sidebar landmark with a logical source order. Do not introduce a nested `<main>` landmark inside the Resume preview. Keyboard and assistive-technology reading must remain understandable even though CSS places content into columns.
 
 **Updated picker description:**
 
@@ -213,10 +215,12 @@ A template shell chooses only:
 
 The shell must never mutate Resume data.
 
+Each content section and Candidate Photo must be rendered at most once in the selected template; template differentiation must not be implemented by duplicating the whole Resume tree and hiding alternate copies with CSS.
+
 Expected structure:
 
 - ATS Classic shell: one sequential column;
-- Modern Professional shell: shared header + main region + sidebar region;
+- Modern Professional shell: shared header + wider content region + sidebar region;
 - Compact Technical shell: shared header + technical content ordering + metadata/date-rail entry presentation.
 
 ### 5.3 No backend changes
@@ -314,13 +318,21 @@ Add restrained print rules that improve normal flow:
 - entire long sections must **not** be globally forced to stay together if doing so creates large blank areas;
 - content may split naturally when it is genuinely too long for the remaining page.
 
-### 9.3 Density objective
+### 9.3 Modern Professional fragmentation safety
+
+Modern Professional must be verified in actual Chromium browser print preview because multi-page grid/flex fragmentation can behave differently from normal screen layout.
+
+The implementation must not accept clipped, overlapping, duplicated, or missing sidebar/main content merely to preserve a rigid two-column grid across every page.
+
+If a browser-safe multi-page two-column grid cannot be achieved with the existing native print path, a **print-only continuation fallback** is allowed: the first-page identity must remain unmistakably Modern Professional with its two-column/sidebar structure, while overflow continuation content may resume in safe normal block flow on later pages. This fallback must not change Resume data, visible screen semantics, or the saved template ID.
+
+### 9.4 Density objective
 
 The layouts should reduce unnecessary vertical waste so a tiny trailing section is less likely to occupy an otherwise blank second page.
 
 This is an optimization objective, **not a one-page guarantee**. Content length, font choice, page size, Candidate Photo, and browser print metrics can legitimately produce additional pages.
 
-### 9.4 Printed content integrity
+### 9.5 Printed content integrity
 
 All templates must preserve:
 
@@ -380,7 +392,7 @@ At minimum cover:
 
 - registry retains exactly the three stable template IDs and updated descriptions;
 - ATS Classic renders the traditional section order;
-- Modern Professional renders distinct main + sidebar semantic regions with the intended section assignment;
+- Modern Professional renders distinct content + sidebar semantic regions with the intended section assignment;
 - Compact Technical renders Skills before Experience and exposes the technical/date-rail structure;
 - template switching preserves identical canonical Resume data;
 - Candidate Photo renders once in each template when enabled and not at all when disabled;
@@ -457,12 +469,12 @@ The feature is ready for merge only when all of the following are true:
 
 1. The same Resume looks immediately and materially different under all three template IDs.
 2. ATS Classic is clearly a traditional single-column Resume.
-3. Modern Professional is clearly a main-column + sidebar Resume.
+3. Modern Professional is clearly a main-content + sidebar Resume on its primary page composition.
 4. Compact Technical is clearly a dense technical/date-rail Resume with Skills prioritized near the top.
 5. The picker miniatures accurately signal those structural differences.
 6. Existing Font, Palette, A4/Letter, Candidate Photo, save/reset, version, and print behavior still works.
 7. Canonical Resume data is unchanged by template switching.
-8. Native browser PDF output contains selectable content without clipping or overlap.
+8. Native browser PDF output contains selectable content without clipping, overlap, duplication, or omission.
 9. Page-break behavior is improved without forcing long sections into wasteful blank-page layouts.
 10. Focused tests, full frontend tests, typecheck, production build, and diff hygiene pass.
 11. User browser QA approves all three templates using the same Resume.
