@@ -8,6 +8,9 @@ import {
 import { ResumeTemplateLayout } from "./ResumeTemplateLayouts";
 import "./resumeCandidatePhoto.css";
 import "./resumeTemplateDifferentiation.css";
+import "./resumeSkillGridRefinement.css";
+import "./resumePrintParity.css";
+import "./resumeLivePreview.css";
 
 interface ResumePreviewProps {
   draft: ResumeDraft;
@@ -41,6 +44,23 @@ export function ResumePreview({
   const showCandidatePhoto =
     design?.showProfilePhoto === true && candidatePhotoUrl !== undefined;
 
+  const paper = (
+    <article
+      className={`resume-paper ${resolved.template.option.className} ${resolved.font.option.className} ${resolved.palette.option.className}`}
+      data-template={resolved.template.option.id}
+      data-font={resolved.font.option.value}
+      data-palette={resolved.palette.option.id}
+      aria-label={ariaLabel}
+    >
+      <ResumeTemplateLayout
+        draft={draft}
+        templateId={resolved.template.option.id}
+        showCandidatePhoto={showCandidatePhoto}
+        {...(candidatePhotoUrl !== undefined ? { candidatePhotoUrl } : {})}
+      />
+    </article>
+  );
+
   return (
     <section
       className={`resume-panel resume-preview-panel${
@@ -68,20 +88,11 @@ export function ResumePreview({
         </header>
       )}
 
-      <article
-        className={`resume-paper ${resolved.template.option.className} ${resolved.font.option.className} ${resolved.palette.option.className}`}
-        data-template={resolved.template.option.id}
-        data-font={resolved.font.option.value}
-        data-palette={resolved.palette.option.id}
-        aria-label={ariaLabel}
-      >
-        <ResumeTemplateLayout
-          draft={draft}
-          templateId={resolved.template.option.id}
-          showCandidatePhoto={showCandidatePhoto}
-          {...(candidatePhotoUrl !== undefined ? { candidatePhotoUrl } : {})}
-        />
-      </article>
+      {printOnly ? (
+        paper
+      ) : (
+        <div className="resume-live-preview-viewport">{paper}</div>
+      )}
     </section>
   );
 }

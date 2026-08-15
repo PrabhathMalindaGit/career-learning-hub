@@ -1,0 +1,37 @@
+/* Print-only template parity repairs for native browser printing. */
+@media print {
+  /* Narrow browser/print viewports must not collapse Compact Technical skills. */
+  .resume-template-compact-technical .resume-paper-skills {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /*
+   * Modern Professional must let the main column fragment normally across pages.
+   * Chromium can move a tall two-item flex/grid body wholesale to the next page,
+   * leaving the identity header alone. Keep the body as a normal block for print,
+   * position the supporting sidebar independently on the first body fragment, and
+   * leave the main column in ordinary paged flow.
+   */
+  .resume-template-modern-professional .resume-modern-columns {
+    position: relative;
+    display: block;
+    break-inside: auto;
+  }
+
+  .resume-template-modern-professional .resume-modern-content {
+    width: calc(68.5% - 0.675rem);
+    min-width: 0;
+    break-inside: auto;
+  }
+
+  .resume-template-modern-professional .resume-modern-sidebar {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    width: calc(31.5% - 0.675rem);
+    min-width: 0;
+    break-inside: avoid-page;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -246,6 +246,19 @@
   display: inline;
 }
 
+.resume-template-compact-technical
+  .resume-paper-skills > .resume-paper-skill--name-only {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.resume-template-compact-technical .resume-paper-skill--name-only dt {
+  font-size: 0.92em;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .resume-template-compact-technical .resume-preview-entry--technical-rail {
   display: grid;
   grid-template-columns: minmax(5.4rem, 0.28fr) minmax(0, 1fr);

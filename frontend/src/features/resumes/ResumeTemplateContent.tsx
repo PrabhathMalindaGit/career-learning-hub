@@ -211,7 +211,14 @@ export function ResumeSkillsSection({ draft }: { draft: ResumeDraft }) {
       <h4>Skills</h4>
       <dl className="resume-paper-definition-list resume-paper-skills">
         {draft.skills.map((group) => (
-          <div key={group.clientKey}>
+          <div
+            className={
+              group.keywords.length === 0
+                ? "resume-paper-skill--name-only"
+                : undefined
+            }
+            key={group.clientKey}
+          >
             <dt>
               {group.name || "Skill group"}
               {group.keywords.length > 0 ? ":" : ""}

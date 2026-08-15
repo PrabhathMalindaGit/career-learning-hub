@@ -1706,7 +1706,7 @@ describe("ResumeWorkspace", () => {
     expect((fullName as HTMLInputElement).value).toBe("Synthetic Candidate");
     expect(screen.queryByText("Unsaved changes")).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Save design" }));
+    await user.click(screen.getByRole("button", { name: "Save appearance" }));
 
     await waitFor(() => {
       expect(resumeApi.updateResumeDesign).toHaveBeenCalledWith(
@@ -1753,7 +1753,7 @@ describe("ResumeWorkspace", () => {
     await user.click(
       screen.getByRole("radio", { name: /Compact Technical/i }),
     );
-    await user.click(screen.getByRole("button", { name: "Save design" }));
+    await user.click(screen.getByRole("button", { name: "Save appearance" }));
 
     expect(
       await screen.findByText("The resume design could not be saved."),
@@ -1790,7 +1790,7 @@ describe("ResumeWorkspace", () => {
     await user.click(
       screen.getByRole("radio", { name: /Forest/i }),
     );
-    await user.click(screen.getByRole("button", { name: "Save design" }));
+    await user.click(screen.getByRole("button", { name: "Save appearance" }));
 
     expect(
       (screen.getByRole("combobox", {

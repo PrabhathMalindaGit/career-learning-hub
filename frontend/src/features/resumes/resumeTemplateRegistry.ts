@@ -11,6 +11,7 @@ export interface ResumeTemplateOption {
   readonly id: ResumeTemplateId;
   readonly label: string;
   readonly description: string;
+  readonly bestFor: string;
   readonly className: string;
   readonly safeFallback?: boolean;
 }
@@ -56,6 +57,7 @@ export const RESUME_TEMPLATES: readonly ResumeTemplateOption[] = Object.freeze([
     label: "ATS Classic",
     description:
       "Traditional single-column layout optimized for clear scanning and conservative applications.",
+    bestFor: "ATS-heavy and traditional applications",
     className: "resume-template-ats-classic",
     safeFallback: true,
   }),
@@ -64,6 +66,7 @@ export const RESUME_TEMPLATES: readonly ResumeTemplateOption[] = Object.freeze([
     label: "Modern Professional",
     description:
       "Polished two-column presentation with a strong header and structured professional sidebar.",
+    bestFor: "General professional and business roles",
     className: "resume-template-modern-professional",
   }),
   Object.freeze({
@@ -71,6 +74,7 @@ export const RESUME_TEMPLATES: readonly ResumeTemplateOption[] = Object.freeze([
     label: "Compact Technical",
     description:
       "Dense technical layout prioritizing skills, tools, projects, and efficient use of page space.",
+    bestFor: "Engineering, software, and technical roles",
     className: "resume-template-compact-technical",
   }),
 ]);
