@@ -31,7 +31,7 @@ function design(templateId: string, showProfilePhoto: boolean): ResumeDesign {
 
 describe("ResumePreview Candidate Photo", () => {
   it.each(["ats-classic", "modern-professional", "compact-technical"])(
-    "renders the current Candidate Photo in %s with empty alt text",
+    "renders exactly one current Candidate Photo in %s with empty alt text",
     (templateId) => {
       const { container } = render(
         <ResumePreview
@@ -41,11 +41,13 @@ describe("ResumePreview Candidate Photo", () => {
         />,
       );
 
+      expect(container.querySelectorAll(".resume-profile-photo")).toHaveLength(1);
       const image = container.querySelector(".resume-profile-photo");
-      expect(image).not.toBeNull();
       expect(image?.getAttribute("src")).toBe("blob:canonical-photo");
       expect(image?.getAttribute("alt")).toBe("");
-      expect(container.querySelector('[aria-hidden="true"] .resume-profile-photo')).not.toBeNull();
+      expect(
+        container.querySelector('[aria-hidden="true"] .resume-profile-photo'),
+      ).not.toBeNull();
     },
   );
 
@@ -57,7 +59,7 @@ describe("ResumePreview Candidate Photo", () => {
         candidatePhotoUrl="blob:canonical-photo"
       />,
     );
-    expect(container.querySelector(".resume-profile-photo")).toBeNull();
+    expect(container.querySelectorAll(".resume-profile-photo")).toHaveLength(0);
   });
 
   it("does not render a visible preference without a canonical source", () => {
@@ -67,6 +69,6 @@ describe("ResumePreview Candidate Photo", () => {
         design={design("ats-classic", true)}
       />,
     );
-    expect(container.querySelector(".resume-profile-photo")).toBeNull();
+    expect(container.querySelectorAll(".resume-profile-photo")).toHaveLength(0);
   });
 });
