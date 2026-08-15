@@ -3,6 +3,10 @@ import { Types } from "mongoose";
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { app } from "../../app.js";
+import { env } from "../../config/env.js";
+import { claimNextJob, enqueueJob } from "../../jobs/job.queue.js";
+import { JobRecordModel } from "../../jobs/job.model.js";
+import { activateProvider } from "../../modules/ai/aiProvider.service.js";
 import { AssetModel } from "../../modules/assets/asset.model.js";
 import { createAsset } from "../../modules/assets/asset.service.js";
 import { ResumeModel } from "../../modules/resumes/resume.model.js";
@@ -10,7 +14,6 @@ import { createResume } from "../../modules/resumes/resume.service.js";
 import { ResumeVersionModel } from "../../modules/resumes/resumeVersion.model.js";
 import { normalizeResumeContent } from "../../modules/resumes/resume.validation.js";
 import { AppError } from "../../shared/appError.js";
-import { JobRecordModel } from "../../jobs/job.model.js";
 import { registerTestUser } from "../helpers/auth.js";
 
 const { extractPdfImagesMock, extractPdfTextMock } = vi.hoisted(() => ({
@@ -31,6 +34,7 @@ import {
 const syntheticPdf = Buffer.from(
   "%PDF-1.4\n% Synthetic privacy-safe Resume PDF fixture\n%%EOF\n",
 );
+const originalAdminCompatibility = env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED;
 
 function syntheticPng(width = 240, height = 320, marker = 0): Buffer {
   const buffer = Buffer.alloc(33);
@@ -99,6 +103,26 @@ async function createImportAsset(userId: string) {
       stream: Readable.from(syntheticPdf),
     },
   });
+}
+
+async function createRoutedImportJob(userId: string, assetId: string) {
+  env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = true;
+  await activateProvider({
+    userId,
+    provider: "gemini-direct",
+    credentialSource: "administrator-managed",
+    expectedRevision: 0,
+  });
+  const queued = await enqueueJob({
+    type: "resume.import-pdf",
+    payload: { userId, assetId, title: "Synthetic routed Resume" },
+    userId,
+  });
+  const claimed = await claimNextJob();
+  if (!claimed || claimed._id.toString() !== queued._id.toString()) {
+    throw new Error("Synthetic routed Resume import job was not claimed.");
+  }
+  return claimed;
 }
 
 async function createReviewJob(userId: string, title = "Reviewed Resume") {
@@ -208,6 +232,7 @@ function minimalResume() {
 
 describe("Resume PDF staged import", () => {
   afterEach(() => {
+    env.AI_ADMIN_GEMINI_COMPATIBILITY_ENABLED = originalAdminCompatibility;
     vi.unstubAllGlobals();
     extractPdfImagesMock.mockReset();
     extractPdfTextMock.mockReset();
@@ -350,7 +375,8 @@ describe("Resume PDF staged import", () => {
   it("stages at most three eligible import-bound photo candidates and skips invalid images", async () => {
     const userId = new Types.ObjectId().toString();
     const asset = await createImportAsset(userId);
-    const jobId = new Types.ObjectId().toString();
+    const job = await createRoutedImportJob(userId, asset._id.toString());
+    const jobId = job._id.toString();
     extractPdfTextMock.mockResolvedValue({
       text: "Synthetic candidate Resume text long enough for photo staging.",
       pageCount: 1,
@@ -443,7 +469,6 @@ describe("Resume PDF staged import", () => {
       prepareResumePdfImport({
         userId,
         assetId: asset._id.toString(),
-        jobId: new Types.ObjectId().toString(),
       }),
     ).rejects.toMatchObject({ code });
     expect(extractPdfImagesMock).not.toHaveBeenCalled();
@@ -532,7 +557,6 @@ describe("Resume PDF staged import", () => {
       prepareResumePdfImport({
         userId,
         assetId: asset._id.toString(),
-        jobId: new Types.ObjectId().toString(),
       }),
     ).rejects.toMatchObject({ code: "UNAVAILABLE", retryable: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -622,15 +646,16 @@ describe("Resume PDF staged import", () => {
       candidatePhotoAssetId: candidate._id,
       design: { showProfilePhoto: true },
     });
-    await expect(AssetModel.findById(candidate._id).lean()).resolves.toMatchObject({
+    const adoptedCandidate = await AssetModel.findById(candidate._id).lean();
+    expect(adoptedCandidate).toMatchObject({
       status: "active",
-      expiresAt: null,
       metadata: {
         resumeId: result.resumeId,
         resumeImportJobId: job._id.toString(),
         resumeImportSourceAssetId: asset._id.toString(),
       },
     });
+    expect(adoptedCandidate).not.toHaveProperty("expiresAt");
     await expect(ResumeVersionModel.findById(result.versionId).lean()).resolves.toMatchObject({
       sourceAssetId: asset._id,
       source: "pdf-import",
@@ -797,8 +822,9 @@ describe("Resume PDF staged import", () => {
       }),
     ]);
     const fulfilled = results.filter(
-      (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof confirmResumePdfImport>>> =>
-        result.status === "fulfilled",
+      (result): result is PromiseFulfilledResult<
+        Awaited<ReturnType<typeof confirmResumePdfImport>>
+      > => result.status === "fulfilled",
     );
     expect(fulfilled.length).toBeGreaterThanOrEqual(1);
     const identity = fulfilled[0]!.value;
