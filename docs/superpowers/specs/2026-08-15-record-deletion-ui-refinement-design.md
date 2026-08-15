@@ -1,10 +1,11 @@
 # Record Deletion UI Refinement Design
 
 **Date:** 2026-08-15
-**Status:** Design and written specification approved by the user; implementation plan pending approval
+**Status:** Design and written specification approved by the user; implementation plan created and awaiting approval
 **Task branch:** `task/record-deletion-destructive-actions`
 **Parent PR:** `#18 — Record deletion and destructive actions`
 **Base:** existing Record Deletion implementation on PR #18
+**Implementation plan:** `docs/superpowers/plans/2026-08-15-record-deletion-ui-refinement.md`
 
 ## 1. Purpose
 
@@ -270,7 +271,7 @@ After focused UI tests pass, rerun:
 - full frontend test suite;
 - frontend typecheck;
 - frontend production build;
-- `git diff --check origin/main...HEAD`.
+- `git diff --check origin/main...HEAD` after the approved implementation commit; use `git diff --check` while implementation remains intentionally uncommitted for review.
 
 Backend reruns are not required solely for this presentation change unless backend files unexpectedly change.
 
@@ -305,6 +306,7 @@ Expected existing files to modify:
 - `frontend/src/features/resumes/resumeDeletion.css`
 - `frontend/src/features/resumes/resumeWorkspace.css` only for bounded card alignment
 - Resume deletion/list tests already present on PR #18
+- `frontend/src/features/interviews/InterviewSessionListPage.tsx` only for the approved one-open-at-a-time collection coordination required by the implementation plan
 - `frontend/src/features/interviews/InterviewSessionCard.tsx`
 - `frontend/src/features/interviews/InterviewDeleteDialog.tsx`
 - Interview deletion/card CSS and tests already present on PR #18
@@ -335,4 +337,4 @@ Do not add:
 
 The written specification is approved.
 
-Implementation may begin only after the user explicitly approves the resulting implementation plan.
+The implementation plan has been created and self-reviewed, but implementation remains unauthorized until the user explicitly approves the plan.
