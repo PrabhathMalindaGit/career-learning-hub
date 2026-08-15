@@ -85,6 +85,7 @@ export function ResumeImportPhotoChoices({
           type="radio"
           name={name}
           checked={selectedAssetId === undefined}
+          disabled={disabled}
           onChange={() => onChange(undefined)}
         />
         <span>Do not import a photo</span>
@@ -107,6 +108,7 @@ export function ResumeImportPhotoChoices({
                 name={name}
                 aria-label={`Use extracted photo ${index + 1}`}
                 checked={selectedAssetId === candidate.assetId}
+                disabled={disabled}
                 onChange={() => onChange(candidate.assetId)}
               />
               <span className="resume-import-photo-preview">
