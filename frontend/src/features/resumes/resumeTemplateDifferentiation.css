@@ -1,0 +1,346 @@
+/* Template differentiation is intentionally presentation-only. */
+
+.resume-layout {
+  min-width: 0;
+}
+
+/* Appearance-picker miniature documents */
+.resume-mini-layout {
+  display: grid;
+  width: 100%;
+  min-height: 100%;
+  gap: 4px;
+}
+
+.resume-mini-layout > span {
+  display: block;
+  min-width: 0;
+  border-radius: 2px;
+}
+
+.resume-mini-layout--classic {
+  grid-template-columns: 1fr;
+  align-content: start;
+}
+
+.resume-mini-identity {
+  width: 58%;
+  height: 8px;
+  margin-bottom: 4px;
+  background: var(--resume-heading);
+}
+
+.resume-mini-stack-line {
+  width: 76%;
+  height: 3px;
+  background: var(--resume-secondary);
+  opacity: 0.45;
+}
+
+.resume-mini-stack-line--wide {
+  width: 100%;
+  border-top: 1px solid var(--resume-rule);
+  padding-top: 5px;
+}
+
+.resume-mini-stack-line--short {
+  width: 54%;
+}
+
+.resume-mini-layout--modern {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 0.9fr);
+  grid-template-areas:
+    "header header"
+    "main sidebar";
+  grid-template-rows: 20px minmax(42px, 1fr);
+}
+
+.resume-mini-modern-header {
+  grid-area: header;
+  background:
+    linear-gradient(90deg, var(--resume-heading) 0 48%, transparent 48%),
+    linear-gradient(90deg, var(--resume-rule), var(--resume-rule)) bottom / 100% 2px no-repeat;
+}
+
+.resume-mini-modern-main {
+  grid-area: main;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--resume-secondary) 42%, transparent) 0 3px,
+      transparent 3px 9px
+    );
+}
+
+.resume-mini-modern-sidebar {
+  grid-area: sidebar;
+  border-inline-start: 2px solid var(--resume-rule);
+  background: color-mix(in srgb, var(--resume-heading) 8%, var(--resume-background));
+}
+
+.resume-mini-layout--technical {
+  grid-template-columns: 24% minmax(0, 1fr);
+  grid-template-areas:
+    "header header"
+    "rail content";
+  grid-template-rows: 16px minmax(46px, 1fr);
+}
+
+.resume-mini-technical-header {
+  grid-area: header;
+  border-bottom: 2px solid var(--resume-heading);
+  background: linear-gradient(90deg, var(--resume-heading) 0 44%, transparent 44%);
+}
+
+.resume-mini-technical-rail {
+  grid-area: rail;
+  border-inline-end: 1px solid var(--resume-rule);
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--resume-rule) 62%, transparent) 0 2px,
+      transparent 2px 8px
+    );
+}
+
+.resume-mini-technical-content {
+  grid-area: content;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--resume-secondary) 46%, transparent) 0 2px,
+      transparent 2px 7px
+    );
+}
+
+/* Shared identity refinements */
+.resume-paper [data-resume-identity] {
+  break-inside: avoid-page;
+}
+
+.resume-paper [data-resume-identity="classic"] .resume-paper-identity {
+  align-items: start;
+}
+
+.resume-template-ats-classic .resume-profile-photo-frame {
+  width: 4.3rem;
+  aspect-ratio: 4 / 5;
+  border-radius: 0.35rem;
+}
+
+/* Modern Professional: strong identity header + supporting sidebar */
+.resume-template-modern-professional {
+  padding: clamp(28px, 4.8vw, 46px);
+}
+
+.resume-template-modern-professional [data-resume-identity="modern"] {
+  margin: calc(clamp(28px, 4.8vw, 46px) * -1);
+  margin-bottom: 1.35rem;
+  padding: 1.35rem clamp(28px, 4.8vw, 46px) 1.2rem;
+  border-top: 6px solid var(--resume-heading);
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-rule) 72%, white);
+  background: color-mix(in srgb, var(--resume-heading) 5%, var(--resume-background));
+}
+
+.resume-template-modern-professional [data-resume-identity="modern"] h3 {
+  font-size: clamp(1.72rem, 3.4vw, 2.3rem);
+  letter-spacing: -0.025em;
+}
+
+.resume-template-modern-professional .resume-modern-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2.08fr) minmax(0, 0.92fr);
+  gap: 1.35rem;
+  align-items: start;
+}
+
+.resume-template-modern-professional .resume-modern-content,
+.resume-template-modern-professional .resume-modern-sidebar {
+  min-width: 0;
+}
+
+.resume-template-modern-professional .resume-modern-sidebar {
+  padding: 0.1rem 0.85rem 0.85rem 1rem;
+  border-inline-start: 2px solid color-mix(in srgb, var(--resume-rule) 64%, white);
+  background: color-mix(in srgb, var(--resume-heading) 4%, var(--resume-background));
+}
+
+.resume-template-modern-professional .resume-modern-sidebar h4 {
+  margin-top: 1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-rule) 55%, white);
+}
+
+.resume-template-modern-professional .resume-modern-content h4 {
+  margin-top: 1.35rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid color-mix(in srgb, var(--resume-rule) 70%, white);
+}
+
+.resume-template-modern-professional .resume-profile-photo-frame {
+  width: 5.2rem;
+  aspect-ratio: 4 / 5;
+  border-radius: 0.9rem;
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--resume-heading) 18%, transparent);
+}
+
+.resume-template-modern-professional .resume-paper-skills {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.resume-template-modern-professional .resume-paper-skills > div {
+  display: block;
+}
+
+.resume-template-modern-professional .resume-paper-skills dt,
+.resume-template-modern-professional .resume-paper-skills dd {
+  display: block;
+}
+
+.resume-template-modern-professional .resume-paper-skills dd {
+  margin-top: 0.12rem;
+}
+
+/* Compact Technical: skills-first flow + date/metadata rail */
+.resume-template-compact-technical {
+  padding: clamp(21px, 3.7vw, 34px);
+}
+
+.resume-template-compact-technical [data-resume-identity="technical"] {
+  padding-bottom: 0.8rem;
+  border-bottom-width: 1px;
+}
+
+.resume-template-compact-technical [data-resume-identity="technical"] h3 {
+  font-size: clamp(1.45rem, 2.8vw, 1.9rem);
+}
+
+.resume-template-compact-technical .resume-layout--technical {
+  font-size: 0.94em;
+}
+
+.resume-template-compact-technical .resume-layout--technical > section > h4 {
+  margin-top: 0.95rem;
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.24rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-rule) 64%, white);
+  letter-spacing: 0.09em;
+}
+
+.resume-template-compact-technical .resume-paper-skills {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 0.85rem;
+}
+
+.resume-template-compact-technical .resume-paper-skills > div {
+  display: block;
+  min-width: 0;
+}
+
+.resume-template-compact-technical .resume-paper-skills dt,
+.resume-template-compact-technical .resume-paper-skills dd {
+  display: inline;
+}
+
+.resume-template-compact-technical .resume-preview-entry--technical-rail {
+  display: grid;
+  grid-template-columns: minmax(5.4rem, 0.28fr) minmax(0, 1fr);
+  column-gap: 0.75rem;
+  row-gap: 0.18rem;
+  margin-top: 0.7rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, var(--resume-rule) 32%, transparent);
+}
+
+.resume-template-compact-technical
+  .resume-preview-entry--technical-rail
+  .resume-preview-entry-heading {
+  display: contents;
+}
+
+.resume-template-compact-technical
+  .resume-preview-entry--technical-rail
+  .resume-preview-entry-date {
+  grid-column: 1;
+  grid-row: 1;
+  padding-inline-end: 0.55rem;
+  border-inline-end: 2px solid color-mix(in srgb, var(--resume-rule) 65%, white);
+  color: var(--resume-heading);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.resume-template-compact-technical
+  .resume-preview-entry--technical-rail
+  .resume-preview-entry-title,
+.resume-template-compact-technical
+  .resume-preview-entry--technical-rail
+  .resume-preview-entry-meta,
+.resume-template-compact-technical
+  .resume-preview-entry--technical-rail
+  .resume-preview-entry-description,
+.resume-template-compact-technical
+  .resume-preview-entry--technical-rail
+  .resume-preview-entry-technologies,
+.resume-template-compact-technical
+  .resume-preview-entry--technical-rail
+  .resume-preview-entry-links,
+.resume-template-compact-technical
+  .resume-preview-entry--technical-rail
+  .resume-preview-entry-details {
+  grid-column: 2;
+}
+
+.resume-template-compact-technical .resume-profile-photo-frame {
+  width: 3.8rem;
+  aspect-ratio: 4 / 5;
+  border-radius: 0.35rem;
+}
+
+@media (max-width: 760px) {
+  .resume-template-modern-professional .resume-modern-columns {
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+
+  .resume-template-modern-professional .resume-modern-sidebar {
+    padding-inline-start: 0.65rem;
+  }
+
+  .resume-template-compact-technical .resume-paper-skills {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .resume-paper h4 {
+    break-after: avoid-page;
+  }
+
+  .resume-preview-entry {
+    break-inside: avoid-page;
+  }
+
+  .resume-paper-compact-list > li,
+  .resume-paper-skills > div,
+  .resume-paper [data-resume-identity] {
+    break-inside: avoid-page;
+  }
+
+  .resume-layout,
+  .resume-modern-content,
+  .resume-modern-sidebar {
+    min-width: 0;
+  }
+
+  .resume-template-modern-professional .resume-modern-columns {
+    grid-template-columns: minmax(0, 2.08fr) minmax(0, 0.92fr);
+  }
+
+  .resume-template-modern-professional .resume-modern-sidebar {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
