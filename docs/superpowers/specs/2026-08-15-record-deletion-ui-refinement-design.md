@@ -338,3 +338,5 @@ Do not add:
 The written specification is approved.
 
 The implementation plan has been created and self-reviewed, but implementation remains unauthorized until the user explicitly approves the plan.
+
+Next gate: `APPROVE RECORD DELETION UI REFINEMENT PLAN + CODEX EXECUTION`.
