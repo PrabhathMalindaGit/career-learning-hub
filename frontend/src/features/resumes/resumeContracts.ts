@@ -6,6 +6,7 @@ import type {
   ResumeContent,
   ResumeContentInput,
   ResumeDesign,
+  ResumeImportPhotoCandidate,
   ResumeJob,
   ResumeListPageData,
   ResumeRecord,
@@ -261,8 +262,7 @@ function parseContent(
       ...(basics.summary === undefined
         ? {}
         : { summary: text(basics.summary, 5_000) }),
-      links: array(basics.links, 20, (entry) =>
-        parseLink(entry, policy)),
+      links: array(basics.links, 20, (entry) => parseLink(entry, policy)),
     },
     experience: array(item.experience, 50, (value) => {
       const entry = record(value);
@@ -281,23 +281,16 @@ function parseContent(
           : { endDate: text(entry.endDate, 30) }),
         isCurrent: boolean(entry.isCurrent),
         bullets: array(entry.bullets, 50, (bullet) =>
-          parseBullet(bullet, policy)),
+          parseBullet(bullet, policy),
+        ),
       };
     }),
     education: array(item.education, 30, (value) => {
       const entry = record(value);
       return {
         ...entityIdentifier(entry, policy),
-        institution: text(
-          entry.institution,
-          200,
-          policy.requiredMinimum,
-        ),
-        qualification: text(
-          entry.qualification,
-          200,
-          policy.requiredMinimum,
-        ),
+        institution: text(entry.institution, 200, policy.requiredMinimum),
+        qualification: text(entry.qualification, 200, policy.requiredMinimum),
         ...(entry.fieldOfStudy === undefined
           ? {}
           : { fieldOfStudy: text(entry.fieldOfStudy, 200) }),
@@ -312,7 +305,8 @@ function parseContent(
           : { endDate: text(entry.endDate, 30) }),
         isCurrent: boolean(entry.isCurrent),
         details: array(entry.details, 30, (detail) =>
-          parseBullet(detail, policy)),
+          parseBullet(detail, policy),
+        ),
       };
     }),
     skills: array(item.skills, 30, (value) => {
@@ -330,9 +324,7 @@ function parseContent(
       return {
         ...entityIdentifier(entry, policy),
         name: text(entry.name, 200, policy.requiredMinimum),
-        ...(entry.role === undefined
-          ? {}
-          : { role: text(entry.role, 160) }),
+        ...(entry.role === undefined ? {} : { role: text(entry.role, 160) }),
         ...(entry.description === undefined
           ? {}
           : { description: text(entry.description, 2_000) }),
@@ -345,10 +337,10 @@ function parseContent(
         technologies: array(entry.technologies, 100, (technology) =>
           text(technology, 120, policy.requiredMinimum),
         ),
-        links: array(entry.links, 20, (link) =>
-          parseLink(link, policy)),
+        links: array(entry.links, 20, (link) => parseLink(link, policy)),
         bullets: array(entry.bullets, 50, (bullet) =>
-          parseBullet(bullet, policy)),
+          parseBullet(bullet, policy),
+        ),
       };
     }),
     certifications: array(item.certifications, 50, (value) => {
@@ -364,12 +356,7 @@ function parseContent(
           : { issuedDate: text(entry.issuedDate, 30) }),
         ...(entry.credentialUrl === undefined
           ? {}
-          : {
-              credentialUrl: contentUrl(
-                entry.credentialUrl,
-                policy,
-              ),
-            }),
+          : { credentialUrl: contentUrl(entry.credentialUrl, policy) }),
       };
     }),
     languages: array(item.languages, 30, (value) => {
@@ -404,8 +391,14 @@ function assertExactContentKeys(
   policy: ContentParsePolicy,
 ): void {
   const item = exactKeys(value, [
-    "basics", "experience", "education", "skills", "projects",
-    "certifications", "languages", "interests",
+    "basics",
+    "experience",
+    "education",
+    "skills",
+    "projects",
+    "certifications",
+    "languages",
+    "interests",
   ]);
   const basics = exactKeys(
     item.basics,
@@ -413,7 +406,8 @@ function assertExactContentKeys(
     ["email", "phone", "location", "headline", "summary"],
   );
   array(basics.links, 20, (link) =>
-    exactEntityKeys(link, ["label", "url"], [], policy));
+    exactEntityKeys(link, ["label", "url"], [], policy),
+  );
   const bullet = (value: unknown) =>
     exactEntityKeys(value, ["text"], [], policy);
   array(item.experience, 50, (value) => {
@@ -437,7 +431,8 @@ function assertExactContentKeys(
     return entry;
   });
   array(item.skills, 30, (value) =>
-    exactEntityKeys(value, ["name", "keywords"], [], policy));
+    exactEntityKeys(value, ["name", "keywords"], [], policy),
+  );
   array(item.projects, 50, (value) => {
     const entry = exactEntityKeys(
       value,
@@ -446,7 +441,8 @@ function assertExactContentKeys(
       policy,
     );
     array(entry.links, 20, (link) =>
-      exactEntityKeys(link, ["label", "url"], [], policy));
+      exactEntityKeys(link, ["label", "url"], [], policy),
+    );
     array(entry.bullets, 50, bullet);
     return entry;
   });
@@ -456,9 +452,11 @@ function assertExactContentKeys(
       ["name"],
       ["issuer", "issuedDate", "credentialUrl"],
       policy,
-    ));
+    ),
+  );
   array(item.languages, 30, (value) =>
-    exactEntityKeys(value, ["name"], ["proficiency"], policy));
+    exactEntityKeys(value, ["name"], ["proficiency"], policy),
+  );
 }
 
 export function parseResumeContent(value: unknown): ResumeContent {
@@ -591,6 +589,18 @@ export function parseAcceptedJob(
   };
 }
 
+function parseImportPhotoCandidates(
+  value: unknown,
+): ResumeImportPhotoCandidate[] {
+  const candidates = array(value, 3, (candidate) => {
+    const item = exactKeys(candidate, ["assetId"]);
+    return { assetId: id(item.assetId) };
+  });
+  const unique = new Set(candidates.map((candidate) => candidate.assetId));
+  if (unique.size !== candidates.length) invalid();
+  return candidates;
+}
+
 function parseCompletedResult(
   type: ResumeJob["type"],
   value: unknown,
@@ -598,10 +608,19 @@ function parseCompletedResult(
   const item = record(value);
   if (type === "resume.import-pdf") {
     if (item.kind === "import-review") {
-      const review = exactKeys(item, ["kind", "content"]);
+      const review = exactKeys(
+        item,
+        ["kind", "content"],
+        ["photoCandidates"],
+      );
+      const photoCandidates =
+        review.photoCandidates === undefined
+          ? undefined
+          : parseImportPhotoCandidates(review.photoCandidates);
       return {
         kind: "import-review",
         content: parseResumeContent(review.content),
+        ...(photoCandidates === undefined ? {} : { photoCandidates }),
       };
     }
     if (item.kind === "import-adopted") {
@@ -734,9 +753,7 @@ export function parseAnalysis(value: unknown): ResumeAnalysis {
         originalText: text(suggestion.originalText, 2_000, 1),
         rewrittenText: text(suggestion.rewrittenText, 2_000, 1),
         rationale: text(suggestion.rationale, 1_000, 1),
-        verificationRequired: boolean(
-          suggestion.verificationRequired,
-        ),
+        verificationRequired: boolean(suggestion.verificationRequired),
       };
     }),
     createdAt: date(item.createdAt),
