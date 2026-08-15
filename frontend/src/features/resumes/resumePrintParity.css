@@ -1,0 +1,77 @@
+/* Print-only template parity repairs for native browser printing. */
+@media print {
+  /* Narrow browser/print viewports must not collapse Compact Technical skills. */
+  .resume-template-compact-technical .resume-paper-skills {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /*
+   * Chromium can treat the screen Modern Professional body as one tall grid row
+   * because its main and sidebar wrappers are the two grid items. Flatten those
+   * wrappers only for print so the semantic sections become fragmentable grid
+   * items and can paginate between rows instead of moving the whole body to the
+   * next page.
+   */
+  .resume-template-modern-professional .resume-modern-columns {
+    break-inside: auto;
+    grid-template-columns: minmax(0, 2.08fr) minmax(0, 0.92fr);
+    column-gap: 1.35rem;
+    row-gap: 0;
+    align-items: start;
+  }
+
+  .resume-template-modern-professional .resume-modern-content,
+  .resume-template-modern-professional .resume-modern-sidebar {
+    display: contents;
+  }
+
+  .resume-template-modern-professional
+    .resume-modern-content > [data-resume-section] {
+    grid-column: 1;
+    min-width: 0;
+    break-inside: auto;
+  }
+
+  .resume-template-modern-professional
+    .resume-modern-sidebar > [data-resume-section] {
+    grid-column: 2;
+    min-width: 0;
+    padding: 0.1rem 0.85rem 0.85rem 1rem;
+    border-inline-start: 2px solid color-mix(in srgb, var(--resume-rule) 64%, white);
+    background: color-mix(in srgb, var(--resume-heading) 4%, var(--resume-background));
+    break-inside: avoid-page;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .resume-template-modern-professional
+    .resume-modern-content > [data-resume-section="summary"],
+  .resume-template-modern-professional
+    .resume-modern-sidebar > [data-resume-section="skills"] {
+    grid-row: 1;
+  }
+
+  .resume-template-modern-professional
+    .resume-modern-content > [data-resume-section="experience"],
+  .resume-template-modern-professional
+    .resume-modern-sidebar > [data-resume-section="education"] {
+    grid-row: 2;
+  }
+
+  .resume-template-modern-professional
+    .resume-modern-content > [data-resume-section="projects"],
+  .resume-template-modern-professional
+    .resume-modern-sidebar > [data-resume-section="certifications"] {
+    grid-row: 3;
+  }
+
+  .resume-template-modern-professional
+    .resume-modern-sidebar > [data-resume-section="languages"] {
+    grid-row: 4;
+  }
+
+  .resume-template-modern-professional
+    .resume-modern-sidebar > [data-resume-section="interests"] {
+    grid-row: 5;
+  }
+}
