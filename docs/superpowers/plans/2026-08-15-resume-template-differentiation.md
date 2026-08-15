@@ -98,8 +98,6 @@ expect(
 
 - [ ] **Step 2: Run the registry test and verify RED**
 
-Run:
-
 ```bash
 npm --prefix frontend test -- src/features/resumes/resumeTemplateRegistry.test.ts
 ```
@@ -152,8 +150,6 @@ describe("ResumeMiniDocument", () => {
 
 - [ ] **Step 6: Run the miniature test and verify RED**
 
-Run:
-
 ```bash
 npm --prefix frontend test -- src/features/resumes/ResumeMiniDocument.test.tsx
 ```
@@ -201,9 +197,9 @@ Use a simple `switch (resolvedTemplateId)` to choose one. Do not create a generi
 
 Import `./resumeTemplateDifferentiation.css` from `ResumeMiniDocument.tsx` so list-card miniatures and appearance-picker miniatures receive the new rules even when `ResumePreview` is not mounted.
 
-- [ ] **Step 8: Add the minimum miniature CSS**
+- [ ] **Step 8: Add explicit visible miniature CSS**
 
-Start `resumeTemplateDifferentiation.css` with bounded miniature rules that make the geometry visibly different:
+Start `resumeTemplateDifferentiation.css` with rules that make the three layouts visibly different while reusing the existing Resume palette variables:
 
 ```css
 .resume-mini-layout {
@@ -217,6 +213,30 @@ Start `resumeTemplateDifferentiation.css` with bounded miniature rules that make
   grid-template-columns: 1fr;
 }
 
+.resume-mini-identity,
+.resume-mini-modern-header,
+.resume-mini-technical-header {
+  display: block;
+  min-height: 9px;
+  border-bottom: 2px solid var(--resume-rule);
+  background: linear-gradient(
+    to right,
+    var(--resume-heading) 0 48%,
+    transparent 48% 100%
+  );
+}
+
+.resume-mini-stack-line {
+  display: block;
+  width: 76%;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--resume-secondary) 48%, transparent);
+}
+
+.resume-mini-stack-line--wide { width: 100%; }
+.resume-mini-stack-line--short { width: 58%; }
+
 .resume-mini-layout--modern {
   grid-template-columns: minmax(0, 2fr) minmax(0, 0.9fr);
   grid-template-areas:
@@ -225,8 +245,21 @@ Start `resumeTemplateDifferentiation.css` with bounded miniature rules that make
 }
 
 .resume-mini-modern-header { grid-area: header; }
-.resume-mini-modern-main { grid-area: main; }
-.resume-mini-modern-sidebar { grid-area: sidebar; }
+.resume-mini-modern-main {
+  grid-area: main;
+  min-height: 52px;
+  background: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--resume-secondary) 40%, transparent) 0 3px,
+    transparent 3px 8px
+  );
+}
+.resume-mini-modern-sidebar {
+  grid-area: sidebar;
+  min-height: 52px;
+  border-inline-start: 2px solid var(--resume-rule);
+  background: color-mix(in srgb, var(--resume-rule) 10%, transparent);
+}
 
 .resume-mini-layout--technical {
   grid-template-columns: 24% minmax(0, 1fr);
@@ -236,11 +269,28 @@ Start `resumeTemplateDifferentiation.css` with bounded miniature rules that make
 }
 
 .resume-mini-technical-header { grid-area: header; }
-.resume-mini-technical-rail { grid-area: rail; }
-.resume-mini-technical-content { grid-area: content; }
+.resume-mini-technical-rail {
+  grid-area: rail;
+  min-height: 52px;
+  border-inline-end: 2px solid var(--resume-rule);
+  background: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--resume-heading) 48%, transparent) 0 3px,
+    transparent 3px 10px
+  );
+}
+.resume-mini-technical-content {
+  grid-area: content;
+  min-height: 52px;
+  background: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--resume-secondary) 42%, transparent) 0 2px,
+    transparent 2px 6px
+  );
+}
 ```
 
-Use the existing palette variables/background roles; do not hard-code a new color system.
+Do not add a fourth miniature style or a new color system.
 
 - [ ] **Step 9: Update exact description assertions in `ResumeDesignControls.test.tsx`**
 
@@ -286,6 +336,8 @@ git commit -m "feat: differentiate Resume template choices"
 - Produces:
 
 ```ts
+import type { ReactElement } from "react";
+
 export type ResumeEntryLayout = "standard" | "technical-rail";
 
 export interface ResumeTemplateLayoutProps {
@@ -295,14 +347,16 @@ export interface ResumeTemplateLayoutProps {
   readonly candidatePhotoUrl?: string;
 }
 
-export function ResumeTemplateLayout(props: ResumeTemplateLayoutProps): JSX.Element;
+export function ResumeTemplateLayout(
+  props: ResumeTemplateLayoutProps,
+): ReactElement;
 ```
 
 Shared section renderers expose `data-resume-section` values: `summary`, `experience`, `education`, `skills`, `projects`, `certifications`, `languages`, `interests`.
 
 - [ ] **Step 1: Write the ATS Classic layout test before refactoring**
 
-In `ResumeTemplateLayouts.test.tsx`, build one representative `ResumeDraft` containing every section and assert ATS order:
+In `ResumeTemplateLayouts.test.tsx`, build one representative `ResumeContent`, convert it with the existing `resumeContentToDraft`, and include every section: identity/contact/link, Summary, Experience, Education, Skills, Projects, Certifications, Languages, and Interests. Assert ATS order:
 
 ```tsx
 const sectionNames = Array.from(
@@ -323,7 +377,7 @@ expect(sectionNames).toEqual([
 expect(container.querySelector('[data-resume-layout="ats-classic"]')).not.toBeNull();
 ```
 
-Also assert all existing safe links and content text remain present through the layout.
+Also assert the representative name, safe Portfolio link, Experience title, Education qualification, Skill group, Project, Certification, Language, and Interest remain present.
 
 - [ ] **Step 2: Run the layout test and verify RED**
 
@@ -337,7 +391,17 @@ Expected: FAIL because `ResumeTemplateLayouts.tsx` and section markers do not ex
 
 Move the existing `safeHref`, `SafeLink`, `DateSpan`, and canonical section JSX from `ResumePreview.tsx` into `ResumeTemplateContent.tsx`.
 
-Use explicit shared exports, for example:
+Keep the exact current field mappings:
+
+- Experience: job title, start/end/current date span, employer + location, bullets.
+- Education: qualification, start/end/current date span, institution + field of study + location, details.
+- Skills: group name + comma-separated keywords using the existing definition-list structure.
+- Projects: name, date span, role, description, technologies, safe links, bullets.
+- Certifications: name, issuer, issued date, optional safe Credential link.
+- Languages: name + proficiency joined with middle dots between languages.
+- Interests: values joined with middle dots.
+
+Use explicit shared exports. For example:
 
 ```tsx
 export function ResumeSummarySection({ draft }: { draft: ResumeDraft }) {
@@ -351,19 +415,36 @@ export function ResumeSummarySection({ draft }: { draft: ResumeDraft }) {
 }
 ```
 
-Repeat the current content behavior for Experience, Education, Skills, Projects, Certifications, Languages, and Interests. Preserve safe-link behavior exactly.
-
-For Experience/Projects, accept an optional `entryLayout` prop with default `"standard"` and add only a class marker when `"technical-rail"` is requested; do not change content yet:
+For Experience/Projects, accept an optional `entryLayout: ResumeEntryLayout = "standard"` and add only this class marker when `"technical-rail"` is requested:
 
 ```tsx
-className={`resume-preview-entry${
+const entryClassName = `resume-preview-entry${
   entryLayout === "technical-rail"
     ? " resume-preview-entry--technical-rail"
     : ""
-}`}
+}`;
 ```
 
-- [ ] **Step 4: Implement the shared identity header**
+Update `DateSpan` now to support the technical rail later:
+
+```tsx
+export function DateSpan({
+  start,
+  end,
+  current,
+  className,
+}: {
+  start?: string;
+  end?: string;
+  current?: boolean;
+  className?: string;
+}) {
+  const value = [start, current ? "Present" : end].filter(Boolean).join(" – ");
+  return value ? <small className={className}>{value}</small> : null;
+}
+```
+
+- [ ] **Step 4: Implement the shared identity header with the existing contact/link/photo behavior**
 
 Create:
 
@@ -371,7 +452,7 @@ Create:
 export type ResumeIdentityVariant = "classic" | "modern" | "technical";
 ```
 
-and:
+and implement:
 
 ```tsx
 export function ResumeIdentityHeader({
@@ -384,10 +465,61 @@ export function ResumeIdentityHeader({
   variant: ResumeIdentityVariant;
   showCandidatePhoto: boolean;
   candidatePhotoUrl?: string;
-}) { /* existing identity/contact/link/photo content */ }
+}) {
+  return (
+    <header
+      className={`resume-paper-header resume-paper-header--${variant}`}
+      data-resume-identity={variant}
+    >
+      <div className="resume-paper-identity">
+        <div className="resume-paper-identity-copy">
+          <h3>{draft.basics.fullName || "Your name"}</h3>
+          {draft.basics.headline ? <p>{draft.basics.headline}</p> : null}
+          {draft.basics.email || draft.basics.phone || draft.basics.location ? (
+            <ul className="resume-paper-contact">
+              {draft.basics.email ? (
+                <li>
+                  <SafeLink href={`mailto:${draft.basics.email}`}>
+                    {draft.basics.email}
+                  </SafeLink>
+                </li>
+              ) : null}
+              {draft.basics.phone ? (
+                <li>
+                  <SafeLink href={`tel:${draft.basics.phone}`}>
+                    {draft.basics.phone}
+                  </SafeLink>
+                </li>
+              ) : null}
+              {draft.basics.location ? <li>{draft.basics.location}</li> : null}
+            </ul>
+          ) : null}
+          {draft.basics.links.length > 0 ? (
+            <ul className="resume-paper-links">
+              {draft.basics.links.map((link) => (
+                <li key={link.clientKey}>
+                  <SafeLink href={link.url}>{link.label}</SafeLink>: {link.url}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+        {showCandidatePhoto && candidatePhotoUrl ? (
+          <div className="resume-profile-photo-frame" aria-hidden="true">
+            <img
+              className="resume-profile-photo"
+              src={candidatePhotoUrl}
+              alt=""
+            />
+          </div>
+        ) : null}
+      </div>
+    </header>
+  );
+}
 ```
 
-The image remains decorative (`alt=""`) and is rendered only when both `showCandidatePhoto` and `candidatePhotoUrl` are present. Add `data-resume-identity={variant}` to the identity wrapper for focused tests.
+`SafeLink` must remain the exact protocol allow-list already used by `ResumePreview`: `https:`, `http:`, `mailto:`, `tel:` only.
 
 - [ ] **Step 5: Implement ATS Classic shell and dispatcher**
 
@@ -412,7 +544,7 @@ function AtsClassicLayout(props: Omit<ResumeTemplateLayoutProps, "templateId">) 
 }
 ```
 
-Initially have Modern Professional and Compact Technical call the ATS shell so this refactor can go GREEN before their structural tasks. The later tasks will replace those two dispatch branches.
+Initially have Modern Professional and Compact Technical call the ATS shell so this refactor can go GREEN before their structural tasks. The later tasks replace those two dispatch branches.
 
 - [ ] **Step 6: Make `ResumePreview` a wrapper only**
 
@@ -427,7 +559,7 @@ Keep the existing panel, print-only `<style>` page-size rule, resolved template/
 />
 ```
 
-Import `./resumeTemplateDifferentiation.css` from `ResumePreview.tsx` after existing Resume CSS imports.
+Import `./resumeTemplateDifferentiation.css` from `ResumePreview.tsx` after `resumeCandidatePhoto.css`.
 
 - [ ] **Step 7: Run the new layout test plus existing ResumePreview tests**
 
@@ -438,7 +570,7 @@ npm --prefix frontend test -- \
   src/features/resumes/ResumePreview.candidatePhoto.test.tsx
 ```
 
-Expected: PASS. At this checkpoint ATS behavior and all canonical content/safe links must remain intact before further visual differentiation.
+Expected: PASS. At this checkpoint ATS behavior and all canonical content/safe links remain intact before further visual differentiation.
 
 - [ ] **Step 8: Commit Task 2**
 
@@ -483,9 +615,8 @@ expect(sidebar?.querySelector('[data-resume-section="education"]')).not.toBeNull
 expect(sidebar?.querySelector('[data-resume-section="certifications"]')).not.toBeNull();
 expect(sidebar?.querySelector('[data-resume-section="languages"]')).not.toBeNull();
 expect(sidebar?.querySelector('[data-resume-section="interests"]')).not.toBeNull();
+expect(container.querySelector("main")).toBeNull();
 ```
-
-Also assert there is no nested `<main>` inside the Resume article.
 
 - [ ] **Step 2: Run only the Modern layout test and verify RED**
 
@@ -544,23 +675,39 @@ In `resumeTemplateDifferentiation.css`:
 
 .resume-template-modern-professional .resume-modern-sidebar {
   min-width: 0;
-  padding-inline-start: 1rem;
+  padding: 0.15rem 0 0.25rem 1rem;
   border-inline-start: 1px solid var(--resume-rule);
-  background: color-mix(in srgb, var(--resume-background) 94%, var(--resume-heading) 6%);
+  background: color-mix(
+    in srgb,
+    var(--resume-background) 94%,
+    var(--resume-heading) 6%
+  );
+}
+
+.resume-template-modern-professional .resume-paper-header--modern {
+  padding: 0 0 1rem;
+  border-bottom: 3px solid var(--resume-rule);
+}
+
+.resume-template-modern-professional .resume-paper-header--modern h3 {
+  font-size: clamp(1.75rem, 3.4vw, 2.25rem);
+  letter-spacing: -0.025em;
 }
 
 .resume-template-modern-professional .resume-paper-identity {
   align-items: start;
+  gap: 1.1rem;
+}
+
+.resume-template-modern-professional .resume-profile-photo-frame {
+  width: 5.2rem;
+  height: 6rem;
 }
 ```
 
-Use existing Resume CSS variables such as `--resume-background`, `--resume-heading`, and `--resume-rule`; do not add a new palette contract.
+Use existing `--resume-background`, `--resume-heading`, and `--resume-rule`; do not add a new palette contract.
 
-- [ ] **Step 5: Add Modern header/photo geometry overrides**
-
-Keep the same single image node but make it intentionally larger than ATS/Technical through template-scoped CSS. Do not alter storage or Candidate Photo controls.
-
-- [ ] **Step 6: Run the focused Modern tests**
+- [ ] **Step 5: Run the focused Modern tests**
 
 ```bash
 npm --prefix frontend test -- \
@@ -570,7 +717,7 @@ npm --prefix frontend test -- \
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit Task 3**
+- [ ] **Step 6: Commit Task 3**
 
 ```bash
 git add \
@@ -651,28 +798,45 @@ Update the dispatcher so `compact-technical` uses this shell.
 
 - [ ] **Step 4: Give technical-rail entries explicit internal classes**
 
-In shared Experience and Project renderers, keep current DOM/source order but add stable child classes to the existing heading/date/content elements so CSS can visually place the date rail without duplicating text:
+In shared Experience and Project renderers, keep current DOM/source order and use the `DateSpan` className added in Task 2:
 
 ```tsx
 <div className="resume-preview-entry-heading">
-  <strong className="resume-preview-entry-title">...</strong>
-  <DateSpan ... className="resume-preview-entry-date" />
+  <strong className="resume-preview-entry-title">{entry.jobTitle || "Job title"}</strong>
+  <DateSpan
+    start={entry.startDate}
+    end={entry.endDate}
+    current={entry.isCurrent}
+    className="resume-preview-entry-date"
+  />
 </div>
 ```
 
-If `DateSpan` needs `className`, add an optional `className?: string` prop and pass it to `<small>`.
+For Projects use the same `resume-preview-entry-title` and `resume-preview-entry-date` class names with project name/start/end values.
 
-- [ ] **Step 5: Add dense technical/date-rail CSS**
+- [ ] **Step 5: Add dense technical/date-rail CSS with explicit spacing**
 
 ```css
 .resume-template-compact-technical .resume-layout--technical {
   font-size: 0.94em;
 }
 
+.resume-template-compact-technical .resume-paper-header--technical {
+  padding-bottom: 0.7rem;
+  border-bottom: 2px solid var(--resume-rule);
+}
+
+.resume-template-compact-technical .resume-layout--technical > section h4 {
+  margin-top: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
 .resume-template-compact-technical .resume-preview-entry--technical-rail {
   display: grid;
   grid-template-columns: minmax(5.6rem, 0.28fr) minmax(0, 1fr);
   column-gap: 0.75rem;
+  row-gap: 0.15rem;
+  margin-top: 0.55rem;
 }
 
 .resume-template-compact-technical
@@ -685,7 +849,10 @@ If `DateSpan` needs `className`, add an optional `className?: string` prop and p
   .resume-preview-entry--technical-rail
   .resume-preview-entry-date {
   grid-column: 1;
-  grid-row: 1 / span 3;
+  grid-row: 1 / span 4;
+  color: var(--resume-heading);
+  font-size: 0.74rem;
+  font-weight: 700;
 }
 
 .resume-template-compact-technical
@@ -705,9 +872,14 @@ If `DateSpan` needs `className`, add an optional `className?: string` prop and p
   > small {
   grid-column: 2;
 }
+
+.resume-template-compact-technical .resume-profile-photo-frame {
+  width: 3.8rem;
+  height: 4.4rem;
+}
 ```
 
-Tune only enough spacing to make the template clearly denser while retaining practical reading size. Do not add capsules/badges to Skills.
+Do not add capsules/badges to Skills. Existing PR #20 natural wrapping remains authoritative.
 
 - [ ] **Step 6: Run Compact + skill-wrapping regression tests**
 
@@ -789,7 +961,7 @@ rerender(
 expect(JSON.stringify(draft)).toBe(before);
 ```
 
-Also assert the same representative full name, Experience title, skill group, Project, Education, Certification, Language, and Interest remain present after each rerender.
+Define `representativeDraft()` once in the test file by creating the same full `ResumeContent` fixture used for Task 2 and returning `resumeContentToDraft(fixture)`; do not mock or omit sections. After each rerender assert the representative full name, Experience title, skill group, Project, Education, Certification, Language, and Interest remain present.
 
 - [ ] **Step 3: Run tests and verify the contract**
 
@@ -801,28 +973,18 @@ npm --prefix frontend test -- \
 
 Expected: PASS.
 
-- [ ] **Step 4: Add template-scoped photo sizing only**
+- [ ] **Step 4: Add the remaining ATS Candidate Photo size override**
 
-In `resumeTemplateDifferentiation.css`, define distinct footprints without changing markup:
+Modern and Compact sizes are already defined in Tasks 3–4. Add ATS only:
 
 ```css
 .resume-template-ats-classic .resume-profile-photo-frame {
   width: 4.3rem;
   height: 5rem;
 }
-
-.resume-template-modern-professional .resume-profile-photo-frame {
-  width: 5.2rem;
-  height: 6rem;
-}
-
-.resume-template-compact-technical .resume-profile-photo-frame {
-  width: 3.8rem;
-  height: 4.4rem;
-}
 ```
 
-If existing Candidate Photo CSS uses stronger selectors, increase selector specificity only as needed; do not modify Candidate Photo storage/control code.
+If existing Candidate Photo CSS uses stronger selectors, use the smallest increased selector specificity needed; do not modify Candidate Photo storage/control code.
 
 - [ ] **Step 5: Run Candidate Photo tests again**
 
@@ -916,11 +1078,11 @@ In `resumeTemplateDifferentiation.css`:
 
 Do **not** add `break-inside: avoid` to all sections or the entire modern content/sidebar columns.
 
-- [ ] **Step 4: Keep Modern Professional print geometry explicit but browser-QA gated**
+- [ ] **Step 4: Keep Modern Professional print geometry browser-QA gated**
 
-Preserve the same two-column `resume-modern-columns` structure in print unless actual local Chromium print QA shows clipping/overlap. Do not preemptively introduce JavaScript pagination or duplicate content.
+Preserve the same two-column `resume-modern-columns` structure in print for the first implementation. Do not add JavaScript pagination, duplicate content, or a second print renderer.
 
-If local QA later proves Chromium cannot fragment the grid safely, the PR remains unmergeable and the smallest repair must be made on the same branch. The permitted repair is CSS-only and must keep the first-page Modern identity while ensuring continuation content is not clipped; no new PDF engine is authorized.
+If local Chromium print QA later shows clipping, overlap, duplication, or omission, the PR remains unmergeable. The repair must stay CSS-only unless the user explicitly re-approves broader scope; the exact failing A4/Letter + font + palette combination becomes the reproduction case for that repair.
 
 - [ ] **Step 5: Run focused print tests and verify GREEN**
 
@@ -1059,7 +1221,7 @@ git rev-parse HEAD
 git status --short
 ```
 
-Expected: feature branch name, expected PR head SHA, and no `git status --short` output.
+Expected: `feature/resume-template-differentiation`, the exact draft-PR head SHA, and no `git status --short` output.
 
 ---
 
@@ -1086,20 +1248,7 @@ npm run dev:frontend
 
 - [ ] **Step 3: Use the same representative Resume for all comparisons**
 
-Use a Resume containing at least:
-
-- full identity/contact details;
-- Candidate Photo enabled;
-- Summary;
-- at least two Experience entries;
-- Education;
-- multiple long Skill groups;
-- at least two Projects;
-- at least one Certification;
-- Languages;
-- Interests.
-
-This must be the same content when switching templates.
+Use a Resume containing full identity/contact details, Candidate Photo enabled, Summary, at least two Experience entries, Education, multiple long Skill groups, at least two Projects, at least one Certification, Languages, and Interests. Do not edit the content between template comparisons.
 
 - [ ] **Step 4: Verify ATS Classic live preview**
 
@@ -1162,11 +1311,11 @@ A second page is acceptable when content genuinely requires it.
 
 - [ ] **Step 9: Spot-check all three templates at Letter**
 
-Verify the same structural identity and no clipping/overlap under Letter page size. Full three-file side-by-side comparison is optional; at minimum inspect print preview and save one representative Letter PDF if a pagination concern appears.
+Verify the same structural identity and no clipping/overlap under Letter page size. At minimum inspect print preview for all three and save one representative Letter PDF if any pagination concern appears.
 
 - [ ] **Step 10: Modern Professional fragmentation gate**
 
-If any Modern PDF has clipped, overlapping, duplicated, or missing sidebar/main content, stop. Do not approve merge. Report the exact page/template/font/palette combination and screenshot/PDF evidence so the same PR can receive a CSS-only print repair.
+If any Modern PDF has clipped, overlapping, duplicated, or missing sidebar/main content, stop. Do not approve merge. Report the exact page size, font, palette, screenshot/PDF page, and affected section so the same PR can receive the smallest CSS-only print repair.
 
 - [ ] **Step 11: Report browser/PDF QA evidence in the PR**
 
