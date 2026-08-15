@@ -37,13 +37,13 @@ function differsMeaningfully(title: string, role: string): boolean {
 
 export function InterviewSessionCard({
   session,
-  actionsOpen,
-  onActionsOpenChange,
+  actionsOpen = false,
+  onActionsOpenChange = () => undefined,
   onDeleted = () => undefined,
 }: {
   session: InterviewSessionSummary;
-  actionsOpen: boolean;
-  onActionsOpenChange(open: boolean): void;
+  actionsOpen?: boolean;
+  onActionsOpenChange?(open: boolean): void;
   onDeleted?(sessionId: string): void;
 }) {
   const navigate = useNavigate();
