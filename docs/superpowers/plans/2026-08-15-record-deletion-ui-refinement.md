@@ -3,7 +3,7 @@
 > **For Codex:** REQUIRED execution discipline: use test-driven development, execute this plan task-by-task, keep changes surgical, and stop at every explicit approval boundary. Do not widen scope when a focused fix is sufficient.
 
 **Date:** 2026-08-15
-**Status:** Written UI refinement specification approved; implementation plan created and self-reviewed; awaiting user execution approval
+**Status:** Written UI refinement specification approved; implementation plan created and self-reviewed; awaiting user Codex-execution approval
 **Task branch:** `task/record-deletion-destructive-actions`
 **Parent PR:** `#18 — Record deletion and destructive actions`
 **Approved spec:** `docs/superpowers/specs/2026-08-15-record-deletion-ui-refinement-design.md`
@@ -36,28 +36,36 @@ This plan authorizes **frontend UI refinement only**. It does not authorize chan
 - **Model:** GPT-5.6 Sol.
 - **Intelligence / reasoning:** High.
 - **Plan mode:** use the written plan as the execution contract; do not re-scope it.
-- **Browser:** prohibited during RED/GREEN coding loops; required only after automated GREEN for bounded visual/runtime verification of the changed UI, if the Codex browser is available. Final human browser QA by the user remains mandatory.
+- **Browser:** prohibited during RED/GREEN coding loops; limited to post-GREEN visual/runtime verification of the changed UI. If the Codex browser is available, use it for that bounded check. Final human browser QA by the user remains mandatory.
 - **Terminal:** Codex runs all Git/test/typecheck/build/git-diff commands itself. The user does not need to manually run terminal commands during implementation.
 - **Servers during RED/GREEN:** none. Vitest, typecheck, and build must run without keeping the application development servers running.
 - **Servers for bounded browser verification:** use the existing local Career Learning Hub frontend/backend/MongoDB development workflow already used for PR #18. Do not deploy or alter production/staging services.
 
 ### Git workflow
 
-Before touching production code, Codex must:
+Before touching production code, Codex must run:
 
 ```bash
 git status --short
 git branch --show-current
-git rev-parse HEAD
 git fetch origin
+git rev-parse HEAD
+git rev-list --left-right --count HEAD...origin/task/record-deletion-destructive-actions
 ```
 
-Required preconditions:
+Required preconditions and safe sync behavior:
 
-- branch is `task/record-deletion-destructive-actions`;
-- the local branch contains the approved spec and this plan from origin;
-- unrelated local work is not overwritten, reset, stashed, or deleted;
-- if unexpected unrelated modifications exist, stop and report them instead of continuing.
+- branch must be `task/record-deletion-destructive-actions`;
+- do not overwrite, reset, stash, or delete unrelated local work;
+- if unexpected local modifications exist, stop and report them;
+- if the working tree is clean and the local branch is only behind the remote branch, Codex may safely synchronize with:
+
+```bash
+git pull --ff-only origin task/record-deletion-destructive-actions
+```
+
+- if the branch is diverged, has local commits not on the remote, or cannot fast-forward safely, stop and report instead of rebasing/resetting;
+- after safe synchronization, confirm the approved spec and this plan exist locally before implementation.
 
 During implementation:
 
@@ -67,7 +75,7 @@ During implementation:
 - do **not** rebase;
 - do **not** deploy.
 
-After implementation and verification, Codex must leave the tested changes uncommitted and report the evidence. The next user gate is explicit commit approval.
+After implementation and verification, Codex must leave the tested production changes uncommitted and report the evidence. The next user gate is explicit commit approval.
 
 ## 4. Verified current code shape
 
@@ -150,14 +158,14 @@ Do not create a new shared CSS file or introduce a styling dependency. The share
 
 ## 0.1 Confirm repository state
 
-Run the Git commands from Section 3 and record:
+Run the Git commands from Section 3, perform only the allowed fast-forward sync when necessary, and record:
 
 - current branch;
-- current HEAD;
+- current HEAD after sync;
 - whether working tree is clean or contains expected task-only changes;
-- whether local HEAD contains the approved spec/plan commits.
+- whether the approved spec/plan are present locally.
 
-If the branch is wrong or unrelated modifications are present, stop. Do not auto-reset or discard anything.
+If the branch is wrong, diverged, or unrelated modifications are present, stop. Do not auto-reset or discard anything.
 
 ## 0.2 Capture current focused baseline
 
@@ -337,6 +345,7 @@ In `resumeDeletion.css` and, only if needed, bounded rules in `resumeWorkspace.c
 
 - style the More actions trigger as neutral/subtle;
 - position it within the heading without overlaying the preview;
+- scope shared component descendant styles under Resume-specific wrappers so other feature CSS cannot override them accidentally;
 - style the overflow panel/action using existing colors/tokens;
 - keep destructive red inside the action panel/dialog only;
 - ensure mobile/narrow layouts do not overflow;
@@ -446,6 +455,7 @@ In `interviewCoach.css` / `interviewDeletion.css`:
 
 - place More actions beside the lifecycle badge without collision;
 - retain the existing primary `Open session` hierarchy;
+- scope shared component descendant styles under Interview-specific wrappers;
 - style neutral trigger, overflow panel, separator, destructive action, and refined dialog;
 - preserve responsive wrapping;
 - remove obsolete persistent-delete styling only when no longer referenced.
@@ -539,7 +549,7 @@ In `learningWorkspace.css`:
 
 - place More actions beside PDF/status badges without horizontal overflow;
 - neutralize the card-level destructive affordance;
-- style the shared overflow class names in Learning context;
+- scope shared component descendant styles under Learning-specific wrappers;
 - align the Learning confirmation dialog with the approved warning/title/input/action hierarchy;
 - preserve compact deletion status/error/retry panels and `Deleting` presentation.
 
@@ -758,4 +768,4 @@ This implementation plan is **not yet authorized for execution**.
 
 Execution may begin only after the user explicitly approves:
 
-`APPROVE RECORD DELETION UI REFINEMENT PLAN + INLINE EXECUTION`
+`APPROVE RECORD DELETION UI REFINEMENT PLAN + CODEX EXECUTION`
