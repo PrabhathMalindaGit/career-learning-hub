@@ -13,6 +13,13 @@ const resumeWorkspaceCss = readFileSync(
   resolve(process.cwd(), "src/features/resumes/resumeWorkspace.css"),
   "utf8",
 );
+const resumeRefinementCss = readFileSync(
+  resolve(
+    process.cwd(),
+    "src/features/resumes/resumeImportSkillsRefinement.css",
+  ),
+  "utf8",
+);
 
 function content(): ResumeContent {
   return {
@@ -314,13 +321,13 @@ describe("ResumePreview", () => {
     );
 
     const skills = container.querySelector(".resume-paper-skills");
-    const skillGroupRule = resumeWorkspaceCss.match(
+    const skillGroupRule = resumeRefinementCss.match(
       /\.resume-paper-skills > div\s*\{([^}]*)\}/,
     )?.[1];
-    const skillNameRule = resumeWorkspaceCss.match(
+    const skillNameRule = resumeRefinementCss.match(
       /\.resume-paper-skills dt\s*\{([^}]*)\}/,
     )?.[1];
-    const skillKeywordsRule = resumeWorkspaceCss.match(
+    const skillKeywordsRule = resumeRefinementCss.match(
       /\.resume-paper-skills dd\s*\{([^}]*)\}/,
     )?.[1];
 
@@ -337,7 +344,7 @@ describe("ResumePreview", () => {
     expect(skillNameRule).toContain("overflow-wrap: normal;");
     expect(skillNameRule).toContain("word-break: normal;");
     expect(skillKeywordsRule).toContain("overflow-wrap: anywhere;");
-    expect(resumeWorkspaceCss).not.toMatch(
+    expect(resumeRefinementCss).not.toMatch(
       /\.resume-paper-skills dt::after/,
     );
   });
