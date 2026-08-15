@@ -1,3 +1,16 @@
+.resume-record-card-heading {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.resume-record-card-heading > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .resume-delete-overflow {
   position: relative;
   flex: 0 0 auto;
