@@ -1,7 +1,7 @@
 # Record Deletion UI Refinement Design
 
 **Date:** 2026-08-15
-**Status:** Design approved by the user; written specification awaiting user review
+**Status:** Design approved by the user; written specification self-reviewed and awaiting user approval
 **Task branch:** `task/record-deletion-destructive-actions`
 **Parent PR:** `#18 — Record deletion and destructive actions`
 **Base:** existing Record Deletion implementation on PR #18
@@ -22,18 +22,18 @@ Therefore this refinement will:
 
 - stay inside PR #18;
 - reuse the existing deletion components and APIs;
-- use one small reusable overflow-action pattern only if that reduces duplication cleanly;
+- use one small shared overflow-actions component to avoid duplicating focus/dismissal behavior three times;
 - avoid a generic command framework, context-menu framework, design-system rewrite, or card refactor unrelated to deletion;
 - keep all existing backend deletion behavior untouched;
 - keep PR #18 draft until the refined UI is requalified and user-approved.
 
 ## 3. Approved visual direction
 
-Use an overflow-menu pattern for destructive record actions.
+Use an overflow-actions pattern for destructive record actions.
 
 Normal cards must no longer show persistent solid-red delete buttons. Each card instead exposes a compact `More actions` button using an ellipsis (`⋯`). The primary open action remains visually dominant.
 
-Red is reserved for destructive intent inside the overflow menu, the destructive confirmation surface, error state, and the final irreversible confirmation button.
+Red is reserved for destructive intent inside the overflow panel, the destructive confirmation surface, error state, and the final irreversible confirmation button.
 
 ### 3.1 Resume card
 
@@ -46,13 +46,13 @@ The Resume card keeps:
 - updated date;
 - `Open Resume` as the primary card action.
 
-Add a compact top-right or footer-adjacent `More actions` trigger that does not compete with `Open Resume`.
+The `More actions` trigger is fixed in the **top-right of the card body heading**, aligned with the Resume title area and never overlaid on the document preview. The footer remains dedicated to update metadata and `Open Resume`.
 
-Its menu contains:
+Its overflow panel contains:
 
 - `Delete resume` — destructive item.
 
-The existing `ResumeDeleteDialog` remains the deletion owner; only its trigger/presentation is refined.
+The existing `ResumeDeleteDialog` remains the deletion owner; only its trigger integration and presentation are refined.
 
 ### 3.2 Interview session card
 
@@ -65,13 +65,13 @@ The Interview card keeps:
 - updated date;
 - `Open session` as the primary card action.
 
-Replace the persistent `Delete permanently` button with `More actions`.
+The `More actions` trigger is fixed in the **top-right heading cluster adjacent to the lifecycle status**, without replacing or obscuring the status badge. The footer remains focused on count/date and `Open session`.
 
-For active/completed sessions the menu contains:
+For active/completed sessions the overflow panel contains:
 
 - `Delete permanently` — destructive item.
 
-For archived sessions the menu contains:
+For archived sessions it contains:
 
 - `Restore session` — normal lifecycle action;
 - visual separator;
@@ -89,53 +89,82 @@ The Learning card keeps:
 - updated timestamp;
 - `Open workspace` as the primary card action.
 
-Replace the persistent `Delete document` button with `More actions`.
+The `More actions` trigger is fixed in the **top-right of the document card heading adjacent to the status badge**. `Open workspace` remains the primary card action below the metadata.
 
-For deletable documents the menu contains:
+For deletable documents the overflow panel contains:
 
 - `Delete document` — destructive item.
 
-When the document is already `deleting`, the destructive action remains suppressed exactly as today; do not expose a duplicate deletion trigger.
+When the document is already `deleting`, the destructive action remains suppressed exactly as today; no duplicate deletion trigger may be exposed.
 
-## 4. Overflow-menu interaction requirements
+## 4. Shared overflow-actions component
 
-The overflow control must be accessible and predictable.
+Implement one small shared component:
+
+- `frontend/src/components/CardOverflowActions.tsx`
+- `frontend/src/components/CardOverflowActions.test.tsx`
+
+It exists only to centralize the repeated trigger/panel dismissal and focus behavior required by Resume, Interview, and Learning cards. It must not grow into a generic application command system.
 
 Required behavior:
 
-- button accessible name: `More actions for <record title>` or equivalent record-specific label;
-- menu opens only on explicit user action;
-- menu is keyboard reachable;
-- Escape closes the menu;
-- clicking/tapping outside closes the menu;
-- focus returns to the trigger after menu dismissal;
-- opening a destructive confirmation closes the menu first;
-- only one card menu should remain open at a time within a collection;
-- menu must remain within the viewport on narrow layouts;
-- destructive item uses red text/icon treatment but not a large permanent red button;
-- minimum interactive target size follows the existing application token;
+- record-specific trigger accessible name such as `More actions for <record title>`;
+- visible ellipsis trigger (`⋯`);
+- `aria-expanded` reflects open state;
+- opens only on explicit activation;
+- action buttons remain keyboard reachable with normal Tab navigation;
+- Escape closes the panel;
+- clicking/tapping outside closes the panel;
+- focus returns to the trigger after dismissal when focus has not intentionally moved into a confirmation dialog;
+- selecting an action closes the panel before invoking that action;
+- minimum interactive target size uses the existing application token;
+- panel remains inside the viewport on narrow layouts;
 - no hover-only functionality.
 
-A small shared component may be introduced if Resume, Interview, and Learning would otherwise duplicate the same focus/dismissal logic. It must remain narrowly scoped to card overflow actions and must not become a generic application command framework.
+Do **not** use `role="menu"` / `role="menuitem"` unless the implementation also provides the full ARIA menu keyboard model, including arrow-key navigation. The preferred small solution is normal buttons inside a controlled popover/panel with standard Tab behavior.
 
-## 5. Destructive confirmation dialog refinement
+Collections must coordinate open state so only one card overflow panel is open at a time.
 
-Keep the existing secure confirmation behavior and exact-title requirement. Refine only presentation and copy hierarchy.
+## 5. Deletion-component integration
 
-All three dialogs should follow one visual structure:
+The existing deletion components remain responsible for:
+
+- API calls;
+- busy/single-flight behavior;
+- errors and request IDs;
+- confirmation state;
+- successful deletion callbacks.
+
+Refactor their trigger boundary only as much as needed so a destructive overflow action can open the existing confirmation dialog without duplicating deletion logic into the card component.
+
+The implementation plan may choose a small controlled/open-trigger prop shape or equivalent bounded mechanism, but deletion logic must stay inside the existing deletion components.
+
+## 6. Destructive confirmation dialog refinement
+
+Keep the existing secure confirmation behavior. Refine only presentation and copy hierarchy.
+
+All three dialogs follow one visual structure:
 
 1. subtle warning icon/badge;
 2. eyebrow: `Permanent action`;
 3. concise title naming the record, for example `Delete “test 2”?`;
 4. short statement describing what will be removed;
 5. visible warning panel: `This action cannot be undone.`;
-6. explicit confirmation guidance showing the exact title to type;
+6. confirmation guidance that visibly shows the exact stored title expected;
 7. confirmation input;
 8. actions: secondary `Cancel`, destructive `Delete permanently`.
 
-### 5.1 Resume consequences
+### 6.1 Confirmation semantics — preserve existing behavior exactly
 
-The Resume dialog must continue to communicate that deletion removes:
+Do not normalize all three modules to one new comparison rule.
+
+- **Resume:** enabled only when `confirmation === resume.title` — exact, case-sensitive equality.
+- **Interview:** enabled only when the entered confirmation exactly and case-sensitively equals the stored session title, preserving current behavior.
+- **Learning:** preserve the current Learning contract: trim surrounding whitespace from the entered value, then compare exactly with the stored document title. Do not introduce case-folding or other normalization.
+
+### 6.2 Resume consequences
+
+The Resume dialog continues to communicate that deletion removes:
 
 - the Resume;
 - saved versions;
@@ -143,9 +172,9 @@ The Resume dialog must continue to communicate that deletion removes:
 - Candidate Photo when associated;
 - associated imported Resume PDF source assets covered by the existing deletion implementation.
 
-### 5.2 Interview consequences
+### 6.3 Interview consequences
 
-The Interview dialog must continue to communicate that deletion removes:
+The Interview dialog continues to communicate that deletion removes:
 
 - the Interview session;
 - questions;
@@ -153,9 +182,9 @@ The Interview dialog must continue to communicate that deletion removes:
 
 It must not imply the source Resume is deleted.
 
-### 5.3 Learning consequences
+### 6.4 Learning consequences
 
-The Learning dialog must continue to communicate the existing deletion cascade for:
+The Learning dialog continues to communicate the existing deletion cascade for:
 
 - document;
 - conversations/messages;
@@ -165,49 +194,49 @@ The Learning dialog must continue to communicate the existing deletion cascade f
 
 The Learning deletion remains asynchronous and keeps its existing `Deleting` state behavior.
 
-## 6. Button and color hierarchy
+## 7. Button and color hierarchy
 
 Normal collection cards:
 
 - primary open action: existing green/brand treatment;
 - overflow trigger: neutral/subtle treatment;
-- destructive menu item: red text/icon treatment;
+- destructive overflow action: red text/icon treatment;
 - no persistent solid-red delete button.
 
 Confirmation dialog:
 
 - Cancel: normal secondary treatment;
 - final irreversible action: solid destructive treatment;
-- disabled destructive action: muted, clearly disabled, not visually equivalent to enabled danger state.
+- disabled destructive action: muted and clearly disabled, not visually equivalent to enabled danger state.
 
 Do not introduce new palette families. Reuse current CSS variables and existing error/destructive colors where practical.
 
-## 7. Responsive layout
+## 8. Responsive layout
 
 Desktop:
 
-- overflow trigger should align cleanly with the card action hierarchy;
-- no overlap with status badges, titles, or primary actions.
+- fixed top-right overflow placement follows Sections 3.1–3.3;
+- no overlap with status badges, titles, preview, or primary actions.
 
 Tablet/narrow desktop:
 
-- action areas may wrap without changing priority;
+- headings/action areas may wrap without changing priority;
 - `Open ...` remains easy to find;
-- overflow menu stays anchored and visible.
+- overflow panel stays anchored and visible.
 
 Mobile:
 
 - dialogs fit within the viewport with internal scrolling only when required;
-- final dialog actions may stack full-width if current responsive patterns require it;
-- menu remains tappable and does not create horizontal overflow.
+- final dialog actions may stack full-width using current responsive patterns;
+- overflow remains tappable and causes no horizontal overflow.
 
-No card redesign beyond what is required to integrate the overflow trigger cleanly.
+No card redesign beyond what is required to integrate this action hierarchy cleanly.
 
-## 8. Error and busy-state preservation
+## 9. Error and busy-state preservation
 
 Existing deletion behavior remains authoritative:
 
-- exact-title confirmation remains case-sensitive according to current Resume/Interview behavior and current Learning confirmation contract;
+- module-specific confirmation semantics from Section 6.1 remain unchanged;
 - duplicate submit remains blocked while deletion is busy;
 - backend `409` active-job conflicts remain visible and actionable;
 - request IDs remain displayed where currently supported;
@@ -216,22 +245,24 @@ Existing deletion behavior remains authoritative:
 
 The UI refinement must not catch or transform errors in a way that changes these behaviors.
 
-## 9. Testing requirements
+## 10. Testing requirements
 
 Update/add frontend tests only as required by the presentation change.
 
 Required automated coverage:
 
-- Resume card no longer exposes a persistent `Delete resume` button before opening More actions;
-- Interview card no longer exposes a persistent `Delete permanently` button before opening More actions;
-- Learning card no longer exposes a persistent `Delete document` button before opening More actions;
-- each More actions control opens the correct record-specific actions;
+- `CardOverflowActions.test.tsx` covers trigger, `aria-expanded`, Escape, outside dismissal, action selection, standard keyboard access, and focus return;
+- Resume card exposes no persistent `Delete resume` button before opening More actions;
+- Interview card exposes no persistent `Delete permanently` button before opening More actions;
+- Learning card exposes no persistent `Delete document` button before opening More actions;
+- each More actions trigger opens only its record-specific actions;
 - destructive action still opens the existing confirmation flow;
-- archived Interview menu exposes Restore and permanent Delete separately;
-- Learning `deleting` state exposes no duplicate deletion action;
-- Escape/outside dismissal and focus return work;
-- keyboard access remains usable;
-- existing deletion-dialog behavior tests continue passing;
+- archived Interview overflow exposes Restore and permanent Delete separately;
+- Learning `deleting` state exposes no delete option;
+- collection behavior allows only one overflow panel open at once;
+- Resume/Interview exact case-sensitive confirmation behavior remains covered;
+- Learning trimmed-surrounding-whitespace confirmation behavior remains covered;
+- existing deletion-dialog API/error/busy tests continue passing;
 - existing collection refresh/deletion tests continue passing.
 
 After focused UI tests pass, rerun:
@@ -241,9 +272,9 @@ After focused UI tests pass, rerun:
 - frontend production build;
 - `git diff --check origin/main...HEAD`.
 
-Backend reruns are not required solely for CSS/component presentation changes unless backend files unexpectedly change.
+Backend reruns are not required solely for this presentation change unless backend files unexpectedly change.
 
-## 10. Human browser QA
+## 11. Human browser QA
 
 The user must verify the refined PR #18 UI at desktop, tablet/narrow, and mobile widths.
 
@@ -251,22 +282,28 @@ Verify:
 
 - no persistent red delete buttons dominate cards;
 - primary Open actions remain clear;
-- More actions menus are easy to discover and use;
+- fixed top-right More actions triggers are visually consistent;
+- overflow actions are discoverable without dominating the card;
 - destructive options are visually secondary but unmistakable;
 - Resume, Interview, and Learning dialogs have consistent hierarchy;
-- Cancel, Escape, Tab/Shift+Tab, focus return, and outside-menu dismissal behave correctly;
+- Cancel, Escape, Tab/Shift+Tab, focus return, and outside-panel dismissal behave correctly;
 - archived Interview Restore remains independent from permanent deletion;
 - Learning `Deleting` state remains clear;
 - no horizontal overflow or action collision.
 
-## 11. Planned file boundary
+## 12. Planned file boundary
+
+Create:
+
+- `frontend/src/components/CardOverflowActions.tsx`
+- `frontend/src/components/CardOverflowActions.test.tsx`
 
 Expected existing files to modify:
 
 - `frontend/src/features/resumes/ResumeListPage.tsx`
 - `frontend/src/features/resumes/ResumeDeleteDialog.tsx`
 - `frontend/src/features/resumes/resumeDeletion.css`
-- `frontend/src/features/resumes/resumeWorkspace.css` only if card alignment requires a bounded adjustment
+- `frontend/src/features/resumes/resumeWorkspace.css` only for bounded card alignment
 - Resume deletion/list tests already present on PR #18
 - `frontend/src/features/interviews/InterviewSessionCard.tsx`
 - `frontend/src/features/interviews/InterviewDeleteDialog.tsx`
@@ -276,13 +313,9 @@ Expected existing files to modify:
 - `frontend/src/features/learning/learningWorkspace.css`
 - Learning deletion/dashboard tests already present on PR #18
 
-Optional new file, only if justified by clean reuse across all three modules:
-
-- a small feature-neutral card overflow actions component plus focused tests under `frontend/src/components/`.
-
 No backend, package, lockfile, migration, auth, AI-provider, environment, deployment, or database files are authorized by this refinement.
 
-## 12. Explicit non-goals
+## 13. Explicit non-goals
 
 Do not add:
 
@@ -298,7 +331,7 @@ Do not add:
 - Phase 19C activation;
 - deployment or merge actions.
 
-## 13. Acceptance state
+## 14. Acceptance state
 
 This written specification authorizes no implementation by itself.
 
