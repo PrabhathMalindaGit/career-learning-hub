@@ -44,10 +44,9 @@ describe("InterviewSessionListPage deletion", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(deletionApi.deleteInterviewSession).mockResolvedValue();
-    vi.mocked(interviewApi.updateInterviewSessionStatus).mockResolvedValue({
-      ...archivedSession,
-      status: "active",
-    });
+    vi.mocked(interviewApi.updateInterviewSessionStatus).mockResolvedValue(
+      undefined as never,
+    );
     vi.mocked(interviewApi.listInterviewSessions)
       .mockResolvedValueOnce({
         sessions: [session],
