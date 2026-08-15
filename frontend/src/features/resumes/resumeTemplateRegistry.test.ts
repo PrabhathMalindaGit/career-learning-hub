@@ -65,22 +65,29 @@ describe("resumeTemplateRegistry", () => {
       },
     ]);
     expect(
-      RESUME_TEMPLATES.map(({ id, description }) => ({ id, description })),
+      RESUME_TEMPLATES.map(({ id, description, bestFor }) => ({
+        id,
+        description,
+        bestFor,
+      })),
     ).toEqual([
       {
         id: "ats-classic",
         description:
           "Traditional single-column layout optimized for clear scanning and conservative applications.",
+        bestFor: "ATS-heavy and traditional applications",
       },
       {
         id: "modern-professional",
         description:
           "Polished two-column presentation with a strong header and structured professional sidebar.",
+        bestFor: "General professional and business roles",
       },
       {
         id: "compact-technical",
         description:
           "Dense technical layout prioritizing skills, tools, projects, and efficient use of page space.",
+        bestFor: "Engineering, software, and technical roles",
       },
     ]);
     expect(DEFAULT_RESUME_TEMPLATE.id).toBe("ats-classic");
