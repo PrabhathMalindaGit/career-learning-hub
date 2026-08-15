@@ -2,19 +2,19 @@
   min-width: 0;
 }
 
-.learning-document-row > .learning-document-card-footer .learning-deletion {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 3;
-}
-
 .learning-document-card-header {
   padding-right: 52px;
 }
 
 .learning-card-overflow {
   position: relative;
+}
+
+.learning-document-row .learning-card-overflow {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 3;
 }
 
 .learning-card-overflow .card-overflow-actions__trigger {
@@ -128,7 +128,7 @@
 }
 
 @media (max-width: 560px) {
-  .learning-document-row > .learning-document-card-footer .learning-deletion {
+  .learning-document-row .learning-card-overflow {
     top: 16px;
     right: 16px;
   }
