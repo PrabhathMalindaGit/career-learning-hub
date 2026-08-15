@@ -64,6 +64,14 @@ Paper size remains owned by the existing Print / Save as PDF workflow. Resume Ap
 - Show representative palette swatches while retaining text labels.
 - Show a concise unsaved state and saving state.
 
+## Approved post-QA presentation repairs
+
+- Name-only Compact Technical skill groups may use a lighter, slightly smaller standalone-label treatment while keyword-bearing groups preserve the existing grouped hierarchy.
+- Compact Technical may keep a bounded minimum width only in the on-screen Live preview so its dense technical layout is not crushed by a narrow editor column.
+- Horizontal and desktop vertical scrolling belong to an inner résumé viewport, not the entire Live preview card.
+- The template label, `Live preview` heading, and A4/Letter badge stay outside that scroll viewport and remain fixed/aligned.
+- Print-only and saved-export surfaces do not use the live-preview viewport or its minimum-width behavior.
+
 ## Responsive and accessibility requirements
 
 - Use a balanced gallery when enough width exists.
@@ -72,6 +80,7 @@ Paper size remains owned by the existing Print / Save as PDF workflow. Resume Ap
 - Preserve focus visibility and semantic radio labels.
 - Do not use color alone to convey selection.
 - Respect reduced-motion preferences.
+- Keep the on-screen Live preview keyboard-focusable while its inner résumé viewport handles overflow.
 
 ## Architecture constraints
 
@@ -97,11 +106,11 @@ No migration or backend/API contract change is required.
 
 Required local qualification after the GitHub implementation is pulled:
 
-- focused Resume Appearance tests;
+- focused Resume Appearance / template / live-preview tests;
 - frontend typecheck;
 - frontend production build;
 - `git diff --check`;
 - full frontend regression;
-- browser QA for template/font/palette switching, live preview, save/reset, refresh persistence, keyboard behavior, and responsive layout.
+- browser QA for template/font/palette switching, live preview, save/reset, refresh persistence, keyboard behavior, responsive layout, name-only Compact Technical skills, and inner résumé scrolling with the preview header fixed.
 
-PDF requalification is only required if the implementation unexpectedly affects Resume document rendering.
+PDF requalification is only required if implementation unexpectedly affects Resume print rendering.
