@@ -33,14 +33,14 @@ describe("ResumeDeleteDialog", () => {
     });
     const submit = screen.getByRole("button", {
       name: "Permanently delete Resume",
-    });
+    }) as HTMLButtonElement;
 
-    expect(submit).toBeDisabled();
+    expect(submit.disabled).toBe(true);
     await user.type(confirmation, "platform engineer resume");
-    expect(submit).toBeDisabled();
+    expect(submit.disabled).toBe(true);
     await user.clear(confirmation);
     await user.type(confirmation, resume.title);
-    expect(submit).toBeEnabled();
+    expect(submit.disabled).toBe(false);
 
     await user.click(submit);
 
