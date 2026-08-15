@@ -246,10 +246,15 @@ describe("Learning document library", () => {
     renderLibrary();
 
     expect(await screen.findByText(label)).not.toBeNull();
+    const moreActions = screen.queryByRole("button", {
+      name: `More actions for ${learningDocument().title}`,
+    });
     if (status === "deleting") {
+      expect(moreActions).toBeNull();
       expect(screen.queryByRole("button", { name: "Delete document" })).toBeNull();
     } else {
-      expect(screen.getByRole("button", { name: "Delete document" })).not.toBeNull();
+      expect(moreActions).not.toBeNull();
+      expect(screen.queryByRole("button", { name: "Delete document" })).toBeNull();
     }
   });
 
@@ -275,6 +280,11 @@ describe("Learning document library", () => {
         name: "Open workspace",
       }).getAttribute("href"),
     ).toBe(`/learning/documents/${documentId}`);
+    const moreActions = screen.getByRole("button", {
+      name: `More actions for ${learningDocument().title}`,
+    });
+    expect(screen.queryByRole("button", { name: "Delete document" })).toBeNull();
+    await userEvent.click(moreActions);
     expect(screen.getByRole("button", { name: "Delete document" })).not.toBeNull();
     expect(card.textContent).not.toMatch(/file size/i);
   });
