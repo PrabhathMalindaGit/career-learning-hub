@@ -95,6 +95,8 @@ describe("LearningDashboard deletion discoverability", () => {
     await waitFor(() => {
       expect(learningApi.listLearningDocuments).toHaveBeenCalledTimes(2);
     });
-    expect(await screen.findByText("Deleting")).not.toBeNull();
+    expect(
+      await screen.findByText("Deleting", { selector: "span.learning-status" }),
+    ).not.toBeNull();
   });
 });
