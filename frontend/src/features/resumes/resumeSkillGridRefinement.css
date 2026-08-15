@@ -1,0 +1,45 @@
+/* Template-specific name-only Skills grids. Keyword-bearing groups stay full-width. */
+.resume-template-ats-classic .resume-paper-skills,
+.resume-template-modern-professional .resume-paper-skills {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.resume-template-ats-classic .resume-paper-skills {
+  gap: 0.3rem 1.25rem;
+}
+
+.resume-template-modern-professional .resume-paper-skills {
+  gap: 0.28rem 0.55rem;
+}
+
+.resume-template-ats-classic .resume-paper-skills > div,
+.resume-template-modern-professional .resume-paper-skills > div {
+  min-width: 0;
+}
+
+.resume-template-ats-classic
+  .resume-paper-skills > div:not(.resume-paper-skill--name-only),
+.resume-template-modern-professional
+  .resume-paper-skills > div:not(.resume-paper-skill--name-only) {
+  grid-column: 1 / -1;
+}
+
+.resume-template-ats-classic .resume-paper-skill--name-only,
+.resume-template-modern-professional .resume-paper-skill--name-only {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.resume-template-ats-classic .resume-paper-skill--name-only dt {
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.resume-template-modern-professional .resume-paper-skill--name-only dt {
+  font-size: 0.88em;
+  font-weight: 650;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
