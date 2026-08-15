@@ -8,11 +8,22 @@ const livePreviewCss = readFileSync(
 );
 
 describe("Resume live preview scrolling", () => {
-  it("allows horizontal scrolling in the live preview viewport", () => {
+  it("keeps the outer preview panel fixed while the inner viewport scrolls", () => {
     expect(livePreviewCss).toMatch(
-      /\.resume-editor-preview-grid\s*>\s*\.resume-preview-panel\.resume-preview-panel\s*\{[^}]*overflow-x:\s*auto;/s,
+      /\.resume-editor-preview-grid\s*>\s*\.resume-preview-panel\.resume-preview-panel\s*\{[^}]*overflow:\s*hidden;/s,
+    );
+    expect(livePreviewCss).toMatch(
+      /\.resume-live-preview-viewport\s*\{[^}]*overflow-x:\s*auto;/s,
     );
     expect(livePreviewCss).toContain("overscroll-behavior-x: contain;");
+  });
+
+  it("moves wide-screen vertical scrolling into the inner resume viewport", () => {
+    expect(livePreviewCss).toContain("@media (min-width: 1280px)");
+    expect(livePreviewCss).toMatch(
+      /\.resume-live-preview-viewport\s*\{[^}]*min-height:\s*0;[^}]*overflow-x:\s*auto;[^}]*overflow-y:\s*auto;/s,
+    );
+    expect(livePreviewCss).toContain("grid-template-rows: auto minmax(0, 1fr);");
   });
 
   it("keeps only Compact Technical wide enough to require scrolling when needed", () => {
