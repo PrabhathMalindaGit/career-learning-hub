@@ -19,6 +19,7 @@ import type {
   LearningDocument,
   LearningDocumentDeletionJob,
 } from "./types";
+import "./learningDeletion.css";
 
 type DeletionState =
   | { status: "idle" | "confirmation" | "accepting" }
