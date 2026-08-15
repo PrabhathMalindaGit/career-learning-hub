@@ -98,7 +98,9 @@ export function ResumeTemplateLayout(props: ResumeTemplateLayoutProps) {
   const shellProps: ShellProps = {
     draft: props.draft,
     showCandidatePhoto: props.showCandidatePhoto,
-    candidatePhotoUrl: props.candidatePhotoUrl,
+    ...(props.candidatePhotoUrl !== undefined
+      ? { candidatePhotoUrl: props.candidatePhotoUrl }
+      : {}),
   };
 
   switch (props.templateId) {
