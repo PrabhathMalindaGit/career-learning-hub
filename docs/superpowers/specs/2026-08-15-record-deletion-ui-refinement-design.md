@@ -1,7 +1,7 @@
 # Record Deletion UI Refinement Design
 
 **Date:** 2026-08-15
-**Status:** Design approved by the user; written specification self-reviewed and awaiting user approval
+**Status:** Design and written specification approved by the user; implementation plan pending approval
 **Task branch:** `task/record-deletion-destructive-actions`
 **Parent PR:** `#18 — Record deletion and destructive actions`
 **Base:** existing Record Deletion implementation on PR #18
@@ -333,6 +333,6 @@ Do not add:
 
 ## 14. Acceptance state
 
-This written specification authorizes no implementation by itself.
+The written specification is approved.
 
-Implementation may begin only after the user explicitly approves this written UI refinement specification and then approves the resulting implementation plan.
+Implementation may begin only after the user explicitly approves the resulting implementation plan.
