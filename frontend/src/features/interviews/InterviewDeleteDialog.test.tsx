@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createRef } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiClient";
 import { InterviewDeleteDialog } from "./InterviewDeleteDialog";
@@ -15,26 +16,48 @@ const session = {
   targetRole: "Senior Frontend Engineer",
 };
 
+function renderDialog(onDeleted = vi.fn(), onRequestClose = vi.fn()) {
+  const returnFocusRef = createRef<HTMLElement>();
+  render(
+    <InterviewDeleteDialog
+      session={session}
+      open
+      returnFocusRef={returnFocusRef}
+      onRequestClose={onRequestClose}
+      onDeleted={onDeleted}
+    />,
+  );
+  return { onDeleted, onRequestClose };
+}
+
 describe("InterviewDeleteDialog", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("requires exact title confirmation and submits once", async () => {
+  it("requires exact case-sensitive title confirmation and submits once", async () => {
     const user = userEvent.setup();
     const onDeleted = vi.fn();
     vi.mocked(deletionApi.deleteInterviewSession).mockResolvedValue();
-    render(<InterviewDeleteDialog session={session} onDeleted={onDeleted} />);
+    renderDialog(onDeleted);
 
-    await user.click(
-      screen.getByRole("button", { name: "Delete permanently" }),
-    );
+    expect(
+      screen.getByRole("heading", { name: `Delete “${session.title}”?` }),
+    ).not.toBeNull();
+    expect(screen.getByText("This action cannot be undone.")).not.toBeNull();
+    expect(
+      screen.getByText("The Resume used to create this session is not deleted."),
+    ).not.toBeNull();
+
     const input = screen.getByRole("textbox", {
-      name: "Type the session title exactly to confirm",
+      name: `Type ${session.title} exactly to confirm`,
     });
     const submit = screen.getByRole("button", {
-      name: "Permanently delete session",
+      name: "Delete permanently",
     }) as HTMLButtonElement;
     expect(submit.disabled).toBe(true);
 
+    await user.type(input, session.title.toLocaleLowerCase());
+    expect(submit.disabled).toBe(true);
+    await user.clear(input);
     await user.type(input, session.title);
     expect(submit.disabled).toBe(false);
     await user.click(submit);
@@ -55,20 +78,15 @@ describe("InterviewDeleteDialog", () => {
         "interview-delete-request-1",
       ),
     );
-    render(<InterviewDeleteDialog session={session} onDeleted={vi.fn()} />);
+    renderDialog();
 
-    await user.click(
-      screen.getByRole("button", { name: "Delete permanently" }),
-    );
     await user.type(
       screen.getByRole("textbox", {
-        name: "Type the session title exactly to confirm",
+        name: `Type ${session.title} exactly to confirm`,
       }),
       session.title,
     );
-    await user.click(
-      screen.getByRole("button", { name: "Permanently delete session" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Delete permanently" }));
 
     expect(
       await screen.findByText(
