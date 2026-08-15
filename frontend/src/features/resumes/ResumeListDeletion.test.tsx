@@ -35,6 +35,12 @@ const resume = {
   updatedAt: "2026-08-14T00:00:00.000Z",
 };
 
+const secondResume = {
+  ...resume,
+  id: "507f1f77bcf86cd799439099",
+  title: "Second Resume",
+};
+
 describe("ResumeListPage deletion", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -50,7 +56,7 @@ describe("ResumeListPage deletion", () => {
       });
   });
 
-  it("exposes permanent deletion beside Open Resume and refreshes canonical collection", async () => {
+  it("keeps Open Resume primary and exposes deletion through More actions", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
@@ -61,21 +67,53 @@ describe("ResumeListPage deletion", () => {
     expect(
       await screen.findByRole("link", { name: `Open Resume: ${resume.title}` }),
     ).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "Delete resume" })).toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: `More actions for ${resume.title}` }),
+    );
     await user.click(screen.getByRole("button", { name: "Delete resume" }));
     await user.type(
       screen.getByRole("textbox", {
-        name: "Type the Resume title exactly to confirm",
+        name: `Type ${resume.title} exactly to confirm`,
       }),
       resume.title,
     );
-    await user.click(
-      screen.getByRole("button", { name: "Permanently delete Resume" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Delete permanently" }));
 
     await waitFor(() => expect(resumeApi.deleteResume).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(resumeApi.listResumes).toHaveBeenCalledTimes(2));
     expect(
       screen.queryByRole("link", { name: `Open Resume: ${resume.title}` }),
     ).toBeNull();
+  });
+
+  it("keeps only one Resume overflow open at a time", async () => {
+    const user = userEvent.setup();
+    vi.mocked(resumeApi.listResumes).mockReset();
+    vi.mocked(resumeApi.listResumes).mockResolvedValue({
+      resumes: [resume, secondResume],
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+
+    render(
+      <MemoryRouter>
+        <ResumeListPage />
+      </MemoryRouter>,
+    );
+
+    const first = await screen.findByRole("button", {
+      name: `More actions for ${resume.title}`,
+    });
+    const second = screen.getByRole("button", {
+      name: `More actions for ${secondResume.title}`,
+    });
+
+    await user.click(first);
+    expect(first.getAttribute("aria-expanded")).toBe("true");
+    await user.click(second);
+    expect(first.getAttribute("aria-expanded")).toBe("false");
+    expect(second.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getAllByRole("button", { name: "Delete resume" })).toHaveLength(1);
   });
 });
