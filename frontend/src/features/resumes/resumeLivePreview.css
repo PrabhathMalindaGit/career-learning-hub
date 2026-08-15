@@ -1,0 +1,11 @@
+/* Screen-only live-preview viewport behavior. Print surfaces are not inside the editor preview grid. */
+.resume-editor-preview-grid > .resume-preview-panel.resume-preview-panel {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.resume-editor-preview-grid
+  > .resume-preview-panel
+  > .resume-paper.resume-template-compact-technical {
+  min-width: 620px;
+}
