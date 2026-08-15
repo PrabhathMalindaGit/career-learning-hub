@@ -178,6 +178,35 @@ describe("ResumeTemplateLayout", () => {
     ).not.toBeNull();
   });
 
+  it("marks name-only skills without changing grouped keyword rendering", () => {
+    const content = representativeContent();
+    content.skills = [
+      { id, name: "MS Excel", keywords: [] },
+      { id: secondId, name: "Accounting", keywords: ["Bookkeeping"] },
+    ];
+    const draft = resumeContentToDraft(content);
+    const { container } = render(
+      <ResumeTemplateLayout
+        draft={draft}
+        templateId="compact-technical"
+        showCandidatePhoto={false}
+      />,
+    );
+
+    const skillGroups = container.querySelectorAll(".resume-paper-skills > div");
+    expect(skillGroups).toHaveLength(2);
+
+    const nameOnly = skillGroups[0];
+    expect(nameOnly?.classList.contains("resume-paper-skill--name-only")).toBe(true);
+    expect(nameOnly?.querySelector("dt")?.textContent).toBe("MS Excel");
+    expect(nameOnly?.querySelector("dd")).toBeNull();
+
+    const grouped = skillGroups[1];
+    expect(grouped?.classList.contains("resume-paper-skill--name-only")).toBe(false);
+    expect(grouped?.querySelector("dt")?.textContent).toBe("Accounting:");
+    expect(grouped?.querySelector("dd")?.textContent).toBe("Bookkeeping");
+  });
+
   it("does not mutate canonical draft data while switching templates", () => {
     const draft = resumeContentToDraft(representativeContent());
     const before = JSON.stringify(draft);
