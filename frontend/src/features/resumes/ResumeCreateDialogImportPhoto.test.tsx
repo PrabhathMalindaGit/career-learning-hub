@@ -7,6 +7,7 @@ import { ResumeCreateDialog } from "./ResumeCreateDialog";
 import * as candidatePhoto from "./resumeCandidatePhoto";
 import * as resumeApi from "./resumeApi";
 import * as polling from "./resumePolling";
+import type { ResumeWorkspaceData } from "./types";
 
 vi.mock("./resumeApi", () => ({
   confirmResumePdfImport: vi.fn(),
@@ -49,18 +50,18 @@ const reviewContent = {
   interests: [],
 };
 
-const workspace = {
+const workspace: ResumeWorkspaceData = {
   resume: {
     id: "507f1f77bcf86cd799439011",
     title: "Imported Resume",
-    status: "draft" as const,
+    status: "draft",
     currentVersionId: "507f1f77bcf86cd799439012",
     candidatePhotoAssetId: photoAssetId,
     latestVersionNumber: 1,
     design: {
       templateId: "ats-classic",
       colorPaletteId: "slate",
-      pageSize: "A4" as const,
+      pageSize: "A4",
       fontFamily: "Inter",
       showProfilePhoto: true,
     },
@@ -71,7 +72,7 @@ const workspace = {
     id: "507f1f77bcf86cd799439012",
     resumeId: "507f1f77bcf86cd799439011",
     versionNumber: 1,
-    source: "pdf-import" as const,
+    source: "pdf-import",
     content: reviewContent,
     createdAt: "2026-08-15T00:00:00.000Z",
     updatedAt: "2026-08-15T00:00:00.000Z",
@@ -102,7 +103,7 @@ function completedReviewJob() {
 function Harness({
   onCreated = vi.fn(),
 }: {
-  onCreated?: (value: typeof workspace) => void;
+  onCreated?: (value: ResumeWorkspaceData) => void;
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
