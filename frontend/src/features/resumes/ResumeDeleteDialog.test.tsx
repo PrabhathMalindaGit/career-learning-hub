@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiClient";
 import { ResumeDeleteDialog } from "./ResumeDeleteDialog";
@@ -14,6 +15,25 @@ const resume = {
   title: "Platform Engineer Resume",
 };
 
+function Harness({ onDeleted = vi.fn() }: { onDeleted?: (resumeId: string) => void }) {
+  const [actionsOpen, setActionsOpen] = useState(false);
+  return (
+    <ResumeDeleteDialog
+      resume={resume}
+      onDeleted={onDeleted}
+      actionsOpen={actionsOpen}
+      onActionsOpenChange={setActionsOpen}
+    />
+  );
+}
+
+async function openDeleteDialog(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(
+    screen.getByRole("button", { name: `More actions for ${resume.title}` }),
+  );
+  await user.click(screen.getByRole("button", { name: "Delete resume" }));
+}
+
 describe("ResumeDeleteDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -23,16 +43,18 @@ describe("ResumeDeleteDialog", () => {
     const user = userEvent.setup();
     const onDeleted = vi.fn();
     vi.mocked(resumeApi.deleteResume).mockResolvedValue();
-    render(<ResumeDeleteDialog resume={resume} onDeleted={onDeleted} />);
+    render(<Harness onDeleted={onDeleted} />);
 
-    const trigger = screen.getByRole("button", { name: "Delete resume" });
-    await user.click(trigger);
+    await openDeleteDialog(user);
+
+    expect(screen.getByRole("heading", { name: `Delete “${resume.title}”?` })).not.toBeNull();
+    expect(screen.getByText("This action cannot be undone.")).not.toBeNull();
 
     const confirmation = screen.getByRole("textbox", {
-      name: "Type the Resume title exactly to confirm",
+      name: `Type ${resume.title} exactly to confirm`,
     });
     const submit = screen.getByRole("button", {
-      name: "Permanently delete Resume",
+      name: "Delete permanently",
     }) as HTMLButtonElement;
 
     expect(submit.disabled).toBe(true);
@@ -44,9 +66,7 @@ describe("ResumeDeleteDialog", () => {
 
     await user.click(submit);
 
-    await waitFor(() =>
-      expect(resumeApi.deleteResume).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(resumeApi.deleteResume).toHaveBeenCalledTimes(1));
     expect(resumeApi.deleteResume).toHaveBeenCalledWith(
       resume.id,
       expect.any(AbortSignal),
@@ -64,18 +84,16 @@ describe("ResumeDeleteDialog", () => {
         "resume-delete-request-1",
       ),
     );
-    render(<ResumeDeleteDialog resume={resume} onDeleted={vi.fn()} />);
+    render(<Harness />);
 
-    await user.click(screen.getByRole("button", { name: "Delete resume" }));
+    await openDeleteDialog(user);
     await user.type(
       screen.getByRole("textbox", {
-        name: "Type the Resume title exactly to confirm",
+        name: `Type ${resume.title} exactly to confirm`,
       }),
       resume.title,
     );
-    await user.click(
-      screen.getByRole("button", { name: "Permanently delete Resume" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Delete permanently" }));
 
     expect(
       await screen.findByText(
@@ -86,16 +104,18 @@ describe("ResumeDeleteDialog", () => {
     expect(screen.getByRole("dialog")).not.toBeNull();
   });
 
-  it("returns focus to the trigger when cancellation closes the dialog", async () => {
+  it("returns focus to More actions when cancellation closes the dialog", async () => {
     const user = userEvent.setup();
-    render(<ResumeDeleteDialog resume={resume} onDeleted={vi.fn()} />);
+    render(<Harness />);
 
-    const trigger = screen.getByRole("button", { name: "Delete resume" });
-    await user.click(trigger);
+    const trigger = screen.getByRole("button", {
+      name: `More actions for ${resume.title}`,
+    });
+    await openDeleteDialog(user);
     expect(screen.getByRole("dialog")).not.toBeNull();
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(document.activeElement).toBe(trigger);
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
 });
