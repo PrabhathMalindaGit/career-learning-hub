@@ -41,11 +41,13 @@ function contrast(first: string, second: string): number {
 
 describe("resumeTemplateRegistry", () => {
   it("defines the exact bounded template catalogue and ATS Classic fallback", () => {
-    expect(RESUME_TEMPLATES.map(({ id, label, className }) => ({
-      id,
-      label,
-      className,
-    }))).toEqual([
+    expect(
+      RESUME_TEMPLATES.map(({ id, label, className }) => ({
+        id,
+        label,
+        className,
+      })),
+    ).toEqual([
       {
         id: "ats-classic",
         label: "ATS Classic",
@@ -62,17 +64,38 @@ describe("resumeTemplateRegistry", () => {
         className: "resume-template-compact-technical",
       },
     ]);
+    expect(
+      RESUME_TEMPLATES.map(({ id, description }) => ({ id, description })),
+    ).toEqual([
+      {
+        id: "ats-classic",
+        description:
+          "Traditional single-column layout optimized for clear scanning and conservative applications.",
+      },
+      {
+        id: "modern-professional",
+        description:
+          "Polished two-column presentation with a strong header and structured professional sidebar.",
+      },
+      {
+        id: "compact-technical",
+        description:
+          "Dense technical layout prioritizing skills, tools, projects, and efficient use of page space.",
+      },
+    ]);
     expect(DEFAULT_RESUME_TEMPLATE.id).toBe("ats-classic");
     expect(DEFAULT_RESUME_TEMPLATE.safeFallback).toBe(true);
   });
 
   it("defines exact stored font values with bounded local/system stacks", () => {
-    expect(RESUME_FONTS.map(({ value, label, className, stack }) => ({
-      value,
-      label,
-      className,
-      stack,
-    }))).toEqual([
+    expect(
+      RESUME_FONTS.map(({ value, label, className, stack }) => ({
+        value,
+        label,
+        className,
+        stack,
+      })),
+    ).toEqual([
       {
         value: "Inter",
         label: "Inter / system sans-serif",
@@ -97,11 +120,13 @@ describe("resumeTemplateRegistry", () => {
   });
 
   it("defines exact palette IDs, safe classes, and contrast-verified roles", () => {
-    expect(RESUME_PALETTES.map(({ id, label, className }) => ({
-      id,
-      label,
-      className,
-    }))).toEqual([
+    expect(
+      RESUME_PALETTES.map(({ id, label, className }) => ({
+        id,
+        label,
+        className,
+      })),
+    ).toEqual([
       {
         id: "slate",
         label: "Slate",
