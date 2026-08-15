@@ -1,5 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { PageHeader } from "../../components/PageHeader";
 import { Pager } from "../../components/Pager";
@@ -59,7 +66,9 @@ export function InterviewSessionListPage() {
   const [listError, setListError] = useState<SafeError | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
-  const [openActionsSessionId, setOpenActionsSessionId] = useState<string | null>(null);
+  const [openActionsSessionId, setOpenActionsSessionId] = useState<
+    string | null
+  >(null);
   const listSequence = useRef(0);
   const createButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -115,9 +124,13 @@ export function InterviewSessionListPage() {
       sessions.length === 1 && sessions[0]?.id === sessionId;
 
     setOpenActionsSessionId(null);
-    setSessions((current) => current.filter((session) => session.id !== sessionId));
+    setSessions((current) =>
+      current.filter((session) => session.id !== sessionId),
+    );
     setPagination((current) =>
-      current ? { ...current, total: Math.max(0, current.total - 1) } : current,
+      current
+        ? { ...current, total: Math.max(0, current.total - 1) }
+        : current,
     );
 
     if (deletingLastVisibleSession && page > 1) {
@@ -128,7 +141,10 @@ export function InterviewSessionListPage() {
   }
 
   return (
-    <section className="interview-list-page" aria-labelledby="interview-list-title">
+    <section
+      className="interview-list-page"
+      aria-labelledby="interview-list-title"
+    >
       <PageHeader
         className="interview-page-heading"
         heading={
@@ -165,7 +181,11 @@ export function InterviewSessionListPage() {
             <p className="interview-kicker">Briefing desk</p>
             <h2 id="interview-collection-title">Your sessions</h2>
           </div>
-          {pagination ? <span className="interview-chip">{pagination.total} total</span> : null}
+          {pagination ? (
+            <span className="interview-chip">
+              {pagination.total} total
+            </span>
+          ) : null}
         </div>
 
         <div className="interview-filter-row" aria-label="Session status">
@@ -190,7 +210,10 @@ export function InterviewSessionListPage() {
             body={<p>{listError.message}</p>}
             requestId={listError.requestId}
             actions={
-              <button type="button" onClick={() => setReloadKey((key) => key + 1)}>
+              <button
+                type="button"
+                onClick={() => setReloadKey((key) => key + 1)}
+              >
                 Retry list
               </button>
             }
@@ -202,7 +225,10 @@ export function InterviewSessionListPage() {
             body={emptyStateCopy(filter)}
           />
         ) : (
-          <ul className="interview-session-list" aria-label="Interview sessions">
+          <ul
+            className="interview-session-list"
+            aria-label="Interview sessions"
+          >
             {sessions.map((session) => (
               <InterviewSessionCard
                 key={session.id}
