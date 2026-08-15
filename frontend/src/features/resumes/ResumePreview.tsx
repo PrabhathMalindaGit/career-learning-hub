@@ -8,6 +8,7 @@ import {
 import { ResumeTemplateLayout } from "./ResumeTemplateLayouts";
 import "./resumeCandidatePhoto.css";
 import "./resumeTemplateDifferentiation.css";
+import "./resumePrintParity.css";
 import "./resumeLivePreview.css";
 
 interface ResumePreviewProps {
