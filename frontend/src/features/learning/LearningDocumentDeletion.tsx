@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { CardOverflowActions } from "../../components/CardOverflowActions";
 import {
   fetchLearningDocument,
   fetchLearningDocumentDeletionJob,
@@ -75,10 +76,14 @@ export function LearningDocumentDeletion({
   accountId,
   document,
   onDeletionAccepted,
+  actionsOpen = false,
+  onActionsOpenChange = () => undefined,
 }: {
   accountId: string;
   document: LearningDocument;
   onDeletionAccepted(): void;
+  actionsOpen?: boolean;
+  onActionsOpenChange?(open: boolean): void;
 }) {
   const navigate = useNavigate();
   const identity = `${accountId}:${document.id}`;
@@ -94,15 +99,9 @@ export function LearningDocumentDeletion({
   const operation = useRef(0);
   const accepting = useRef(false);
   const accepted = useRef(false);
-  const acceptController = useRef<AbortController | undefined>(
-    undefined,
-  );
-  const pollController = useRef<AbortController | undefined>(
-    undefined,
-  );
-  const reconcileController = useRef<
-    AbortController | undefined
-  >(undefined);
+  const acceptController = useRef<AbortController | undefined>(undefined);
+  const pollController = useRef<AbortController | undefined>(undefined);
+  const reconcileController = useRef<AbortController | undefined>(undefined);
   const activeIdentity = useRef(identity);
 
   const abortWork = useCallback(() => {
@@ -137,8 +136,7 @@ export function LearningDocumentDeletion({
   }, [abortWork, document.id, identity]);
 
   const dialogVisible =
-    state.status === "confirmation" ||
-    state.status === "accepting";
+    state.status === "confirmation" || state.status === "accepting";
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -189,13 +187,8 @@ export function LearningDocumentDeletion({
       reconcileController.current = controller;
       const currentOperation = ++operation.current;
       const requestId =
-        reason.kind === "terminal"
-          ? reason.job.requestId
-          : reason.requestId;
-      const jobId =
-        reason.kind === "terminal"
-          ? reason.job.id
-          : reason.jobId;
+        reason.kind === "terminal" ? reason.job.requestId : reason.requestId;
+      const jobId = reason.kind === "terminal" ? reason.job.id : reason.jobId;
       setState({
         status: "reconciling",
         ...(jobId === undefined ? {} : { jobId }),
@@ -203,10 +196,7 @@ export function LearningDocumentDeletion({
       });
 
       try {
-        const result = await fetchLearningDocument(
-          document.id,
-          controller.signal,
-        );
+        const result = await fetchLearningDocument(document.id, controller.signal);
         if (
           controller.signal.aborted ||
           currentOperation !== operation.current ||
@@ -222,8 +212,7 @@ export function LearningDocumentDeletion({
             setState({
               status: "failed",
               message:
-                reason.job.error?.message ??
-                "The document could not be deleted.",
+                reason.job.error?.message ?? "The document could not be deleted.",
               canRetry,
               jobId: reason.job.id,
               ...(requestId === undefined ? {} : { requestId }),
@@ -233,8 +222,7 @@ export function LearningDocumentDeletion({
           if (reason.job.status === "cancelled") {
             setState({
               status: "cancelled",
-              message:
-                "Document deletion was cancelled before completion.",
+              message: "Document deletion was cancelled before completion.",
               canRetry,
               jobId: reason.job.id,
               ...(requestId === undefined ? {} : { requestId }),
@@ -296,37 +284,30 @@ export function LearningDocumentDeletion({
       });
 
       try {
-        const result =
-          await pollLearningJob<LearningDocumentDeletionJob>({
-            jobId,
-            documentId: document.id,
-            fetchJob: fetchLearningDocumentDeletionJob,
-            signal: controller.signal,
-            onUpdate: (job) => {
-              if (
-                controller.signal.aborted ||
-                currentOperation !== operation.current ||
-                activeIdentity.current !== identity
-              ) {
-                return;
-              }
-              if (
-                job.status === "queued" ||
-                job.status === "processing"
-              ) {
-                setState({
-                  status: job.status,
-                  jobId,
-                  ...((job.requestId ?? requestId) === undefined
-                    ? {}
-                    : {
-                        requestId:
-                          job.requestId ?? requestId,
-                      }),
-                });
-              }
-            },
-          });
+        const result = await pollLearningJob<LearningDocumentDeletionJob>({
+          jobId,
+          documentId: document.id,
+          fetchJob: fetchLearningDocumentDeletionJob,
+          signal: controller.signal,
+          onUpdate: (job) => {
+            if (
+              controller.signal.aborted ||
+              currentOperation !== operation.current ||
+              activeIdentity.current !== identity
+            ) {
+              return;
+            }
+            if (job.status === "queued" || job.status === "processing") {
+              setState({
+                status: job.status,
+                jobId,
+                ...((job.requestId ?? requestId) === undefined
+                  ? {}
+                  : { requestId: job.requestId ?? requestId }),
+              });
+            }
+          },
+        });
         if (
           controller.signal.aborted ||
           currentOperation !== operation.current ||
@@ -342,10 +323,7 @@ export function LearningDocumentDeletion({
             jobId,
             ...((result.job?.requestId ?? requestId) === undefined
               ? {}
-              : {
-                  requestId:
-                    result.job?.requestId ?? requestId,
-                }),
+              : { requestId: result.job?.requestId ?? requestId }),
           });
           return;
         }
@@ -392,10 +370,7 @@ export function LearningDocumentDeletion({
   const acceptDeletion = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
-      if (
-        accepting.current ||
-        confirmation.trim() !== document.title
-      ) {
+      if (accepting.current || confirmation.trim() !== document.title) {
         return;
       }
       accepting.current = true;
@@ -421,9 +396,7 @@ export function LearningDocumentDeletion({
         markDeletionAccepted();
         void runPolling(
           result.job.id,
-          result.job.status === "processing"
-            ? "processing"
-            : "queued",
+          result.job.status === "processing" ? "processing" : "queued",
           result.requestId,
         );
       } catch (error) {
@@ -453,9 +426,7 @@ export function LearningDocumentDeletion({
     ],
   );
 
-  const handleDialogKeyDown = (
-    event: KeyboardEvent<HTMLDialogElement>,
-  ) => {
+  const handleDialogKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
     if (event.key === "Escape") {
       event.preventDefault();
       closeConfirmation();
@@ -472,10 +443,7 @@ export function LearningDocumentDeletion({
     if (focusable.length === 0) return;
     const first = focusable[0]!;
     const last = focusable[focusable.length - 1]!;
-    if (
-      !event.shiftKey &&
-      globalThis.document.activeElement === last
-    ) {
+    if (!event.shiftKey && globalThis.document.activeElement === last) {
       event.preventDefault();
       first.focus();
     } else if (
@@ -489,27 +457,21 @@ export function LearningDocumentDeletion({
 
   const resumePolling = () => {
     if (state.status !== "paused") return;
-    void runPolling(
-      state.jobId,
-      "processing",
-      state.requestId,
-    );
+    void runPolling(state.jobId, "processing", state.requestId);
   };
 
   const checkCanonicalStatus = () => {
     const trackedState = "jobId" in state ? state : undefined;
     void reconcile({
       kind: "uncertain",
-      ...(trackedState?.jobId === undefined
-        ? {}
-        : { jobId: trackedState.jobId }),
+      ...(trackedState?.jobId === undefined ? {} : { jobId: trackedState.jobId }),
       ...(trackedState?.requestId === undefined
         ? {}
         : { requestId: trackedState.requestId }),
     });
   };
 
-  const canShowTrigger =
+  const canShowActions =
     document.status !== "deleting" &&
     (state.status === "idle" ||
       state.status === "confirmation" ||
@@ -517,16 +479,25 @@ export function LearningDocumentDeletion({
 
   return (
     <div className="learning-deletion">
-      {canShowTrigger ? (
-        <button
-          ref={triggerRef}
-          type="button"
-          className="learning-danger-button"
-          disabled={state.status === "accepting"}
-          onClick={openConfirmation}
-        >
-          Delete document
-        </button>
+      {canShowActions ? (
+        <CardOverflowActions
+          ariaLabel={`More actions for ${document.title}`}
+          open={actionsOpen}
+          onOpenChange={onActionsOpenChange}
+          className="learning-card-overflow"
+          actions={[
+            {
+              id: "delete-document",
+              label: "Delete document",
+              destructive: true,
+              disabled: state.status === "accepting",
+              onSelect: (trigger) => {
+                triggerRef.current = trigger;
+                openConfirmation();
+              },
+            },
+          ]}
+        />
       ) : null}
 
       {state.status === "observing" ? (
@@ -538,8 +509,8 @@ export function LearningDocumentDeletion({
         >
           <h2>Document is being deleted</h2>
           <p>
-            The deletion job is already in progress. This page will
-            only use the canonical document state to check completion.
+            The deletion job is already in progress. This page will only use
+            the canonical document state to check completion.
           </p>
           <p>Grounded chat is unavailable while deletion completes.</p>
           <p>Flashcards are unavailable while deletion completes.</p>
@@ -554,8 +525,7 @@ export function LearningDocumentDeletion({
         </div>
       ) : null}
 
-      {state.status === "queued" ||
-      state.status === "processing" ? (
+      {state.status === "queued" || state.status === "processing" ? (
         <div
           ref={statusRef}
           className="learning-deletion-status"
@@ -564,18 +534,11 @@ export function LearningDocumentDeletion({
           tabIndex={-1}
         >
           <h2>
-            {state.status === "queued"
-              ? "Deletion queued"
-              : "Deletion processing"}
+            {state.status === "queued" ? "Deletion queued" : "Deletion processing"}
           </h2>
-          <p>
-            Keep this page open while the same deletion job is
-            checked.
-          </p>
+          <p>Keep this page open while the same deletion job is checked.</p>
           {state.requestId ? (
-            <p className="request-id">
-              Request ID: {state.requestId}
-            </p>
+            <p className="request-id">Request ID: {state.requestId}</p>
           ) : null}
         </div>
       ) : null}
@@ -589,13 +552,11 @@ export function LearningDocumentDeletion({
         >
           <h2>Deletion checks paused</h2>
           <p>
-            The backend deletion result is not known locally. Resume
-            checks for the same job when ready.
+            The backend deletion result is not known locally. Resume checks
+            for the same job when ready.
           </p>
           {state.requestId ? (
-            <p className="request-id">
-              Request ID: {state.requestId}
-            </p>
+            <p className="request-id">Request ID: {state.requestId}</p>
           ) : null}
           <button
             type="button"
@@ -636,22 +597,14 @@ export function LearningDocumentDeletion({
           </h2>
           <p>{state.message}</p>
           {state.requestId ? (
-            <p className="request-id">
-              Request ID: {state.requestId}
-            </p>
+            <p className="request-id">Request ID: {state.requestId}</p>
           ) : null}
           <button
             type="button"
             className="learning-secondary-button"
-            onClick={
-              state.canRetry
-                ? openConfirmation
-                : checkCanonicalStatus
-            }
+            onClick={state.canRetry ? openConfirmation : checkCanonicalStatus}
           >
-            {state.canRetry
-              ? "Review deletion again"
-              : "Check deletion status"}
+            {state.canRetry ? "Review deletion again" : "Check deletion status"}
           </button>
         </div>
       ) : null}
@@ -666,25 +619,27 @@ export function LearningDocumentDeletion({
         }}
         onKeyDown={handleDialogKeyDown}
       >
-        <form
-          className="learning-deletion-form"
-          onSubmit={acceptDeletion}
-        >
-          <p className="learning-kicker">Permanent action</p>
-          <h2 id={deletionTitleId}>
-            Permanently delete document
-          </h2>
+        <form className="learning-deletion-form" onSubmit={acceptDeletion}>
+          <div className="learning-delete-heading">
+            <span className="learning-delete-warning-mark" aria-hidden="true">
+              !
+            </span>
+            <div>
+              <p className="learning-kicker">Permanent action</p>
+              <h2 id={deletionTitleId}>Delete “{document.title}”?</h2>
+            </div>
+          </div>
           <p>
-            You are permanently deleting{" "}
-            <strong>{document.title}</strong>.
+            This permanently removes the document and its related
+            conversations, messages, flashcards, quizzes, and attempts.
           </p>
-          <p>
-            Related conversations, messages, flashcards, quizzes, and
-            attempts will also be removed.
+          <p className="learning-delete-irreversible">
+            This action cannot be undone.
           </p>
-          <p>This deletion cannot be undone.</p>
           <label>
-            <span>Type the document title to confirm</span>
+            <span>
+              Type <strong>{document.title}</strong> to confirm
+            </span>
             <input
               ref={inputRef}
               type="text"
@@ -692,9 +647,7 @@ export function LearningDocumentDeletion({
               disabled={state.status === "accepting"}
               autoComplete="off"
               spellCheck={false}
-              onChange={(event) =>
-                setConfirmation(event.target.value)
-              }
+              onChange={(event) => setConfirmation(event.target.value)}
             />
           </label>
           <div className="learning-deletion-actions">
@@ -714,9 +667,7 @@ export function LearningDocumentDeletion({
                 confirmation.trim() !== document.title
               }
             >
-              {state.status === "accepting"
-                ? "Accepting deletion…"
-                : "Permanently delete document"}
+              {state.status === "accepting" ? "Accepting deletion…" : "Delete permanently"}
             </button>
           </div>
         </form>
