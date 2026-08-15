@@ -83,10 +83,10 @@ export async function listResumes(
   input: { page?: number; limit?: number } = {},
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
-    `/resumes?${pageQuery(input)}`,
-    { authentication: "required", signal },
-  );
+  const data = await apiRequest<unknown>(`/resumes?${pageQuery(input)}`, {
+    authentication: "required",
+    signal,
+  });
   return parseResumeList(data);
 }
 
@@ -139,15 +139,12 @@ export async function saveResumeVersion(
   },
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
-    `/resumes/${resumeId}/versions`,
-    {
-      method: "POST",
-      body: payload,
-      authentication: "required",
-      signal,
-    },
-  );
+  const data = await apiRequest<unknown>(`/resumes/${resumeId}/versions`, {
+    method: "POST",
+    body: payload,
+    authentication: "required",
+    signal,
+  });
   const workspace = parseWorkspaceWithCandidatePhoto(data);
   assertResumeIdentity(resumeId, workspace.resume.id);
   return workspace;
@@ -158,15 +155,12 @@ export async function updateResumeDesign(
   design: Partial<ResumeDesign>,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
-    `/resumes/${resumeId}/design`,
-    {
-      method: "PATCH",
-      body: design,
-      authentication: "required",
-      signal,
-    },
-  );
+  const data = await apiRequest<unknown>(`/resumes/${resumeId}/design`, {
+    method: "PATCH",
+    body: design,
+    authentication: "required",
+    signal,
+  });
   const resume = parseResumeWithCandidatePhoto(data);
   assertResumeIdentity(resumeId, resume.id);
   return resume;
@@ -185,15 +179,12 @@ export async function uploadResumeCandidatePhoto(
   );
   form.set("file", file);
 
-  const data = await apiRequest<unknown>(
-    `/resumes/${resumeId}/candidate-photo`,
-    {
-      method: "POST",
-      body: form,
-      authentication: "required",
-      signal,
-    },
-  );
+  const data = await apiRequest<unknown>(`/resumes/${resumeId}/candidate-photo`, {
+    method: "POST",
+    body: form,
+    authentication: "required",
+    signal,
+  });
   const resume = parseResumeWithCandidatePhoto(data);
   assertResumeIdentity(resumeId, resume.id);
   return resume;
@@ -204,15 +195,12 @@ export async function removeResumeCandidatePhoto(
   expectedCandidatePhotoAssetId: string,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
-    `/resumes/${resumeId}/candidate-photo`,
-    {
-      method: "DELETE",
-      body: { expectedCandidatePhotoAssetId },
-      authentication: "required",
-      signal,
-    },
-  );
+  const data = await apiRequest<unknown>(`/resumes/${resumeId}/candidate-photo`, {
+    method: "DELETE",
+    body: { expectedCandidatePhotoAssetId },
+    authentication: "required",
+    signal,
+  });
   const resume = parseResumeWithCandidatePhoto(data);
   assertResumeIdentity(resumeId, resume.id);
   return resume;
@@ -225,6 +213,22 @@ export async function fetchResumeCandidatePhotoSource(
   const data = await apiRequest<unknown>(
     `/resumes/${resumeId}/candidate-photo/source`,
     { authentication: "required", signal },
+  );
+  return parseCandidatePhotoSource(data);
+}
+
+export async function fetchResumeImportPhotoCandidateSource(
+  assetId: string,
+  signal?: AbortSignal,
+) {
+  const data = await apiRequest<unknown>(
+    `/assets/${encodeURIComponent(assetId)}/signed-url`,
+    {
+      method: "POST",
+      body: { expiresInSeconds: 300 },
+      authentication: "required",
+      signal,
+    },
   );
   return parseCandidatePhotoSource(data);
 }
@@ -271,26 +275,27 @@ export async function importResumePdf(
   form.set("requestId", crypto.randomUUID());
   form.set("title", title);
   form.set("file", file);
-  const data = await apiRequest<unknown>(
-    "/resume-analyses/import-pdf",
-    {
-      method: "POST",
-      body: form,
-      authentication: "required",
-      signal,
-    },
-  );
+  const data = await apiRequest<unknown>("/resume-analyses/import-pdf", {
+    method: "POST",
+    body: form,
+    authentication: "required",
+    signal,
+  });
   return parseAcceptedJob(data, "resume.import-pdf");
 }
 
 export async function confirmResumePdfImport(
   jobId: string,
   signal?: AbortSignal,
+  selectedPhotoAssetId?: string,
 ): Promise<ResumeWorkspaceData> {
   const data = await apiRequest<unknown>(
     `/resume-analyses/import-pdf/${jobId}/confirm`,
     {
       method: "POST",
+      ...(selectedPhotoAssetId === undefined
+        ? {}
+        : { body: { selectedPhotoAssetId } }),
       authentication: "required",
       signal,
     },
@@ -335,10 +340,10 @@ export async function fetchResumeAnalysis(
   analysisId: string,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<unknown>(
-    `/resume-analyses/${analysisId}`,
-    { authentication: "required", signal },
-  );
+  const data = await apiRequest<unknown>(`/resume-analyses/${analysisId}`, {
+    authentication: "required",
+    signal,
+  });
   return parseAnalysis(data);
 }
 
