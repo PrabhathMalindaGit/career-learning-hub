@@ -57,8 +57,8 @@ export async function extractFirstPagePdfImages(
       imageDataUrl: false,
       imageBuffer: true,
     });
-    const firstPage = result.pages.find((page) => page.pageNumber === 1)
-      ?? result.pages[0];
+    const firstPage =
+      result.pages.find((page) => page.pageNumber === 1) ?? result.pages[0];
     if (!firstPage) return [];
 
     const seen = new Set<string>();
@@ -100,7 +100,11 @@ export async function extractFirstPagePdfImages(
   } catch {
     return [];
   } finally {
-    await parser.destroy().catch(() => undefined);
+    try {
+      await parser.destroy();
+    } catch {
+      // Embedded-image extraction is optional, including parser cleanup.
+    }
   }
 }
 
