@@ -1,0 +1,142 @@
+.resume-paper-skills {
+  display: grid;
+  gap: 5px;
+}
+
+.resume-paper-skills > div {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.resume-paper-skills dt {
+  flex: 0 0 auto;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.resume-paper-skills dd {
+  min-width: 0;
+  flex: 1 1 220px;
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.resume-import-photo-choices {
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.resume-import-photo-choices legend {
+  padding: 0 5px;
+  color: #1d2b22;
+  font-weight: 800;
+}
+
+.resume-import-photo-guidance {
+  margin: 2px 0 12px;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.resume-import-photo-option {
+  color: #27372e;
+  cursor: pointer;
+}
+
+.resume-import-photo-option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent-dark);
+}
+
+.resume-import-photo-option--none {
+  display: flex;
+  min-height: var(--minimum-interactive-target);
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid #c8d5cd;
+  border-radius: 10px;
+  background: #fbfdfc;
+}
+
+.resume-import-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.resume-import-photo-card {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #c8d5cd;
+  border-radius: 12px;
+  background: #fbfdfc;
+}
+
+.resume-import-photo-card--selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.resume-import-photo-preview {
+  display: grid;
+  min-width: 0;
+  min-height: 124px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #dce5df;
+  border-radius: 9px;
+  color: var(--text-muted);
+  background: #f4f8f5;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.resume-import-photo-preview img {
+  display: block;
+  width: 100%;
+  height: 124px;
+  object-fit: contain;
+}
+
+.resume-import-photo-label {
+  min-width: 0;
+  color: #27372e;
+  font-size: 0.82rem;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.resume-import-photo-choices:disabled .resume-import-photo-option {
+  cursor: default;
+  opacity: 0.7;
+}
+
+@media (max-width: 560px) {
+  .resume-import-photo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-import-photo-preview,
+  .resume-import-photo-preview img {
+    height: 150px;
+  }
+}
