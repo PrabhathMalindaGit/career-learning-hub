@@ -14,7 +14,7 @@
 .resume-editor-preview-grid
   > .resume-preview-panel
   > .resume-live-preview-viewport
-  > .resume-paper.resume-template-compact-technical {
+  > .resume-paper {
   min-width: 620px;
 }
 

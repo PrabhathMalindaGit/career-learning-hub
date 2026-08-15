@@ -26,12 +26,13 @@ describe("Resume live preview scrolling", () => {
     expect(livePreviewCss).toContain("grid-template-rows: auto minmax(0, 1fr);");
   });
 
-  it("keeps only Compact Technical wide enough to require scrolling when needed", () => {
+  it("keeps every live-preview resume paper wide enough to preserve realistic proportions", () => {
     expect(livePreviewCss).toMatch(
-      /\.resume-paper\.resume-template-compact-technical\s*\{[^}]*min-width:\s*620px;/s,
+      /\.resume-live-preview-viewport\s*>\s*\.resume-paper\s*\{[^}]*min-width:\s*620px;/s,
     );
-    expect(livePreviewCss).not.toMatch(/resume-template-ats-classic[^}]*min-width:/s);
-    expect(livePreviewCss).not.toMatch(/resume-template-modern-professional[^}]*min-width:/s);
+    expect(livePreviewCss).not.toMatch(
+      /resume-template-(?:ats-classic|modern-professional|compact-technical)[^}]*min-width:/s,
+    );
   });
 
   it("does not add print or saved-export surface overrides", () => {
