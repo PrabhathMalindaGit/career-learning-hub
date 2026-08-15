@@ -16,8 +16,99 @@
   opacity: 0.62;
 }
 
-.interview-delete-trigger {
-  font-size: 0.8rem;
+.interview-session-card__heading-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.interview-card-overflow {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.interview-card-overflow .card-overflow-actions__trigger {
+  display: inline-flex;
+  width: var(--minimum-interactive-target);
+  min-width: var(--minimum-interactive-target);
+  min-height: var(--minimum-interactive-target);
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid #d5e0d9;
+  border-radius: 10px;
+  color: #53655a;
+  background: #f8fbf9;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.interview-card-overflow .card-overflow-actions__trigger:hover,
+.interview-card-overflow .card-overflow-actions__trigger[aria-expanded="true"] {
+  border-color: #b9cec1;
+  color: #245e3c;
+  background: #eef6f1;
+}
+
+.interview-card-overflow .card-overflow-actions__trigger:focus-visible {
+  outline: 3px solid rgba(18, 107, 58, 0.22);
+  outline-offset: 2px;
+}
+
+.interview-card-overflow .card-overflow-actions__panel {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 20;
+  width: max-content;
+  min-width: 190px;
+  max-width: min(250px, calc(100vw - 32px));
+  padding: 6px;
+  border: 1px solid #d9e3dd;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(20, 45, 31, 0.14);
+}
+
+.interview-card-overflow .card-overflow-actions__group {
+  display: grid;
+}
+
+.interview-card-overflow .card-overflow-actions__group--separated {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid #e5ebe7;
+}
+
+.interview-card-overflow .card-overflow-actions__action {
+  width: 100%;
+  min-height: var(--minimum-interactive-target);
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  color: #2b5139;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
+  text-align: left;
+}
+
+.interview-card-overflow .card-overflow-actions__action:hover,
+.interview-card-overflow .card-overflow-actions__action:focus-visible {
+  background: #eef6f1;
+}
+
+.interview-card-overflow .card-overflow-actions__action--destructive {
+  color: #9d3232;
+}
+
+.interview-card-overflow .card-overflow-actions__action--destructive:hover,
+.interview-card-overflow .card-overflow-actions__action--destructive:focus-visible {
+  color: #7f2424;
+  background: #fff1f1;
 }
 
 .interview-delete-dialog {
@@ -37,8 +128,28 @@
 
 .interview-delete-form {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   padding: 24px;
+}
+
+.interview-delete-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.interview-delete-warning-mark {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #8d2d2d;
+  background: #fdeaea;
+  font-size: 1rem;
+  font-weight: 900;
 }
 
 .interview-delete-form h2,
@@ -47,17 +158,40 @@
   margin: 0;
 }
 
+.interview-delete-form h2 {
+  color: #243129;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
 .interview-delete-warning {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   color: var(--text-muted);
   line-height: 1.55;
+}
+
+.interview-delete-resume-note {
+  color: #45564b;
+}
+
+.interview-delete-irreversible {
+  padding: 11px 12px;
+  border: 1px solid #f0caca;
+  border-radius: 10px;
+  color: #842c2c;
+  background: #fff5f5;
+  font-weight: 750;
 }
 
 .interview-delete-confirmation {
   display: grid;
   gap: 7px;
   font-weight: 700;
+}
+
+.interview-delete-confirmation span {
+  line-height: 1.45;
 }
 
 .interview-delete-confirmation input {
@@ -82,6 +216,14 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+  padding-top: 2px;
+}
+
+@media (max-width: 720px) {
+  .interview-session-card__heading-actions {
+    align-items: flex-end;
+    flex-direction: column-reverse;
+  }
 }
 
 @media (max-width: 560px) {
@@ -91,5 +233,9 @@
 
   .interview-delete-actions > button {
     width: 100%;
+  }
+
+  .interview-card-overflow .card-overflow-actions__panel {
+    max-width: min(230px, calc(100vw - 40px));
   }
 }
