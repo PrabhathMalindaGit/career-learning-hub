@@ -64,6 +64,8 @@ export async function deleteInterviewSession(input: {
       _id: session._id,
       userId: input.userId,
     }).session(mongoSession);
+
+    return session._id.toString();
   });
 
   await recordActivitySafely({
