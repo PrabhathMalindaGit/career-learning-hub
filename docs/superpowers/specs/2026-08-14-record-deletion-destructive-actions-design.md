@@ -1,7 +1,7 @@
 # Record Deletion & Destructive Actions — Design Specification
 
 **Date:** 2026-08-14
-**Status:** Design approved by the user; written specification awaiting user approval
+**Status:** Design and written specification approved by the user on 2026-08-14; implementation authorized on 2026-08-15
 **Task branch:** `task/record-deletion-destructive-actions`
 **Base branch:** `main`
 **Base commit:** `91f911f013fa35b4288f4299237b19c14a07d187`
@@ -465,9 +465,10 @@ Do not deploy, delete branches, or activate Phase 19C or any later phase through
 
 - Work only on `task/record-deletion-destructive-actions`.
 - Base is `main` at `91f911f013fa35b4288f4299237b19c14a07d187`.
-- The written specification must be reviewed and approved by the user before implementation planning/code changes.
-- After spec approval, create the implementation plan under `docs/superpowers/plans/` and obtain separate plan + inline-execution approval.
-- Use a draft PR targeting `main` for the task.
+- Design approval: `APPROVE RECORD DELETION DESIGN`.
+- Written specification approval: `APPROVE RECORD DELETION SPEC`.
+- Implementation plan + inline execution approval: `APPROVE RECORD DELETION PLAN + INLINE EXECUTION`.
+- Use draft PR #18 targeting `main` for the task.
 - User-run local verification is required before implementation acceptance.
 - Implementation approval does not equal merge approval.
 - Merge requires a separate explicit user approval after final review.
