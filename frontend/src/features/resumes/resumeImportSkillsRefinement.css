@@ -29,6 +29,32 @@
   word-break: normal;
 }
 
+.resume-paper .resume-paper-skills {
+  display: grid;
+  gap: 5px;
+}
+
+.resume-paper .resume-paper-skills > div {
+  display: flex;
+  max-width: none;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.resume-paper .resume-paper-skills dd {
+  min-width: 0;
+  flex: 1 1 220px;
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
 .resume-import-photo-choices {
   min-width: 0;
   margin: 0;
