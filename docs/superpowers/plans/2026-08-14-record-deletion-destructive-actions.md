@@ -2,10 +2,10 @@
 
 > **Execution discipline:** implement task-by-task with test-driven development. Do not widen scope when a focused fix is sufficient.
 
-**Date:** 2026-08-14  
-**Status:** Written specification approved; implementation plan self-reviewed and awaiting explicit execution approval  
-**Task branch:** `task/record-deletion-destructive-actions`  
-**Base:** `main @ 91f911f013fa35b4288f4299237b19c14a07d187`  
+**Date:** 2026-08-14
+**Status:** Written specification approved; implementation plan approved and inline execution authorized
+**Task branch:** `task/record-deletion-destructive-actions`
+**Base:** `main @ 91f911f013fa35b4288f4299237b19c14a07d187`
 **Draft PR:** `#18 — Record deletion and destructive actions`
 
 ## 1. Goal
@@ -421,14 +421,15 @@ Inside `withMongoTransaction`:
 2. check exact Interview job filter plus status `queued|processing`; throw `INTERVIEW_DELETE_BLOCKED_BY_ACTIVE_JOB` before mutations;
 3. delete owned InterviewAttempts by session ID;
 4. delete owned InterviewQuestions by session ID;
-5. delete only matching terminal Interview jobs;
-6. delete the owned InterviewSession root.
+5. delete matching terminal Interview jobs only;
+6. delete owned InterviewSession root;
+7. return a non-undefined transaction result so `withMongoTransaction` can verify completion.
 
-After commit, record `interview.session.deleted` with resourceType `interview-session` and the deleted session ID. Do not record answers, job description, model feedback, or other sensitive content.
+After commit, record safe activity type `interview.session.deleted`. Do not delete `sourceResumeId` or `sourceResumeVersionId`.
 
-## 3.3 Wire exact existing route middleware
+## 3.3 Wire route
 
-`interview.routes.ts` already imports the middleware named `requireOwnedInterviewSession`. Register the new route with that exact middleware:
+Add a narrow `deleteInterviewSessionController` using a typed `Request<{ sessionId: string }>` and register:
 
 ```ts
 interviewRouter.delete(
@@ -439,304 +440,179 @@ interviewRouter.delete(
 );
 ```
 
-In `interview.controller.ts`, current controllers use generic `Request`; follow that style. The middleware places the owned root on `request.interviewSession`, but the deletion service still receives the authenticated user ID and route session ID so the transaction performs its own authoritative owner check:
+Do not add rate limiting to deletion. Keep existing Archive/Restore behavior untouched.
 
-```ts
-export async function deleteInterviewSessionController(
-  request: Request,
-  response: Response,
-): Promise<void> {
-  await deleteInterviewSession({
-    userId: request.auth!.userId,
-    sessionId: request.params.sessionId,
-  });
-  response.status(204).send();
-}
-```
-
-Do not rename or restructure `interviewOwnership.middleware.ts`.
-
-## 3.4 Focused GREEN verification
+## 3.4 Focused GREEN
 
 ```bash
 npm --prefix backend test -- \
   src/tests/integration/interviewDeletion.integration.test.ts \
-  src/tests/integration/interviewQuestionTypes.integration.test.ts \
-  src/tests/integration/interviewFeedbackTypes.integration.test.ts \
-  src/tests/integration/interviewStarterCode.integration.test.ts \
+  src/tests/integration/crossUserAccess.integration.test.ts \
   src/tests/integration/jobExecutionFence.integration.test.ts
 ```
 
-Then commit only the bounded files.
-
 ---
 
-# Task 4 — Interview Coach permanent-deletion UI
+# Task 4 — Interview Coach deletion UI
 
-## 4.1 RED tests
+## 4.1 Test first
 
-Extend `interviewApi.test.ts` and `InterviewSessionListPage.test.tsx`; create `InterviewDeleteDialog.test.tsx`.
+Cover:
 
-Required cases:
+- `DELETE /interview-sessions/:sessionId` API helper accepts `204`;
+- delete is available for active, completed, and archived sessions;
+- Archive/Restore remains unchanged;
+- exact case-sensitive title confirmation;
+- duplicate submit suppression;
+- active-job `409` remains actionable;
+- successful deletion removes the card and reconciles canonical pagination;
+- focus returns on cancellation;
+- dialog keyboard behavior uses the shared modal behavior.
 
-- `204` DELETE API handling;
-- exact stored session-title confirmation;
-- warning says questions and Saved Attempts/Attempt History are removed permanently;
-- duplicate submit protection;
-- `409` active-job error is shown without changing archive state;
-- keyboard modal/focus behavior;
-- permanent deletion is available for active, completed, and archived cards;
-- archived card still exposes Restore independently;
-- successful deletion refreshes canonical list.
+## 4.2 Implement
 
-RED:
-
-```bash
-npm --prefix frontend test -- \
-  src/features/interviews/interviewApi.test.ts \
-  src/features/interviews/InterviewDeleteDialog.test.tsx \
-  src/features/interviews/InterviewSessionListPage.test.tsx \
-  src/features/interviews/InterviewSessionCard.restore.test.tsx
-```
-
-## 4.2 API helper
-
-Add to `interviewApi.ts` using its existing `routeId` and `requestWithMetadata` conventions:
-
-```ts
-export async function deleteInterviewSession(
-  sessionId: string,
-  signal?: AbortSignal,
-): Promise<void> {
-  await requestWithMetadata<void>(
-    `/interview-sessions/${routeId(sessionId)}`,
-    {
-      method: "DELETE",
-      authentication: "required",
-      signal,
-    },
-  );
-}
-```
-
-## 4.3 Dialog and cards
-
-Create `InterviewDeleteDialog.tsx` with:
-
-```ts
-type InterviewDeleteDialogProps = {
-  session: Pick<InterviewSessionSummary, "id" | "title" | "targetRole">;
-  onDeleted(sessionId: string): void;
-};
-```
-
-Use `confirmation === session.title`. Do not require archive first.
-
-Change `InterviewSessionCard` to accept `onDeleted(sessionId)` while leaving the existing `restoreSession()` logic unchanged. Keep `Open session` visually primary and `Delete permanently` destructive but secondary.
-
-In `InterviewSessionListPage`, add a `reloadKey` because the current page has none. Include it in the existing list-fetch effect dependencies. On successful deletion, remove the ID locally and trigger reload/decrement a now-empty non-first page once.
-
-GREEN: rerun the Task 4 focused command, including the pre-existing restore test.
-
----
-
-# Task 5 — Learning library deletion discoverability
-
-## 5.1 RED tests
-
-Extend `LearningDocumentDeletion.test.tsx` to render two instances simultaneously and prove each dialog has a unique accessible heading ID.
-
-Extend `LearningDashboard.test.tsx` to prove:
-
-- non-deleting document card has both `Open workspace` and `Delete document`;
-- a document already in `deleting` state does not expose a fresh delete trigger;
-- accepted deletion suppresses the local duplicate trigger and causes canonical refresh;
-- existing Open workspace behavior remains.
-
-RED:
-
-```bash
-npm --prefix frontend test -- \
-  src/features/learning/LearningDocumentDeletion.test.tsx \
-  src/features/learning/LearningDashboard.test.tsx \
-  src/features/learning/learningDeletionApi.test.ts \
-  src/features/learning/learningDeletionContracts.test.ts
-```
-
-## 5.2 Make the existing component instance-safe
-
-In `LearningDocumentDeletion.tsx`, replace the static heading ID with:
-
-```ts
-const deletionTitleId = `learning-deletion-title-${document.id}`;
-```
-
-Use it in both `dialog aria-labelledby` and the dialog `<h2 id>`. Do not change existing Learning exact-title semantics, polling, reconciliation, cancellation, retry, canonical-absence behavior, or workspace navigation.
-
-## 5.3 Reuse the existing component in `LearningDashboard`
-
-Render `LearningDocumentDeletion` in each non-deleting card's action/footer area. Pass the existing `accountId` and document. In `onDeletionAccepted`:
-
-- locally mark only that card `status: "deleting"` so a second trigger disappears immediately;
-- call the existing `refresh()`; the next server response remains authoritative.
-
-Do not add deletion API/polling logic to `LearningDashboard`.
+Create `InterviewDeleteDialog.tsx` and integrate it into `InterviewSessionCard.tsx`/the list page. Keep `Delete permanently` visually secondary to Open/Restore and Archive lifecycle actions.
 
 GREEN:
 
 ```bash
 npm --prefix frontend test -- \
-  src/features/learning/LearningDocumentDeletion.test.tsx \
-  src/features/learning/LearningDashboard.test.tsx \
-  src/features/learning/learningDeletionApi.test.ts \
-  src/features/learning/learningDeletionContracts.test.ts \
-  src/features/learning/LearningDocumentWorkspace.test.tsx
+  src/features/interviews/InterviewDeleteDialog.test.tsx \
+  src/features/interviews/InterviewSessionListPage.test.tsx \
+  src/features/interviews/InterviewSessionCard.restore.test.tsx \
+  src/features/interviews/interviewDeletionApi.test.ts
 ```
 
 ---
 
-# Task 6 — Cross-feature security/race regression
+# Task 5 — Learning library deletion discoverability
 
-Run after Tasks 1–5 are green.
+## 5.1 Reuse existing deletion workflow
 
-Backend:
+Do not add another backend route or deletion state machine.
+
+Expose the existing `LearningDocumentDeletion` component from each deletable Learning library card/row while keeping `Open workspace` as the primary navigation action.
+
+## 5.2 Make repeated dialogs instance-safe
+
+Replace the static `learning-deletion-title` heading ID with an instance-safe ID derived from a safe React ID mechanism or the canonical document ID. Do not change deletion semantics.
+
+## 5.3 Prevent duplicate triggers
+
+Once deletion is accepted for a document, suppress its library Delete trigger while the canonical document remains in `deleting` state or until canonical absence is confirmed.
+
+Focused GREEN:
+
+```bash
+npm --prefix frontend test -- \
+  src/features/learning/LearningDocumentDeletionLibrary.test.tsx \
+  src/features/learning/LearningDashboardDeletion.test.tsx \
+  src/features/learning/LearningDocumentDeletion.test.tsx \
+  src/features/learning/LearningDashboard.test.tsx
+```
+
+---
+
+# Task 6 — Cross-feature regression and security gate
+
+Run the focused cross-feature deletion/security suite:
 
 ```bash
 npm --prefix backend test -- \
-  src/tests/integration/crossUserAccess.integration.test.ts \
   src/tests/integration/resumeDeletion.integration.test.ts \
   src/tests/integration/interviewDeletion.integration.test.ts \
+  src/tests/integration/crossUserAccess.integration.test.ts \
   src/tests/integration/learningDocumentDeletionConcurrency.integration.test.ts \
   src/tests/integration/jobExecutionFence.integration.test.ts \
   src/tests/integration/resumeJobIdempotency.integration.test.ts
 ```
 
-Frontend:
+Then frontend deletion suite:
 
 ```bash
 npm --prefix frontend test -- \
-  src/features/resumes/ResumeListPage.test.tsx \
   src/features/resumes/ResumeDeleteDialog.test.tsx \
-  src/features/interviews/InterviewSessionListPage.test.tsx \
-  src/features/interviews/InterviewSessionCard.restore.test.tsx \
+  src/features/resumes/ResumeListDeletion.test.tsx \
+  src/features/resumes/resumeDeletionApi.test.ts \
   src/features/interviews/InterviewDeleteDialog.test.tsx \
-  src/features/learning/LearningDashboard.test.tsx \
+  src/features/interviews/InterviewSessionListDeletion.test.tsx \
+  src/features/interviews/interviewDeletionApi.test.ts \
+  src/features/learning/LearningDocumentDeletionLibrary.test.tsx \
+  src/features/learning/LearningDashboardDeletion.test.tsx \
   src/features/learning/LearningDocumentDeletion.test.tsx \
-  src/features/learning/LearningDocumentWorkspace.test.tsx
+  src/features/learning/LearningDashboard.test.tsx
 ```
-
-If a regression fails, fix only the demonstrated defect in the owning feature and rerun both focused groups. Do not refactor unrelated modules.
 
 ---
 
-# Task 7 — Full verification, user-local evidence, browser QA, PR review
+# Task 7 — Final qualification
 
-## 7.1 Full automated verification
-
-Backend:
+After focused suites are green, run:
 
 ```bash
 npm --prefix backend run typecheck:all
-npm --prefix backend test
-npm --prefix backend run build
-```
-
-Frontend:
-
-```bash
 npm --prefix frontend run typecheck
-npm --prefix frontend test
-npm --prefix frontend run build
-```
-
-Repository hygiene:
-
-```bash
-git diff --check origin/main...HEAD
-git diff --name-only origin/main...HEAD
-git status --short
-```
-
-Required result:
-
-- all commands exit `0`;
-- `git diff --check` is blank;
-- only the approved Resume/Interview/Learning implementation/test/style files and approved spec/plan process files changed;
-- no package/lock/env/auth/migration/provider/deployment/unrelated feature file changed;
-- worktree clean.
-
-## 7.2 Independent user-local verification
-
-After ChatGPT finishes implementation, give the user exactly:
-
-```bash
-cd "/Users/prabhathmalinda/Documents/Projects/Career Learning Hub"
-
-git fetch origin
-git switch task/record-deletion-destructive-actions
-git pull --ff-only
-
-git branch --show-current
-git rev-parse HEAD
-git status --short
-
-npm --prefix backend run typecheck:all
 npm --prefix backend test
-npm --prefix backend run build
-
-npm --prefix frontend run typecheck
 npm --prefix frontend test
+npm --prefix backend run build
 npm --prefix frontend run build
-
 git diff --check origin/main...HEAD
-git diff --name-only origin/main...HEAD
-git status --short
 ```
 
-The user must paste the complete output. Do not call the implementation verified solely because GitHub edits were accepted.
+Then verify exactly the intended changed-file boundary and a clean worktree.
 
-## 7.3 Human browser QA after automated verification is green
+## Human browser QA
 
-Verify with real local UI:
+Only after the automated gate is green, run the existing frontend/backend/MongoDB local development workflow and manually verify:
 
-1. Resume Studio: delete success with exact-title confirmation; card disappears.
-2. Resume: wrong title leaves permanent button disabled.
-3. Resume: active related AI job produces clear `409`; record remains.
-4. Interview: active session can be permanently deleted without archive prerequisite.
-5. Interview: archived session shows Restore and Delete permanently as separate actions.
-6. Interview: wrong title and `409` states remain keyboard accessible.
-7. Learning library: Delete document appears alongside Open workspace for deletable records.
-8. Learning: a `deleting` document has no duplicate fresh delete trigger.
-9. Learning: existing asynchronous deletion polling/reconciliation still works.
-10. Desktop/tablet/mobile widths: destructive actions do not overlap or overpower primary Open/Restore actions.
-11. Keyboard: open/cancel/confirm, Tab/Shift+Tab containment, Escape, and trigger focus return.
+### Resume Studio
+- delete action is discoverable but secondary;
+- exact-title confirmation;
+- wrong-case title cannot submit;
+- cancellation returns focus;
+- successful delete removes the card;
+- active-job conflict is understandable;
+- desktop/tablet/mobile layouts remain usable.
 
-## 7.4 Final PR review gate
+### Interview Coach
+- delete is available for active/completed/archived sessions;
+- Archive/Restore still work;
+- permanent deletion is visually distinct from Archive;
+- exact-title confirmation and cancellation focus;
+- successful deletion refreshes collection state;
+- desktop/tablet/mobile layouts remain usable.
 
-Before taking PR #18 out of draft, verify all approved invariants:
+### Learning
+- Open workspace remains primary;
+- Delete document is available from the library;
+- workspace deletion still works;
+- accepted deletion cannot be started twice from the library;
+- deleting status/absence reconciles correctly;
+- repeated card dialogs have unique accessible labels;
+- desktop/tablet/mobile layouts remain usable.
 
-- Resume 204 owner-scoped delete; versions/analyses/direct Assets/terminal jobs cleaned; active AI job 409; no cross-user or unrelated Asset deletion.
-- Interview 204 delete for all lifecycle states; attempts/questions/terminal jobs cleaned; source Resume preserved; Archive/Restore unchanged; active AI job 409.
-- Learning existing backend/state machine reused; library action discoverable; no duplicate trigger while deleting; instance-safe dialog IDs.
-- No Trash/retention/undo/bulk/generic framework.
-- No provider/auth/migration/deployment/Phase19C change.
+### Accessibility
+- Tab/Shift+Tab stays inside each open confirmation dialog;
+- Escape cancels only while not busy;
+- destructive action labels are explicit;
+- modal focus enters meaningfully and returns to its trigger;
+- errors/request IDs remain perceivable.
 
-Mark PR ready only after automated, user-local, browser, and diff review evidence is accepted. Merge remains a separate explicit approval. Do not deploy or delete branches.
+## Completion gate
 
-## 8. Plan self-review result
+Do not call the task complete unless:
 
-**PASS.** The plan was checked against the current repository after creation. The self-review corrected the initial draft's ambiguous Interview naming so it now uses the actual current interfaces:
-
-- route middleware: `requireOwnedInterviewSession`;
-- transaction-aware service owner lookup: `requireOwnedSession`;
-- controller style: generic Express `Request`, matching current Interview controllers.
-
-The plan also uses the actual `StorageProvider` type instead of restating its union locally and explicitly keeps Learning's existing title-confirmation semantics unchanged.
-
-## 9. Approval gate
-
-Production and test implementation is still **not authorized** until the user explicitly approves this plan plus inline execution.
-
-Required phrase:
-
-**`APPROVE RECORD DELETION PLAN + INLINE EXECUTION`**
+- Resume deletion focused backend/frontend tests pass;
+- Interview deletion focused backend/frontend tests pass;
+- Learning existing deletion + library exposure tests pass;
+- cross-user ownership tests pass;
+- active-job blocking tests pass;
+- job execution fence/regression tests pass;
+- backend and frontend typechecks pass;
+- backend and frontend full suites pass;
+- backend and frontend production builds pass;
+- `git diff --check origin/main...HEAD` passes;
+- independent local verification passes;
+- human desktop/tablet/mobile and keyboard QA passes;
+- final PR review finds no blocking issue;
+- merge remains separately authorized.
