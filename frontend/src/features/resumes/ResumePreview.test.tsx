@@ -283,22 +283,29 @@ describe("ResumePreview", () => {
     expect(screenPaperRule).toContain("box-shadow:");
   });
 
-  it("keeps Modern Professional skill items atomic while wrapping the list", () => {
+  it("renders long skill groups as clean naturally wrapping Resume rows", () => {
     const resume = content();
     resume.skills = [
-      "TypeScript",
-      "JavaScript",
-      "Playwright",
-      "Communication",
-      "Problem Solving",
-      "REST APIs",
-      "MongoDB",
-      "Cloud Infrastructure Automation",
-    ].map((name, index) => ({
-      id: `${id.slice(0, -1)}${index}`,
-      name,
-      keywords: [],
-    }));
+      {
+        id,
+        name: "Technical Skills",
+        keywords: [
+          "TypeScript",
+          "JavaScript",
+          "Playwright",
+          "Communication",
+          "Problem Solving",
+          "REST APIs",
+          "MongoDB",
+          "Cloud Infrastructure Automation",
+        ],
+      },
+      {
+        id: secondId,
+        name: "Strengths",
+        keywords: ["Clear communication", "Team collaboration"],
+      },
+    ];
     const { container } = render(
       <ResumePreview
         draft={resumeContentToDraft(resume)}
@@ -307,19 +314,29 @@ describe("ResumePreview", () => {
     );
 
     const skills = container.querySelector(".resume-paper-skills");
-    expect(skills).not.toBeNull();
-    expect(skills?.children).toHaveLength(8);
-    expect(skills?.textContent).toContain("Cloud Infrastructure Automation");
-    const skillsRule = resumeWorkspaceCss.match(
-      /\.resume-paper-skills\s*\{([^}]*)\}/,
+    const skillGroupRule = resumeWorkspaceCss.match(
+      /\.resume-paper-skills > div\s*\{([^}]*)\}/,
     )?.[1];
     const skillNameRule = resumeWorkspaceCss.match(
       /\.resume-paper-skills dt\s*\{([^}]*)\}/,
     )?.[1];
-    expect(skillsRule).toContain("display: flex;");
-    expect(skillsRule).toContain("flex-wrap: wrap;");
+    const skillKeywordsRule = resumeWorkspaceCss.match(
+      /\.resume-paper-skills dd\s*\{([^}]*)\}/,
+    )?.[1];
+
+    expect(skills).not.toBeNull();
+    expect(skills?.querySelectorAll("dt")).toHaveLength(2);
+    expect(skills?.querySelectorAll("dd")).toHaveLength(2);
+    expect(skills?.textContent).toContain("Technical Skills:");
+    expect(skills?.textContent).toContain("Cloud Infrastructure Automation");
+    expect(skillGroupRule).toContain("display: flex;");
+    expect(skillGroupRule).toContain("flex-wrap: wrap;");
+    expect(skillGroupRule).toContain("min-width: 0;");
+    expect(skillGroupRule).not.toContain("border-radius: 999px;");
+    expect(skillGroupRule).not.toMatch(/border:\s*1px/);
     expect(skillNameRule).toContain("overflow-wrap: normal;");
     expect(skillNameRule).toContain("word-break: normal;");
+    expect(skillKeywordsRule).toContain("overflow-wrap: anywhere;");
     expect(resumeWorkspaceCss).not.toMatch(
       /\.resume-paper-skills dt::after/,
     );
