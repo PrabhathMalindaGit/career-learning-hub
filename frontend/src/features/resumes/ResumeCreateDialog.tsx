@@ -15,8 +15,9 @@ import {
   normalizeSafeJob,
   retryJob,
 } from "../jobs/jobResilience";
-import { ResumePdfUpload } from "./ResumePdfUpload";
 import { ResumeGuidedSetup } from "./ResumeGuidedSetup";
+import { ResumeImportPhotoChoices } from "./ResumeImportPhotoChoices";
+import { ResumePdfUpload } from "./ResumePdfUpload";
 import { ResumePreview } from "./ResumePreview";
 import {
   confirmResumePdfImport,
@@ -29,6 +30,7 @@ import { pollResumeJob } from "./resumePolling";
 import type {
   CreateResumeInput,
   ResumeContent,
+  ResumeImportPhotoCandidate,
   ResumeJob,
   ResumeWorkspaceData,
 } from "./types";
@@ -109,7 +111,11 @@ export function ResumeCreateDialog({
   const [importReview, setImportReview] = useState<{
     jobId: string;
     content: ResumeContent;
+    photoCandidates: ResumeImportPhotoCandidate[];
   } | null>(null);
+  const [selectedImportPhotoAssetId, setSelectedImportPhotoAssetId] = useState<
+    string | undefined
+  >(undefined);
   const [confirmBusy, setConfirmBusy] = useState(false);
 
   useEffect(() => {
@@ -128,6 +134,7 @@ export function ResumeCreateDialog({
     setImportJob(null);
     setPollPaused(false);
     setImportReview(null);
+    setSelectedImportPhotoAssetId(undefined);
     setConfirmBusy(false);
   }, [open]);
 
@@ -230,9 +237,11 @@ export function ResumeCreateDialog({
           result.job.status === "completed" &&
           result.job.result?.kind === "import-review"
         ) {
+          setSelectedImportPhotoAssetId(undefined);
           setImportReview({
             jobId: result.job.id,
             content: result.job.result.content,
+            photoCandidates: result.job.result.photoCandidates ?? [],
           });
           setMethod("review");
         } else if (
@@ -359,6 +368,7 @@ export function ResumeCreateDialog({
     if (confirmBusy) return;
     setError(null);
     setImportReview(null);
+    setSelectedImportPhotoAssetId(undefined);
     setImportJob(null);
     setPollPaused(false);
     setMethod("import");
@@ -372,10 +382,13 @@ export function ResumeCreateDialog({
     setConfirmBusy(true);
     setError(null);
     try {
-      const workspace = await confirmResumePdfImport(
-        importReview.jobId,
-        controller.signal,
-      );
+      const workspace = selectedImportPhotoAssetId
+        ? await confirmResumePdfImport(
+            importReview.jobId,
+            controller.signal,
+            selectedImportPhotoAssetId,
+          )
+        : await confirmResumePdfImport(importReview.jobId, controller.signal);
       if (!controller.signal.aborted) onCreated(workspace);
     } catch (nextError) {
       if (!controller.signal.aborted) setError(safeError(nextError));
@@ -446,7 +459,9 @@ export function ResumeCreateDialog({
               <span>Import an existing resume.</span>
             </button>
             <div className="resume-dialog-actions resume-create-methods-footer">
-              <button type="button" onClick={onClose}>Cancel</button>
+              <button type="button" onClick={onClose}>
+                Cancel
+              </button>
             </div>
           </div>
         ) : null}
@@ -529,7 +544,10 @@ export function ResumeCreateDialog({
               <p>Select a private PDF to parse and review before adoption.</p>
             </div>
             <div className="field-shell">
-              <label className="field-label required-label" htmlFor={`${titleId}-import`}>
+              <label
+                className="field-label required-label"
+                htmlFor={`${titleId}-import`}
+              >
                 Imported resume title
               </label>
               <input
@@ -563,8 +581,12 @@ export function ResumeCreateDialog({
             {error ? (
               <p role="alert" className="field-error">
                 {error.message}
-                {error.message === "PDF import needs a connected Gemini account." ? (
-                  <> <Link to="/settings">Open Settings</Link>.</>
+                {error.message ===
+                "PDF import needs a connected Gemini account." ? (
+                  <>
+                    {" "}
+                    <Link to="/settings">Open Settings</Link>.
+                  </>
                 ) : null}
                 {error.requestId ? ` Request ID: ${error.requestId}` : ""}
               </p>
@@ -629,7 +651,10 @@ export function ResumeCreateDialog({
         ) : null}
 
         {method === "review" && importReview ? (
-          <section className="resume-import-review" aria-labelledby={`${headingId}-review`}>
+          <section
+            className="resume-import-review"
+            aria-labelledby={`${headingId}-review`}
+          >
             <div>
               <h3 id={`${headingId}-review`}>Import Review</h3>
               <p>Review what was extracted before creating your editable Resume.</p>
@@ -661,6 +686,14 @@ export function ResumeCreateDialog({
                 <p>{extractedCount(importReview.content.education.length)}</p>
               </section>
             </div>
+            {importReview.photoCandidates.length > 0 ? (
+              <ResumeImportPhotoChoices
+                candidates={importReview.photoCandidates}
+                selectedAssetId={selectedImportPhotoAssetId}
+                disabled={confirmBusy}
+                onChange={setSelectedImportPhotoAssetId}
+              />
+            ) : null}
             <details className="resume-import-review-preview">
               <summary>Preview extracted Resume</summary>
               <ResumePreview
@@ -676,7 +709,11 @@ export function ResumeCreateDialog({
               </p>
             ) : null}
             <div className="resume-dialog-actions">
-              <button type="button" disabled={confirmBusy} onClick={backToImport}>
+              <button
+                type="button"
+                disabled={confirmBusy}
+                onClick={backToImport}
+              >
                 Back
               </button>
               <button

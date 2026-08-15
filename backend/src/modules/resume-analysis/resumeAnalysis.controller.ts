@@ -29,6 +29,10 @@ type ImportJobIdParams = {
   jobId: string;
 };
 
+type ConfirmImportPdfBody = {
+  selectedPhotoAssetId?: string;
+};
+
 export async function importPdfController(
   request: Request,
   response: Response,
@@ -119,12 +123,13 @@ export async function importPdfController(
 }
 
 export async function confirmImportPdfController(
-  request: Request<ImportJobIdParams>,
+  request: Request<ImportJobIdParams, unknown, ConfirmImportPdfBody>,
   response: Response,
 ): Promise<void> {
   const imported = await confirmResumePdfImport({
     userId: request.auth!.userId,
     jobId: request.params.jobId,
+    selectedPhotoAssetId: request.body.selectedPhotoAssetId,
   });
   const workspace = await getResumeWorkspace(
     request.auth!.userId,

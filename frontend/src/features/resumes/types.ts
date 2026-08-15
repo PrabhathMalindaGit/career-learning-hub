@@ -1,3 +1,5 @@
+import type { PartialJobResilienceMetadata } from "../jobs/jobResilience";
+
 export type ResumeStatus = "draft" | "active" | "archived";
 export type ResumeSource =
   | "manual"
@@ -272,10 +274,15 @@ export interface ResumeAnalysis {
   updatedAt: string;
 }
 
+export type ResumeImportPhotoCandidate = {
+  assetId: string;
+};
+
 export type ResumeImportResult =
   | {
       kind: "import-review";
       content: ResumeContent;
+      photoCandidates?: ResumeImportPhotoCandidate[];
     }
   | {
       kind: "import-adopted";
@@ -307,4 +314,3 @@ export interface ResumeJob extends PartialJobResilienceMetadata {
   createdAt: string;
   updatedAt: string;
 }
-import type { PartialJobResilienceMetadata } from "../jobs/jobResilience";

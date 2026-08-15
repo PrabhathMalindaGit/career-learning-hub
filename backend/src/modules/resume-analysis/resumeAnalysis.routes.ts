@@ -21,6 +21,7 @@ import {
   analysisResumeParamsSchema,
   analyzeResumeBodySchema,
   applyRewriteBodySchema,
+  confirmImportPdfBodySchema,
   importPdfBodySchema,
   importJobIdParamsSchema,
 } from "./resumeAnalysis.schemas.js";
@@ -40,7 +41,10 @@ resumeAnalysisRouter.post(
 resumeAnalysisRouter.post(
   "/import-pdf/:jobId/confirm",
   resumeImportRateLimiter,
-  validate({ params: importJobIdParamsSchema }),
+  validate({
+    params: importJobIdParamsSchema,
+    body: confirmImportPdfBodySchema,
+  }),
   asyncHandler(confirmImportPdfController),
 );
 
