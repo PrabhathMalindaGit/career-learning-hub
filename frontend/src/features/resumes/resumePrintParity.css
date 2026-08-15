@@ -6,29 +6,31 @@
   }
 
   /*
-   * Modern Professional keeps two independent print columns. Using flex here
-   * avoids synchronizing unrelated main/sidebar sections into shared grid rows,
-   * so a tall Skills block cannot create a matching blank gap under Summary (or
-   * vice versa). The existing DOM/order remains unchanged.
+   * Modern Professional must let the main column fragment normally across pages.
+   * Chromium can move a tall two-item flex/grid body wholesale to the next page,
+   * leaving the identity header alone. Keep the body as a normal block for print,
+   * position the supporting sidebar independently on the first body fragment, and
+   * leave the main column in ordinary paged flow.
    */
   .resume-template-modern-professional .resume-modern-columns {
-    display: flex;
-    gap: 1.35rem;
-    align-items: flex-start;
+    position: relative;
+    display: block;
     break-inside: auto;
   }
 
   .resume-template-modern-professional .resume-modern-content {
-    flex: 2.08 1 0;
+    width: calc(68.5% - 0.675rem);
     min-width: 0;
     break-inside: auto;
   }
 
   .resume-template-modern-professional .resume-modern-sidebar {
-    flex: 0.92 1 0;
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    width: calc(31.5% - 0.675rem);
     min-width: 0;
-    align-self: flex-start;
-    break-inside: auto;
+    break-inside: avoid-page;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
