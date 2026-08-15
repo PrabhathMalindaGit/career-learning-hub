@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ApiError } from "../../api/apiClient";
+import { CardOverflowActions } from "../../components/CardOverflowActions";
 import { Dialog } from "../../components/Dialog";
 import { deleteResume } from "./resumeApi";
 import type { ResumeRecord } from "./types";
@@ -23,9 +24,13 @@ function safeError(error: unknown): SafeError {
 export function ResumeDeleteDialog({
   resume,
   onDeleted,
+  actionsOpen,
+  onActionsOpenChange,
 }: {
   resume: Pick<ResumeRecord, "id" | "title">;
   onDeleted(resumeId: string): void;
+  actionsOpen: boolean;
+  onActionsOpenChange(open: boolean): void;
 }) {
   const headingId = useId();
   const descriptionId = useId();
@@ -74,18 +79,25 @@ export function ResumeDeleteDialog({
 
   return (
     <>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="resume-danger-button resume-record-delete-action"
-        onClick={() => {
-          setConfirmation("");
-          setError(null);
-          setOpen(true);
-        }}
-      >
-        Delete resume
-      </button>
+      <CardOverflowActions
+        ariaLabel={`More actions for ${resume.title}`}
+        open={actionsOpen}
+        onOpenChange={onActionsOpenChange}
+        className="resume-delete-overflow"
+        actions={[
+          {
+            id: "delete-resume",
+            label: "Delete resume",
+            destructive: true,
+            onSelect: (trigger) => {
+              triggerRef.current = trigger;
+              setConfirmation("");
+              setError(null);
+              setOpen(true);
+            },
+          },
+        ]}
+      />
 
       <Dialog
         open={open}
@@ -98,21 +110,30 @@ export function ResumeDeleteDialog({
         className="resume-delete-dialog"
       >
         <form className="resume-delete-form" onSubmit={submit}>
-          <p className="resume-kicker">Permanent action</p>
-          <h2 id={headingId}>Permanently delete Resume</h2>
+          <div className="resume-delete-heading">
+            <span className="resume-delete-warning-mark" aria-hidden="true">
+              !
+            </span>
+            <div>
+              <p className="resume-kicker">Permanent action</p>
+              <h2 id={headingId}>Delete “{resume.title}”?</h2>
+            </div>
+          </div>
           <div id={descriptionId} className="resume-delete-warning">
             <p>
-              You are permanently deleting <strong>{resume.title}</strong>.
+              This permanently removes the Resume, its saved versions,
+              analyses, Candidate Photo, and associated imported Resume PDF
+              source files.
             </p>
-            <p>
-              Its saved versions, analyses, Candidate Photo, and associated
-              imported Resume PDF source files will also be removed.
+            <p className="resume-delete-irreversible">
+              This action cannot be undone.
             </p>
-            <p>This deletion cannot be undone.</p>
           </div>
 
           <label className="resume-delete-confirmation">
-            <span>Type the Resume title exactly to confirm</span>
+            <span>
+              Type <strong>{resume.title}</strong> exactly to confirm
+            </span>
             <input
               ref={inputRef}
               type="text"
@@ -147,7 +168,7 @@ export function ResumeDeleteDialog({
               className="resume-danger-button"
               disabled={busy || confirmation !== resume.title}
             >
-              {busy ? "Deleting…" : "Permanently delete Resume"}
+              {busy ? "Deleting…" : "Delete permanently"}
             </button>
           </div>
         </form>
