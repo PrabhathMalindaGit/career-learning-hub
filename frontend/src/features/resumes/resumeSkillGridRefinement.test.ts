@@ -12,23 +12,32 @@ const resumePreviewSource = readFileSync(
 );
 
 describe("Resume name-only Skills grid refinement", () => {
-  it("uses two columns for ATS Classic and Modern Professional", () => {
+  it("keeps ATS Classic two-column while Modern Professional uses one sidebar column", () => {
     expect(refinementCss).toMatch(
-      /\.resume-template-ats-classic\s+\.resume-paper-skills,\s*\.resume-template-modern-professional\s+\.resume-paper-skills\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s,
+      /\.resume-template-ats-classic\s+\.resume-paper-skills\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s,
+    );
+    expect(refinementCss).toMatch(
+      /\.resume-template-modern-professional\s+\.resume-paper-skills\s*\{[^}]*grid-template-columns:\s*1fr;/s,
     );
   });
 
-  it("keeps keyword-bearing groups full-width", () => {
+  it("keeps ATS keyword-bearing groups full-width", () => {
     expect(refinementCss).toMatch(
-      /div:not\(\.resume-paper-skill--name-only\)[^{]*\{[^}]*grid-column:\s*1\s*\/\s*-1;/s,
+      /\.resume-template-ats-classic[^}]*div:not\(\.resume-paper-skill--name-only\)[^{]*\{[^}]*grid-column:\s*1\s*\/\s*-1;/s,
     );
   });
 
-  it("keeps Modern name-only skills tighter without touching Compact Technical", () => {
+  it("keeps Modern name-only skills compact without touching Compact Technical", () => {
     expect(refinementCss).toMatch(
-      /\.resume-template-modern-professional\s+\.resume-paper-skill--name-only\s+dt\s*\{[^}]*font-size:\s*0\.88em;[^}]*font-weight:\s*650;/s,
+      /\.resume-template-modern-professional\s+\.resume-paper-skill--name-only\s+dt\s*\{[^}]*font-size:\s*0\.88em;[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.25;/s,
     );
     expect(refinementCss).not.toContain("resume-template-compact-technical");
+  });
+
+  it("collapses only ATS to one column on narrow screens", () => {
+    expect(refinementCss).toMatch(
+      /@media screen and \(max-width:\s*760px\)[^{]*\{[^]*?\.resume-template-ats-classic\s+\.resume-paper-skills\s*\{[^}]*grid-template-columns:\s*1fr;/s,
+    );
   });
 
   it("loads the refinement after template differentiation and before print parity", () => {
