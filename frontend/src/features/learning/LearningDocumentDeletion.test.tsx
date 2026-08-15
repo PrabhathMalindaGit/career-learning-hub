@@ -90,8 +90,7 @@ function renderDeletion(
     onDeletionAccepted?: () => void;
   } = {},
 ) {
-  const onDeletionAccepted =
-    options.onDeletionAccepted ?? vi.fn();
+  const onDeletionAccepted = options.onDeletionAccepted ?? vi.fn();
   const router = createMemoryRouter(
     [
       {
@@ -110,9 +109,7 @@ function renderDeletion(
       },
     ],
     {
-      initialEntries: [
-        `/learning/documents/${documentId}`,
-      ],
+      initialEntries: [`/learning/documents/${documentId}`],
     },
   );
   const rendered = render(<RouterProvider router={router} />);
@@ -121,37 +118,35 @@ function renderDeletion(
 
 async function openConfirmation() {
   const trigger = screen.getByRole("button", {
-    name: "Delete document",
+    name: `More actions for ${learningDocument().title}`,
   });
   await userEvent.click(trigger);
+  await userEvent.click(
+    screen.getByRole("button", { name: "Delete document" }),
+  );
   return {
     trigger,
     dialog: screen.getByRole("dialog", {
-      name: "Permanently delete document",
+      name: `Delete “${learningDocument().title}”?`,
     }),
     input: screen.getByRole("textbox", {
-      name: "Type the document title to confirm",
+      name: `Type ${learningDocument().title} to confirm`,
     }),
     finalAction: screen.getByRole("button", {
-      name: "Permanently delete document",
+      name: "Delete permanently",
     }),
   };
 }
 
 async function enterExactTitle() {
   const controls = await openConfirmation();
-  await userEvent.type(
-    controls.input,
-    learningDocument().title,
-  );
+  await userEvent.type(controls.input, learningDocument().title);
   return controls;
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(
-    learningApi.requestLearningDocumentDeletion,
-  ).mockResolvedValue({
+  vi.mocked(learningApi.requestLearningDocumentDeletion).mockResolvedValue({
     job: {
       id: jobId,
       type: "learning.document.delete",
@@ -168,19 +163,21 @@ beforeEach(() => {
 });
 
 describe("Learning document deletion confirmation", () => {
-  it("places one exact document action and renders inert consequences", async () => {
+  it("keeps deletion behind one record-specific More actions control and renders inert consequences", async () => {
     renderDeletion();
     expect(
-      screen.getAllByRole("button", { name: "Delete document" }),
+      screen.getAllByRole("button", {
+        name: `More actions for ${learningDocument().title}`,
+      }),
     ).toHaveLength(1);
+    expect(
+      screen.queryByRole("button", { name: "Delete document" }),
+    ).toBeNull();
 
-    const { dialog, input, finalAction } =
-      await openConfirmation();
+    const { dialog, input, finalAction } = await openConfirmation();
 
-    expect(dialog.textContent).toContain(
-      learningDocument().title,
-    );
-    expect(dialog.textContent).toMatch(/permanently delete/i);
+    expect(dialog.textContent).toContain(learningDocument().title);
+    expect(dialog.textContent).toMatch(/permanently removes/i);
     expect(dialog.textContent).toMatch(
       /conversations, messages, flashcards, quizzes, and attempts/i,
     );
@@ -208,25 +205,17 @@ describe("Learning document deletion confirmation", () => {
     await userEvent.type(input, "Synthetic");
     expect((finalAction as HTMLButtonElement).disabled).toBe(true);
     await userEvent.clear(input);
-    await userEvent.type(
-      input,
-      learningDocument().title.toLowerCase(),
-    );
+    await userEvent.type(input, learningDocument().title.toLowerCase());
     expect((finalAction as HTMLButtonElement).disabled).toBe(true);
     await userEvent.clear(input);
-    await userEvent.type(
-      input,
-      `  ${learningDocument().title}  `,
-    );
+    await userEvent.type(input, `  ${learningDocument().title}  `);
     expect((finalAction as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it("closes with Cancel or Escape and returns focus to the trigger", async () => {
+  it("closes with Cancel or Escape and returns focus to More actions", async () => {
     renderDeletion();
     let controls = await openConfirmation();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Cancel" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(controls.trigger).toBe(document.activeElement);
 
@@ -240,8 +229,7 @@ describe("Learning document deletion confirmation", () => {
 
   it("contains forward and reverse Tab focus inside the dialog", async () => {
     renderDeletion();
-    const { dialog, input, finalAction } =
-      await enterExactTitle();
+    const { dialog, input, finalAction } = await enterExactTitle();
 
     finalAction.focus();
     fireEvent.keyDown(dialog, { key: "Tab" });
@@ -261,16 +249,13 @@ describe("Learning document deletion confirmation", () => {
           typeof learningApi.requestLearningDocumentDeletion
         >>) => void)
       | undefined;
-    vi.mocked(
-      learningApi.requestLearningDocumentDeletion,
-    ).mockReturnValue(
+    vi.mocked(learningApi.requestLearningDocumentDeletion).mockReturnValue(
       new Promise((resolve) => {
         resolveAcceptance = resolve;
       }),
     );
     renderDeletion();
-    const { dialog, input, finalAction } =
-      await enterExactTitle();
+    const { dialog, input, finalAction } = await enterExactTitle();
 
     fireEvent.click(finalAction);
     fireEvent.click(finalAction);
@@ -280,11 +265,8 @@ describe("Learning document deletion confirmation", () => {
     ).toHaveBeenCalledTimes(1);
     expect((input as HTMLInputElement).disabled).toBe(true);
     expect(
-      (
-        screen.getByRole("button", {
-          name: "Cancel",
-        }) as HTMLButtonElement
-      ).disabled,
+      (screen.getByRole("button", { name: "Cancel" }) as HTMLButtonElement)
+        .disabled,
     ).toBe(true);
     fireEvent.keyDown(dialog, { key: "Escape" });
     expect(screen.getByRole("dialog")).not.toBeNull();
@@ -301,30 +283,25 @@ describe("Learning document deletion confirmation", () => {
 
 describe("Learning document deletion lifecycle", () => {
   it("polls only the accepted job and reports queued then processing", async () => {
-    let update:
-      | ((job: LearningDocumentDeletionJob) => void)
-      | undefined;
-    vi.mocked(learningPolling.pollLearningJob).mockImplementation(
-      (input) => {
-        update = input.onUpdate;
-        return new Promise(() => undefined);
-      },
-    );
+    let update: ((job: LearningDocumentDeletionJob) => void) | undefined;
+    vi.mocked(learningPolling.pollLearningJob).mockImplementation((input) => {
+      update = input.onUpdate;
+      return new Promise(() => undefined);
+    });
     const onDeletionAccepted = vi.fn();
     renderDeletion({ onDeletionAccepted });
     const { finalAction } = await enterExactTitle();
     await userEvent.click(finalAction);
 
-    expect(
-      (await screen.findByRole("status")).textContent,
-    ).toMatch(/deletion queued/i);
+    expect((await screen.findByRole("status")).textContent).toMatch(
+      /deletion queued/i,
+    );
     expect(onDeletionAccepted).toHaveBeenCalledTimes(1);
     expect(learningPolling.pollLearningJob).toHaveBeenCalledWith(
       expect.objectContaining({
         jobId,
         documentId,
-        fetchJob:
-          learningApi.fetchLearningDocumentDeletionJob,
+        fetchJob: learningApi.fetchLearningDocumentDeletionJob,
         signal: expect.any(AbortSignal),
       }),
     );
@@ -418,21 +395,17 @@ describe("Learning document deletion lifecycle", () => {
   );
 
   it("reconciles an uncertain transport outcome without repeating DELETE", async () => {
-    vi.mocked(
-      learningApi.requestLearningDocumentDeletion,
-    ).mockRejectedValue(new TypeError("network unavailable"));
+    vi.mocked(learningApi.requestLearningDocumentDeletion).mockRejectedValue(
+      new TypeError("network unavailable"),
+    );
     renderDeletion();
     const { finalAction } = await enterExactTitle();
     await userEvent.click(finalAction);
 
     expect(
-      await screen.findByText(
-        /the deletion request outcome is uncertain/i,
-      ),
+      await screen.findByText(/the deletion request outcome is uncertain/i),
     ).not.toBeNull();
-    expect(
-      learningApi.fetchLearningDocument,
-    ).toHaveBeenCalledWith(
+    expect(learningApi.fetchLearningDocument).toHaveBeenCalledWith(
       documentId,
       expect.any(AbortSignal),
     );
@@ -446,15 +419,15 @@ describe("Learning document deletion lifecycle", () => {
     ).toHaveBeenCalledTimes(1);
     expect(
       screen.getByRole("dialog", {
-        name: "Permanently delete document",
+        name: `Delete “${learningDocument().title}”?`,
       }),
     ).not.toBeNull();
   });
 
   it("treats canonical absence after an uncertain request as success", async () => {
-    vi.mocked(
-      learningApi.requestLearningDocumentDeletion,
-    ).mockRejectedValue(new TypeError("network unavailable"));
+    vi.mocked(learningApi.requestLearningDocumentDeletion).mockRejectedValue(
+      new TypeError("network unavailable"),
+    );
     vi.mocked(learningApi.fetchLearningDocument).mockRejectedValue(
       new ApiError(
         404,
@@ -490,8 +463,11 @@ describe("Learning document deletion lifecycle", () => {
 
     expect(
       screen.queryByRole("button", {
-        name: "Delete document",
+        name: `More actions for ${learningDocument().title}`,
       }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Delete document" }),
     ).toBeNull();
     await userEvent.click(
       screen.getByRole("button", {
@@ -510,12 +486,12 @@ describe("Learning document deletion lifecycle", () => {
 
   it("clears in-memory work and aborts when account identity changes", async () => {
     let deletionSignal: AbortSignal | undefined;
-    vi.mocked(
-      learningApi.requestLearningDocumentDeletion,
-    ).mockImplementation((_documentId, signal) => {
-      deletionSignal = signal;
-      return new Promise(() => undefined);
-    });
+    vi.mocked(learningApi.requestLearningDocumentDeletion).mockImplementation(
+      (_documentId, signal) => {
+        deletionSignal = signal;
+        return new Promise(() => undefined);
+      },
+    );
     const { rerender } = renderDeletion();
     const { finalAction } = await enterExactTitle();
     fireEvent.click(finalAction);
@@ -534,9 +510,7 @@ describe("Learning document deletion lifecycle", () => {
         },
       ],
       {
-        initialEntries: [
-          `/learning/documents/${documentId}`,
-        ],
+        initialEntries: [`/learning/documents/${documentId}`],
       },
     );
     rerender(<RouterProvider router={router} />);
@@ -547,10 +521,7 @@ describe("Learning document deletion lifecycle", () => {
 
   it("does not persist deletion state in browser storage or the URL", async () => {
     const local = vi.spyOn(Storage.prototype, "setItem");
-    const session = vi.spyOn(
-      window.sessionStorage.__proto__,
-      "setItem",
-    );
+    const session = vi.spyOn(window.sessionStorage.__proto__, "setItem");
     const { router } = renderDeletion();
     await openConfirmation();
 
