@@ -23,7 +23,7 @@ describe("Resume live preview scrolling", () => {
     expect(livePreviewCss).not.toMatch(/resume-template-modern-professional[^}]*min-width:/s);
   });
 
-  it("does not add print-specific overrides", () => {
+  it("does not add print or saved-export surface overrides", () => {
     expect(livePreviewCss).not.toContain("@media print");
     expect(livePreviewCss).not.toContain("resume-print-surface");
   });
