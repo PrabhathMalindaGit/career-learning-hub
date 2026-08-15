@@ -1,11 +1,38 @@
-/* Screen-only live-preview viewport behavior. Print surfaces are not inside the editor preview grid. */
+/* Screen-only live-preview viewport behavior. Print surfaces bypass this wrapper. */
 .resume-editor-preview-grid > .resume-preview-panel.resume-preview-panel {
+  overflow: hidden;
+}
+
+.resume-editor-preview-grid
+  > .resume-preview-panel
+  > .resume-live-preview-viewport {
+  min-width: 0;
   overflow-x: auto;
   overscroll-behavior-x: contain;
 }
 
 .resume-editor-preview-grid
   > .resume-preview-panel
+  > .resume-live-preview-viewport
   > .resume-paper.resume-template-compact-technical {
   min-width: 620px;
+}
+
+@media (min-width: 1280px) {
+  .resume-editor-preview-grid > .resume-preview-panel.resume-preview-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .resume-editor-preview-grid
+    > .resume-preview-panel
+    > .resume-live-preview-viewport {
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable both-edges;
+    scrollbar-color: #9aaba0 transparent;
+  }
 }
