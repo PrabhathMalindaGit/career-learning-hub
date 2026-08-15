@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { CardOverflowActions, type CardOverflowAction } from "../../components/CardOverflowActions";
+import { InterviewDeleteDialog } from "./InterviewDeleteDialog";
 import { updateInterviewSessionStatus } from "./interviewApi";
 import type {
   InterviewMode,
@@ -35,12 +37,20 @@ function differsMeaningfully(title: string, role: string): boolean {
 
 export function InterviewSessionCard({
   session,
+  actionsOpen = false,
+  onActionsOpenChange = () => undefined,
+  onDeleted = () => undefined,
 }: {
   session: InterviewSessionSummary;
+  actionsOpen?: boolean;
+  onActionsOpenChange?(open: boolean): void;
+  onDeleted?(sessionId: string): void;
 }) {
   const navigate = useNavigate();
   const [restoreBusy, setRestoreBusy] = useState(false);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const deleteReturnFocusRef = useRef<HTMLElement | null>(null);
   const updatedLabel = new Date(session.updatedAt).toLocaleDateString(
     undefined,
     {
@@ -73,6 +83,26 @@ export function InterviewSessionCard({
     }
   }
 
+  const actions: CardOverflowAction[] = [];
+  if (session.status === "archived") {
+    actions.push({
+      id: "restore-session",
+      label: restoreBusy ? "Restoring…" : "Restore session",
+      disabled: restoreBusy,
+      onSelect: () => void restoreSession(),
+    });
+  }
+  actions.push({
+    id: "delete-session",
+    label: "Delete permanently",
+    destructive: true,
+    separatorBefore: session.status === "archived",
+    onSelect: (trigger) => {
+      deleteReturnFocusRef.current = trigger;
+      setDeleteOpen(true);
+    },
+  });
+
   return (
     <li
       className={`interview-session-card interview-session-card--${session.status}`}
@@ -90,11 +120,20 @@ export function InterviewSessionCard({
               </p>
             ) : null}
           </div>
-          <span
-            className={`interview-lifecycle interview-lifecycle--${session.status}`}
-          >
-            {statusLabels[session.status]}
-          </span>
+          <div className="interview-session-card__heading-actions">
+            <span
+              className={`interview-lifecycle interview-lifecycle--${session.status}`}
+            >
+              {statusLabels[session.status]}
+            </span>
+            <CardOverflowActions
+              ariaLabel={`More actions for ${session.title}`}
+              open={actionsOpen}
+              onOpenChange={onActionsOpenChange}
+              actions={actions}
+              className="interview-card-overflow"
+            />
+          </div>
         </div>
 
         <div
@@ -127,16 +166,6 @@ export function InterviewSessionCard({
             <span>Last updated</span>
             <time dateTime={session.updatedAt}>{updatedLabel}</time>
           </p>
-          {session.status === "archived" ? (
-            <button
-              type="button"
-              className="interview-secondary-button"
-              disabled={restoreBusy}
-              onClick={() => void restoreSession()}
-            >
-              {restoreBusy ? "Restoring…" : "Restore session"}
-            </button>
-          ) : null}
           <Link
             className="interview-session-card__action"
             to={`/interviews/${session.id}`}
@@ -147,6 +176,14 @@ export function InterviewSessionCard({
           </Link>
         </div>
       </div>
+
+      <InterviewDeleteDialog
+        session={session}
+        open={deleteOpen}
+        returnFocusRef={deleteReturnFocusRef}
+        onRequestClose={() => setDeleteOpen(false)}
+        onDeleted={onDeleted}
+      />
     </li>
   );
 }

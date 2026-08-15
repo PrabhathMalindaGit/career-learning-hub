@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { Types } from "mongoose";
+import { Types, type ClientSession } from "mongoose";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/appError.js";
 import { logger, serializeErrorForLog } from "../../shared/logger.js";
@@ -9,6 +9,7 @@ import {
   AssetModel,
   type AssetDocument,
   type AssetPurpose,
+  type StorageProvider,
 } from "./asset.model.js";
 import { validateAssetFile } from "./asset.policy.js";
 import {
@@ -154,6 +155,59 @@ export async function getOwnedAsset(
   return asset;
 }
 
+export type AssetCascadeCleanupTarget = {
+  assetId: string;
+  storageProvider: StorageProvider;
+  storageKey: string;
+};
+
+export async function markOwnedAssetsDeletedForCascade(input: {
+  userId: string;
+  assetIds: string[];
+  session: ClientSession;
+}): Promise<AssetCascadeCleanupTarget[]> {
+  const uniqueIds = [...new Set(input.assetIds)];
+  if (uniqueIds.length === 0) return [];
+
+  const assets = await AssetModel.find({
+    _id: { $in: uniqueIds },
+    userId: input.userId,
+    status: { $ne: "deleted" },
+  }).session(input.session);
+
+  const deletedAt = new Date();
+  for (const asset of assets) {
+    asset.status = "deleted";
+    asset.deletedAt = deletedAt;
+    asset.expiresAt = undefined;
+    await asset.save({ session: input.session });
+  }
+
+  return assets.map((asset) => ({
+    assetId: asset._id.toString(),
+    storageProvider: asset.storageProvider,
+    storageKey: asset.storageKey,
+  }));
+}
+
+export async function deleteCascadeAssetObjectsBestEffort(
+  targets: readonly AssetCascadeCleanupTarget[],
+): Promise<void> {
+  for (const target of targets) {
+    try {
+      await getStorageForProvider(target.storageProvider).deleteObject(
+        target.storageKey,
+      );
+    } catch (error) {
+      logger.error("asset.cascade_cleanup.failed", {
+        assetId: target.assetId,
+        storageProvider: target.storageProvider,
+        ...serializeErrorForLog(error),
+      });
+    }
+  }
+}
+
 export async function createSignedAssetUrl(
   userId: string,
   assetId: string,
@@ -295,7 +349,6 @@ export async function cleanupExpiredTemporaryAssets(
 
   return { deleted, failed };
 }
-
 
 export async function readOwnedAssetBuffer(
   userId: string,

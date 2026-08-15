@@ -52,7 +52,7 @@ function renderCard() {
 }
 
 describe("InterviewSessionCard archived restore", () => {
-  it("restores an archived session to active before reopening its workspace", async () => {
+  it("keeps Restore inside More actions and restores before reopening the workspace", async () => {
     vi.mocked(interviewApi.updateInterviewSessionStatus).mockResolvedValue({
       ...archivedSession(),
       status: "active",
@@ -61,9 +61,25 @@ describe("InterviewSessionCard archived restore", () => {
     const router = renderCard();
     const user = userEvent.setup();
 
+    expect(screen.queryByRole("button", { name: "Restore session" })).toBeNull();
     await user.click(
-      screen.getByRole("button", { name: "Restore session" }),
+      screen.getByRole("button", {
+        name: `More actions for ${archivedSession().title}`,
+      }),
     );
+
+    const restore = screen.getByRole("button", { name: "Restore session" });
+    const permanentDelete = screen.getByRole("button", {
+      name: "Delete permanently",
+    });
+    expect(restore.className).not.toContain(
+      "card-overflow-actions__action--destructive",
+    );
+    expect(permanentDelete.className).toContain(
+      "card-overflow-actions__action--destructive",
+    );
+
+    await user.click(restore);
 
     expect(interviewApi.updateInterviewSessionStatus).toHaveBeenCalledWith(
       sessionId,

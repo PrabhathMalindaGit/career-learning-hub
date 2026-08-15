@@ -7,6 +7,7 @@ import { asyncHandler } from "../../shared/asyncHandler.js";
 import {
   createResumeController,
   createVersionController,
+  deleteResumeController,
   getCandidatePhotoSourceController,
   getResumeController,
   getVersionController,
@@ -77,6 +78,12 @@ resumeRouter.delete(
     body: candidatePhotoMutationBodySchema,
   }),
   asyncHandler(removeCandidatePhotoController),
+);
+
+resumeRouter.delete(
+  "/:resumeId",
+  validate({ params: resumeIdParamsSchema }),
+  asyncHandler(deleteResumeController),
 );
 
 resumeRouter.get(

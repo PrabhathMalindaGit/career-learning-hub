@@ -9,6 +9,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { Pager } from "../../components/Pager";
 import { StateSurface } from "../../components/StateSurface";
 import { listResumes } from "./resumeApi";
+import { ResumeDeleteDialog } from "./ResumeDeleteDialog";
 import { ResumeMiniDocument } from "./ResumeMiniDocument";
 import { ResumeCreateDialog } from "./ResumeCreateDialog";
 import { resolveResumePresentation } from "./resumeTemplateRegistry";
@@ -48,6 +49,9 @@ export function ResumeListPage() {
   const [listError, setListError] = useState<SafeError | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [openActionsResumeId, setOpenActionsResumeId] = useState<string | null>(
+    null,
+  );
   const listSequence = useRef(0);
   const headingCreateRef = useRef<HTMLButtonElement>(null);
   const createReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -93,6 +97,27 @@ export function ResumeListPage() {
 
     return () => controller.abort();
   }, [page, reloadKey]);
+
+  function handleResumeDeleted(resumeId: string) {
+    const deletingLastVisibleResume =
+      resumes.length === 1 && resumes[0]?.id === resumeId;
+
+    setOpenActionsResumeId(null);
+    setResumes((current) =>
+      current.filter((resume) => resume.id !== resumeId),
+    );
+    setPagination((current) =>
+      current
+        ? { ...current, total: Math.max(0, current.total - 1) }
+        : current,
+    );
+
+    if (deletingLastVisibleResume && page > 1) {
+      setPage((current) => Math.max(1, current - 1));
+      return;
+    }
+    setReloadKey((key) => key + 1);
+  }
 
   return (
     <section className="resume-list-page" aria-labelledby="resume-list-title">
@@ -217,6 +242,14 @@ export function ResumeListPage() {
                     <div className="resume-record-card-body">
                       <div className="resume-record-card-heading">
                         <strong>{resume.title}</strong>
+                        <ResumeDeleteDialog
+                          resume={resume}
+                          onDeleted={handleResumeDeleted}
+                          actionsOpen={openActionsResumeId === resume.id}
+                          onActionsOpenChange={(open) =>
+                            setOpenActionsResumeId(open ? resume.id : null)
+                          }
+                        />
                       </div>
                       <div className="resume-record-state">
                         <span className="resume-record-status">

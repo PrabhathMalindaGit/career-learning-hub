@@ -66,6 +66,9 @@ export function InterviewSessionListPage() {
   const [listError, setListError] = useState<SafeError | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [openActionsSessionId, setOpenActionsSessionId] = useState<
+    string | null
+  >(null);
   const listSequence = useRef(0);
   const createButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -113,6 +116,28 @@ export function InterviewSessionListPage() {
   function selectFilter(next: SessionFilter) {
     setFilter(next);
     setPage(1);
+    setOpenActionsSessionId(null);
+  }
+
+  function handleSessionDeleted(sessionId: string) {
+    const deletingLastVisibleSession =
+      sessions.length === 1 && sessions[0]?.id === sessionId;
+
+    setOpenActionsSessionId(null);
+    setSessions((current) =>
+      current.filter((session) => session.id !== sessionId),
+    );
+    setPagination((current) =>
+      current
+        ? { ...current, total: Math.max(0, current.total - 1) }
+        : current,
+    );
+
+    if (deletingLastVisibleSession && page > 1) {
+      setPage((current) => Math.max(1, current - 1));
+      return;
+    }
+    setReloadKey((key) => key + 1);
   }
 
   return (
@@ -205,7 +230,15 @@ export function InterviewSessionListPage() {
             aria-label="Interview sessions"
           >
             {sessions.map((session) => (
-              <InterviewSessionCard key={session.id} session={session} />
+              <InterviewSessionCard
+                key={session.id}
+                session={session}
+                actionsOpen={openActionsSessionId === session.id}
+                onActionsOpenChange={(open) =>
+                  setOpenActionsSessionId(open ? session.id : null)
+                }
+                onDeleted={handleSessionDeleted}
+              />
             ))}
           </ul>
         )}

@@ -1,0 +1,143 @@
+.learning-deletion {
+  min-width: 0;
+}
+
+.learning-document-card-header {
+  padding-right: 52px;
+}
+
+.learning-card-overflow {
+  position: relative;
+}
+
+.learning-document-row .learning-card-overflow {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 3;
+}
+
+.learning-card-overflow .card-overflow-actions__trigger {
+  display: inline-flex;
+  width: var(--minimum-interactive-target);
+  min-width: var(--minimum-interactive-target);
+  min-height: var(--minimum-interactive-target);
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid #d5e0d9;
+  border-radius: 10px;
+  color: #53655a;
+  background: #f8fbf9;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.learning-card-overflow .card-overflow-actions__trigger:hover,
+.learning-card-overflow .card-overflow-actions__trigger[aria-expanded="true"] {
+  border-color: #b9cec1;
+  color: #245e3c;
+  background: #eef6f1;
+}
+
+.learning-card-overflow .card-overflow-actions__trigger:focus-visible {
+  outline: 3px solid rgba(18, 107, 58, 0.22);
+  outline-offset: 2px;
+}
+
+.learning-card-overflow .card-overflow-actions__panel {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 20;
+  width: max-content;
+  min-width: 182px;
+  max-width: min(240px, calc(100vw - 32px));
+  padding: 6px;
+  border: 1px solid #d9e3dd;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(20, 45, 31, 0.14);
+}
+
+.learning-card-overflow .card-overflow-actions__group {
+  display: grid;
+}
+
+.learning-card-overflow .card-overflow-actions__action {
+  width: 100%;
+  min-height: var(--minimum-interactive-target);
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
+  text-align: left;
+}
+
+.learning-card-overflow .card-overflow-actions__action--destructive {
+  color: #9d3232;
+}
+
+.learning-card-overflow .card-overflow-actions__action--destructive:hover,
+.learning-card-overflow .card-overflow-actions__action--destructive:focus-visible {
+  color: #7f2424;
+  background: #fff1f1;
+}
+
+.learning-delete-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.learning-delete-warning-mark {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #8d2d2d;
+  background: #fdeaea;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.learning-deletion-form .learning-delete-heading h2 {
+  color: #243129;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.learning-delete-irreversible {
+  padding: 11px 12px;
+  border: 1px solid #f0caca;
+  border-radius: 10px;
+  color: #842c2c;
+  background: #fff5f5;
+  font-weight: 750;
+}
+
+.learning-deletion-form label > span {
+  line-height: 1.45;
+}
+
+@media (max-width: 560px) {
+  .learning-document-row .learning-card-overflow {
+    top: 16px;
+    right: 16px;
+  }
+
+  .learning-document-card-header {
+    padding-right: 48px;
+  }
+
+  .learning-card-overflow .card-overflow-actions__panel {
+    max-width: min(220px, calc(100vw - 40px));
+  }
+}

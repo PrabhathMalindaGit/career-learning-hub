@@ -119,6 +119,17 @@ export async function fetchResume(
   return workspace;
 }
 
+export async function deleteResume(
+  resumeId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await apiRequest<void>(`/resumes/${encodeURIComponent(resumeId)}`, {
+    method: "DELETE",
+    authentication: "required",
+    signal,
+  });
+}
+
 export async function saveResumeVersion(
   resumeId: string,
   payload: {

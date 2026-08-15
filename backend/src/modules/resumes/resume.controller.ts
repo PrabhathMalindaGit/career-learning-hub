@@ -3,6 +3,7 @@ import { AppError } from "../../shared/appError.js";
 import {
   createResume,
   createResumeVersion,
+  deleteResume,
   getOwnedResumeVersion,
   getResumeWorkspace,
   listResumes,
@@ -63,6 +64,18 @@ export async function getResumeController(
   );
 
   response.status(200).json({ success: true, data: result });
+}
+
+export async function deleteResumeController(
+  request: Request<ResumeIdParams>,
+  response: Response,
+): Promise<void> {
+  await deleteResume({
+    userId: request.auth!.userId,
+    resumeId: request.params.resumeId,
+  });
+
+  response.status(204).send();
 }
 
 export async function createVersionController(
