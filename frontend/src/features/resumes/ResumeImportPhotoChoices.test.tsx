@@ -19,6 +19,7 @@ vi.mock("./resumeCandidatePhoto", async (importOriginal) => {
 
 const firstAssetId = "507f1f77bcf86cd799439015";
 const secondAssetId = "507f1f77bcf86cd799439016";
+const revokeObjectURL = vi.fn();
 
 function candidates() {
   return [{ assetId: firstAssetId }, { assetId: secondAssetId }];
@@ -27,6 +28,11 @@ function candidates() {
 describe("ResumeImportPhotoChoices", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    revokeObjectURL.mockClear();
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: revokeObjectURL,
+    });
     vi.mocked(resumeApi.fetchResumeImportPhotoCandidateSource).mockImplementation(
       async (assetId) => ({
         url: `https://example.test/${assetId}`,
@@ -55,14 +61,19 @@ describe("ResumeImportPhotoChoices", () => {
     const none = screen.getByRole("radio", { name: "Do not import a photo" });
     expect((none as HTMLInputElement).checked).toBe(true);
     expect(
-      (screen.getByRole("radio", { name: "Use extracted photo 1" }) as HTMLInputElement)
-        .checked,
+      (
+        screen.getByRole("radio", {
+          name: "Use extracted photo 1",
+        }) as HTMLInputElement
+      ).checked,
     ).toBe(false);
     expect(onChange).not.toHaveBeenCalled();
 
     expect(await screen.findByAltText("Extracted PDF image 1")).not.toBeNull();
     expect(await screen.findByAltText("Extracted PDF image 2")).not.toBeNull();
-    expect(resumeApi.fetchResumeImportPhotoCandidateSource).toHaveBeenCalledTimes(2);
+    expect(
+      resumeApi.fetchResumeImportPhotoCandidateSource,
+    ).toHaveBeenCalledTimes(2);
   });
 
   it("reports one explicit mutually exclusive selection", async () => {
@@ -91,11 +102,16 @@ describe("ResumeImportPhotoChoices", () => {
       />,
     );
     expect(
-      (screen.getByRole("radio", { name: "Use extracted photo 2" }) as HTMLInputElement)
-        .checked,
+      (
+        screen.getByRole("radio", {
+          name: "Use extracted photo 2",
+        }) as HTMLInputElement
+      ).checked,
     ).toBe(true);
 
-    await user.click(screen.getByRole("radio", { name: "Do not import a photo" }));
+    await user.click(
+      screen.getByRole("radio", { name: "Do not import a photo" }),
+    );
     expect(onChange).toHaveBeenLastCalledWith(undefined);
   });
 
@@ -116,7 +132,9 @@ describe("ResumeImportPhotoChoices", () => {
     );
 
     expect(await screen.findByText("Preview unavailable")).not.toBeNull();
-    const candidate = screen.getByRole("radio", { name: "Use extracted photo 1" });
+    const candidate = screen.getByRole("radio", {
+      name: "Use extracted photo 1",
+    });
     await user.click(candidate);
     expect(onChange).toHaveBeenCalledWith(firstAssetId);
   });
@@ -137,7 +155,6 @@ describe("ResumeImportPhotoChoices", () => {
   });
 
   it("revokes loaded object URLs when candidates leave the review", async () => {
-    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
     const { unmount } = render(
       <ResumeImportPhotoChoices
         candidates={[{ assetId: firstAssetId }]}
@@ -153,7 +170,8 @@ describe("ResumeImportPhotoChoices", () => {
       ).toContain("blob:"),
     );
     unmount();
-    expect(revoke).toHaveBeenCalledWith(`blob:https://example.test/${firstAssetId}`);
-    revoke.mockRestore();
+    expect(revokeObjectURL).toHaveBeenCalledWith(
+      `blob:https://example.test/${firstAssetId}`,
+    );
   });
 });
