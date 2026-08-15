@@ -1,86 +1,85 @@
 # Resume Import + Skills Refinement Implementation Plan
 
-> **Execution model for this project:** ChatGPT implements through the GitHub connector on `feature/resume-import-skills-refinement`; Codex is not used. Tests are committed before their production changes, but runtime RED/GREEN evidence comes from the user's local verification because the GitHub connector cannot execute the repository.
+> **Execution model:** ChatGPT implements through the GitHub connector on `feature/resume-import-skills-refinement`; Codex is not used. Tests are committed before their corresponding production changes. Runtime RED/GREEN evidence comes from the user's local verification because the GitHub connector cannot execute the repository.
 
 **Goal:** Replace oversized Resume Skills capsules with clean wrapping rows and let PDF import optionally reuse a user-selected eligible first-page embedded image as the imported Resume's existing Candidate Photo.
 
-**Architecture:** Keep canonical Resume content unchanged. Track A is a presentation-only CSS/test refinement. Track B adds a best-effort first-page embedded-image pass after successful canonical text parsing, stages at most three private temporary `resume-photo` assets bound to the exact import job/source PDF, carries only their Asset IDs in the import-review result, and atomically finalizes the user's optional photo selection with the existing Resume/photo ownership model when import is confirmed.
+**Architecture:** Keep canonical Resume content unchanged. Track A is presentation-only. Track B adds a best-effort first-page image pass only after canonical Resume text parsing succeeds, stages at most three private temporary `resume-photo` assets bound to the exact import Job/source PDF, persists only their Asset IDs in the import-review result, and atomically finalizes the winning optional photo selection with the existing Resume/Candidate Photo ownership model.
 
 **Tech Stack:** React + TypeScript + Vite + Vitest + Testing Library; Express + TypeScript + Mongoose + Zod + Vitest; existing `pdf-parse@^2.4.5`; existing private Asset storage and Candidate Photo validation.
 
 ## Global Constraints
 
 - Build the smallest secure and functional solution suitable for a university project. Reuse existing code and architecture. Do not add enterprise-grade complexity unless it is necessary for correctness or security.
-- Base implementation on merged `main @ a0543f735496215418eb16c6151e68446025fd29` (PR #19 included).
-- Required branch: `feature/resume-import-skills-refinement`.
-- Do not modify Gemini routing, prompts, credentials, provider selection, or send image bytes to Gemini.
-- Do not add OCR, face detection/recognition, image classification, image cropping, a new PDF/image package, a new storage system, or a new Resume photo schema.
-- Inspect first-page embedded images only with `getImage({ partial: [1], imageThreshold: 80, imageDataUrl: false, imageBuffer: true })`.
-- Keep at most 3 usable photo candidates. Default UI selection is always `Do not import a photo`.
-- Candidate assets use the existing 15-minute Candidate Photo staging lifetime and existing `resume-photo` file validation.
-- Candidate identity must be bound to user + Resume-import Job ID + source PDF Asset ID.
-- Raw image bytes/data URLs must never be persisted in the Job result.
-- Existing text-only PDF import behavior, strict canonical Resume parser, source-PDF idempotency, manual Candidate Photo controls, Resume versioning, and deletion behavior must remain intact.
+- Base: merged `main @ a0543f735496215418eb16c6151e68446025fd29` (PR #19 included).
+- Branch: `feature/resume-import-skills-refinement`.
+- Do not change Gemini routing/prompts/credentials/provider selection and never send candidate-image bytes to Gemini.
+- Do not add OCR, face detection/recognition, image classification, cropping, a PDF/image package, storage system, worker, or Resume photo schema.
+- First-page embedded images only: `getImage({ partial: [1], imageThreshold: 80, imageDataUrl: false, imageBuffer: true })`.
+- Keep at most 3 **eligible** photo candidates; default selection is always `Do not import a photo`.
+- Candidate assets use the existing 15-minute Candidate Photo staging lifetime and existing `resume-photo` validation.
+- Candidate identity is bound to user + import Job ID + source PDF Asset ID.
+- Raw image bytes/data URLs never enter the MongoDB Job result.
+- Existing text-only PDF import, strict Resume parser, source-PDF idempotency, manual Candidate Photo, Resume versioning, and deletion behavior remain intact.
 - No deployment, merge, or branch deletion is authorized by implementation approval.
-- User manual terminal commands: none during GitHub-side implementation; required after implementation for local verification.
-- Browser use: not available/required during GitHub-side implementation; user performs local browser QA only after automated verification is green.
-- Local runtime for final browser QA: backend + frontend development servers; no separate worker process is required by this feature.
+- User terminal work: none during GitHub-side implementation; user runs verification afterward.
+- Browser: user performs local browser QA only after automated verification is green.
 
 ---
 
-## File Structure and Responsibility Map
+## File Boundary
 
-### Existing files to modify
+### Existing files expected to change
 
-**Skills presentation**
-- `frontend/src/features/resumes/resumeWorkspace.css` — remove pill styling and define natural wrapping skill rows.
-- `frontend/src/features/resumes/ResumePreview.test.tsx` — lock long-skill wrapping and no-pill presentation.
+**Skills**
+- `frontend/src/features/resumes/resumeWorkspace.css`
+- `frontend/src/features/resumes/ResumePreview.test.tsx`
 
-**PDF image extraction/staging**
-- `backend/src/modules/resume-analysis/pdf.service.ts` — add best-effort first-page embedded-image extraction with byte-signature MIME detection.
-- `backend/src/modules/resumes/resumePhoto.service.ts` — reuse existing Candidate Photo staging/attachment rules for import-generated temporary photo assets.
-- `backend/src/modules/resume-analysis/resumeAnalysis.service.ts` — stage photo candidates after canonical text parsing and finalize an optional selected candidate during import confirmation.
-- `backend/src/modules/resume-analysis/resumeAnalysis.schemas.ts` — validate optional selected photo Asset ID on confirm.
-- `backend/src/modules/resume-analysis/resumeAnalysis.controller.ts` — pass optional selected photo ID to service.
-- `backend/src/modules/resume-analysis/resumeAnalysis.routes.ts` — validate confirm request body.
-- `backend/src/tests/integration/resumePdfImport.integration.test.ts` — import-review candidate lifecycle, security, idempotency, and concurrency regression coverage.
+**Backend import/photo path**
+- `backend/src/modules/resume-analysis/pdf.service.ts`
+- `backend/src/modules/resume-analysis/resumeAnalysis.service.ts`
+- `backend/src/modules/resume-analysis/resumeAnalysis.schemas.ts`
+- `backend/src/modules/resume-analysis/resumeAnalysis.controller.ts`
+- `backend/src/modules/resume-analysis/resumeAnalysis.routes.ts`
+- `backend/src/modules/resumes/resumePhoto.service.ts`
+- `backend/src/tests/integration/resumePdfImport.integration.test.ts`
 
 **Frontend import contract/UI**
-- `frontend/src/features/resumes/types.ts` — add bounded import photo-candidate type.
-- `frontend/src/features/resumes/resumeContracts.ts` — strictly parse optional `photoCandidates` from completed import jobs.
-- `frontend/src/features/resumes/resumeApi.ts` — send optional selected photo ID on confirmation and request private signed candidate sources.
-- `frontend/src/features/resumes/ResumeCreateDialog.tsx` — hold selected candidate state and render the focused choice component during Import Review.
-- `frontend/src/features/resumes/ResumeCreateDialog.test.tsx` — review/selection/default/confirmation behavior.
-- `frontend/src/features/resumes/resumeWorkspace.css` — compact responsive candidate-choice styling alongside Skills CSS.
+- `frontend/src/features/resumes/types.ts`
+- `frontend/src/features/resumes/resumeContracts.ts`
+- `frontend/src/features/resumes/resumeApi.ts`
+- `frontend/src/features/resumes/ResumeCreateDialog.tsx`
+- `frontend/src/features/resumes/ResumeCreateDialog.test.tsx`
+- `frontend/src/features/resumes/resumeWorkspace.css`
 
-### New focused frontend files
+### New focused files
 
-- `frontend/src/features/resumes/ResumeImportPhotoChoices.tsx` — private candidate thumbnail loading, radio-group selection, object-URL cleanup, unavailable-candidate handling.
-- `frontend/src/features/resumes/ResumeImportPhotoChoices.test.tsx` — focused accessibility/selection/loading tests.
+- `backend/src/tests/unit/resumePdfImageExtraction.test.ts`
+- `frontend/src/features/resumes/ResumeImportPhotoChoices.tsx`
+- `frontend/src/features/resumes/ResumeImportPhotoChoices.test.tsx`
 
-### Expected files that should NOT change
+### Files that should not change
 
-- `backend/package.json`, root `package.json`, lockfiles.
-- Resume/Mongo schemas (`resume.model.ts`, `resumeVersion.model.ts`) unless an implementation blocker proves the approved design impossible.
-- AI gateway/provider files.
-- deployment/env/migration files.
+- package/lock files;
+- `.env*`, deployment, migration, provider/routing files;
+- Resume/Mongo schemas unless a proven blocker requires explicit user re-approval;
 - Learning or Interview modules.
 
 ---
 
-### Task 1: Replace Skills capsules with Resume-style wrapping rows
+### Task 1: Clean Skills presentation
 
 **Files:**
-- Modify: `frontend/src/features/resumes/ResumePreview.test.tsx`
+- Test: `frontend/src/features/resumes/ResumePreview.test.tsx`
 - Modify: `frontend/src/features/resumes/resumeWorkspace.css`
 
-**Interfaces:**
-- Consumes: existing `.resume-paper-skills` definition-list markup from `ResumePreview.tsx`.
-- Produces: the same semantic `<dl><div><dt><dd>` structure with presentation-only CSS; no component/data contract change.
+**Consumes:** existing `.resume-paper-skills` `<dl>` with `<dt>/<dd>` from `ResumePreview.tsx`.
 
-- [ ] **Step 1: Add the failing presentation expectations first**
+**Produces:** same semantic markup, no capsule borders, natural wrapping shared by screen and print.
 
-Extend the existing long-skills test so it checks the group container rule rather than accepting the pill treatment:
+- [ ] **1.1 Add failing test expectations first**
+
+Extend the existing long-skills test:
 
 ```ts
 const skillGroupRule = resumeWorkspaceCss.match(
@@ -95,13 +94,11 @@ expect(skillGroupRule).not.toMatch(/border:\s*1px/);
 expect(skills?.textContent).toContain("Cloud Infrastructure Automation");
 ```
 
-Also keep assertions that the group names/keywords remain inside the semantic definition list and the long keyword string is not removed.
+Expected pre-implementation failure: the current rule still has a one-pixel border and `border-radius: 999px`.
 
-**Expected RED before CSS change:** current `.resume-paper-skills > div` still contains `border: 1px solid var(--resume-rule)` and `border-radius: 999px` and does not contain `min-width: 0`.
+- [ ] **1.2 Implement only the shared CSS treatment**
 
-- [ ] **Step 2: Implement the smallest shared preview CSS change**
-
-Replace the capsule rule with a wrapping row:
+Use:
 
 ```css
 .resume-paper-skills {
@@ -134,26 +131,21 @@ Replace the capsule rule with a wrapping row:
 }
 ```
 
-Do not add a replacement border/background/chip class.
+Do not modify skill data/editing or create replacement chip styling.
 
-- [ ] **Step 3: Preserve print/shared-template behavior**
+- [ ] **1.3 Diff checkpoint**
 
-Do not change `ResumePreview.tsx`. The shared `.resume-paper-skills` rule must remain used by ATS Classic, Modern Professional, Compact Technical, screen preview, and print surface.
-
-- [ ] **Step 4: GitHub-side review checkpoint**
-
-Inspect the diff and confirm only the preview test + CSS changed for this task, and no skill data/editor behavior changed.
+Only the preview test and CSS should change in this task.
 
 ---
 
-### Task 2: Add a bounded first-page embedded-image extraction primitive
+### Task 2: Add best-effort first-page PDF image extraction
 
 **Files:**
-- Modify: `backend/src/modules/resume-analysis/pdf.service.ts`
 - Create: `backend/src/tests/unit/resumePdfImageExtraction.test.ts`
+- Modify: `backend/src/modules/resume-analysis/pdf.service.ts`
 
-**Interfaces:**
-- Produces:
+**Produces:**
 
 ```ts
 export type ExtractedPdfImageCandidate = {
@@ -168,11 +160,9 @@ export async function extractFirstPagePdfImages(
 ): Promise<ExtractedPdfImageCandidate[]>;
 ```
 
-- The function is best-effort: image-pass failures return `[]`; they do not change `extractPdfText()` error semantics.
+- [ ] **2.1 Add tests before implementation**
 
-- [ ] **Step 1: Add unit tests before the implementation**
-
-Mock `PDFParse` and assert the image pass is invoked exactly as approved:
+Mock `PDFParse` and require:
 
 ```ts
 expect(getImageMock).toHaveBeenCalledWith({
@@ -183,46 +173,15 @@ expect(getImageMock).toHaveBeenCalledWith({
 });
 ```
 
-Add cases proving:
+Cover PNG/JPEG/WebP signatures, unsupported-byte skipping, checksum deduplication, deterministic descending pixel-area order with stable tie order, `getImage()` failure -> `[]`, and `destroy()` in success/failure paths.
 
-```ts
-// PNG/JPEG/WebP magic bytes are accepted.
-// unsupported bytes are skipped.
-// duplicate buffers are returned once.
-// deterministic order is descending width*height, stable on ties.
-// getImage rejection returns [] rather than throwing.
-// parser.destroy() runs in success and failure paths.
-```
+Expected failure: `extractFirstPagePdfImages` does not exist.
 
-**Expected RED:** `extractFirstPagePdfImages` does not exist.
+- [ ] **2.2 Detect MIME from bytes only**
 
-- [ ] **Step 2: Add byte-signature MIME detection**
+Add a local helper in `pdf.service.ts` for PNG/JPEG/WebP magic bytes. Do not trust PDF image metadata.
 
-Keep this local to `pdf.service.ts`:
-
-```ts
-function imageMimeType(buffer: Buffer): ExtractedPdfImageCandidate["mimeType"] | undefined {
-  if (buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
-    return "image/png";
-  }
-  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
-    return "image/jpeg";
-  }
-  if (
-    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
-    buffer.subarray(8, 12).toString("ascii") === "WEBP"
-  ) {
-    return "image/webp";
-  }
-  return undefined;
-}
-```
-
-Do not trust PDF metadata for MIME type.
-
-- [ ] **Step 3: Implement the best-effort image pass**
-
-Use a separate `PDFParse` instance so the existing text-extraction lifetime remains unchanged:
+- [ ] **2.3 Implement the image pass with a separate parser lifetime**
 
 ```ts
 const parser = new PDFParse({ data: new Uint8Array(buffer) });
@@ -233,9 +192,9 @@ try {
     imageDataUrl: false,
     imageBuffer: true,
   });
-  // map first-page images -> Buffer + actual MIME + finite positive width/height
-  // dedupe by SHA-256 buffer checksum
-  // stable sort by pixel area descending
+  // first-page images -> Buffer + detected MIME + positive width/height
+  // dedupe by SHA-256
+  // stable sort by width * height descending
   return candidates;
 } catch {
   return [];
@@ -244,23 +203,24 @@ try {
 }
 ```
 
-Do not slice to 3 here; Candidate Photo validation can reject a larger image, so the staging layer must continue until it has at most 3 **eligible** candidates.
+Do **not** slice to 3 here; the next layer must continue past ineligible images until it has at most 3 validated Candidate Photo assets.
 
-- [ ] **Step 4: GitHub-side review checkpoint**
+- [ ] **2.4 Diff checkpoint**
 
-Confirm no text extraction behavior changed and no image data is logged or persisted.
+Existing `extractPdfText()` semantics must be untouched.
 
 ---
 
-### Task 3: Stage eligible image candidates as private import-bound Candidate Photo assets
+### Task 3: Stage eligible extracted images as import-bound private Candidate Photo assets
 
 **Files:**
 - Modify: `backend/src/modules/resumes/resumePhoto.service.ts`
 - Modify: `backend/src/modules/resume-analysis/resumeAnalysis.service.ts`
 - Modify: `backend/src/tests/integration/resumePdfImport.integration.test.ts`
 
-**Interfaces:**
-- `resumePhoto.service.ts` produces:
+**Important dependency rule:** `resumePhoto.service.ts` must **not** import types from `resume-analysis`. Its staging function consumes primitive buffer/MIME inputs so the Resume module does not depend back on the Resume Analysis module.
+
+**Produces:**
 
 ```ts
 export const RESUME_PHOTO_STAGING_TTL_SECONDS = 15 * 60;
@@ -269,12 +229,13 @@ export async function stageResumeImportPhotoCandidate(input: {
   userId: string;
   importJobId: string;
   sourceAssetId: string;
-  candidate: ExtractedPdfImageCandidate;
+  buffer: Buffer;
+  mimeType: "image/jpeg" | "image/png" | "image/webp";
   ordinal: number;
 }): Promise<AssetDocument>;
 ```
 
-- `ImportReviewResult` becomes:
+and:
 
 ```ts
 export interface ImportReviewResult {
@@ -284,9 +245,9 @@ export interface ImportReviewResult {
 }
 ```
 
-- [ ] **Step 1: Add integration tests before staging implementation**
+- [ ] **3.1 Add integration tests first**
 
-Mock both PDF functions independently:
+Mock both PDF functions:
 
 ```ts
 vi.mock("../../modules/resume-analysis/pdf.service.js", () => ({
@@ -295,41 +256,23 @@ vi.mock("../../modules/resume-analysis/pdf.service.js", () => ({
 }));
 ```
 
-Add cases proving:
+Prove:
 
-- image extraction is not called when text extraction fails;
+- image extraction is not called when PDF text extraction fails;
 - image extraction is not called when Gemini/canonical parsing fails;
-- production import with a job ID stages eligible candidates only after canonical content exists;
-- text-only/empty image result returns the existing `{ kind, content }` contract without `photoCandidates`;
-- invalid/tiny/oversized Candidate Photo input is skipped without failing the valid text import;
-- more than three eligible candidates yields exactly three IDs;
-- staged assets are `purpose: "resume-photo"`, `status: "temporary"`, have ~15-minute expiry, and metadata contains exact `resumeImportJobId` + `resumeImportSourceAssetId`;
-- the job result contains only Asset IDs, never `buffer`, `data`, `dataUrl`, or base64 content.
+- direct service calls without `jobId` create no unbound photo assets;
+- text-only import returns no candidate field;
+- invalid/oversized/unsupported Candidate Photo bytes are skipped without failing valid text import;
+- the loop continues until at most 3 **eligible** assets are staged;
+- staged assets are `resume-photo`, `temporary`, ~15-minute TTL;
+- metadata is exactly bound with `resumeImportJobId` and `resumeImportSourceAssetId`;
+- import-review persistence contains Asset IDs only, never image buffers/data URLs/base64.
 
-**Expected RED:** current `prepareResumePdfImport()` never calls an image extractor and `ImportReviewResult` has no candidate field.
+- [ ] **3.2 Reuse the existing Candidate Photo asset boundary**
 
-- [ ] **Step 2: Reuse the existing Candidate Photo staging boundary**
+Inside `resumePhoto.service.ts`, build the memory-file object and call existing `createAsset()` with `purpose: "resume-photo"`. The file uses the detected MIME and buffer; validation therefore reuses existing signature/size/dimension policy.
 
-In `resumePhoto.service.ts`, rename/export the TTL constant and add `stageResumeImportPhotoCandidate()`.
-
-Construct the in-memory `Express.Multer.File` only inside this service, then call existing `createAsset()` with `purpose: "resume-photo"`. Example shape:
-
-```ts
-const file: Express.Multer.File = {
-  fieldname: "file",
-  originalname: `resume-import-photo-${input.ordinal}.${extension}`,
-  encoding: "7bit",
-  mimetype: input.candidate.mimeType,
-  size: input.candidate.buffer.length,
-  buffer: input.candidate.buffer,
-  destination: "",
-  filename: "",
-  path: "",
-  stream: Readable.from(input.candidate.buffer),
-};
-```
-
-After `createAsset()` validates/stores it, write only:
+After creation:
 
 ```ts
 asset.metadata = {
@@ -340,36 +283,26 @@ asset.metadata = {
 await asset.save();
 ```
 
-If metadata persistence fails, delete that staged asset best-effort and rethrow to the caller; the caller treats optional-photo staging failure as a skipped candidate.
+If metadata persistence fails, delete the staged asset best-effort and rethrow; the optional-photo caller may skip it.
 
-- [ ] **Step 3: Call image extraction only after canonical text parsing**
+- [ ] **3.3 Extract/stage only after canonical content exists**
 
-In `prepareResumePdfImport()` preserve:
+Preserve the current order:
 
 ```ts
 const extracted = await extractPdfText(buffer);
 const content = await parseResumeText(...);
 ```
 
-Then, only when `input.jobId` exists, call `extractFirstPagePdfImages(buffer)`. Stage candidates in deterministic order until 3 successful `resume-photo` assets exist. Return:
+Only then, and only when `input.jobId` exists, call `extractFirstPagePdfImages(buffer)`. Stage in deterministic order until 3 successes. Return `photoCandidates` only when non-empty.
 
-```ts
-return {
-  kind: "import-review",
-  content,
-  ...(photoCandidates.length === 0 ? {} : { photoCandidates }),
-};
-```
+- [ ] **3.4 Diff checkpoint**
 
-Direct service calls without a Job ID must not create unbound candidate assets.
-
-- [ ] **Step 4: GitHub-side review checkpoint**
-
-Confirm image bytes exist only transiently in memory/private object storage and the persisted import-review job result contains IDs only.
+No image bytes may enter Job result or logs.
 
 ---
 
-### Task 4: Securely adopt an explicitly selected staged photo during import confirmation
+### Task 4: Secure optional photo adoption during import confirmation
 
 **Files:**
 - Modify: `backend/src/modules/resume-analysis/resumeAnalysis.schemas.ts`
@@ -379,16 +312,20 @@ Confirm image bytes exist only transiently in memory/private object storage and 
 - Modify: `backend/src/modules/resumes/resumePhoto.service.ts`
 - Modify: `backend/src/tests/integration/resumePdfImport.integration.test.ts`
 
-**Interfaces:**
-- Add request body schema:
+**Produces request schema:**
 
 ```ts
-export const confirmImportPdfBodySchema = z.object({
-  selectedPhotoAssetId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
-}).strict();
+export const confirmImportPdfBodySchema = z
+  .object({
+    selectedPhotoAssetId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
+  })
+  .strict()
+  .default({});
 ```
 
-- Extend service input:
+The `.default({})` is required so the already-supported bodyless `POST /confirm` remains valid.
+
+**Service signature:**
 
 ```ts
 confirmResumePdfImport({
@@ -398,7 +335,7 @@ confirmResumePdfImport({
 })
 ```
 
-- `resumePhoto.service.ts` adds a transaction-aware helper:
+**Transaction-aware Resume helper:**
 
 ```ts
 export async function attachStagedImportPhotoCandidate(input: {
@@ -411,31 +348,24 @@ export async function attachStagedImportPhotoCandidate(input: {
 }): Promise<void>;
 ```
 
-- [ ] **Step 1: Add request/security/idempotency tests first**
+- [ ] **4.1 Add backend route/security/concurrency tests first**
 
-Extend `resumePdfImport.integration.test.ts` with:
+Cover:
 
-```ts
-// POST confirm with {} -> no candidate photo, existing behavior.
-// valid selected candidate -> resume.candidatePhotoAssetId is set and design.showProfilePhoto === true.
-// selected candidate must be present in result.photoCandidates.
-// cross-user candidate -> reject.
-// candidate bound to another import job -> reject.
-// candidate bound to another source PDF -> reject.
-// expired/deleted candidate -> reject when selected.
-// arbitrary active resume-photo asset -> reject.
-// expired non-selected candidates do not block confirming with {}.
-// repeated same selection -> same Resume/version and one photo association.
-// two racing different selections -> at most one wins; loser cannot replace the winner.
-// source PDF remains active and associated with the same Resume.
-// after success, job.result is scrubbed to import-adopted with no content/candidate IDs.
-```
+- old bodyless confirm still succeeds;
+- `{}` confirm -> no Candidate Photo;
+- valid selected candidate -> `candidatePhotoAssetId` set and `showProfilePhoto=true`;
+- selection must be present in that Job's `photoCandidates`;
+- cross-user, wrong Job, wrong source PDF, expired/deleted, or arbitrary active photo -> rejected;
+- expired **non-selected** candidates do not block `{}` confirmation;
+- repeated same selection -> same Resume/version and one photo;
+- concurrent different selections -> at most one authoritative photo; loser cannot replace it;
+- source PDF association remains unchanged;
+- adopted Job result contains only `{kind,resumeId,versionId,versionNumber}`.
 
-**Expected RED:** route ignores request body; service has no candidate handling.
+- [ ] **4.2 Validate route body without breaking legacy bodyless calls**
 
-- [ ] **Step 2: Validate the confirm body at the route**
-
-Update the confirm route to:
+Apply:
 
 ```ts
 validate({
@@ -444,16 +374,16 @@ validate({
 })
 ```
 
-Controller passes `request.body.selectedPhotoAssetId`.
+Controller forwards `request.body.selectedPhotoAssetId`.
 
-- [ ] **Step 3: Add transaction-aware staged-photo attachment**
+- [ ] **4.3 Implement staged-photo attachment under an existing Mongo session**
 
-`attachStagedImportPhotoCandidate()` must:
+The helper must:
 
-1. load the owned Resume in the supplied session;
-2. if the current Candidate Photo already equals `assetId`, verify the active asset belongs to that Resume and return (same-selection retry);
-3. if another Candidate Photo is already attached, throw `409 RESUME_PHOTO_CONFLICT`;
-4. load the selected asset with exact owner/purpose/status/expiry and metadata binding:
+1. load owned Resume in `session`;
+2. if current photo already equals `assetId`, verify the active asset belongs to the Resume and return;
+3. if another photo exists, throw `409 RESUME_PHOTO_CONFLICT`;
+4. require selected Asset with:
 
 ```ts
 {
@@ -467,27 +397,25 @@ Controller passes `request.body.selectedPhotoAssetId`.
 }
 ```
 
-5. promote it in-session, add `resumeId` to metadata, set Resume `candidatePhotoAssetId`, set `design.showProfilePhoto = true`, and save both with the same `ClientSession`.
+5. set asset active, clear expiry, add `resumeId` metadata;
+6. set Resume `candidatePhotoAssetId` and `design.showProfilePhoto=true`;
+7. save both with the supplied session.
 
-Do not call `createOrReplaceCandidatePhoto()` because that function creates a second staged asset from an upload.
+Do not call `createOrReplaceCandidatePhoto()` because it would create a second asset.
 
-- [ ] **Step 4: Prevalidate selection before creating/finding the import winner**
+- [ ] **4.4 Prevalidate the chosen ID before winner creation**
 
-From the existing import-review Job result:
+Parse optional `photoCandidates` from the current import-review Job as max 3 `{assetId}` records. If a supplied selection is absent from that list or its temporary bound asset is no longer eligible, return the existing bounded import-confirmation conflict before creating a new Resume.
 
-- parse `photoCandidates` as max 3 `{assetId}` records;
-- if `selectedPhotoAssetId` is supplied but is not in that exact candidate list, throw `RESUME_IMPORT_NOT_CONFIRMABLE`;
-- verify its current temporary asset binding before Resume creation so a tampered/stale choice fails early.
+- [ ] **4.5 Atomically finalize the winning photo choice and scrub the Job**
 
-- [ ] **Step 5: Atomically finalize photo choice + adopted Job result**
+After current source-PDF winner creation/reuse and source-asset promotion, use one `withMongoTransaction()` that:
 
-After current source-PDF winner creation/reuse and source-asset promotion, run one `withMongoTransaction()` that:
-
-1. re-reads the Job by owner/type/status in the transaction;
-2. if it is already `import-adopted`, returns the existing identity without attaching/replacing a photo;
-3. if still `import-review`, revalidates the selected candidate against the transactional Job result;
-4. attaches the selected candidate in the same transaction when present;
-5. replaces Job `result` with only:
+1. re-reads the owner-scoped completed import Job in-session;
+2. if already `import-adopted`, returns that identity without attaching/replacing a photo;
+3. if still `import-review`, revalidates selected ID against that transactional result;
+4. attaches the selected candidate in-session when present;
+5. replaces Job result in the same transaction with:
 
 ```ts
 {
@@ -498,29 +426,27 @@ After current source-PDF winner creation/reuse and source-asset promotion, run o
 }
 ```
 
-This transaction establishes one authoritative winner for concurrent `none`/photo-1/photo-2 confirmations. A losing request must not mutate the Resume after another request has scrubbed the Job to `import-adopted`.
+This makes `none`, candidate A, and candidate B concurrent confirmations compete for one Job-result write; a losing request cannot mutate the Resume after another request wins.
 
-- [ ] **Step 6: Best-effort cleanup after successful adoption**
+- [ ] **4.6 Best-effort cleanup after success**
 
-Keep the selected asset active. For all other candidate IDs captured from the winning import review, call `deleteOwnedAsset()` best-effort. If cleanup fails, the assets remain temporary and their 15-minute expiry remains the fallback.
+For candidate IDs captured from the import review, delete all non-selected temporary candidates best-effort. If cleanup fails, their 15-minute expiry remains the fallback. Never turn a successful import into a failure because non-selected cleanup failed.
 
-Never let non-selected cleanup failure turn a completed import into a reported failure.
+- [ ] **4.7 Diff checkpoint**
 
-- [ ] **Step 7: GitHub-side review checkpoint**
-
-Inspect the service diff specifically for ownership predicates, metadata binding, transaction session use, no photo replacement race, and no weakening of source-PDF idempotency.
+Review ownership predicates, metadata binding, transaction session use, race behavior, source-PDF idempotency, and job-result scrubbing.
 
 ---
 
-### Task 5: Extend the strict frontend contract and API without weakening Resume parsing
+### Task 5: Extend the strict frontend job contract and API
 
 **Files:**
 - Modify: `frontend/src/features/resumes/types.ts`
 - Modify: `frontend/src/features/resumes/resumeContracts.ts`
 - Modify: `frontend/src/features/resumes/resumeApi.ts`
-- Add/modify tests in existing Resume contract/API test files if present; otherwise cover parsing through `ResumeCreateDialog.test.tsx` plus a focused `resumeContracts` test only if the repository already has one.
+- Test through existing contract/API tests where present and `ResumeCreateDialog.test.tsx` otherwise.
 
-**Interfaces:**
+**Types:**
 
 ```ts
 export interface ResumeImportPhotoCandidate {
@@ -536,7 +462,7 @@ export type ResumeImportResult =
   | ...;
 ```
 
-API signatures:
+**API:**
 
 ```ts
 export async function confirmResumePdfImport(
@@ -551,24 +477,11 @@ export async function fetchResumeImportPhotoCandidateSource(
 ): Promise<CandidatePhotoSource>;
 ```
 
-- [ ] **Step 1: Add strict parser tests first**
+- [ ] **5.1 Add strict parser tests first**
 
-For completed `resume.import-pdf` jobs prove:
+Completed import-review results must accept omitted/0-3 valid candidates and reject >3, non-object IDs, extra candidate keys, malformed records, while retaining strict `parseResumeContent()` behavior.
 
-```ts
-// photoCandidates omitted -> valid.
-// [] -> valid if server sends it, but implementation should normally omit empty.
-// 1..3 valid object IDs -> valid.
-// >3 -> invalid response.
-// malformed candidate record, extra keys, non-object-ID -> INVALID_RESUME_RESPONSE.
-// canonical content strictness remains unchanged.
-```
-
-**Expected RED:** `exactKeys(item, ["kind", "content"])` rejects `photoCandidates`.
-
-- [ ] **Step 2: Extend only the import-review result parser**
-
-Use the existing `array`, `exactKeys`, and `id` helpers:
+- [ ] **5.2 Extend only `import-review` parsing**
 
 ```ts
 const review = exactKeys(item, ["kind", "content"], ["photoCandidates"]);
@@ -580,9 +493,9 @@ const photoCandidates = review.photoCandidates === undefined
     });
 ```
 
-Do not loosen `parseResumeContent()`.
+Do not loosen canonical Resume parsing.
 
-- [ ] **Step 3: Update confirmation API body**
+- [ ] **5.3 Send only the optional selected ID on confirmation**
 
 ```ts
 body: selectedPhotoAssetId === undefined
@@ -590,11 +503,7 @@ body: selectedPhotoAssetId === undefined
   : { selectedPhotoAssetId }
 ```
 
-Keep authentication and workspace parsing unchanged.
-
-- [ ] **Step 4: Reuse the generic private signed-asset route for previews**
-
-Add:
+- [ ] **5.4 Reuse generic private signed-asset preview**
 
 ```ts
 const data = await apiRequest<unknown>(
@@ -609,11 +518,11 @@ const data = await apiRequest<unknown>(
 return parseCandidatePhotoSource(data);
 ```
 
-Reuse `parseCandidatePhotoSource` and `loadCanonicalCandidatePhoto`; do not create a public image endpoint.
+Reuse `parseCandidatePhotoSource()` and `loadCanonicalCandidatePhoto()`; do not create a public route.
 
 ---
 
-### Task 6: Add the explicit Import Review photo-choice UI
+### Task 6: Add explicit Import Review photo choices
 
 **Files:**
 - Create: `frontend/src/features/resumes/ResumeImportPhotoChoices.tsx`
@@ -622,7 +531,7 @@ Reuse `parseCandidatePhotoSource` and `loadCanonicalCandidatePhoto`; do not crea
 - Modify: `frontend/src/features/resumes/ResumeCreateDialog.test.tsx`
 - Modify: `frontend/src/features/resumes/resumeWorkspace.css`
 
-**Interfaces:**
+**Component:**
 
 ```ts
 interface ResumeImportPhotoChoicesProps {
@@ -633,68 +542,48 @@ interface ResumeImportPhotoChoicesProps {
 }
 ```
 
-- [ ] **Step 1: Add focused component tests first**
+- [ ] **6.1 Add focused UI tests before component implementation**
 
-Mock `fetchResumeImportPhotoCandidateSource` / `loadCanonicalCandidatePhoto` and prove:
+Prove:
 
-- fieldset/legend is `Possible candidate photo from PDF`;
-- `Do not import a photo` is checked by default;
-- no image candidate is preselected when only one exists;
-- at most the supplied 3 candidates render;
-- each usable option has accessible name `Use extracted photo N`;
-- selecting a photo is mutually exclusive with `Do not import a photo`;
-- one preview failure leaves other candidates usable and makes the failed option unavailable;
-- generated object URLs are revoked on replacement/unmount;
-- disabled state prevents selection during confirmation.
+- legend is `Possible candidate photo from PDF`;
+- `Do not import a photo` is selected by default;
+- one candidate is never auto-selected;
+- options use native radio semantics and accessible names `Use extracted photo N`;
+- selection is mutually exclusive;
+- one thumbnail-source failure leaves other choices usable and that failed choice disabled;
+- object URLs are revoked on replacement/unmount;
+- disabled state prevents changes while confirming.
 
-**Expected RED:** component does not exist.
+- [ ] **6.2 Load private thumbnails using existing Candidate Photo checks**
 
-- [ ] **Step 2: Implement private candidate thumbnail loading**
+For each candidate, request signed source with `fetchResumeImportPhotoCandidateSource()`, then call `loadCanonicalCandidatePhoto()`. Store only returned local object URLs and revoke them in cleanup.
 
-For each candidate:
+- [ ] **6.3 Render conservative user-controlled wording**
 
-1. request an owner-authenticated signed URL through `fetchResumeImportPhotoCandidateSource()`;
-2. pass it through existing `loadCanonicalCandidatePhoto()` so MIME/size/dimensions are rechecked client-side;
-3. store only the returned object URL in component state;
-4. revoke every object URL in effect cleanup.
-
-Do not persist signed URLs or object URLs in Resume state.
-
-- [ ] **Step 3: Render radio semantics and conservative copy**
-
-Use native radio inputs inside a fieldset:
+Use:
 
 ```text
 Possible candidate photo from PDF
 Images were extracted from the PDF. Select one only if it is the Candidate Photo you want to use.
 
 (o) Do not import a photo
-( ) Use extracted photo 1   [thumbnail]
-( ) Use extracted photo 2   [thumbnail]
+( ) Use extracted photo 1
+( ) Use extracted photo 2
 ```
 
-Never use wording that claims a face/person was detected.
+Never claim that a face/person was detected.
 
-- [ ] **Step 4: Integrate with `ResumeCreateDialog`**
+- [ ] **6.4 Integrate into `ResumeCreateDialog`**
 
-Add state:
+Add:
 
 ```ts
 const [selectedImportPhotoAssetId, setSelectedImportPhotoAssetId] =
   useState<string | undefined>(undefined);
 ```
 
-Reset it when:
-
-- dialog closes;
-- a new import review is received;
-- the user returns from Review to Import.
-
-When a completed review job arrives, carry `photoCandidates` into `importReview`.
-
-Render `ResumeImportPhotoChoices` only when candidates exist.
-
-Confirmation becomes:
+Reset it on dialog close, new review, and Back to Import. Carry `photoCandidates` into `importReview`. Render the choice component only when candidates exist. Confirm with:
 
 ```ts
 await confirmResumePdfImport(
@@ -704,60 +593,29 @@ await confirmResumePdfImport(
 );
 ```
 
-- [ ] **Step 5: Add integration-level dialog tests**
+Keep existing confirm-button initial-focus behavior and single-flight logic.
 
-Extend the completed job fixture with optional candidates and prove:
+- [ ] **6.5 Extend dialog tests**
 
-- no candidates -> current review UI is unchanged;
-- one candidate -> choice section appears, `Do not import a photo` is default;
-- confirm without selection calls API with `undefined` selected photo;
-- selecting candidate 2 calls API with its Asset ID;
-- returning Back then starting/reviewing a new import clears the old photo choice;
-- confirm busy state disables choices and still single-flights the request.
+Cover no-candidate unchanged UI, default none, selecting candidate 2, API call with undefined vs selected ID, Back/new-review reset, and confirm-busy disabled choices.
 
-- [ ] **Step 6: Add bounded responsive styling**
+- [ ] **6.6 Add bounded responsive CSS only**
 
-In `resumeWorkspace.css`, add only feature-scoped classes such as:
-
-```css
-.resume-import-photo-choices { display: grid; gap: 10px; }
-.resume-import-photo-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
-.resume-import-photo-option { min-width: 0; }
-.resume-import-photo-thumbnail { width: 100%; max-height: 150px; object-fit: contain; }
-```
-
-Use current border/surface variables. No new palette, animation, or design system.
+Use feature-scoped classes, existing colors/tokens, `object-fit: contain`, and an auto-fit grid or stacked mobile layout. No new palette/animation/design system.
 
 ---
 
-### Task 7: Cross-feature regression and final qualification
+### Task 7: Final regression and qualification
 
-**Files:**
-- No new production files expected.
-- Modify only tests that are legitimately stale because of the approved behavior.
+**Files:** no new production files expected.
 
-**Interfaces:**
-- Consumes all previous tasks.
-- Produces one locally verifiable feature branch ready for user browser QA, not merge.
+- [ ] **7.1 Static GitHub scope audit**
 
-- [ ] **Step 1: Static scope audit through GitHub**
+Compare feature branch to `main`; reject unexpected package/lock/env/deployment/provider/Learning/Interview/schema changes.
 
-Compare the feature branch to `main` and confirm there are no unexpected changes in:
+- [ ] **7.2 User focused local verification**
 
-```text
-backend/package.json
-frontend/package.json
-package-lock.json
-.env*
-deployment files
-AI provider/routing files
-Learning/Interview modules
-Resume database schemas
-```
-
-- [ ] **Step 2: User local focused verification block**
-
-After implementation, provide one copy-paste terminal block covering at minimum:
+Provide one block containing at minimum:
 
 ```bash
 npm --prefix backend test -- \
@@ -776,11 +634,11 @@ npm --prefix backend run typecheck:all
 npm --prefix frontend run typecheck
 ```
 
-Do not claim these pass until the user supplies output.
+Do not claim PASS until the user supplies output.
 
-- [ ] **Step 3: User local full qualification**
+- [ ] **7.3 User full local qualification**
 
-Only after focused tests are green:
+After focused green:
 
 ```bash
 npm --prefix backend test
@@ -792,67 +650,65 @@ git diff --check origin/main...HEAD
 
 Final `git status --short` must be blank.
 
-- [ ] **Step 4: User browser QA**
+- [ ] **7.4 User browser QA**
 
-Start the existing local backend + frontend development servers and verify:
+Verify:
 
-1. Long Technical Skills no longer have rounded capsule outlines and wrap cleanly in live preview.
-2. Print/PDF preview uses the same clean Skills rows.
-3. Text-only Resume PDF still imports normally and shows no photo-choice section.
-4. Resume PDF with one eligible first-page embedded candidate-style image shows one optional preview but defaults to `Do not import a photo`.
-5. Selecting that image, confirming, and opening the imported Resume shows it through the existing Candidate Photo mechanism.
-6. A PDF with multiple eligible first-page images shows no more than 3 choices and does not auto-select one.
-7. Manual Candidate Photo upload/replace/remove still works after import.
-8. Narrow/mobile dialog layout has no horizontal overflow.
+1. long Technical Skills have no rounded capsule outline and wrap cleanly;
+2. print/PDF preview uses the same Skills rows;
+3. text-only Resume PDF still imports normally with no photo-choice section;
+4. one eligible first-page image appears as an optional choice but defaults to none;
+5. selected extracted image becomes the normal Candidate Photo after confirmation;
+6. multiple eligible images show no more than 3 choices and never auto-select;
+7. manual Candidate Photo upload/replace/remove still works;
+8. narrow/mobile Import Review has no horizontal overflow.
 
-- [ ] **Step 5: Repair loop if needed**
+- [ ] **7.5 Repair loop**
 
-If any local test/browser check fails, the user pastes the exact output/screenshots back into ChatGPT. Diagnose with systematic debugging, fix the same feature branch through GitHub, and have the user pull/retest. Do not merge while any gate is failing.
+On any failure, user pastes exact logs/screenshots; diagnose with systematic debugging; repair the same GitHub branch; user pulls/retests. Do not merge while any gate fails.
 
-- [ ] **Step 6: Final approval gate**
+- [ ] **7.6 Final gate**
 
-When all automated and human QA is green, update the draft PR with exact verification evidence and stop for explicit merge approval.
+Update draft PR with exact verification evidence and stop for explicit merge approval.
 
 ---
 
-## Planned Commit / Review Sequence
+## GitHub Commit Order
 
-Because GitHub connector writes create commits directly, preserve TDD ordering in branch history:
+Preserve test-before-production ordering:
 
-1. tests for Skills presentation;
-2. minimal Skills CSS;
-3. tests for PDF image extraction;
-4. extraction primitive;
-5. tests for staging/import-review candidates;
+1. Skills test;
+2. Skills CSS;
+3. PDF image extraction test;
+4. PDF image extraction implementation;
+5. staging/import-review tests;
 6. staging/import-review implementation;
 7. confirmation/security/concurrency tests;
 8. confirmation/adoption implementation;
 9. frontend contract/API tests + implementation;
 10. photo-choice component/dialog tests;
 11. photo-choice UI implementation;
-12. only necessary regression-test repairs;
-13. final documentation/PR verification note.
+12. only legitimate stale regression-test repairs;
+13. final verification/PR note.
 
-Do not squash or merge until the user has locally verified the final branch and explicitly authorizes merge.
+Do not merge until the user has locally verified the final branch and explicitly authorizes merge.
 
 ## Acceptance Checklist
 
-- [ ] Skills use clean Resume-style rows with no `999px` capsule styling.
-- [ ] Long technical keyword text wraps naturally without clipping/horizontal overflow.
-- [ ] Screen and print share the Skills presentation.
-- [ ] Existing PDF response-contract fix remains intact.
-- [ ] Photo extraction runs only after canonical text parsing succeeds.
-- [ ] Only first-page embedded images are considered; threshold is 80.
-- [ ] Only JPEG/PNG/WebP byte signatures are considered.
-- [ ] Existing Candidate Photo validation decides actual eligibility.
-- [ ] At most 3 eligible temporary candidate Asset IDs enter import-review.
-- [ ] Candidates are owner-scoped and bound to import Job ID + source PDF Asset ID.
-- [ ] No raw image bytes/data URLs enter Mongo Job results or Gemini requests.
-- [ ] `Do not import a photo` is always the default.
-- [ ] User can explicitly select exactly one candidate.
-- [ ] Selected candidate becomes the normal existing Candidate Photo with `showProfilePhoto=true`.
-- [ ] Cross-user/wrong-job/wrong-PDF/expired/arbitrary assets are rejected.
+- [ ] Skills have no pill/capsule border treatment.
+- [ ] Long skills wrap naturally in screen and print output.
+- [ ] PR #19's PDF response-contract fix remains intact.
+- [ ] Image extraction occurs only after canonical text parsing succeeds.
+- [ ] First page only; threshold 80; actual byte signature determines MIME.
+- [ ] Existing Candidate Photo validation determines eligibility.
+- [ ] At most 3 eligible candidate Asset IDs are persisted in import-review.
+- [ ] Candidates are owner-scoped and bound to exact Job + source PDF.
+- [ ] No raw image bytes/data URLs enter Job result or Gemini.
+- [ ] Default is always `Do not import a photo`.
+- [ ] One explicit selection can become the normal Candidate Photo.
+- [ ] Cross-user/wrong-job/wrong-PDF/expired/arbitrary assets cannot be attached.
 - [ ] Concurrent confirmations cannot silently replace the winning photo choice.
-- [ ] Non-selected candidates are cleaned best-effort and remain temporary on cleanup failure.
+- [ ] Non-selected candidates remain temporary or are cleaned best-effort.
+- [ ] Bodyless existing confirm calls remain valid.
 - [ ] Manual Candidate Photo remains functional.
-- [ ] Full backend/frontend tests, typechecks, builds, diff check, and user browser QA pass before merge approval.
+- [ ] Focused/full tests, typechecks, builds, diff check, and browser QA pass before merge approval.
