@@ -8,11 +8,17 @@ import { calculateResumeReadinessScore } from "../../shared/scoring.js";
 import { recordActivitySafely } from "../activity/activity.service.js";
 import { generateStructuredOutput } from "../ai/aiGateway.service.js";
 import {
+  deleteOwnedAsset,
   getOwnedAsset,
   promoteOwnedAsset,
   readOwnedAssetBuffer,
 } from "../assets/asset.service.js";
 import { ResumeModel } from "../resumes/resume.model.js";
+import {
+  assertStagedImportPhotoCandidate,
+  attachStagedImportPhotoCandidate,
+  stageResumeImportPhotoCandidate,
+} from "../resumes/resumePhoto.service.js";
 import {
   createResume,
   findResumeBullet,
@@ -25,7 +31,10 @@ import {
 } from "../resumes/resumeVersion.model.js";
 import type { ResumeContent } from "../resumes/resume.types.js";
 import { normalizeResumeContent } from "../resumes/resume.validation.js";
-import { extractPdfText } from "./pdf.service.js";
+import {
+  extractFirstPagePdfImages,
+  extractPdfText,
+} from "./pdf.service.js";
 import {
   ResumeAnalysisModel,
   type ResumeAnalysisDocument,
@@ -45,9 +54,7 @@ function isDuplicateKeyError(error: unknown): boolean {
   );
 }
 
-function importedVersionResult(
-  version: ResumeVersionDocument | null,
-) {
+function importedVersionResult(version: ResumeVersionDocument | null) {
   if (!version) return undefined;
   return {
     resumeId: version.resumeId.toString(),
@@ -74,10 +81,8 @@ function collectBulletText(content: ResumeContent): Map<string, string> {
 
 function internalIdentifierLabels(content: ResumeContent): Map<string, string> {
   const labels = new Map<string, string>();
-  const contextual = (
-    value: string | undefined,
-    fallback: string,
-  ) => value?.trim() ? `${value.trim()} — ${fallback}` : fallback;
+  const contextual = (value: string | undefined, fallback: string) =>
+    value?.trim() ? `${value.trim()} — ${fallback}` : fallback;
 
   content.basics.links.forEach((link, index) => {
     labels.set(link.id, contextual(link.label, `link ${index + 1}`));
@@ -107,16 +112,10 @@ function internalIdentifierLabels(content: ResumeContent): Map<string, string> {
     });
   });
   content.skills.forEach((group, index) => {
-    labels.set(
-      group.id,
-      contextual(group.name, `skill group ${index + 1}`),
-    );
+    labels.set(group.id, contextual(group.name, `skill group ${index + 1}`));
   });
   content.projects.forEach((project, index) => {
-    labels.set(
-      project.id,
-      contextual(project.name, `project ${index + 1}`),
-    );
+    labels.set(project.id, contextual(project.name, `project ${index + 1}`));
     project.links.forEach((link, linkIndex) => {
       labels.set(
         link.id,
@@ -164,6 +163,7 @@ function sanitizeInternalIdentifierProse(
 export interface ImportReviewResult {
   kind: "import-review";
   content: ResumeContent;
+  photoCandidates?: Array<{ assetId: string }>;
 }
 
 export interface ConfirmedResumeImportIdentity {
@@ -204,7 +204,33 @@ export async function prepareResumePdfImport(input: {
     execution: input.execution,
   });
 
-  return { kind: "import-review", content };
+  if (!input.jobId) return { kind: "import-review", content };
+
+  const photoCandidates: Array<{ assetId: string }> = [];
+  const images = await extractFirstPagePdfImages(buffer);
+  for (const image of images) {
+    if (photoCandidates.length >= 3) break;
+    try {
+      const staged = await stageResumeImportPhotoCandidate({
+        userId: input.userId,
+        importJobId: input.jobId,
+        sourceAssetId: input.assetId,
+        buffer: image.buffer,
+        mimeType: image.mimeType,
+        ordinal: photoCandidates.length + 1,
+      });
+      photoCandidates.push({ assetId: staged._id.toString() });
+    } catch {
+      // Candidate-photo extraction is optional. Invalid or unstorable images
+      // must not make an otherwise valid text import fail.
+    }
+  }
+
+  return {
+    kind: "import-review",
+    content,
+    ...(photoCandidates.length === 0 ? {} : { photoCandidates }),
+  };
 }
 
 function importConfirmationError(): AppError {
@@ -223,7 +249,9 @@ function recordValue(value: unknown): Record<string, unknown> | undefined {
     : undefined;
 }
 
-function adoptedIdentity(value: unknown): ConfirmedResumeImportIdentity | undefined {
+function adoptedIdentity(
+  value: unknown,
+): ConfirmedResumeImportIdentity | undefined {
   const result = recordValue(value);
   if (result?.kind !== "import-adopted") return undefined;
   if (
@@ -242,9 +270,44 @@ function adoptedIdentity(value: unknown): ConfirmedResumeImportIdentity | undefi
   };
 }
 
+function reviewPhotoCandidateIds(result: Record<string, unknown>): string[] {
+  if (result.photoCandidates === undefined) return [];
+  if (!Array.isArray(result.photoCandidates) || result.photoCandidates.length > 3) {
+    throw importConfirmationError();
+  }
+
+  const ids: string[] = [];
+  for (const value of result.photoCandidates) {
+    const candidate = recordValue(value);
+    if (
+      !candidate ||
+      Object.keys(candidate).some((key) => key !== "assetId") ||
+      typeof candidate.assetId !== "string" ||
+      !/^[a-f\d]{24}$/i.test(candidate.assetId)
+    ) {
+      throw importConfirmationError();
+    }
+    if (ids.includes(candidate.assetId)) throw importConfirmationError();
+    ids.push(candidate.assetId);
+  }
+  return ids;
+}
+
+async function cleanupImportPhotoCandidates(
+  userId: string,
+  candidateIds: readonly string[],
+  selectedPhotoAssetId: string | undefined,
+): Promise<void> {
+  for (const assetId of candidateIds) {
+    if (assetId === selectedPhotoAssetId) continue;
+    await deleteOwnedAsset(userId, assetId).catch(() => undefined);
+  }
+}
+
 export async function confirmResumePdfImport(input: {
   userId: string;
   jobId: string;
+  selectedPhotoAssetId?: string;
 }): Promise<ConfirmedResumeImportIdentity> {
   const job = await JobRecordModel.findOne({
     _id: input.jobId,
@@ -276,6 +339,15 @@ export async function confirmResumePdfImport(input: {
     throw importConfirmationError();
   }
 
+  const photoCandidateIds = reviewPhotoCandidateIds(result);
+  if (
+    input.selectedPhotoAssetId !== undefined &&
+    (!/^[a-f\d]{24}$/i.test(input.selectedPhotoAssetId) ||
+      !photoCandidateIds.includes(input.selectedPhotoAssetId))
+  ) {
+    throw importConfirmationError();
+  }
+
   let content: ResumeContent;
   try {
     content = normalizeResumeContent(result.content);
@@ -289,6 +361,15 @@ export async function confirmResumePdfImport(input: {
     asset.mimeType !== "application/pdf"
   ) {
     throw importConfirmationError();
+  }
+
+  if (input.selectedPhotoAssetId !== undefined) {
+    await assertStagedImportPhotoCandidate({
+      userId: input.userId,
+      assetId: input.selectedPhotoAssetId,
+      importJobId: input.jobId,
+      sourceAssetId: assetId,
+    });
   }
 
   let winning = importedVersionResult(
@@ -327,34 +408,89 @@ export async function confirmResumePdfImport(input: {
     }
   }
 
+  if (!winning) throw importConfirmationError();
+
   await promoteOwnedAsset(input.userId, assetId, {
     resumeId: winning.resumeId,
   });
 
-  const adoptedResult = { kind: "import-adopted" as const, ...winning };
-  const scrubbed = await JobRecordModel.updateOne(
-    {
-      _id: job._id,
+  const finalization = await withMongoTransaction(async (session) => {
+    const currentJob = await JobRecordModel.findOne({
+      _id: input.jobId,
       userId: input.userId,
       type: "resume.import-pdf",
       status: "completed",
-      "result.kind": "import-review",
-    },
-    { $set: { result: adoptedResult } },
-  );
+      expiresAt: { $gt: new Date() },
+    }).session(session);
 
-  if (scrubbed.modifiedCount === 1) {
+    if (!currentJob) throw importConfirmationError();
+
+    const adopted = adoptedIdentity(currentJob.result);
+    if (adopted) {
+      return {
+        identity: adopted,
+        finalized: false,
+        candidateIds: [] as string[],
+        selectedPhotoAssetId: undefined as string | undefined,
+      };
+    }
+
+    const currentResult = recordValue(currentJob.result);
+    if (currentResult?.kind !== "import-review") {
+      throw importConfirmationError();
+    }
+    const currentCandidateIds = reviewPhotoCandidateIds(currentResult);
+    if (
+      input.selectedPhotoAssetId !== undefined &&
+      !currentCandidateIds.includes(input.selectedPhotoAssetId)
+    ) {
+      throw importConfirmationError();
+    }
+
+    if (input.selectedPhotoAssetId !== undefined) {
+      await attachStagedImportPhotoCandidate({
+        userId: input.userId,
+        resumeId: winning.resumeId,
+        assetId: input.selectedPhotoAssetId,
+        importJobId: input.jobId,
+        sourceAssetId: assetId,
+        session,
+      });
+    }
+
+    currentJob.result = {
+      kind: "import-adopted",
+      resumeId: winning.resumeId,
+      versionId: winning.versionId,
+      versionNumber: winning.versionNumber,
+    };
+    await currentJob.save({ session });
+
+    return {
+      identity: winning,
+      finalized: true,
+      candidateIds: currentCandidateIds,
+      selectedPhotoAssetId: input.selectedPhotoAssetId,
+    };
+  });
+
+  if (finalization.finalized) {
+    await cleanupImportPhotoCandidates(
+      input.userId,
+      finalization.candidateIds,
+      finalization.selectedPhotoAssetId,
+    );
     await recordActivitySafely({
       userId: input.userId,
       type: "resume.pdf.imported",
       resourceType: "resume",
-      resourceId: winning.resumeId,
+      resourceId: finalization.identity.resumeId,
       origin: "api",
       metadata: { assetId },
     });
   }
 
-  return winning;
+  return finalization.identity;
 }
 
 export async function analyzeResume(input: {
@@ -377,8 +513,7 @@ export async function analyzeResume(input: {
   }
 
   const resume = await requireOwnedResume(input.userId, input.resumeId);
-  const versionId =
-    input.versionId ?? resume.currentVersionId?.toString();
+  const versionId = input.versionId ?? resume.currentVersionId?.toString();
 
   if (!versionId) {
     throw new AppError(
@@ -477,8 +612,7 @@ export async function analyzeResume(input: {
   });
 
   const scoreBreakdown = result.scoreBreakdown;
-  const totalScore =
-    calculateResumeReadinessScore(scoreBreakdown);
+  const totalScore = calculateResumeReadinessScore(scoreBreakdown);
 
   let analysis: ResumeAnalysisDocument;
 
@@ -487,27 +621,29 @@ export async function analyzeResume(input: {
     analysis = await withMongoTransaction(async (mongoSession) => {
       await input.execution?.assertActive(mongoSession);
       const [createdAnalysis] = await ResumeAnalysisModel.create(
-        [{
-          userId: input.userId,
-          resumeId: input.resumeId,
-          resumeVersionId: versionId,
-          target: {
-            role: input.targetRole,
-            company: input.company,
-            jobDescription: input.jobDescription,
+        [
+          {
+            userId: input.userId,
+            resumeId: input.resumeId,
+            resumeVersionId: versionId,
+            target: {
+              role: input.targetRole,
+              company: input.company,
+              jobDescription: input.jobDescription,
+            },
+            scoringVersion: SCORING_VERSION,
+            promptVersion: ANALYSIS_PROMPT_VERSION,
+            provider: env.AI_DEFAULT_PROVIDER,
+            model: env.GEMINI_MODEL,
+            scoreBreakdown,
+            totalScore,
+            issues,
+            strengths,
+            missingKeywords,
+            suggestions,
+            jobId: input.jobId,
           },
-          scoringVersion: SCORING_VERSION,
-          promptVersion: ANALYSIS_PROMPT_VERSION,
-          provider: env.AI_DEFAULT_PROVIDER,
-          model: env.GEMINI_MODEL,
-          scoreBreakdown,
-          totalScore,
-          issues,
-          strengths,
-          missingKeywords,
-          suggestions,
-          jobId: input.jobId,
-        }],
+        ],
         { session: mongoSession },
       );
       return createdAnalysis;
@@ -637,8 +773,7 @@ export async function applyAnalysisSuggestions(input: {
     }
 
     if (
-      resume.currentVersionId?.toString() !==
-      analysis.resumeVersionId.toString()
+      resume.currentVersionId?.toString() !== analysis.resumeVersionId.toString()
     ) {
       throw new AppError(
         409,
