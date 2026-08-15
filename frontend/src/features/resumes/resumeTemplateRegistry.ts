@@ -54,20 +54,23 @@ export const RESUME_TEMPLATES: readonly ResumeTemplateOption[] = Object.freeze([
   Object.freeze({
     id: "ats-classic",
     label: "ATS Classic",
-    description: "A familiar single-column structure with clear section hierarchy.",
+    description:
+      "Traditional single-column layout optimized for clear scanning and conservative applications.",
     className: "resume-template-ats-classic",
     safeFallback: true,
   }),
   Object.freeze({
     id: "modern-professional",
     label: "Modern Professional",
-    description: "A restrained single-column layout with stronger visual dividers.",
+    description:
+      "Polished two-column presentation with a strong header and structured professional sidebar.",
     className: "resume-template-modern-professional",
   }),
   Object.freeze({
     id: "compact-technical",
     label: "Compact Technical",
-    description: "A denser single-column layout for detailed technical experience.",
+    description:
+      "Dense technical layout prioritizing skills, tools, projects, and efficient use of page space.",
     className: "resume-template-compact-technical",
   }),
 ]);
