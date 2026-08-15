@@ -738,14 +738,25 @@ describe("Page-aware extracted content", () => {
 });
 
 describe("Document-level deletion placement and teardown", () => {
-  it("places the sole destructive action in the document header", async () => {
+  it("places the sole destructive action behind More actions in the document header", async () => {
     renderWorkspace();
 
     const trigger = await screen.findByRole("button", {
-      name: "Delete document",
+      name: `More actions for ${learningDocument().title}`,
     });
     expect(
       trigger.closest(".learning-workspace-header"),
+    ).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Delete document" }),
+    ).toBeNull();
+
+    await userEvent.click(trigger);
+    const deleteAction = screen.getByRole("button", {
+      name: "Delete document",
+    });
+    expect(
+      deleteAction.closest(".learning-workspace-header"),
     ).not.toBeNull();
     expect(
       screen.queryByRole("button", {
@@ -763,17 +774,22 @@ describe("Document-level deletion placement and teardown", () => {
       "Original PDF: Synthetic distributed systems notes",
     );
     await userEvent.click(
+      screen.getByRole("button", {
+        name: `More actions for ${learningDocument().title}`,
+      }),
+    );
+    await userEvent.click(
       screen.getByRole("button", { name: "Delete document" }),
     );
     await userEvent.type(
       screen.getByRole("textbox", {
-        name: "Type the document title to confirm",
+        name: `Type ${learningDocument().title} to confirm`,
       }),
       learningDocument().title,
     );
     await userEvent.click(
       screen.getByRole("button", {
-        name: "Permanently delete document",
+        name: "Delete permanently",
       }),
     );
 
@@ -804,6 +820,11 @@ describe("Document-level deletion placement and teardown", () => {
     ).not.toBeNull();
     expect(
       screen.queryByRole("button", { name: "Delete document" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: `More actions for ${learningDocument().title}`,
+      }),
     ).toBeNull();
     expect(
       screen.getByRole("button", {
