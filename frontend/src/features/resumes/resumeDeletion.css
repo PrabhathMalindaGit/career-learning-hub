@@ -1,7 +1,77 @@
-.resume-record-delete-action {
+.resume-delete-overflow {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.resume-delete-overflow .card-overflow-actions__trigger {
+  display: inline-flex;
+  width: var(--minimum-interactive-target);
+  min-width: var(--minimum-interactive-target);
   min-height: var(--minimum-interactive-target);
-  padding: 8px 12px;
-  font-size: 0.8rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid #d5e0d9;
+  border-radius: 10px;
+  color: #53655a;
+  background: #f8fbf9;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.resume-delete-overflow .card-overflow-actions__trigger:hover,
+.resume-delete-overflow .card-overflow-actions__trigger[aria-expanded="true"] {
+  border-color: #b9cec1;
+  color: #245e3c;
+  background: #eef6f1;
+}
+
+.resume-delete-overflow .card-overflow-actions__trigger:focus-visible {
+  outline: 3px solid rgba(18, 107, 58, 0.22);
+  outline-offset: 2px;
+}
+
+.resume-delete-overflow .card-overflow-actions__panel {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 20;
+  width: max-content;
+  min-width: 176px;
+  max-width: min(240px, calc(100vw - 32px));
+  padding: 6px;
+  border: 1px solid #d9e3dd;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(20, 45, 31, 0.14);
+}
+
+.resume-delete-overflow .card-overflow-actions__group {
+  display: grid;
+}
+
+.resume-delete-overflow .card-overflow-actions__action {
+  width: 100%;
+  min-height: var(--minimum-interactive-target);
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
+  text-align: left;
+}
+
+.resume-delete-overflow .card-overflow-actions__action--destructive {
+  color: #9d3232;
+}
+
+.resume-delete-overflow .card-overflow-actions__action--destructive:hover,
+.resume-delete-overflow .card-overflow-actions__action--destructive:focus-visible {
+  color: #7f2424;
+  background: #fff1f1;
 }
 
 .resume-delete-dialog {
@@ -21,8 +91,28 @@
 
 .resume-delete-form {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   padding: 24px;
+}
+
+.resume-delete-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.resume-delete-warning-mark {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #8d2d2d;
+  background: #fdeaea;
+  font-size: 1rem;
+  font-weight: 900;
 }
 
 .resume-delete-form h2,
@@ -31,17 +121,36 @@
   margin: 0;
 }
 
+.resume-delete-form h2 {
+  color: #243129;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
 .resume-delete-warning {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   color: var(--text-muted);
   line-height: 1.55;
+}
+
+.resume-delete-irreversible {
+  padding: 11px 12px;
+  border: 1px solid #f0caca;
+  border-radius: 10px;
+  color: #842c2c;
+  background: #fff5f5;
+  font-weight: 750;
 }
 
 .resume-delete-confirmation {
   display: grid;
   gap: 7px;
   font-weight: 700;
+}
+
+.resume-delete-confirmation span {
+  line-height: 1.45;
 }
 
 .resume-delete-confirmation input {
@@ -58,6 +167,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+  padding-top: 2px;
 }
 
 @media (max-width: 560px) {
@@ -67,5 +177,9 @@
 
   .resume-delete-actions > button {
     width: 100%;
+  }
+
+  .resume-delete-overflow .card-overflow-actions__panel {
+    max-width: min(220px, calc(100vw - 40px));
   }
 }
