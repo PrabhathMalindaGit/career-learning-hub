@@ -32,11 +32,11 @@ describe("InterviewDeleteDialog", () => {
     });
     const submit = screen.getByRole("button", {
       name: "Permanently delete session",
-    });
-    expect(submit).toBeDisabled();
+    }) as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
 
     await user.type(input, session.title);
-    expect(submit).toBeEnabled();
+    expect(submit.disabled).toBe(false);
     await user.click(submit);
 
     await waitFor(() =>
