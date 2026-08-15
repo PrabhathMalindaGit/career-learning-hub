@@ -1,8 +1,8 @@
 # Resume Template Differentiation & Print Layout Refinement — Design
 
-**Date:** 2026-08-15  
-**Project:** Career Learning Hub  
-**Status:** Written specification approved; implementation planning authorized  
+**Date:** 2026-08-15
+**Project:** Career Learning Hub
+**Status:** Written specification approved; implementation planning authorized
 **Baseline:** `main @ 937002e331fbbc4ae8ac7d725876b46a34fd9217`
 
 ## 1. Purpose
