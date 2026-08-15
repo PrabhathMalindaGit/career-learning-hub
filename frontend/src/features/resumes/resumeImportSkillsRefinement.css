@@ -33,9 +33,9 @@
   min-width: 0;
   margin: 0;
   padding: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border, #d8ded9);
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--surface, #ffffff);
 }
 
 .resume-import-photo-choices legend {
@@ -46,7 +46,7 @@
 
 .resume-import-photo-guidance {
   margin: 2px 0 12px;
-  color: var(--text-muted);
+  color: var(--text-muted, #5b665e);
   font-size: 0.84rem;
   line-height: 1.5;
 }
@@ -60,12 +60,12 @@
   width: 18px;
   height: 18px;
   margin: 0;
-  accent-color: var(--accent-dark);
+  accent-color: var(--accent-dark, #235f40);
 }
 
 .resume-import-photo-option--none {
   display: flex;
-  min-height: var(--minimum-interactive-target);
+  min-height: var(--minimum-interactive-target, 44px);
   align-items: center;
   gap: 9px;
   padding: 9px 10px;
@@ -92,8 +92,8 @@
 }
 
 .resume-import-photo-card--selected {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  border-color: var(--accent, #2f7f53);
+  box-shadow: inset 0 0 0 1px var(--accent, #2f7f53);
 }
 
 .resume-import-photo-preview {
@@ -104,7 +104,7 @@
   overflow: hidden;
   border: 1px solid #dce5df;
   border-radius: 9px;
-  color: var(--text-muted);
+  color: var(--text-muted, #5b665e);
   background: #f4f8f5;
   font-size: 0.78rem;
   text-align: center;
