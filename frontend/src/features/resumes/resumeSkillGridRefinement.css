@@ -1,16 +1,14 @@
-/* Template-specific name-only Skills grids. Keyword-bearing groups stay full-width. */
-.resume-template-ats-classic .resume-paper-skills,
-.resume-template-modern-professional .resume-paper-skills {
+/* Template-specific name-only Skills layouts. Keyword-bearing groups keep their normal hierarchy. */
+.resume-template-ats-classic .resume-paper-skills {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.resume-template-ats-classic .resume-paper-skills {
   gap: 0.3rem 1.25rem;
 }
 
 .resume-template-modern-professional .resume-paper-skills {
-  gap: 0.28rem 0.55rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.36rem;
 }
 
 .resume-template-ats-classic .resume-paper-skills > div,
@@ -19,8 +17,6 @@
 }
 
 .resume-template-ats-classic
-  .resume-paper-skills > div:not(.resume-paper-skill--name-only),
-.resume-template-modern-professional
   .resume-paper-skills > div:not(.resume-paper-skill--name-only) {
   grid-column: 1 / -1;
 }
@@ -39,14 +35,13 @@
 
 .resume-template-modern-professional .resume-paper-skill--name-only dt {
   font-size: 0.88em;
-  font-weight: 650;
-  line-height: 1.3;
+  font-weight: 600;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
 @media screen and (max-width: 760px) {
-  .resume-template-ats-classic .resume-paper-skills,
-  .resume-template-modern-professional .resume-paper-skills {
+  .resume-template-ats-classic .resume-paper-skills {
     grid-template-columns: 1fr;
   }
 }
