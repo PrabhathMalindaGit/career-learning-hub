@@ -1,4 +1,9 @@
-import { AssetModel } from "../assets/asset.model.js";
+import { Readable } from "node:stream";
+import type { ClientSession } from "mongoose";
+import {
+  AssetModel,
+  type AssetDocument,
+} from "../assets/asset.model.js";
 import {
   createAsset,
   createSignedAssetUrl,
@@ -9,9 +14,10 @@ import { logger, serializeErrorForLog } from "../../shared/logger.js";
 import { withMongoTransaction } from "../../shared/mongoTransaction.js";
 import { requireOwnedResume } from "./resume.service.js";
 
-const TEMPORARY_PHOTO_TTL_SECONDS = 15 * 60;
+export const RESUME_PHOTO_STAGING_TTL_SECONDS = 15 * 60;
 
 type CandidatePhotoExpectation = string | "none";
+type ResumePhotoMimeType = "image/jpeg" | "image/png" | "image/webp";
 
 function currentCandidatePhotoId(value: unknown): string {
   if (
@@ -45,6 +51,12 @@ function assetBelongsToResume(
   return metadata?.resumeId === resumeId;
 }
 
+function metadataRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
 async function cleanupRetiredPhoto(
   userId: string,
   assetId: string,
@@ -59,6 +71,159 @@ async function cleanupRetiredPhoto(
   }
 }
 
+function importedPhotoFilename(
+  mimeType: ResumePhotoMimeType,
+  ordinal: number,
+): string {
+  const extension =
+    mimeType === "image/jpeg" ? "jpg" : mimeType === "image/png" ? "png" : "webp";
+  return `resume-import-photo-${ordinal}.${extension}`;
+}
+
+export async function stageResumeImportPhotoCandidate(input: {
+  userId: string;
+  importJobId: string;
+  sourceAssetId: string;
+  buffer: Buffer;
+  mimeType: ResumePhotoMimeType;
+  ordinal: number;
+}): Promise<AssetDocument> {
+  const staged = await createAsset({
+    userId: input.userId,
+    purpose: "resume-photo",
+    temporary: true,
+    expiresInSeconds: RESUME_PHOTO_STAGING_TTL_SECONDS,
+    file: {
+      fieldname: "file",
+      originalname: importedPhotoFilename(input.mimeType, input.ordinal),
+      encoding: "7bit",
+      mimetype: input.mimeType,
+      size: input.buffer.length,
+      buffer: input.buffer,
+      destination: "",
+      filename: "",
+      path: "",
+      stream: Readable.from(input.buffer),
+    },
+  });
+
+  try {
+    staged.metadata = {
+      ...(metadataRecord(staged.metadata) ?? {}),
+      resumeImportJobId: input.importJobId,
+      resumeImportSourceAssetId: input.sourceAssetId,
+      resumeImportOrdinal: input.ordinal,
+    };
+    await staged.save();
+    return staged;
+  } catch (error) {
+    void cleanupRetiredPhoto(input.userId, staged._id.toString());
+    throw error;
+  }
+}
+
+export async function assertStagedImportPhotoCandidate(input: {
+  userId: string;
+  assetId: string;
+  importJobId: string;
+  sourceAssetId: string;
+  session?: ClientSession;
+}): Promise<AssetDocument> {
+  let query = AssetModel.findOne({
+    _id: input.assetId,
+    userId: input.userId,
+    purpose: "resume-photo",
+    status: "temporary",
+    expiresAt: { $gt: new Date() },
+  });
+  if (input.session) query = query.session(input.session);
+  const asset = await query;
+  const metadata = metadataRecord(asset?.metadata);
+
+  if (
+    !asset ||
+    metadata?.resumeImportJobId !== input.importJobId ||
+    metadata?.resumeImportSourceAssetId !== input.sourceAssetId
+  ) {
+    throw new AppError(
+      409,
+      "RESUME_IMPORT_NOT_CONFIRMABLE",
+      "The Resume import is not ready for confirmation.",
+      undefined,
+      false,
+    );
+  }
+
+  return asset;
+}
+
+export async function attachStagedImportPhotoCandidate(input: {
+  userId: string;
+  resumeId: string;
+  assetId: string;
+  importJobId: string;
+  sourceAssetId: string;
+  session: ClientSession;
+}): Promise<void> {
+  const ownedResume = await requireOwnedResume(
+    input.userId,
+    input.resumeId,
+    input.session,
+  );
+  const currentAssetId = ownedResume.candidatePhotoAssetId?.toString();
+
+  if (currentAssetId) {
+    if (currentAssetId !== input.assetId) {
+      throw new AppError(
+        409,
+        "RESUME_PHOTO_CONFLICT",
+        "The candidate photo changed after this Resume was loaded. Refresh and try again.",
+      );
+    }
+
+    const existing = await AssetModel.findOne({
+      _id: input.assetId,
+      userId: input.userId,
+      purpose: "resume-photo",
+      status: "active",
+    }).session(input.session);
+    if (
+      !existing ||
+      !assetBelongsToResume(
+        metadataRecord(existing.metadata),
+        input.resumeId,
+      )
+    ) {
+      throw new AppError(
+        409,
+        "RESUME_PHOTO_STATE_INVALID",
+        "The current candidate photo could not be attached safely.",
+      );
+    }
+    return;
+  }
+
+  const staged = await assertStagedImportPhotoCandidate({
+    userId: input.userId,
+    assetId: input.assetId,
+    importJobId: input.importJobId,
+    sourceAssetId: input.sourceAssetId,
+    session: input.session,
+  });
+
+  staged.status = "active";
+  staged.expiresAt = undefined;
+  staged.metadata = {
+    ...(metadataRecord(staged.metadata) ?? {}),
+    resumeId: input.resumeId,
+  };
+  await staged.save({ session: input.session });
+
+  ownedResume.candidatePhotoAssetId = staged._id;
+  ownedResume.design.showProfilePhoto = true;
+  await ownedResume.save({ session: input.session });
+}
+
 export async function createOrReplaceCandidatePhoto(input: {
   userId: string;
   resumeId: string;
@@ -70,7 +235,7 @@ export async function createOrReplaceCandidatePhoto(input: {
     purpose: "resume-photo",
     file: input.file,
     temporary: true,
-    expiresInSeconds: TEMPORARY_PHOTO_TTL_SECONDS,
+    expiresInSeconds: RESUME_PHOTO_STAGING_TTL_SECONDS,
   });
 
   let retiredAssetId: string | undefined;
@@ -114,7 +279,7 @@ export async function createOrReplaceCandidatePhoto(input: {
         if (
           !previous ||
           !assetBelongsToResume(
-            previous.metadata as Record<string, unknown> | undefined,
+            metadataRecord(previous.metadata),
             input.resumeId,
           )
         ) {
@@ -134,7 +299,7 @@ export async function createOrReplaceCandidatePhoto(input: {
       staged.status = "active";
       staged.expiresAt = undefined;
       staged.metadata = {
-        ...(staged.metadata ?? {}),
+        ...(metadataRecord(staged.metadata) ?? {}),
         resumeId: input.resumeId,
       };
       await staged.save({ session });
@@ -196,7 +361,7 @@ export async function removeCandidatePhoto(input: {
     if (
       !currentAsset ||
       !assetBelongsToResume(
-        currentAsset.metadata as Record<string, unknown> | undefined,
+        metadataRecord(currentAsset.metadata),
         input.resumeId,
       )
     ) {
@@ -250,7 +415,7 @@ export async function getCandidatePhotoSource(input: {
   if (
     !asset ||
     !assetBelongsToResume(
-      asset.metadata as Record<string, unknown> | undefined,
+      metadataRecord(asset.metadata),
       input.resumeId,
     )
   ) {
