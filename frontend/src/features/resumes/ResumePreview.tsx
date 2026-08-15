@@ -79,7 +79,7 @@ export function ResumePreview({
           draft={draft}
           templateId={resolved.template.option.id}
           showCandidatePhoto={showCandidatePhoto}
-          candidatePhotoUrl={candidatePhotoUrl}
+          {...(candidatePhotoUrl !== undefined ? { candidatePhotoUrl } : {})}
         />
       </article>
     </section>
