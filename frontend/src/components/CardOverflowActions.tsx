@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export type CardOverflowAction = {
   id: string;
@@ -27,19 +27,32 @@ export function CardOverflowActions({
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const [internalOpen, setInternalOpen] = useState(open);
+  const effectiveOpen = open || internalOpen;
 
   useEffect(() => {
-    if (!open) return;
+    setInternalOpen(open);
+  }, [open]);
+
+  function setOpen(next: boolean) {
+    setInternalOpen(next);
+    onOpenChange(next);
+  }
+
+  useEffect(() => {
+    if (!effectiveOpen) return;
 
     function onPointerDown(event: PointerEvent) {
       const target = event.target;
       if (target instanceof Node && rootRef.current?.contains(target)) return;
+      setInternalOpen(false);
       onOpenChange(false);
     }
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       event.preventDefault();
+      setInternalOpen(false);
       onOpenChange(false);
       queueMicrotask(() => triggerRef.current?.focus());
     }
@@ -50,7 +63,7 @@ export function CardOverflowActions({
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [onOpenChange, open]);
+  }, [effectiveOpen, onOpenChange]);
 
   return (
     <div
@@ -63,14 +76,14 @@ export function CardOverflowActions({
         className="card-overflow-actions__trigger"
         aria-label={ariaLabel}
         aria-haspopup="true"
-        aria-expanded={open}
+        aria-expanded={effectiveOpen}
         aria-controls={panelId}
-        onClick={() => onOpenChange(!open)}
+        onClick={() => setOpen(!effectiveOpen)}
       >
         <span aria-hidden="true">⋯</span>
       </button>
 
-      {open ? (
+      {effectiveOpen ? (
         <div id={panelId} className="card-overflow-actions__panel">
           {actions.map((action) => (
             <div
@@ -92,7 +105,7 @@ export function CardOverflowActions({
                 onClick={() => {
                   const trigger = triggerRef.current;
                   if (!trigger) return;
-                  onOpenChange(false);
+                  setOpen(false);
                   action.onSelect(trigger);
                 }}
               >
