@@ -1,8 +1,12 @@
 import type { Request, Response } from "express";
 import { deleteInterviewSession } from "./interviewDeletion.service.js";
 
+type InterviewSessionIdParams = {
+  sessionId: string;
+};
+
 export async function deleteInterviewSessionController(
-  request: Request,
+  request: Request<InterviewSessionIdParams>,
   response: Response,
 ): Promise<void> {
   await deleteInterviewSession({
