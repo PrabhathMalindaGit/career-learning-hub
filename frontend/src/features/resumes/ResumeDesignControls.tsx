@@ -97,6 +97,12 @@ export function ResumeDesignControls({
     setDraft(safeCanonicalSelection(design));
   }, [design.colorPaletteId, design.fontFamily, design.templateId]);
 
+  useEffect(() => {
+    if (!saving && status?.tone === "success") {
+      setCustomizing(false);
+    }
+  }, [saving, status?.message, status?.requestId, status?.tone]);
+
   const hasUnavailableSavedChoice =
     canonical.templateId === "" ||
     canonical.fontFamily === "" ||
