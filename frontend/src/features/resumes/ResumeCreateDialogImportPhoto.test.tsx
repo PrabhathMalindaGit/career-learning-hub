@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ResumeCreateDialog } from "./ResumeCreateDialog";
+import * as candidatePhoto from "./resumeCandidatePhoto";
 import * as resumeApi from "./resumeApi";
 import * as polling from "./resumePolling";
 
@@ -11,8 +12,17 @@ vi.mock("./resumeApi", () => ({
   confirmResumePdfImport: vi.fn(),
   createResume: vi.fn(),
   fetchJob: vi.fn(),
+  fetchResumeImportPhotoCandidateSource: vi.fn(),
   importResumePdf: vi.fn(),
 }));
+
+vi.mock("./resumeCandidatePhoto", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./resumeCandidatePhoto")>();
+  return {
+    ...actual,
+    loadCanonicalCandidatePhoto: vi.fn(),
+  };
+});
 
 vi.mock("./resumePolling", () => ({
   pollResumeJob: vi.fn(),
@@ -89,7 +99,11 @@ function completedReviewJob() {
   };
 }
 
-function Harness({ onCreated = vi.fn() }: { onCreated?: typeof vi.fn }) {
+function Harness({
+  onCreated = vi.fn(),
+}: {
+  onCreated?: (value: typeof workspace) => void;
+}) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   return (
@@ -129,12 +143,21 @@ async function openReview(user: ReturnType<typeof userEvent.setup>) {
     new File(["%PDF"], "resume.pdf", { type: "application/pdf" }),
   );
   await user.click(screen.getByRole("button", { name: "Import private PDF" }));
-  expect(await screen.findByRole("heading", { name: "Import Review" })).not.toBeNull();
+  expect(
+    await screen.findByRole("heading", { name: "Import Review" }),
+  ).not.toBeNull();
 }
 
 describe("ResumeCreateDialog imported photo review", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(resumeApi.fetchResumeImportPhotoCandidateSource).mockResolvedValue({
+      url: "https://example.test/extracted-photo",
+      expiresAt: "2026-08-15T01:00:00.000Z",
+    });
+    vi.mocked(candidatePhoto.loadCanonicalCandidatePhoto).mockResolvedValue(
+      "blob:extracted-photo",
+    );
   });
 
   it("shows extracted photo choices with no photo selected by default", async () => {
@@ -146,12 +169,18 @@ describe("ResumeCreateDialog imported photo review", () => {
       screen.getByRole("group", { name: "Possible candidate photo from PDF" }),
     ).not.toBeNull();
     expect(
-      (screen.getByRole("radio", { name: "Do not import a photo" }) as HTMLInputElement)
-        .checked,
+      (
+        screen.getByRole("radio", {
+          name: "Do not import a photo",
+        }) as HTMLInputElement
+      ).checked,
     ).toBe(true);
     expect(
-      (screen.getByRole("radio", { name: "Use extracted photo 1" }) as HTMLInputElement)
-        .checked,
+      (
+        screen.getByRole("radio", {
+          name: "Use extracted photo 1",
+        }) as HTMLInputElement
+      ).checked,
     ).toBe(false);
   });
 
@@ -197,7 +226,7 @@ describe("ResumeCreateDialog imported photo review", () => {
     );
   });
 
-  it("resets photo selection when returning to import and reviewing again", async () => {
+  it("resets photo selection when returning to import", async () => {
     render(<Harness />);
     const user = userEvent.setup();
     await openReview(user);
@@ -206,8 +235,11 @@ describe("ResumeCreateDialog imported photo review", () => {
       screen.getByRole("radio", { name: "Use extracted photo 1" }),
     );
     expect(
-      (screen.getByRole("radio", { name: "Use extracted photo 1" }) as HTMLInputElement)
-        .checked,
+      (
+        screen.getByRole("radio", {
+          name: "Use extracted photo 1",
+        }) as HTMLInputElement
+      ).checked,
     ).toBe(true);
 
     await user.click(screen.getByRole("button", { name: "Back" }));
