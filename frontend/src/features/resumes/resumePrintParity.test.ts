@@ -6,8 +6,24 @@ const printParityCss = readFileSync(
   resolve(process.cwd(), "src/features/resumes/resumePrintParity.css"),
   "utf8",
 );
+const resumePreviewSource = readFileSync(
+  resolve(process.cwd(), "src/features/resumes/ResumePreview.tsx"),
+  "utf8",
+);
 
 describe("Resume template print parity", () => {
+  it("loads print parity after the shared template differentiation stylesheet", () => {
+    const differentiationImport = resumePreviewSource.indexOf(
+      'import "./resumeTemplateDifferentiation.css";',
+    );
+    const parityImport = resumePreviewSource.indexOf(
+      'import "./resumePrintParity.css";',
+    );
+
+    expect(differentiationImport).toBeGreaterThanOrEqual(0);
+    expect(parityImport).toBeGreaterThan(differentiationImport);
+  });
+
   it("keeps Compact Technical skills in two columns during printing", () => {
     expect(printParityCss).toMatch(
       /\.resume-template-compact-technical\s+\.resume-paper-skills\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s,
