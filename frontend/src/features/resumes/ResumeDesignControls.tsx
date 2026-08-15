@@ -15,6 +15,7 @@ import {
   type ResumePresentationSelection,
 } from "./resumeTemplateRegistry";
 import { ResumeMiniDocument } from "./ResumeMiniDocument";
+import "./resumeAppearancePolish.css";
 
 interface ResumeDesignStatus {
   readonly tone: "success" | "error";
@@ -119,14 +120,18 @@ export function ResumeDesignControls({
   };
 
   return (
-    <section className="resume-design-panel" aria-label="Resume design controls">
+    <section
+      className="resume-design-panel resume-appearance-polish"
+      aria-label="Resume design controls"
+    >
       <fieldset className="resume-design-fieldset" disabled={saving}>
         <legend>Resume appearance</legend>
-        <div className="resume-design-overview">
+        <div className="resume-design-overview resume-appearance-overview">
           <div>
             <p className="resume-design-current">{appearanceSummary}</p>
             <p className="resume-design-summary">
-              Preview changes immediately, then save the choices you want to keep.
+              Preview your design choices instantly, then save the appearance you
+              want to keep.
             </p>
           </div>
           <button
@@ -151,17 +156,20 @@ export function ResumeDesignControls({
         {customizing ? (
           <div
             id="resume-design-customization"
-            className="resume-design-customization"
+            className="resume-design-customization resume-appearance-customization"
           >
-            <div className="resume-design-grid">
-              <fieldset className="resume-template-choices">
+            <div className="resume-design-grid resume-appearance-grid">
+              <fieldset className="resume-template-choices resume-appearance-section resume-appearance-section--templates">
                 <legend>Template</legend>
-                <div className="resume-template-card-grid">
+                <p className="resume-appearance-helper">
+                  Choose the layout that best matches the role and application style.
+                </p>
+                <div className="resume-template-card-grid resume-appearance-template-grid">
                   {RESUME_TEMPLATES.map((option) => {
                     const selected = draft.templateId === option.id;
                     return (
                       <label
-                        className={`resume-template-card${
+                        className={`resume-template-card resume-appearance-template-card${
                           selected ? " resume-template-card--selected" : ""
                         }`}
                         key={option.id}
@@ -170,6 +178,7 @@ export function ResumeDesignControls({
                           type="radio"
                           name="resume-template"
                           value={option.id}
+                          aria-label={option.label}
                           checked={selected}
                           disabled={saving}
                           onChange={(event) => {
@@ -179,18 +188,29 @@ export function ResumeDesignControls({
                             }
                           }}
                         />
-                        <span className="resume-template-card-content">
-                          <ResumeMiniDocument
-                            templateId={option.id}
-                            colorPaletteId={draft.colorPaletteId}
-                            fontFamily={draft.fontFamily}
-                            context="template"
-                          />
-                          <span className="resume-template-card-heading">
+                        <span className="resume-template-card-content resume-appearance-template-content">
+                          <span className="resume-appearance-template-preview">
+                            <ResumeMiniDocument
+                              templateId={option.id}
+                              colorPaletteId={draft.colorPaletteId}
+                              fontFamily={draft.fontFamily}
+                              context="template"
+                            />
+                          </span>
+                          <span className="resume-template-card-heading resume-appearance-template-heading">
                             <strong>{option.label}</strong>
+                            {selected ? (
+                              <span className="resume-appearance-selected">
+                                <span aria-hidden="true">✓</span> Selected
+                              </span>
+                            ) : null}
                           </span>
                           <span className="resume-template-card-description">
                             {option.description}
+                          </span>
+                          <span className="resume-appearance-best-for">
+                            <strong>Best for</strong>
+                            <span>{option.bestFor}</span>
                           </span>
                         </span>
                       </label>
@@ -199,9 +219,12 @@ export function ResumeDesignControls({
                 </div>
               </fieldset>
 
-              <fieldset className="resume-design-choice-group">
-                <legend>Font</legend>
-                <div className="resume-font-card-grid">
+              <fieldset className="resume-design-choice-group resume-appearance-section">
+                <legend>Typography</legend>
+                <p className="resume-appearance-helper">
+                  Pick a readable type style for the Resume preview and export.
+                </p>
+                <div className="resume-font-card-grid resume-appearance-choice-grid">
                   {RESUME_FONTS.map((option) => {
                     const selected = draft.fontFamily === option.value;
                     return (
@@ -215,6 +238,7 @@ export function ResumeDesignControls({
                           type="radio"
                           name="resume-font"
                           value={option.value}
+                          aria-label={option.value}
                           checked={selected}
                           disabled={saving}
                           onChange={(event) => {
@@ -235,6 +259,11 @@ export function ResumeDesignControls({
                           </span>
                           <span className="resume-choice-card-heading">
                             <strong>{option.value}</strong>
+                            {selected ? (
+                              <span className="resume-appearance-choice-check" aria-hidden="true">
+                                ✓
+                              </span>
+                            ) : null}
                           </span>
                           <span className="resume-choice-card-description">
                             {option.label}
@@ -246,9 +275,13 @@ export function ResumeDesignControls({
                 </div>
               </fieldset>
 
-              <fieldset className="resume-design-choice-group">
-                <legend>Palette</legend>
-                <div className="resume-palette-card-grid">
+              <fieldset className="resume-design-choice-group resume-appearance-section">
+                <legend>Color</legend>
+                <p className="resume-appearance-helper">
+                  Apply one of the approved professional palettes to headings and
+                  accents.
+                </p>
+                <div className="resume-palette-card-grid resume-appearance-choice-grid">
                   {RESUME_PALETTES.map((option) => {
                     const selected = draft.colorPaletteId === option.id;
                     return (
@@ -262,6 +295,7 @@ export function ResumeDesignControls({
                           type="radio"
                           name="resume-palette"
                           value={option.id}
+                          aria-label={option.label}
                           checked={selected}
                           disabled={saving}
                           onChange={(event) => {
@@ -282,8 +316,22 @@ export function ResumeDesignControls({
                             <span className="resume-palette-card-body resume-palette-card-body--short" />
                             <span className="resume-palette-card-accent" />
                           </span>
+                          <span
+                            className="resume-appearance-swatch-row"
+                            data-palette-swatch={option.id}
+                            aria-hidden="true"
+                          >
+                            <span style={{ background: option.roles.heading }} />
+                            <span style={{ background: option.roles.secondary }} />
+                            <span style={{ background: option.roles.rule }} />
+                          </span>
                           <span className="resume-choice-card-heading">
                             <strong>{option.label}</strong>
+                            {selected ? (
+                              <span className="resume-appearance-choice-check" aria-hidden="true">
+                                ✓
+                              </span>
+                            ) : null}
                           </span>
                           <span className="resume-choice-card-description">
                             Heading, body, and accent roles
@@ -296,6 +344,11 @@ export function ResumeDesignControls({
               </fieldset>
             </div>
 
+            <p className="resume-appearance-paper-note">
+              Paper size is currently <strong>{design.pageSize === "LETTER" ? "Letter" : "A4"}</strong>.
+              Change it in Print / Save as PDF.
+            </p>
+
             <p className="resume-design-history-note">
               Historical saved content uses this current design because design
               choices are not saved with each version.
@@ -304,12 +357,14 @@ export function ResumeDesignControls({
         ) : null}
 
         {dirty ? (
-          <p className="resume-design-dirty-note">Design changes not saved</p>
+          <p className="resume-design-dirty-note resume-appearance-dirty-note">
+            Unsaved appearance changes
+          </p>
         ) : null}
 
         {saving ? (
           <p className="resume-design-status" role="status">
-            Saving resume design…
+            Saving appearance…
           </p>
         ) : null}
 
@@ -329,7 +384,7 @@ export function ResumeDesignControls({
         ) : null}
 
         {customizing || dirty || saving || status ? (
-          <div className="resume-design-actions">
+          <div className="resume-design-actions resume-appearance-actions">
             <button
               type="button"
               className="resume-secondary-button"
@@ -351,7 +406,7 @@ export function ResumeDesignControls({
                 }
               }}
             >
-              Save design
+              Save appearance
             </button>
           </div>
         ) : null}
