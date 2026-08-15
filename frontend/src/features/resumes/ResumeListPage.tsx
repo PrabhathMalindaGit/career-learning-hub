@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { PageHeader } from "../../components/PageHeader";
 import { Pager } from "../../components/Pager";
@@ -45,7 +49,9 @@ export function ResumeListPage() {
   const [listError, setListError] = useState<SafeError | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
-  const [openActionsResumeId, setOpenActionsResumeId] = useState<string | null>(null);
+  const [openActionsResumeId, setOpenActionsResumeId] = useState<string | null>(
+    null,
+  );
   const listSequence = useRef(0);
   const headingCreateRef = useRef<HTMLButtonElement>(null);
   const createReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -70,7 +76,10 @@ export function ResumeListPage() {
     setLoading(true);
     setListError(null);
 
-    void listResumes({ page, limit: PAGE_SIZE }, controller.signal)
+    void listResumes(
+      { page, limit: PAGE_SIZE },
+      controller.signal,
+    )
       .then((result) => {
         if (sequence !== listSequence.current) return;
         setResumes(result.resumes);
@@ -90,11 +99,17 @@ export function ResumeListPage() {
   }, [page, reloadKey]);
 
   function handleResumeDeleted(resumeId: string) {
-    const deletingLastVisibleResume = resumes.length === 1 && resumes[0]?.id === resumeId;
+    const deletingLastVisibleResume =
+      resumes.length === 1 && resumes[0]?.id === resumeId;
+
     setOpenActionsResumeId(null);
-    setResumes((current) => current.filter((resume) => resume.id !== resumeId));
+    setResumes((current) =>
+      current.filter((resume) => resume.id !== resumeId),
+    );
     setPagination((current) =>
-      current ? { ...current, total: Math.max(0, current.total - 1) } : current,
+      current
+        ? { ...current, total: Math.max(0, current.total - 1) }
+        : current,
     );
 
     if (deletingLastVisibleResume && page > 1) {
@@ -116,7 +131,8 @@ export function ResumeListPage() {
         }
         description={
           <p>
-            Create, import, and open your private resume records. Only validated server data is shown.
+            Create, import, and open your private resume records. Only
+            validated server data is shown.
           </p>
         }
         actions={
@@ -148,11 +164,19 @@ export function ResumeListPage() {
               <p className="resume-kicker">Collection</p>
               <h2 id="your-resumes">Your resumes</h2>
             </div>
-            {pagination ? <span className="resume-status">{pagination.total} total</span> : null}
+            {pagination ? (
+              <span className="resume-status">
+                {pagination.total} total
+              </span>
+            ) : null}
           </div>
 
           {loading ? (
-            <div className="resume-loading-state" role="status" aria-label="Loading resumes">
+            <div
+              className="resume-loading-state"
+              role="status"
+              aria-label="Loading resumes"
+            >
               <p>Loading resumes…</p>
               <div className="resume-skeleton-grid" aria-hidden="true">
                 {[0, 1, 2].map((index) => (
@@ -171,7 +195,10 @@ export function ResumeListPage() {
               body={<p>{listError.message}</p>}
               requestId={listError.requestId}
               actions={
-                <button type="button" onClick={() => setReloadKey((key) => key + 1)}>
+                <button
+                  type="button"
+                  onClick={() => setReloadKey((key) => key + 1)}
+                >
                   Retry list
                 </button>
               }
@@ -186,7 +213,9 @@ export function ResumeListPage() {
               </span>
               <div>
                 <strong>No resumes yet</strong>
-                <p>No resumes yet. Create a blank resume or import a private PDF.</p>
+                <p>
+                  No resumes yet. Create a blank resume or import a private PDF.
+                </p>
               </div>
               <button
                 type="button"
@@ -223,16 +252,21 @@ export function ResumeListPage() {
                         />
                       </div>
                       <div className="resume-record-state">
-                        <span className="resume-record-status">{titleCase(resume.status)}</span>
+                        <span className="resume-record-status">
+                          {titleCase(resume.status)}
+                        </span>
                         <span>Version {resume.latestVersionNumber}</span>
                       </div>
                       <div className="resume-record-design">
                         <span>{presentation.template.option.label}</span>
-                        <span>{presentation.palette.option.label} palette</span>
+                        <span>
+                          {presentation.palette.option.label} palette
+                        </span>
                       </div>
                       <div className="resume-record-card-footer">
                         <small>
-                          Updated {new Date(resume.updatedAt).toLocaleDateString()}
+                          Updated{" "}
+                          {new Date(resume.updatedAt).toLocaleDateString()}
                         </small>
                         <Link
                           to={`/resumes/${resume.id}`}
