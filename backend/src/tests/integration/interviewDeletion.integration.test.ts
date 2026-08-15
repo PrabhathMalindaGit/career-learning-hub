@@ -52,13 +52,13 @@ async function createQuestionAndAttempt(userId: string, sessionId: string) {
 }
 
 describe("Interview session permanent deletion", () => {
-  it.each(["active", "completed", "archived"] as const)(
-    "deletes an owned %s session with questions and immutable attempts",
-    async (status) => {
-      const owner = await registerTestUser(app, {
-        email: `interview-delete-${status}@example.com`,
-        displayName: `Interview Delete ${status}`,
-      });
+  it("deletes owned active, completed, and archived sessions with questions and immutable attempts", async () => {
+    const owner = await registerTestUser(app, {
+      email: "interview-delete-statuses@example.com",
+      displayName: "Interview Delete Statuses",
+    });
+
+    for (const status of ["active", "completed", "archived"] as const) {
       const session = await createSession({ userId: owner.userId, status });
       const { question, attempt } = await createQuestionAndAttempt(
         owner.userId,
@@ -73,8 +73,8 @@ describe("Interview session permanent deletion", () => {
       expect(await InterviewSessionModel.exists({ _id: session._id })).toBeFalsy();
       expect(await InterviewQuestionModel.exists({ _id: question._id })).toBeFalsy();
       expect(await InterviewAttemptModel.exists({ _id: attempt._id })).toBeFalsy();
-    },
-  );
+    }
+  });
 
   it("preserves the source Resume when its Interview session is permanently deleted", async () => {
     const owner = await registerTestUser(app, {
@@ -126,17 +126,17 @@ describe("Interview session permanent deletion", () => {
     expect(await InterviewAttemptModel.exists({ _id: attempt._id })).toBeTruthy();
   });
 
-  it.each([
-    "interview.questions.generate",
-    "interview.question.explain",
-    "interview.attempt.feedback",
-  ] as const)(
-    "blocks deletion while related %s work is active",
-    async (type) => {
-      const owner = await registerTestUser(app, {
-        email: `interview-delete-active-${type.replaceAll(".", "-")}@example.com`,
-        displayName: "Interview Delete Active Job",
-      });
+  it("blocks deletion while any related Interview AI work is active", async () => {
+    const owner = await registerTestUser(app, {
+      email: "interview-delete-active-jobs@example.com",
+      displayName: "Interview Delete Active Jobs",
+    });
+
+    for (const type of [
+      "interview.questions.generate",
+      "interview.question.explain",
+      "interview.attempt.feedback",
+    ] as const) {
       const session = await createSession({ userId: owner.userId });
       await JobRecordModel.create({
         userId: owner.userId,
@@ -167,16 +167,16 @@ describe("Interview session permanent deletion", () => {
         "INTERVIEW_DELETE_BLOCKED_BY_ACTIVE_JOB",
       );
       expect(await InterviewSessionModel.exists({ _id: session._id })).toBeTruthy();
-    },
-  );
+    }
+  });
 
-  it.each(["completed", "failed", "cancelled"] as const)(
-    "removes matching terminal Interview jobs with status %s",
-    async (status) => {
-      const owner = await registerTestUser(app, {
-        email: `interview-delete-terminal-${status}@example.com`,
-        displayName: `Interview Delete Terminal ${status}`,
-      });
+  it("removes matching completed, failed, and cancelled Interview jobs", async () => {
+    const owner = await registerTestUser(app, {
+      email: "interview-delete-terminal-jobs@example.com",
+      displayName: "Interview Delete Terminal Jobs",
+    });
+
+    for (const status of ["completed", "failed", "cancelled"] as const) {
       const session = await createSession({ userId: owner.userId });
       const job = await JobRecordModel.create({
         userId: owner.userId,
@@ -198,6 +198,6 @@ describe("Interview session permanent deletion", () => {
         .expect(204);
 
       expect(await JobRecordModel.exists({ _id: job._id })).toBeFalsy();
-    },
-  );
+    }
+  });
 });
