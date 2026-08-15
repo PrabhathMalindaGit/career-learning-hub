@@ -30,19 +30,20 @@ describe("Resume template print parity", () => {
     );
   });
 
-  it("uses independent Modern Professional print columns", () => {
+  it("keeps the Modern main column in normal fragmentable print flow", () => {
     expect(printParityCss).toMatch(
-      /\.resume-template-modern-professional\s+\.resume-modern-columns\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*flex-start;[^}]*break-inside:\s*auto;/s,
+      /\.resume-template-modern-professional\s+\.resume-modern-columns\s*\{[^}]*position:\s*relative;[^}]*display:\s*block;[^}]*break-inside:\s*auto;/s,
     );
     expect(printParityCss).toMatch(
-      /\.resume-template-modern-professional\s+\.resume-modern-content\s*\{[^}]*flex:\s*2\.08\s+1\s+0;[^}]*break-inside:\s*auto;/s,
-    );
-    expect(printParityCss).toMatch(
-      /\.resume-template-modern-professional\s+\.resume-modern-sidebar\s*\{[^}]*flex:\s*0\.92\s+1\s+0;[^}]*break-inside:\s*auto;/s,
+      /\.resume-template-modern-professional\s+\.resume-modern-content\s*\{[^}]*width:\s*calc\(68\.5%\s*-\s*0\.675rem\);[^}]*break-inside:\s*auto;/s,
     );
   });
 
-  it("does not synchronize Modern sections into print grid rows", () => {
+  it("positions the Modern sidebar independently instead of moving the body wholesale", () => {
+    expect(printParityCss).toMatch(
+      /\.resume-template-modern-professional\s+\.resume-modern-sidebar\s*\{[^}]*position:\s*absolute;[^}]*inset-block-start:\s*0;[^}]*inset-inline-end:\s*0;[^}]*width:\s*calc\(31\.5%\s*-\s*0\.675rem\);/s,
+    );
+    expect(printParityCss).not.toContain("display: flex");
     expect(printParityCss).not.toContain("display: contents");
     expect(printParityCss).not.toContain("grid-row:");
     expect(printParityCss).not.toContain("grid-column:");
