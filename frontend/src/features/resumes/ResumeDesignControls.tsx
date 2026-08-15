@@ -97,6 +97,7 @@ export function ResumeDesignControls({
     setDraft(safeCanonicalSelection(design));
   }, [design.colorPaletteId, design.fontFamily, design.templateId]);
 
+  // Keep failed/pending edits visible; collapse only after the saved design is confirmed.
   useEffect(() => {
     if (!saving && status?.tone === "success") {
       setCustomizing(false);
