@@ -201,12 +201,12 @@ function ensureUniqueIds(content: ResumeContent): void {
   const ids = new Set<string>();
   const add = (id: string) => {
     if (ids.has(id)) {
-          throw new AppError(
-            400,
-            "DUPLICATE_RESUME_STABLE_ID",
-            `Duplicate stable resume ID detected: ${id}`,
-          );
-        }
+      throw new AppError(
+        400,
+        "DUPLICATE_RESUME_STABLE_ID",
+        `Duplicate stable resume ID detected: ${id}`,
+      );
+    }
     ids.add(id);
   };
 
@@ -227,6 +227,21 @@ function ensureUniqueIds(content: ResumeContent): void {
   });
   content.certifications.forEach((entry) => add(entry.id));
   content.languages.forEach((entry) => add(entry.id));
+}
+
+function omitUndefinedDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => omitUndefinedDeep(item));
+  }
+  if (typeof value !== "object" || value === null) {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, nested]) => nested !== undefined)
+      .map(([key, nested]) => [key, omitUndefinedDeep(nested)]),
+  );
 }
 
 export function normalizeResumeContent(input: unknown): ResumeContent {
@@ -260,8 +275,9 @@ export function normalizeResumeContent(input: unknown): ResumeContent {
     interests: parsed.interests,
   };
 
-  ensureUniqueIds(normalized);
-  return normalized;
+  const canonical = omitUndefinedDeep(normalized) as ResumeContent;
+  ensureUniqueIds(canonical);
+  return canonical;
 }
 
 export function createBlankResumeContent(): ResumeContent {
