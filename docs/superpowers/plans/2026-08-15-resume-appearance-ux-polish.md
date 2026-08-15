@@ -23,11 +23,17 @@ Polish the existing Resume Appearance selector without expanding the template ca
 9. Update focused `ResumeDesignControls` and template-registry tests for the new visible guidance and labels.
 10. Keep the implementation responsive, keyboard accessible, and reduced-motion aware.
 
+## Approved post-QA repairs
+
+1. Name-only Compact Technical skill groups receive a lighter, slightly smaller standalone-label treatment while keyword-bearing groups keep the existing group-name + keyword hierarchy.
+2. Compact Technical keeps a bounded `620px` minimum width only in the on-screen Live preview when the editor column is narrower.
+3. The outer Live preview card remains the sticky shell. A dedicated inner `resume-live-preview-viewport` owns horizontal and wide-screen vertical scrolling so the template label, `Live preview` heading, and A4/Letter badge stay fixed and aligned.
+4. Print-only Resume surfaces bypass the live-preview viewport entirely.
+
 ## Explicit non-goals
 
 Do not change:
 
-- Resume template layout/rendering components;
 - Candidate Photo behavior or storage;
 - Resume API or backend;
 - MongoDB or migrations;
@@ -36,13 +42,14 @@ Do not change:
 - print/PDF document rendering;
 - page-size persistence;
 - Resume version behavior;
-- template/font/palette IDs.
+- template/font/palette IDs;
+- add arbitrary font-size controls.
 
 ## Local qualification gate
 
 After pulling the feature branch, run:
 
-- focused Resume Appearance tests;
+- focused Resume Appearance / template / live-preview tests;
 - frontend typecheck;
 - frontend production build;
 - `git diff --check` against `origin/main`;
@@ -59,6 +66,8 @@ Then complete browser QA for:
 - explicit save and reset;
 - refresh persistence;
 - keyboard behavior;
-- responsive layout.
+- responsive layout;
+- Compact Technical name-only skill weight;
+- Compact Technical inner résumé scrolling with the header and A4/Letter badge fixed and aligned.
 
 No merge, deployment, or branch deletion occurs without separate approval.
