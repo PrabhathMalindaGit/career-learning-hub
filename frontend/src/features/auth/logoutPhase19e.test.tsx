@@ -104,8 +104,10 @@ describe("Phase 19E logout interaction contract", () => {
     const logout = screen.getByRole("button", { name: "Log out" });
     await user.click(logout);
 
-    const busyLogout = screen.getByRole("button", { name: "Logging out…" });
-    expect(busyLogout).toBeDisabled();
+    const busyLogout = screen.getByRole("button", {
+      name: "Logging out…",
+    }) as HTMLButtonElement;
+    expect(busyLogout.disabled).toBe(true);
     expect(authApi.logout).toHaveBeenCalledTimes(1);
     await user.click(busyLogout);
     expect(authApi.logout).toHaveBeenCalledTimes(1);
@@ -156,8 +158,10 @@ describe("Phase 19E logout interaction contract", () => {
     await user.click(mobileLogout);
 
     expect(screen.queryByRole("dialog", { name: "Navigation" })).toBeNull();
-    const desktopBusy = screen.getByRole("button", { name: "Logging out…" });
-    expect(desktopBusy).toBeDisabled();
+    const desktopBusy = screen.getByRole("button", {
+      name: "Logging out…",
+    }) as HTMLButtonElement;
+    expect(desktopBusy.disabled).toBe(true);
     expect(authApi.logout).toHaveBeenCalledTimes(1);
 
     pendingLogout.resolve(undefined);
