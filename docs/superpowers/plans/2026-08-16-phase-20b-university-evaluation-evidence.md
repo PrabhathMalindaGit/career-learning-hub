@@ -58,17 +58,19 @@ Do not freeze eligibility, recruitment route, target count, sample description, 
 Separate Resume, Interview and Grounded Learning rubrics remain authoritative.
 
 ### Task 8 — Frozen synthetic evaluation inputs
-`IMPLEMENTED / LOCALLY QUALIFIED AT e47d3156... / PR #39 OPEN / REVIEW REPAIR REQUIRES REQUALIFICATION`
+`IMPLEMENTED / PR #39 OPEN / SECOND-ROUND REVIEW REPAIR REQUIRES REQUALIFICATION`
 
 Authoritative directory: `docs/evaluation/datasets/v1/`
 
 Frozen scope:
 
 - 4 synthetic Resume cases (`RSM-01` to `RSM-04`);
-- 4 synthetic Interview role/prepared-answer cases (`INT-01` to `INT-04`);
+- 4 synthetic Interview role/prepared-answer cases (`INT-01` to `INT-04`), each with an exact content-affecting question-generation request covering count, categories, difficulty mix, canonical question types and exact type counts;
 - 2 text-based four-page Learning PDFs with exact source-text mirrors;
 - 6 Grounded Learning QA cases: 2 `ANSWERABLE_SINGLE`, 2 `ANSWERABLE_MULTI`, 2 `UNANSWERABLE`;
 - U1-U5 repeatable usability fixture bindings.
+
+For Interview generation, `requestId` is generated fresh per execution because it is an idempotency field rather than an evaluation variable; `resumeVersionId` is omitted for these synthetic cases. The remaining content-affecting request fields are frozen per case.
 
 Dataset identities and PDF SHA-256 values are recorded in `dataset_manifest.json`.
 
@@ -77,7 +79,7 @@ The two PDFs were rendered and visually inspected, and text extraction was verif
 No AI outputs are generated or scored in Task 8.
 
 ### Task 9 — Evidence-collection templates
-`IMPLEMENTED / PR #39 OPEN / REVIEW REPAIR REQUIRES REQUALIFICATION`
+`IMPLEMENTED / PR #39 OPEN / SECOND-ROUND REVIEW REPAIR REQUIRES REQUALIFICATION`
 
 Authoritative directory: `docs/evaluation/templates/v1/`
 
@@ -85,7 +87,7 @@ Frozen structures after PR #39 review repair:
 
 - `usability_campaign_metadata.csv`;
 - `usability_observations.csv` linked through `campaign_id`;
-- `sus_responses.csv`;
+- `sus_responses.csv` linked to the same usability campaign through `campaign_id`;
 - `accessibility_campaign_metadata.csv`;
 - `accessibility_checks.csv` linked through `campaign_id`;
 - `ai_resume_scoring.csv`;
@@ -96,7 +98,7 @@ Frozen structures after PR #39 review repair:
 
 Static case/check identifiers are pre-populated where useful. Participant responses, observations, metadata values, status values and AI/accessibility results remain blank.
 
-PR #39 review repair preserves the reproducibility fields required by the usability/accessibility protocols and removes ambiguity between Interview question-level and set-level scoring.
+PR #39 review repair preserves the reproducibility fields required by the usability/accessibility protocols, links SUS responses to the same usability campaign baseline, removes ambiguity between Interview question-level and set-level scoring, and freezes the exact content-affecting Interview generation request for every synthetic case.
 
 ### Task 10 — Conduct evaluation and analyse actual evidence
 `PLANNED / NOT AUTHORIZED`
@@ -117,21 +119,27 @@ Only after actual evidence exists, produce the final O7 results/evidence record 
 5. Source/page facts in Learning cases are authoritative for the synthetic PDFs.
 6. PDF hashes are recorded in the manifest.
 7. No result may be pre-populated merely to demonstrate a template.
+8. Interview AI campaign runs must use the frozen content-affecting generation request recorded in each `INT-*` case; execution-only request IDs may vary as documented.
 
 ## PR #39 review-repair record
 
 PR #39 was opened after local qualification at exact head `e47d3156f235606f8e93f174685efedc984be9a2`.
 
-Final pre-merge verification found four unresolved Codex P2 review findings:
+The first final pre-merge review found four Codex P2 findings:
 
 1. the documented raw `git diff --check` contract treated generated PDF internals as line-oriented text;
 2. usability observations lacked a linked campaign-level reproducibility/environment record;
 3. accessibility checks lacked a linked campaign-level environment record;
 4. Interview question scoring mixed per-question IQ-01 to IQ-03 with set-level IQ-04/IQ-05.
 
-Repairs stay on the same branch and inside `docs/` only. The PDF repair does **not** modify repository configuration; instead, text changes use `git diff --check` with PDF paths excluded, while PDFs are qualified by frozen SHA-256 plus macOS PDFKit page/text checks.
+Those were repaired and requalified locally at exact head `dbb9fff75fd30098148889e03b91c5063c95de04`. A fresh Codex review of that exact head then found two additional P2 reproducibility gaps:
 
-Because review repair moves the PR head, the prior exact-head merge approval is stale. Requalification and a new exact-head merge approval are mandatory before merge.
+5. `interview_cases.json` did not freeze the actual content-affecting question-generation request, allowing count/type mix to vary under one case version;
+6. `sus_responses.csv` did not link responses to the new usability campaign metadata, allowing cross-baseline pooling.
+
+The second-round repairs freeze count/categories/difficulty/question types/type counts for every Interview case and add `campaign_id` to SUS responses. All repairs stay on the same branch and inside `docs/` only. The PDF repair does **not** modify repository configuration; text changes use `git diff --check` with PDF paths excluded, while PDFs are qualified by frozen SHA-256 plus macOS PDFKit page/text checks.
+
+Because each review repair moves the PR head, all prior exact-head merge approvals are stale. Requalification and a new exact-head merge approval are mandatory before merge.
 
 ## Current qualification boundary
 
@@ -141,8 +149,10 @@ Before final merge approval, the user must verify:
 - merge base/ancestry against `origin/main`;
 - all changed paths remain under `docs/`;
 - all JSON inputs still parse;
+- every Interview case has an exact content-affecting generation request with `count`, `categories`, `difficultyMix`, `questionTypes` and `typeCounts`, and the difficulty/type counts each sum to `count`;
 - all CSV templates still parse and preserve expected row structures;
 - usability/accessibility campaign metadata templates exist and observation/check rows link through `campaign_id`;
+- SUS responses preserve all ten raw item fields and link through `campaign_id`;
 - Interview question-unit and question-set templates preserve separate scoring units;
 - both PDF SHA-256 values match the frozen manifest;
 - both PDFs open as four-page, text-extractable documents through macOS PDFKit;
@@ -161,13 +171,13 @@ plus modifications to:
 
 No application test rerun is required if all changed paths remain under `docs/`.
 
-Merge requires a new separate exact-head approval after repair qualification.
+Merge requires a new separate exact-head approval after repair qualification and a clean exact-head review verification.
 
 ## Current authorization
 
 Authorized:
 
-- Task 8 synthetic/de-identified fixture creation;
+- Task 8 synthetic/de-identified fixture creation and bounded same-branch reproducibility repair;
 - Task 9 empty machine-readable collection-template creation and bounded same-branch review repair;
 - planning/progress updates for those tasks.
 
