@@ -107,4 +107,29 @@ describe("Pager", () => {
     ).toBe("true");
     expect(screen.queryByRole("link")).toBeNull();
   });
+
+  it("disables both paging actions while busy even when caller flags are false", () => {
+    render(
+      <Pager
+        label="Synthetic result pages"
+        currentPage="Result page 2"
+        previousLabel="Earlier results"
+        nextLabel="Later results"
+        previousDisabled={false}
+        nextDisabled={false}
+        busy
+        onPrevious={() => undefined}
+        onNext={() => undefined}
+      />,
+    );
+
+    expect(
+      (screen.getByRole("button", { name: "Earlier results" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Later results" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
 });
