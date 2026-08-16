@@ -80,6 +80,9 @@ function validTitle(value: string): boolean {
   return length >= 1 && length <= 120;
 }
 
+// Features 3.2.1–3.2.3 — Resume creation modes.
+// Provides Guided setup, Start blank, and staged private PDF import/review
+// before the resulting resume opens in the canonical Resume Studio workspace.
 export function ResumeCreateDialog({
   open,
   returnFocusRef,
