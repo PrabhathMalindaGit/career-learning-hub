@@ -91,8 +91,9 @@ export function LoginPage() {
       if (!current.email) return current;
       const nextError = validateLogin(nextEmail, password).email;
       if (nextError) return { ...current, email: nextError };
-      const { email: _removed, ...rest } = current;
-      return rest;
+      const next = { ...current };
+      delete next.email;
+      return next;
     });
   }
 
@@ -103,8 +104,9 @@ export function LoginPage() {
       if (!current.password) return current;
       const nextError = validateLogin(email, nextPassword).password;
       if (nextError) return { ...current, password: nextError };
-      const { password: _removed, ...rest } = current;
-      return rest;
+      const next = { ...current };
+      delete next.password;
+      return next;
     });
   }
 
