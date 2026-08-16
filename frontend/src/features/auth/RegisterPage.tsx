@@ -17,6 +17,7 @@ import {
 } from "./AuthRoute";
 import { AuthenticationShell } from "./AuthenticationShell";
 import { useAuth } from "./AuthProvider";
+import "./authPhase19e.css";
 
 type RegistrationErrors = {
   displayName?: string;
@@ -60,12 +61,14 @@ export function RegisterPage() {
   const passwordId = useId();
   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const apiErrorRef = useRef<HTMLDivElement>(null);
+  const validationFocusRequestedRef = useRef(false);
   const displayNameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<RegistrationErrors>({});
   const [apiError, setApiError] = useState<{
     message: string;
@@ -74,6 +77,9 @@ export function RegisterPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (!validationFocusRequestedRef.current) return;
+    validationFocusRequestedRef.current = false;
+
     const errorFields = Object.keys(
       errors,
     ) as (keyof RegistrationErrors)[];
@@ -94,6 +100,54 @@ export function RegisterPage() {
     }
   }, [apiError]);
 
+  function handleDisplayNameChange(nextDisplayName: string) {
+    setDisplayName(nextDisplayName);
+    setApiError(null);
+    setErrors((current) => {
+      if (!current.displayName) return current;
+      const nextError = validateRegistration(
+        nextDisplayName,
+        email,
+        password,
+      ).displayName;
+      if (nextError) return { ...current, displayName: nextError };
+      const { displayName: _removed, ...rest } = current;
+      return rest;
+    });
+  }
+
+  function handleEmailChange(nextEmail: string) {
+    setEmail(nextEmail);
+    setApiError(null);
+    setErrors((current) => {
+      if (!current.email) return current;
+      const nextError = validateRegistration(
+        displayName,
+        nextEmail,
+        password,
+      ).email;
+      if (nextError) return { ...current, email: nextError };
+      const { email: _removed, ...rest } = current;
+      return rest;
+    });
+  }
+
+  function handlePasswordChange(nextPassword: string) {
+    setPassword(nextPassword);
+    setApiError(null);
+    setErrors((current) => {
+      if (!current.password) return current;
+      const nextError = validateRegistration(
+        displayName,
+        email,
+        nextPassword,
+      ).password;
+      if (nextError) return { ...current, password: nextError };
+      const { password: _removed, ...rest } = current;
+      return rest;
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
@@ -103,6 +157,7 @@ export function RegisterPage() {
       email,
       password,
     );
+    validationFocusRequestedRef.current = Object.keys(nextErrors).length > 0;
     setErrors(nextErrors);
     setApiError(null);
     if (Object.keys(nextErrors).length > 0) return;
@@ -153,158 +208,159 @@ export function RegisterPage() {
         onSubmit={handleSubmit}
         noValidate
       >
-          {Object.keys(errors).length > 1 ? (
-            <div
-              className="validation-summary"
-              role="alert"
-              tabIndex={-1}
-              ref={errorSummaryRef}
-            >
-              <strong>Review the highlighted fields.</strong>
-              <ul>
-                {errors.displayName ? (
-                  <li>
-                    <a href={`#${displayNameId}`}>Display name</a>
-                  </li>
-                ) : null}
-                {errors.email ? (
-                  <li>
-                    <a href={`#${emailId}`}>Email address</a>
-                  </li>
-                ) : null}
-                {errors.password ? (
-                  <li>
-                    <a href={`#${passwordId}`}>Password</a>
-                  </li>
-                ) : null}
-              </ul>
-            </div>
+        {Object.keys(errors).length > 1 ? (
+          <div
+            className="validation-summary"
+            role="alert"
+            tabIndex={-1}
+            ref={errorSummaryRef}
+          >
+            <strong>Review the highlighted fields.</strong>
+            <ul>
+              {errors.displayName ? (
+                <li>
+                  <a href={`#${displayNameId}`}>Display name</a>
+                </li>
+              ) : null}
+              {errors.email ? (
+                <li>
+                  <a href={`#${emailId}`}>Email address</a>
+                </li>
+              ) : null}
+              {errors.password ? (
+                <li>
+                  <a href={`#${passwordId}`}>Password</a>
+                </li>
+              ) : null}
+            </ul>
+          </div>
+        ) : null}
+
+        <div className="form-field">
+          <label className="required-label" htmlFor={displayNameId}>
+            Display name
+          </label>
+          <input
+            ref={displayNameRef}
+            id={displayNameId}
+            name="displayName"
+            type="text"
+            autoComplete="name"
+            required
+            maxLength={100}
+            value={displayName}
+            onChange={(event) => handleDisplayNameChange(event.target.value)}
+            aria-invalid={errors.displayName ? "true" : undefined}
+            aria-describedby={
+              errors.displayName ? `${displayNameId}-error` : undefined
+            }
+            disabled={busy}
+          />
+          {errors.displayName ? (
+            <p className="field-error" id={`${displayNameId}-error`}>
+              {errors.displayName}
+            </p>
           ) : null}
+        </div>
 
-          <div className="form-field">
-            <label className="required-label" htmlFor={displayNameId}>
-              Display name
-            </label>
-            <input
-              ref={displayNameRef}
-              id={displayNameId}
-              name="displayName"
-              type="text"
-              autoComplete="name"
-              required
-              maxLength={100}
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-              aria-invalid={errors.displayName ? "true" : undefined}
-              aria-describedby={
-                errors.displayName
-                  ? `${displayNameId}-error`
-                  : undefined
-              }
-              disabled={busy}
-            />
-            {errors.displayName ? (
-              <p
-                className="field-error"
-                id={`${displayNameId}-error`}
-              >
-                {errors.displayName}
-              </p>
-            ) : null}
-          </div>
+        <div className="form-field">
+          <label className="required-label" htmlFor={emailId}>
+            Email address
+          </label>
+          <input
+            ref={emailRef}
+            id={emailId}
+            name="email"
+            type="email"
+            autoComplete="email"
+            spellCheck={false}
+            required
+            maxLength={320}
+            value={email}
+            onChange={(event) => handleEmailChange(event.target.value)}
+            aria-invalid={errors.email ? "true" : undefined}
+            aria-describedby={errors.email ? `${emailId}-error` : undefined}
+            disabled={busy}
+          />
+          {errors.email ? (
+            <p className="field-error" id={`${emailId}-error`}>
+              {errors.email}
+            </p>
+          ) : null}
+        </div>
 
-          <div className="form-field">
-            <label className="required-label" htmlFor={emailId}>
-              Email address
-            </label>
-            <input
-              ref={emailRef}
-              id={emailId}
-              name="email"
-              type="email"
-              autoComplete="email"
-              spellCheck={false}
-              required
-              maxLength={320}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              aria-invalid={errors.email ? "true" : undefined}
-              aria-describedby={
-                errors.email ? `${emailId}-error` : undefined
-              }
-              disabled={busy}
-            />
-            {errors.email ? (
-              <p
-                className="field-error"
-                id={`${emailId}-error`}
-              >
-                {errors.email}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="form-field">
-            <label className="required-label" htmlFor={passwordId}>
-              Password
-            </label>
+        <div className="form-field">
+          <label className="required-label" htmlFor={passwordId}>
+            Password
+          </label>
+          <div className="password-input-wrap">
             <input
               ref={passwordRef}
               id={passwordId}
               name="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               required
               maxLength={128}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => handlePasswordChange(event.target.value)}
               aria-invalid={errors.password ? "true" : undefined}
               aria-describedby={`${passwordId}-requirements${
                 errors.password ? ` ${passwordId}-error` : ""
               }`}
               disabled={busy}
             />
-            <p
-              className="field-help"
-              id={`${passwordId}-requirements`}
+            <button
+              className="password-visibility-toggle"
+              type="button"
+              aria-pressed={showPassword}
+              disabled={busy}
+              onClick={() => setShowPassword((visible) => !visible)}
             >
-              Use 12–128 characters with uppercase, lowercase, and a
-              number.
-            </p>
-            {errors.password ? (
-              <p
-                className="field-error"
-                id={`${passwordId}-error`}
-              >
-                {errors.password}
-              </p>
-            ) : null}
+              {showPassword ? "Hide password" : "Show password"}
+            </button>
           </div>
+          <p
+            className="field-help"
+            id={`${passwordId}-requirements`}
+          >
+            Use 12–128 characters with uppercase, lowercase, and a
+            number.
+          </p>
+          {errors.password ? (
+            <p className="field-error" id={`${passwordId}-error`}>
+              {errors.password}
+            </p>
+          ) : null}
+        </div>
 
-          {apiError ? (
-            <div
-              className="form-error"
-              role="alert"
-              tabIndex={-1}
-              ref={apiErrorRef}
-            >
-              <p>{apiError.message}</p>
-              {apiError.requestId ? (
+        {apiError ? (
+          <div
+            className="form-error"
+            role="alert"
+            tabIndex={-1}
+            ref={apiErrorRef}
+          >
+            <p>{apiError.message}</p>
+            {apiError.requestId ? (
+              <details className="authentication-technical-details">
+                <summary>Technical details</summary>
                 <p className="request-id">
                   Request ID: {apiError.requestId}
                 </p>
-              ) : null}
-            </div>
-          ) : null}
+              </details>
+            ) : null}
+          </div>
+        ) : null}
 
-          <button
-            className="primary-button"
-            type="submit"
-            disabled={busy}
-            aria-busy={busy}
-          >
-            {busy ? "Creating account…" : "Create account"}
-          </button>
+        <button
+          className="primary-button"
+          type="submit"
+          disabled={busy}
+          aria-busy={busy}
+        >
+          {busy ? "Creating account…" : "Create account"}
+        </button>
       </form>
 
       <p className="auth-switch">
