@@ -35,6 +35,9 @@ function testedAt(value: string | undefined): string {
       }).format(date);
 }
 
+// Features 6.1–6.9 — Gemini connection management.
+// Presents application-managed/personal/disconnected modes, connection tests,
+// personal-key replacement, disconnection, and explicit key deletion.
 export function GeminiConnectionSettingsSection() {
   const [settings, setSettings] = useState<GeminiConnectionSettings>();
   const [loading, setLoading] = useState(true);
