@@ -2,28 +2,30 @@
 
 ## Current activity
 
-- Activity: `COMPREHENSIVE CURRENT-TREE DOCUMENTATION CONSOLIDATION`
-- Status: `ACTIVE / DOCUMENTATION-ONLY / POST-PHASE-20A / PRE-PHASE-20B`
-- Branch: `docs/comprehensive-current-tree-cleanup`
-- Base `main` commit: `60ea6f9dbaac044ee786ad4628b1040508daf987`
-- Base identity: `MERGE OF PR #31 — PHASE 20A FINAL RELEASE BASELINE & EVIDENCE FREEZE`
-- Frozen executable product baseline: `a2a3aa0ef5b9cf9583ce4aeae2d676f5f568a790`
-- Authoritative final evidence record: `docs/planning/PHASE_20A_FINAL_RELEASE_BASELINE_EVIDENCE_FREEZE.md`
+- Activity: `POST-PR-33 EXECUTABLE QUALIFICATION EVIDENCE CHECKPOINT`
+- Status: `ACTIVE / DOCUMENTATION-ONLY / POST-PR-33 / PRE-PHASE-20B`
+- Branch: `docs/post-pr33-executable-qualification`
+- Base `main` commit: `6b80f91d7016971d58ed9628e8818fabf00d1cd2`
+- Base identity: `MERGE OF PR #33 — VIVA FEATURE & UI LOCATION MAP`
+- Current qualified executable checkpoint: `6b80f91d7016971d58ed9628e8818fabf00d1cd2`
+- Current qualification evidence: `docs/planning/POST_PR33_EXECUTABLE_QUALIFICATION_CHECKPOINT.md`
+- Historical Phase 20A evidence: `docs/planning/PHASE_20A_FINAL_RELEASE_BASELINE_EVIDENCE_FREEZE.md`
 
 ## Purpose
 
-Consolidate the current repository documentation so it presents Career Learning Hub as the current academic-MVP application, while preserving the frozen executable product and final Phase 20A evidence.
+Record the fresh full executable qualification completed after PR #33 added comment-only professional feature annotations to selected `frontend/` and `backend/` files.
 
-This maintenance task intentionally reduces current-tree historical development-source/inventory material. Git history remains unchanged.
+The earlier Phase 20A evidence remains preserved as historical release evidence. Because the Phase 20A freeze rule requires a new executable checkpoint whenever executable-product files change, the current merged tree was fully re-qualified and is now recorded separately.
+
+This current activity changes documentation only. It does not modify application behavior.
 
 ## In scope
 
-- Rewrite current repository overview and governance documentation around the finished Career Learning Hub product.
-- Remove obsolete inventory, migration, comparative-audit, and source-provenance documents from the current tree.
-- Remove obsolete governance statements that no longer describe current product development.
-- Preserve current architecture, security, Gemini, testing, release-evidence, merge, deployment, and approval boundaries.
-- Verify that the final branch changes documentation only.
-- Verify the user-approved terminology search returns no remaining current-tree matches for the removed provenance wording.
+- Add the post-PR-33 executable qualification evidence record.
+- Point current planning/governance documentation at the newly qualified executable checkpoint.
+- Preserve the original Phase 20A evidence record unchanged.
+- Record exact test, typecheck, build, warning, security-claim, and worktree evidence from the fresh qualification run.
+- Verify that this branch differs from `main` only in documentation files.
 
 ## Out of scope
 
@@ -48,25 +50,30 @@ No deployment is authorized.
 No branch deletion is authorized.
 No merge is authorized until the exact final branch head has been locally qualified and explicitly approved by the user.
 
-## Frozen product evidence
+## Current executable qualification evidence
 
-Phase 20A qualification remains authoritative because this activity is documentation-only.
+Fresh qualification was completed on `main` at:
 
-Final complete-suite evidence:
+`6b80f91d7016971d58ed9628e8818fabf00d1cd2`
 
-- backend production typecheck — PASS;
+Observed runtime environment:
+
+- Node.js `v26.5.0`;
+- npm `11.17.0`.
+
+Fresh qualification results:
+
+- root workspace production typecheck — PASS;
 - backend test-source typecheck — PASS;
 - backend unit — 223/223 PASS;
 - backend integration — 249/249 PASS;
 - backend security — 43/43 PASS;
 - complete backend suite — 515/515 PASS;
-- backend production build — PASS;
-- frontend typecheck — PASS;
 - complete frontend suite — 1,170/1,170 PASS;
 - frontend production build — PASS;
-- root workspace typecheck — PASS;
-- root workspace build — PASS;
-- final diff check — PASS.
+- backend production build — PASS;
+- initial and final branch/commit identity — `main` / `6b80f91d7016971d58ed9628e8818fabf00d1cd2`;
+- initial and final working tree — CLEAN.
 
 Non-overlapping complete-suite count:
 
@@ -76,11 +83,20 @@ Security claim boundary:
 
 `BACKEND SECURITY REGRESSION SUITE 43/43 PASS; NO SEPARATE DEDICATED EXTERNAL OR REPOSITORY-WIDE SECURITY-SCANNER PASS IS CLAIMED.`
 
-Human/live evidence boundary:
+Warning boundary:
+
+- the spoofed `X-Forwarded-For` rate-limit security test emitted the expected `express-rate-limit` validation warning while the test and 43/43 security suite passed;
+- `ResumeVersionTimeline.test.tsx` emitted duplicate React-key console warnings while its tests and the complete 1,170/1,170 frontend suite passed;
+- Vite emitted existing module-directive, mixed static/dynamic import, and large-chunk warnings while production builds passed.
+
+The qualification is therefore recorded as passing, but not warning-free.
+
+## Human/live evidence boundary
 
 - integrated authenticated-application QA was completed before Phase 20A;
-- the only final visible Resume assessment-action polish received focused automated qualification and explicit human visual approval;
-- Phase 20A then completed fresh full automated qualification of the final executable tree.
+- the final visible Resume assessment-action polish received focused automated qualification and explicit human visual approval before Phase 20A;
+- PR #33 source-file changes were comment-only and introduced no visible UI/runtime behavior change;
+- no new visual QA is claimed for this documentation-only evidence checkpoint.
 
 ## Current product architecture boundary
 
@@ -103,17 +119,37 @@ Career Learning Hub remains:
 
 `COMPLETED / QUALIFIED / MERGED VIA PR #31`
 
-### Current documentation consolidation
+Historical evidence remains in:
+
+`docs/planning/PHASE_20A_FINAL_RELEASE_BASELINE_EVIDENCE_FREEZE.md`
+
+### Comprehensive current-tree documentation consolidation
+
+`COMPLETED / MERGED VIA PR #32`
+
+### Viva Feature & UI Location Map
+
+`COMPLETED / QUALIFIED / MERGED VIA PR #33`
+
+The PR #33 merge commit is:
+
+`6b80f91d7016971d58ed9628e8818fabf00d1cd2`
+
+### Post-PR-33 executable qualification evidence checkpoint
 
 `ACTIVE / DOCUMENTATION-ONLY`
+
+Authoritative current executable qualification target:
+
+`6b80f91d7016971d58ed9628e8818fabf00d1cd2`
 
 Completion gate:
 
 1. final branch must differ from `main` only in documentation files;
 2. `git diff --check origin/main...HEAD` must pass;
-3. the approved provenance-term grep must return no current-tree matches;
-4. no application test rerun is required if the branch remains documentation-only;
-5. a pull request may be opened only after the documentation-only diff is qualified;
+3. no application test rerun is required for this branch if it remains documentation-only because the full executable qualification has already been completed against the exact `main` checkpoint being recorded;
+4. the evidence record must preserve the exact observed pass counts and warning boundaries;
+5. a pull request may be opened only after the documentation-only diff is locally qualified;
 6. merge requires explicit user approval of the exact final head SHA.
 
 ### Phase 20B — University Evaluation Evidence
@@ -134,7 +170,7 @@ Completion gate:
 
 ## Current approval boundary
 
-The current user approval authorizes **Approach A — comprehensive current-tree documentation cleanup** on the dedicated documentation branch.
+The current user approval authorizes the **post-PR-33 qualification evidence checkpoint** on the dedicated documentation branch.
 
 That approval does not authorize:
 
@@ -144,4 +180,4 @@ That approval does not authorize:
 - executable product changes;
 - activation of Phase 20B.
 
-The final branch head and exact documentation diff must be verified before requesting merge approval.
+The final branch head and exact documentation-only diff must be locally qualified before requesting PR/merge approval.
