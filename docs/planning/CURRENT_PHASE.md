@@ -319,13 +319,13 @@
 - Phase 16B visual approval token accepted: yes
 - Accepted Phase 16C visual approval token:
   `PHASE_16C_RESUME_EXPORT_VISUAL_APPROVED`
-- Phase 16C approval token accepted: yes
+- Phase 16C visual approval token accepted: yes
 - Accepted Phase 16D visual approval token:
   `PHASE_16D_AI_COMPARISON_VISUAL_APPROVED`
-- Phase 16D approval token accepted: yes
+- Phase 16D visual approval token accepted: yes
 - Accepted Phase 16E visual approval token:
   `PHASE_16E_RESUME_TEMPLATES_VISUAL_APPROVED`
-- Phase 16E approval token accepted: yes
+- Phase 16E visual approval token accepted: yes
 - Accepted Phase 16F accessibility and performance approval token:
   `PHASE_16F_ACCESSIBILITY_PERFORMANCE_APPROVED`
 - Phase 16F approval token accepted: yes
