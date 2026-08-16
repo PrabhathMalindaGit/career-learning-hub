@@ -1,2 +1,2 @@
 campaign_id,protocol_version,executable_checkpoint,evaluation_date,browser_name,browser_version,operating_system,viewport,zoom_level,fixture_version,notes
-CLH-ACC-001,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,,,,,,,20B8-v1.0,
+CLH-ACC-001,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,2026-08-17,Google Chrome,151.0.7922.138,macOS 26.6.1 (25G76),,100% baseline; 200% A-19-A-24,20B8-v1.0,Node v26.5.0; npm 11.17.0. Reduced-width viewport pending A-25-A-29 execution.
