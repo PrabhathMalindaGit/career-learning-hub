@@ -2,7 +2,7 @@
 
 ## Status
 
-Implementation-authorized as one bounded Phase 19F campaign. This design records the audited scope before production changes.
+Implementation-authorized as one bounded Phase 19F campaign. This design records the audited scope before production changes and the regression correction discovered during qualification.
 
 ## Baseline
 
@@ -33,7 +33,7 @@ The remaining high-value inconsistencies are:
 2. The complete email is visually truncated by shell CSS without a reusable account presentation primitive.
 3. Phase 19E authentication correctly places Request IDs under collapsed `Technical details`, while `StateSurface` exposes Request IDs directly.
 4. Login and Registration duplicate the same Technical-details markup.
-5. `Pager` exposes `aria-busy` but does not itself prevent paging actions while busy if a caller forgets to fold `busy` into its disabled flags.
+5. `Pager` exposes `aria-busy`; paging availability must remain caller-owned because some pages intentionally allow a new paging action to supersede and abort an obsolete in-flight request.
 6. shared field styles cover validation but do not provide one consistent disabled presentation.
 
 ## Approved design
@@ -64,9 +64,15 @@ Create a small shared `TechnicalDetails` component for safe diagnostic metadata.
 
 Keep caller-owned state copy/actions and existing static/status/alert semantics. Only move Request ID presentation behind shared collapsed Technical details.
 
-### 4. Pager busy-state safety
+### 4. Pager busy-state semantics
 
-Keep routing/data ownership with callers. When `busy` is true, Pager must disable Previous and Next regardless of caller flags. This prevents duplicate paging interactions and makes `aria-busy` behavior operational rather than informational only.
+Keep routing, fetching and disabled-state policy with callers.
+
+- `busy` communicates the current loading state through `aria-busy`.
+- `previousDisabled` and `nextDisabled` remain the sole source of native button disabled state.
+- The shared Pager must not automatically disable paging solely because `busy` is true.
+- This preserves pages such as Dashboard activity, where a new page choice intentionally supersedes an obsolete in-flight request and aborts its `AbortController`.
+- Callers that need to block paging while loading may include their loading state in their own disabled flags.
 
 Conditional pagination remains caller-owned; existing feature pages already render Pager only when multiple pages exist.
 
@@ -86,7 +92,7 @@ No production redesign is required. Their existing semantics are already appropr
 - Account email must remain complete in accessible text even when visually ellipsized.
 - Technical details must be keyboard-operable and collapsed by default.
 - StateSurface must retain explicit status/alert semantics only when requested.
-- Pager buttons must use native disabled behavior while busy.
+- Pager must expose `aria-busy` without overriding caller-owned disabled semantics.
 - Existing mobile navigation focus containment, Escape handling and exact focus restoration must remain unchanged.
 
 ## Responsive requirements
@@ -117,8 +123,10 @@ No production redesign is required. Their existing semantics are already appropr
 - `frontend/src/components/StateSurface.tsx`
 - `frontend/src/features/auth/LoginPage.tsx`
 - `frontend/src/features/auth/RegisterPage.tsx`
-- `frontend/src/styles.css`
+- shared component CSS imported by the frontend entry point
 
 ## Qualification
 
 Focused component/auth/router tests, frontend typecheck, production build, `git diff --check`, full frontend regression, then human browser QA at desktop/tablet/mobile widths. No merge until the exact branch head has fresh qualification evidence and explicit merge approval.
+
+During the first full regression run at head `917eb6b5ed8b0820373a4fec4a6e0f5896fd199a`, 1 of 1,167 frontend tests failed: Dashboard activity could no longer supersede and abort an in-flight page request because Pager automatically disabled both buttons while busy. The correction preserves caller-owned disabled policy and adds focused Pager regression coverage. The corrected head requires fresh qualification before Phase 19F can be called GREEN.
