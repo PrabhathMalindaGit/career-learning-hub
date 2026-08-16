@@ -88,6 +88,27 @@ describe("Phase 19C Learning Workspace contracts", () => {
     );
   });
 
+  it("keeps child deletion in compact overflow controls without displacing primary study actions", () => {
+    const conversations = source("DocumentConversations.tsx");
+    const flashcards = source("DocumentFlashcards.tsx");
+    const quizzes = source("DocumentQuizzes.tsx");
+    const phaseCss = source("learningPhase19c.css");
+
+    expect(conversations).toContain("learning-conversation-card-actions");
+    expect(conversations).toContain('kind="conversation"');
+    expect(flashcards).toContain('kind="flashcard-set"');
+    expect(flashcards).toContain('disabled={set.status === "generating"}');
+    expect(quizzes).toContain('kind="quiz"');
+    expect(quizzes).toContain('disabled={quiz.status === "generating"}');
+    expect(phaseCss).toContain(".learning-conversation-card-actions");
+    expect(phaseCss).toContain(
+      ".learning-collection-card-heading > .learning-child-deletion",
+    );
+    expect(phaseCss).toMatch(
+      /@media \(max-width: 700px\)[\s\S]*\.learning-conversation-card-actions/,
+    );
+  });
+
   it("keeps user and assistant chat messages distinct with sources attached inside messages", () => {
     const conversation = source("LearningConversationWorkspace.tsx");
 
