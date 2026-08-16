@@ -25,7 +25,7 @@ Create `AccountSummary.tsx` as a presentation-only component.
 
 Update `AppShell.tsx` to replace duplicated desktop/mobile account text markup with the component. Preserve logout busy state, navigation behavior, focus behavior and auth architecture.
 
-Update shared CSS so long names/emails safely ellipsize inside desktop and mobile shell containers while the complete email remains in the DOM and `title`.
+Reuse the existing shell truncation styles so long names/emails safely ellipsize inside desktop and mobile shell containers while the complete email remains in the DOM and `title`.
 
 ## Task 3 — Shared technical diagnostics
 
@@ -47,14 +47,14 @@ Do not add page-number routing, data fetching or a pagination framework.
 
 ## Task 5 — Shared disabled form presentation
 
-Add minimal disabled styling for `.form-field input:disabled` and `.field-control:disabled`. Do not change feature validation rules or form data flow.
+Add minimal disabled styling for shared `.form-field` controls and `.field-control`. Do not change feature validation rules or form data flow.
 
 ## Task 6 — Focused qualification
 
 Run locally from repository root:
 
 ```bash
-npm run test --workspace @career-learning-hub/web -- frontend/src/components/AccountSummary.test.tsx frontend/src/components/TechnicalDetails.test.tsx frontend/src/components/Pager.test.tsx frontend/src/components/StateSurface.test.tsx frontend/src/components/Dialog.test.tsx frontend/src/components/PageHeader.test.tsx frontend/src/features/auth/authenticationPhase19e.test.tsx frontend/src/features/auth/logoutPhase19e.test.tsx frontend/src/routing/router.test.tsx
+npm run test --workspace @career-learning-hub/web -- src/components/AccountSummary.test.tsx src/components/TechnicalDetails.test.tsx src/components/Pager.test.tsx src/components/StateSurface.test.tsx src/components/Dialog.test.tsx src/components/PageHeader.test.tsx src/features/auth/authenticationPhase19e.test.tsx src/features/auth/logoutPhase19e.test.tsx src/routing/router.test.tsx
 npm run typecheck --workspace @career-learning-hub/web
 npm run build --workspace @career-learning-hub/web
 git diff --check origin/main...HEAD
