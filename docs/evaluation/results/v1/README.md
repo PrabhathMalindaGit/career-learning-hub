@@ -1,6 +1,6 @@
 # Phase 20B — Actual Permitted Evaluation Results
 
-Status: `EXECUTION AUTHORIZED / RESULTS NOT YET COLLECTED`
+Status: `NON-PARTICIPANT RESULTS COLLECTED / PHASE 20B-10 ANALYSIS COMPLETE / PARTICIPANT STREAM PENDING ETHICS`
 
 This directory stores genuine Phase 20B non-participant evaluation evidence collected under the frozen version 1.0 protocols.
 
@@ -24,7 +24,7 @@ Participant-facing work remains blocked pending authoritative ethics/module guid
 - Preserve the first valid formal AI output; do not regenerate merely to improve a score.
 - Do not modify product code during the evaluation campaign.
 - Raw or derived evidence must contain no authentication token, cookie, API key, password or other secret.
-- Phase 20B-10 aggregate analysis is separate and must not be invented in these raw result files.
+- Phase 20B-10 aggregate analysis must remain reproducible from the recorded raw/derived evidence and must not invent participant evidence.
 
 ## Current baseline
 
@@ -36,12 +36,12 @@ Participant-facing work remains blocked pending authoritative ethics/module guid
 - Learning dataset: `20B8-learning-v1.0`
 - Release-path model for AI evaluation: `gemini-3.6-flash`
 
-## Execution order
+## Completed execution
 
-1. Selected accessibility checks A-01 through A-29.
-2. Resume AI cases RSM-01 through RSM-04.
-3. Interview AI cases INT-01 through INT-04 — generated questions and prepared-answer feedback.
-4. Grounded Learning cases LQ-A01 through LQ-B03.
-5. Review the raw evidence before Phase 20B-10 results analysis.
+1. Selected accessibility checks A-01 through A-29 — completed.
+2. Resume AI cases RSM-01 through RSM-04 — completed and scored.
+3. Interview AI cases INT-01 through INT-04 — generated questions and prepared-answer feedback completed and scored.
+4. Grounded Learning cases LQ-A01 through LQ-B03 — completed and scored.
+5. Phase 20B-10 aggregate results analysis — completed in `PHASE_20B_10_RESULTS_ANALYSIS.md`.
 
-Nothing in this directory is a result until an actual observation/output has been collected and recorded.
+Participant usability and SUS are not included because the ethics/module gate remains blocked. They must not be inferred from the completed non-participant evidence.
