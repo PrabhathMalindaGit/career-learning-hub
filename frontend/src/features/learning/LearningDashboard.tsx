@@ -109,6 +109,9 @@ function isFullLearningJob(
   return "progress" in job;
 }
 
+// Features 5.1–5.3 — Learning document library.
+// Handles private PDF upload, processing-status presentation, filtering, and
+// navigation into an owned document workspace.
 export function LearningDashboard() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
