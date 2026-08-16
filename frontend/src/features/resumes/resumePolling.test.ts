@@ -39,10 +39,10 @@ function job(
 }
 
 describe("resume polling", () => {
-  it("uses the approved delay schedule", () => {
+  it("uses the responsive bounded delay schedule", () => {
     expect(
       [0, 1, 2, 3, 4, 20].map(pollDelayForAttempt),
-    ).toEqual([1_000, 2_000, 3_000, 5_000, 8_000, 8_000]);
+    ).toEqual([1_000, 1_000, 2_000, 2_000, 3_000, 3_000]);
     expect(POLLING_MAX_DURATION_MS).toBe(5 * 60 * 1_000);
   });
 
@@ -64,7 +64,7 @@ describe("resume polling", () => {
       },
     });
 
-    expect(delays).toEqual([1_000, 2_000]);
+    expect(delays).toEqual([1_000, 1_000]);
     expect(updates.map((value) => value.status)).toEqual([
       "processing",
       "completed",
