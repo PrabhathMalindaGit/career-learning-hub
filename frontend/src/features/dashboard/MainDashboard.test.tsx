@@ -293,7 +293,7 @@ describe("MainDashboard", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "Dashboard",
+        name: "Unified dashboard",
       }),
     ).not.toBeNull();
     expect(

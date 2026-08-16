@@ -186,10 +186,13 @@ describe("Phase 19D Dashboard refinements", () => {
     renderDashboard();
 
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Dashboard" }),
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Unified dashboard",
+      }),
     ).not.toBeNull();
 
-    const continuation = screen.getByRole("navigation", {
+    const continuation = await screen.findByRole("navigation", {
       name: "Continue your work",
     });
     expect(
@@ -231,7 +234,9 @@ describe("Phase 19D Dashboard refinements", () => {
     expect(
       screen.getAllByText("Interview feedback").length,
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Quiz performance")).not.toBeNull();
+    expect(
+      screen.getAllByText("Quiz performance").length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("AI usage")).toBeNull();
     expect(screen.queryByText("Total tokens")).toBeNull();
     expect(screen.queryByText("Average latency")).toBeNull();

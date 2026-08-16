@@ -654,7 +654,7 @@ export function MainDashboard() {
         heading={
           <>
             <p className="eyebrow">Career Learning Hub</p>
-            <h1 id="main-dashboard-title">Dashboard</h1>
+            <h1 id="main-dashboard-title">Unified dashboard</h1>
           </>
         }
         description={
@@ -676,6 +676,13 @@ export function MainDashboard() {
         className="dashboard-progress-section"
         aria-label="Progress overview"
       >
+        {progress ? <ContinueWorkActions data={progress} /> : null}
+
+        <PerformanceWindowControls
+          windowDays={windowDays}
+          onChange={setWindowDays}
+        />
+
         {progressLoading ? (
           <DashboardSkeleton label="Loading progress" />
         ) : null}
@@ -690,13 +697,6 @@ export function MainDashboard() {
 
         {progress ? (
           <>
-            <ContinueWorkActions data={progress} />
-
-            <PerformanceWindowControls
-              windowDays={windowDays}
-              onChange={setWindowDays}
-            />
-
             {!hasPerformanceInWindow(progress) ? (
               <div className="dashboard-empty-banner">
                 <span aria-hidden="true">↗</span>
