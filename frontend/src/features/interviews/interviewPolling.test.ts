@@ -68,12 +68,12 @@ function job(
 }
 
 describe("interview polling", () => {
-  it("uses the approved bounded schedule", () => {
+  it("uses the responsive bounded schedule", () => {
     expect(
       [0, 1, 2, 3, 4, 20].map(
         polling.interviewPollDelayForAttempt,
       ),
-    ).toEqual([1_000, 2_000, 3_000, 5_000, 8_000, 8_000]);
+    ).toEqual([1_000, 1_000, 2_000, 2_000, 3_000, 3_000]);
     expect(polling.INTERVIEW_POLLING_MAX_DURATION_MS).toBe(
       5 * 60 * 1_000,
     );
