@@ -69,6 +69,8 @@ function RequestId({ value }: { value?: string }) {
   return value ? <p className="request-id">Request ID: {value}</p> : null;
 }
 
+// Feature 5.9.1 — Document-based quiz generation.
+// Creates and tracks grounded quizzes and opens ready quizzes for attempts.
 export function DocumentQuizzes({
   accountId,
   document,
