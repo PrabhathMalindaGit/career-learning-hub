@@ -4,8 +4,8 @@ import type { ResumeJob } from "./types";
 export const POLLING_MAX_DURATION_MS = 5 * 60 * 1_000;
 const TRANSIENT_FAILURE_LIMIT = 3;
 
-export function pollDelayForAttempt(attempt: number): number {
-  return [1_000, 1_000, 2_000, 2_000, 3_000][attempt] ?? 3_000;
+export function pollDelayForAttempt(_attempt: number): number {
+  return 1_000;
 }
 
 function defaultWait(
@@ -66,15 +66,6 @@ export async function pollResumeJob(input: {
       return { reason: "timeout", job: lastJob };
     }
 
-    await wait(pollDelayForAttempt(attempt), input.signal);
-
-    if (input.signal?.aborted) {
-      return { reason: "cancelled", job: lastJob };
-    }
-    if (now() - startedAt >= POLLING_MAX_DURATION_MS) {
-      return { reason: "timeout", job: lastJob };
-    }
-
     try {
       const job = await input.fetchJob(input.jobId, input.signal);
       if (job.id !== input.jobId || job.type !== input.expectedType) {
@@ -118,6 +109,7 @@ export async function pollResumeJob(input: {
       }
     }
 
+    await wait(pollDelayForAttempt(attempt), input.signal);
     attempt += 1;
   }
 }
