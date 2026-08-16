@@ -58,32 +58,32 @@ Do not freeze eligibility, recruitment route, target count, sample description, 
 Separate Resume, Interview and Grounded Learning rubrics remain authoritative.
 
 ### Task 8 — Frozen synthetic evaluation inputs
-`IMPLEMENTED / PR #39 OPEN / SECOND-ROUND REVIEW REPAIR REQUIRES REQUALIFICATION`
+`IMPLEMENTED / PR #39 OPEN / COMPREHENSIVE REPRODUCIBILITY REPAIR / AWAITING LOCAL REQUALIFICATION`
 
 Authoritative directory: `docs/evaluation/datasets/v1/`
 
 Frozen scope:
 
-- 4 synthetic Resume cases (`RSM-01` to `RSM-04`);
-- 4 synthetic Interview role/prepared-answer cases (`INT-01` to `INT-04`), each with an exact content-affecting question-generation request covering count, categories, difficulty mix, canonical question types and exact type counts;
-- 2 text-based four-page Learning PDFs with exact source-text mirrors;
-- 6 Grounded Learning QA cases: 2 `ANSWERABLE_SINGLE`, 2 `ANSWERABLE_MULTI`, 2 `UNANSWERABLE`;
+- 4 synthetic Resume cases (`RSM-01` to `RSM-04`) using exact application-shaped Resume content with stable IDs and frozen analysis request context;
+- 4 synthetic Interview cases (`INT-01` to `INT-04`) with full frozen question-generation session/request inputs and full frozen prepared-feedback session/manual-question/answer inputs;
+- 2 text-based four-page Learning PDFs with exact source-text mirrors and frozen application upload titles;
+- 6 Grounded Learning QA cases: 2 `ANSWERABLE_SINGLE`, 2 `ANSWERABLE_MULTI`, 2 `UNANSWERABLE`, each executed in a fresh conversation with the frozen question as the first message;
 - U1-U5 repeatable usability fixture bindings.
 
-For Interview generation, `requestId` is generated fresh per execution because it is an idempotency field rather than an evaluation variable; `resumeVersionId` is omitted for these synthetic cases. The remaining content-affecting request fields are frozen per case.
+Execution-only UUID/request identifiers may vary only where explicitly documented. Content-affecting values must not vary under the same case version.
 
 Dataset identities and PDF SHA-256 values are recorded in `dataset_manifest.json`.
 
-The two PDFs were rendered and visually inspected, and text extraction was verified before repository integration. Local qualification later reconfirmed both as four-page, text-extractable PDFs through macOS PDFKit.
+The two PDFs were rendered and visually inspected, and local qualification has repeatedly confirmed both as four-page, text-extractable PDFs through macOS PDFKit. No PDF content was changed by PR #39 review repair.
 
-No AI outputs are generated or scored in Task 8.
+No AI output is generated or scored in Task 8.
 
 ### Task 9 — Evidence-collection templates
-`IMPLEMENTED / PR #39 OPEN / SECOND-ROUND REVIEW REPAIR REQUIRES REQUALIFICATION`
+`IMPLEMENTED / PR #39 OPEN / COMPREHENSIVE REPRODUCIBILITY REPAIR / AWAITING LOCAL REQUALIFICATION`
 
 Authoritative directory: `docs/evaluation/templates/v1/`
 
-Frozen structures after PR #39 review repair:
+Frozen structures:
 
 - `usability_campaign_metadata.csv`;
 - `usability_observations.csv` linked through `campaign_id`;
@@ -91,14 +91,15 @@ Frozen structures after PR #39 review repair:
 - `accessibility_campaign_metadata.csv`;
 - `accessibility_checks.csv` linked through `campaign_id`;
 - `ai_resume_scoring.csv`;
-- `ai_interview_questions_scoring.csv` for per-question IQ-01 to IQ-03 values;
-- `ai_interview_question_sets_scoring.csv` for set-level IQ-04 and IQ-05 values;
+- `ai_interview_questions_scoring.csv` for per-question IQ-01 to IQ-03;
+- `ai_interview_question_sets_scoring.csv` for set-level IQ-04 and IQ-05;
 - `ai_interview_feedback_scoring.csv`;
-- `ai_learning_grounded_qa_scoring.csv`.
+- `ai_learning_grounded_qa_scoring.csv` for answer-level support/completeness/unsupported handling;
+- `ai_learning_grounded_qa_citations.csv` for raw one-row-per-presented-reference citation classification.
 
-Static case/check identifiers are pre-populated where useful. Participant responses, observations, metadata values, status values and AI/accessibility results remain blank.
+For Grounded Learning, `CORRECT / INCORRECT / UNVERIFIABLE` classifications are preserved individually before any count/rate is derived. Aggregate citation metrics belong to later Phase 20B-10 analysis, not the Task 9 raw template.
 
-PR #39 review repair preserves the reproducibility fields required by the usability/accessibility protocols, links SUS responses to the same usability campaign baseline, removes ambiguity between Interview question-level and set-level scoring, and freezes the exact content-affecting Interview generation request for every synthetic case.
+Static case/check identifiers are pre-populated only where useful. Participant responses, observations, campaign metadata values, status values, AI outputs, accessibility results and AI rubric results remain blank.
 
 ### Task 10 — Conduct evaluation and analyse actual evidence
 `PLANNED / NOT AUTHORIZED`
@@ -110,36 +111,67 @@ Participant work is blocked by Task 0 and Task 5. Accessibility/AI execution als
 
 Only after actual evidence exists, produce the final O7 results/evidence record with limitations and reproducible calculations.
 
-## Dataset freeze rules
+## Dataset and evidence freeze rules
 
 1. Stable case IDs and versions must be preserved once execution begins.
-2. Material fixture changes require a new version.
-3. Original captured AI outputs must remain associated with model/executable/case identity.
-4. Do not cherry-pick AI generations.
-5. Source/page facts in Learning cases are authoritative for the synthetic PDFs.
-6. PDF hashes are recorded in the manifest.
-7. No result may be pre-populated merely to demonstrate a template.
-8. Interview AI campaign runs must use the frozen content-affecting generation request recorded in each `INT-*` case; execution-only request IDs may vary as documented.
+2. No formal execution has started, so bounded PR #39 reproducibility repairs remain within version `20B8-v1.0` / `20B9-templates-v1.0`.
+3. After formal execution begins, material fixture/template changes require a new version and results must remain associated with the version used.
+4. Original captured AI outputs must remain associated with model/executable/case identity.
+5. Do not cherry-pick or regenerate AI outputs merely to improve a score.
+6. Source/page facts in Learning cases are authoritative for the synthetic PDFs.
+7. PDF hashes are recorded in the manifest.
+8. No result may be pre-populated merely to demonstrate a template.
+9. Resume AI runs must use the exact frozen Resume content and analysis request context.
+10. Interview AI runs must use the exact frozen session/generation/feedback content-affecting fields; only documented execution-only IDs may vary.
+11. Grounded Learning runs must use the exact frozen document title, a fresh conversation, and the frozen question as the first user message.
+12. Every Grounded Learning source/page reference presented by the application must be preserved as a raw citation-classification row before aggregate citation metrics are derived.
 
 ## PR #39 review-repair record
 
 PR #39 was opened after local qualification at exact head `e47d3156f235606f8e93f174685efedc984be9a2`.
 
-The first final pre-merge review found four Codex P2 findings:
+### Review round 1
 
-1. the documented raw `git diff --check` contract treated generated PDF internals as line-oriented text;
-2. usability observations lacked a linked campaign-level reproducibility/environment record;
-3. accessibility checks lacked a linked campaign-level environment record;
+Four Codex P2 findings were found:
+
+1. raw `git diff --check` treated generated PDF internals as line-oriented text;
+2. usability observations lacked linked campaign-level reproducibility/environment metadata;
+3. accessibility checks lacked linked campaign-level environment metadata;
 4. Interview question scoring mixed per-question IQ-01 to IQ-03 with set-level IQ-04/IQ-05.
 
-Those were repaired and requalified locally at exact head `dbb9fff75fd30098148889e03b91c5063c95de04`. A fresh Codex review of that exact head then found two additional P2 reproducibility gaps:
+Those were repaired and locally requalified at `dbb9fff75fd30098148889e03b91c5063c95de04`.
 
-5. `interview_cases.json` did not freeze the actual content-affecting question-generation request, allowing count/type mix to vary under one case version;
-6. `sus_responses.csv` did not link responses to the new usability campaign metadata, allowing cross-baseline pooling.
+### Review round 2
 
-The second-round repairs freeze count/categories/difficulty/question types/type counts for every Interview case and add `campaign_id` to SUS responses. All repairs stay on the same branch and inside `docs/` only. The PDF repair does **not** modify repository configuration; text changes use `git diff --check` with PDF paths excluded, while PDFs are qualified by frozen SHA-256 plus macOS PDFKit page/text checks.
+A fresh exact-head review found:
 
-Because each review repair moves the PR head, all prior exact-head merge approvals are stale. Requalification and a new exact-head merge approval are mandatory before merge.
+5. Interview generation did not freeze exact count/categories/difficulty/question types/type counts;
+6. SUS responses lacked `campaign_id` linkage.
+
+Those were repaired and locally requalified at `096cbc6a33a1e16183a29aa526b842ce85fe6f00`.
+
+### Review round 3
+
+A fresh exact-head review at `096cbc6a33a1e16183a29aa526b842ce85fe6f00` found:
+
+7. Interview session/manual-question content-affecting fields were still not completely frozen for generation and feedback;
+8. Grounded Learning stored citation classifications only as aggregate counts rather than per-reference evidence.
+
+A bounded broader audit was performed before another review cycle. It also identified two adjacent reproducibility weaknesses:
+
+- Resume cases were simplified descriptions rather than exact application `ResumeContent` plus analysis-request inputs;
+- Grounded Learning did not explicitly freeze the application document title or empty prior-conversation history even though those enter the integrated AI path.
+
+The comprehensive repair now addresses all four issues together:
+
+- exact application-shaped Resume content and analysis context;
+- full Interview session/generation/manual-question/feedback context;
+- exact Grounded Learning upload-title/fresh-conversation rules;
+- raw one-row-per-reference Grounded Learning citation classification plus separate answer-level scoring.
+
+All repairs remain inside `docs/`. The PDF repair does not modify `.gitattributes` or repository configuration; text changes use `git diff --check` with PDF paths excluded while PDFs are qualified by frozen SHA-256 plus macOS PDFKit page/text checks.
+
+Because repairs moved the PR head, every earlier exact-head merge approval is stale. A fresh local qualification, clean exact-head Codex review and new exact-head merge approval are mandatory before merge.
 
 ## Current qualification boundary
 
@@ -148,12 +180,16 @@ Before final merge approval, the user must verify:
 - exact working-branch HEAD;
 - merge base/ancestry against `origin/main`;
 - all changed paths remain under `docs/`;
-- all JSON inputs still parse;
-- every Interview case has an exact content-affecting generation request with `count`, `categories`, `difficultyMix`, `questionTypes` and `typeCounts`, and the difficulty/type counts each sum to `count`;
-- all CSV templates still parse and preserve expected row structures;
-- usability/accessibility campaign metadata templates exist and observation/check rows link through `campaign_id`;
-- SUS responses preserve all ten raw item fields and link through `campaign_id`;
-- Interview question-unit and question-set templates preserve separate scoring units;
+- all JSON inputs parse;
+- all Resume stable IDs are valid unique UUIDs and each case contains frozen `resume_content`, analysis request and optional-field rules;
+- all Interview cases freeze full generation-session/request and feedback-session/manual-question/typed-answer inputs, with valid count/difficulty/type distributions;
+- Learning cases freeze application upload title, fresh-conversation state and first-message question;
+- all CSV templates parse and preserve expected row structures;
+- usability/accessibility campaign metadata linkages remain present;
+- SUS preserves raw items 1-10 and `campaign_id`;
+- Interview question-unit and question-set templates remain separate;
+- Grounded Learning answer-level template contains no aggregate citation-count fields;
+- Grounded Learning citation template contains raw citation identity/page/classification fields;
 - both PDF SHA-256 values match the frozen manifest;
 - both PDFs open as four-page, text-extractable documents through macOS PDFKit;
 - `git diff --check origin/main...HEAD -- . ':(exclude,glob)**/*.pdf'` produces no output;
@@ -169,9 +205,9 @@ plus modifications to:
 - `docs/planning/CURRENT_PHASE.md`
 - this plan.
 
-No application test rerun is required if all changed paths remain under `docs/`.
+No application test rerun is required while all changed paths remain under `docs/`.
 
-Merge requires a new separate exact-head approval after repair qualification and a clean exact-head review verification.
+After local qualification, addressed outdated review threads may be resolved and a fresh exact-head Codex review must complete before a new merge approval token is issued.
 
 ## Current authorization
 
@@ -191,5 +227,5 @@ Not authorized:
 - executable product changes;
 - repository/product configuration changes;
 - deployment;
-- merge at any head not separately approved after qualification;
+- merge at any head not separately approved after qualification and clean exact-head review;
 - branch deletion.
