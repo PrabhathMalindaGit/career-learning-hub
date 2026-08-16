@@ -1,0 +1,19 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "LQ-A01",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "case_version": "1.0",
+  "case_type": "ANSWERABLE_SINGLE",
+  "document_fixture_id": "LEARN-A-SOLAR-01",
+  "document_id": "6a8215bbfcfac3c65e882620",
+  "conversation_id": "6a8215c9fcfac3c65e8826d7",
+  "job_id": "6a8215c9fcfac3c65e8826e6",
+  "question": "How many households will the Greenbridge pilot recruit?",
+  "formal_output": {
+    "answer": "The Greenbridge Community Solar Pilot will recruit 120 households.",
+    "sourcePages": [1],
+    "assistantMessageId": "6a8215ccfcfac3c65e882719"
+  }
+}
