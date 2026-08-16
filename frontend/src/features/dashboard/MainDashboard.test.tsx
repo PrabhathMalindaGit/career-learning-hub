@@ -210,6 +210,7 @@ function emptyProgressFixture(): DashboardProgress {
 function activityPage(
   page = 1,
   pages = 1,
+  limit = 5,
 ): DashboardActivityPage {
   return {
     events: [
@@ -229,8 +230,8 @@ function activityPage(
     ],
     pagination: {
       page,
-      limit: 5,
-      total: pages * 5,
+      limit,
+      total: pages * limit,
       pages,
     },
   };
@@ -287,7 +288,7 @@ describe("MainDashboard", () => {
     expect(screen.getByText("Loading activity")).not.toBeNull();
   });
 
-  it("renders the compact dashboard header and user outcome metrics", async () => {
+  it("renders the compact dashboard header and semantic user outcome metrics", async () => {
     renderDashboard();
 
     expect(
@@ -314,6 +315,7 @@ describe("MainDashboard", () => {
     expect(screen.getByText("76%")).not.toBeNull();
     expect(screen.getByText("75%")).not.toBeNull();
     expect(screen.getByText("84%")).not.toBeNull();
+    expect(screen.getAllByText("Strong result")).toHaveLength(3);
     expect(
       screen.getByText("Distributed systems notes"),
     ).not.toBeNull();
@@ -327,7 +329,7 @@ describe("MainDashboard", () => {
     ).not.toBeNull();
   });
 
-  it("uses owned dashboard data to build contextual continuation links", async () => {
+  it("uses owned dashboard data to build richer contextual continuation links", async () => {
     renderDashboard();
 
     const continuation = await screen.findByRole("navigation", {
@@ -338,16 +340,19 @@ describe("MainDashboard", () => {
         .getByRole("link", { name: /Continue Resume/i })
         .getAttribute("href"),
     ).toBe("/resumes/resume-1");
+    expect(within(continuation).getByText("Platform engineer · 84% readiness")).not.toBeNull();
     expect(
       within(continuation)
         .getByRole("link", { name: /Continue Interview/i })
         .getAttribute("href"),
     ).toBe("/interviews/session-1");
+    expect(within(continuation).getByText("Latest feedback 82%")).not.toBeNull();
     expect(
       within(continuation)
         .getByRole("link", { name: /Open Learning Document/i })
         .getAttribute("href"),
     ).toBe("/learning/documents/document-1");
+    expect(within(continuation).getByText("Distributed systems notes · Ready")).not.toBeNull();
   });
 
   it("falls back to creation actions and purposeful empty states when no work exists", async () => {
@@ -365,6 +370,9 @@ describe("MainDashboard", () => {
       screen.getByText("No scored feedback in this period."),
     ).not.toBeNull();
     expect(screen.queryByText("Unavailable")).toBeNull();
+    expect(screen.queryByText("Needs review")).toBeNull();
+    expect(screen.queryByText("Developing")).toBeNull();
+    expect(screen.queryByText("Strong result")).toBeNull();
 
     const continuation = screen.getByRole("navigation", {
       name: "Continue your work",
@@ -596,19 +604,22 @@ describe("MainDashboard", () => {
     expect(rows[1]?.textContent).toContain("Recorded activity");
     expect(feed.textContent).not.toContain("unknown.private.event");
     expect(feed.textContent).not.toContain("metadata");
+    expect(within(feed).getByText("2 recent")).not.toBeNull();
   });
 
-  it("keeps activity pagination behind an explicit View all disclosure", async () => {
+  it("switches activity to ten-per-page browsing and returns to the five-item summary", async () => {
     vi.mocked(dashboardApi.fetchDashboardActivity)
-      .mockResolvedValueOnce(activityPage(1, 2))
-      .mockResolvedValueOnce(activityPage(2, 2))
-      .mockResolvedValueOnce(activityPage(1, 2));
+      .mockResolvedValueOnce(activityPage(1, 2, 5))
+      .mockResolvedValueOnce(activityPage(1, 2, 10))
+      .mockResolvedValueOnce(activityPage(2, 2, 10))
+      .mockResolvedValueOnce(activityPage(1, 2, 5));
     renderDashboard();
     const user = userEvent.setup();
 
     expect(
       await screen.findByRole("button", { name: "View all activity" }),
     ).not.toBeNull();
+    expect(screen.getByText("2 recent")).not.toBeNull();
     expect(
       screen.queryByRole("button", { name: "Previous activity page" }),
     ).toBeNull();
@@ -616,18 +627,25 @@ describe("MainDashboard", () => {
     await user.click(
       screen.getByRole("button", { name: "View all activity" }),
     );
-    const previous = screen.getByRole("button", {
-      name: "Previous activity page",
+    await waitFor(() => {
+      expect(dashboardApi.fetchDashboardActivity).toHaveBeenLastCalledWith(
+        { page: 1, limit: 10 },
+        expect.any(AbortSignal),
+      );
     });
+    expect(await screen.findByText("20 total")).not.toBeNull();
+
     const next = screen.getByRole("button", {
       name: "Next activity page",
     });
-    expect((previous as HTMLButtonElement).disabled).toBe(true);
-    expect((next as HTMLButtonElement).disabled).toBe(false);
-
     await user.click(next);
     await screen.findByText("Page 2 of 2");
-    expect((next as HTMLButtonElement).disabled).toBe(true);
+    await waitFor(() => {
+      expect(dashboardApi.fetchDashboardActivity).toHaveBeenLastCalledWith(
+        { page: 2, limit: 10 },
+        expect.any(AbortSignal),
+      );
+    });
 
     await user.click(
       screen.getByRole("button", {
@@ -647,10 +665,11 @@ describe("MainDashboard", () => {
     ).toBeNull();
   });
 
-  it("does not present an in-flight activity page as empty", async () => {
+  it("does not present an in-flight expanded activity page as empty", async () => {
     const nextPage = deferred<DashboardActivityPage>();
     vi.mocked(dashboardApi.fetchDashboardActivity)
-      .mockResolvedValueOnce(activityPage(1, 2))
+      .mockResolvedValueOnce(activityPage(1, 2, 5))
+      .mockResolvedValueOnce(activityPage(1, 2, 10))
       .mockReturnValueOnce(nextPage.promise);
     renderDashboard();
     const user = userEvent.setup();
@@ -658,6 +677,7 @@ describe("MainDashboard", () => {
     await user.click(
       await screen.findByRole("button", { name: "View all activity" }),
     );
+    await screen.findByText("20 total");
     await user.click(
       screen.getByRole("button", { name: "Next activity page" }),
     );
@@ -670,12 +690,12 @@ describe("MainDashboard", () => {
     ).toBeNull();
   });
 
-  it("aborts an obsolete activity page and ignores its stale response", async () => {
-    const initial = activityPage(1, 3);
+  it("aborts an obsolete expanded activity page and ignores its stale response", async () => {
     const secondPage = deferred<DashboardActivityPage>();
     const thirdPage = deferred<DashboardActivityPage>();
     vi.mocked(dashboardApi.fetchDashboardActivity)
-      .mockResolvedValueOnce(initial)
+      .mockResolvedValueOnce(activityPage(1, 3, 5))
+      .mockResolvedValueOnce(activityPage(1, 3, 10))
       .mockReturnValueOnce(secondPage.promise)
       .mockReturnValueOnce(thirdPage.promise);
     renderDashboard();
@@ -684,27 +704,28 @@ describe("MainDashboard", () => {
     await user.click(
       await screen.findByRole("button", { name: "View all activity" }),
     );
+    await screen.findByText("Page 1 of 3");
     await user.click(
       screen.getByRole("button", { name: "Next activity page" }),
     );
     await waitFor(() => {
       expect(
         dashboardApi.fetchDashboardActivity,
-      ).toHaveBeenCalledTimes(2);
+      ).toHaveBeenCalledTimes(3);
     });
     const pageTwoSignal = vi.mocked(
       dashboardApi.fetchDashboardActivity,
-    ).mock.calls[1]?.[1];
+    ).mock.calls[2]?.[1];
 
     await user.click(
       screen.getByRole("button", { name: "Next activity page" }),
     );
     expect(pageTwoSignal?.aborted).toBe(true);
 
-    thirdPage.resolve(activityPage(3, 3));
+    thirdPage.resolve(activityPage(3, 3, 10));
     expect(await screen.findByText("Page 3 of 3")).not.toBeNull();
 
-    secondPage.resolve(activityPage(2, 3));
+    secondPage.resolve(activityPage(2, 3, 10));
     await waitFor(() => {
       expect(screen.queryByText("Page 2 of 3")).toBeNull();
     });
