@@ -1,0 +1,19 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "LQ-A03",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "case_version": "1.0",
+  "case_type": "UNANSWERABLE",
+  "document_fixture_id": "LEARN-A-SOLAR-01",
+  "document_id": "6a8215bbfcfac3c65e882620",
+  "conversation_id": "6a8215d1fcfac3c65e882797",
+  "job_id": "6a8215d1fcfac3c65e8827a6",
+  "question": "What battery storage capacity, in kilowatt-hours, is installed for the pilot?",
+  "formal_output": {
+    "answer": "I am sorry, but the provided documents do not contain information about the battery storage capacity installed for the pilot.",
+    "sourcePages": [],
+    "assistantMessageId": "6a8215d4fcfac3c65e8827d9"
+  }
+}
