@@ -1,0 +1,19 @@
+/* Phase 19C — bounded Learning Workspace refinements. */
+
+.learning-study-answer--reserved {
+  min-height: 190px;
+}
+
+.learning-study-answer--hidden {
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.learning-source-pages button::before,
+.learning-source-pages a::before {
+  margin-right: 0.35rem;
+  content: "▤";
+  font-size: 0.9em;
+  line-height: 1;
+}
