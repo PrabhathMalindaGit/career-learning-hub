@@ -1,0 +1,83 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "RSM-03",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "analysis_id": "6a8210eafcfac3c65e87ffa8",
+  "sanitization": "Account-scoped userId omitted from repository evidence; AI output content preserved.",
+  "analysis": {
+    "target": {
+      "role": "Junior Software Developer",
+      "jobDescription": "Entry-level Junior Software Developer role emphasizing programming fundamentals, web development, version control, and testing."
+    },
+    "scoreBreakdown": {
+      "keywordMatch": 18,
+      "clarity": 18,
+      "evidence": 10,
+      "formatting": 20
+    },
+    "resumeId": "6a8210e2fcfac3c65e87ff63",
+    "resumeVersionId": "6a8210e2fcfac3c65e87ff65",
+    "jobId": "6a8210e2fcfac3c65e87ff74",
+    "scoringVersion": "resume-readiness-v1",
+    "promptVersion": "resume-analysis-prompt-v1",
+    "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "totalScore": 66,
+    "issues": [
+      {
+        "code": "NO_WORK_EXPERIENCE",
+        "severity": "medium",
+        "message": "The resume lists no professional or internship experience, relying solely on academic/personal projects."
+      },
+      {
+        "code": "LACK_OF_METRICS",
+        "severity": "high",
+        "message": "Project bullet points lack quantifiable impact, usage metrics, test coverage percentages, or performance results."
+      },
+      {
+        "code": "LIMITED_PROJECT_DEPTH",
+        "severity": "medium",
+        "message": "Project descriptions are single-line statements with minimal detail regarding implementation choices or outcomes."
+      }
+    ],
+    "strengths": [
+      {
+        "title": "Relevant Technology Stack",
+        "detail": "Includes key modern web technologies (TypeScript, React, Node.js, Express, MongoDB, Git) aligned with entry-level web development roles."
+      },
+      {
+        "title": "Inclusion of Automated Testing",
+        "detail": "Mentions writing automated endpoint tests, demonstrating awareness of quality assurance and testing best practices."
+      }
+    ],
+    "missingKeywords": [
+      "Version Control",
+      "Unit Testing",
+      "REST APIs",
+      "Agile",
+      "Problem Solving"
+    ],
+    "suggestions": [
+      {
+        "id": "b3550e5c-90af-4e62-b62f-93a9e3d2acf2",
+        "bulletId": "7870edf6-2911-5266-9a78-006a2b717cfa",
+        "originalText": "Built authenticated task management for a Study Planner using React and Node.js.",
+        "rewrittenText": "Developed authenticated task management features for a Study Planner using React and Node.js, implementing secure authentication and state management for [X] user workflows.",
+        "rationale": "Adds specificity regarding state management and user workflows while using a metric placeholder for scale.",
+        "verificationRequired": true
+      },
+      {
+        "id": "e2fd0ae6-fcae-43a9-8723-fd0511588748",
+        "bulletId": "3e795710-ab5f-56d3-a54f-376a0fa081d7",
+        "originalText": "Built a TypeScript Express API with MongoDB and automated endpoint tests.",
+        "rewrittenText": "Engineered a TypeScript Express API integrated with MongoDB, achieving [X]% automated endpoint test coverage.",
+        "rationale": "Highlights test coverage metrics and API engineering focus without adding unverified facts.",
+        "verificationRequired": true
+      }
+    ],
+    "createdAt": "2026-08-16T19:35:06.709Z",
+    "updatedAt": "2026-08-16T19:35:06.709Z"
+  }
+}
