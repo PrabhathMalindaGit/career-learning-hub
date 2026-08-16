@@ -25,6 +25,9 @@ describe("JobResilienceActions", () => {
     render(<JobResilienceActions job={activeJob} onCancel={onCancel} />);
 
     expect(screen.getByRole("status").textContent).toContain("Waiting for response");
+    expect(
+      screen.getByRole("progressbar", { name: "40% complete" }).getAttribute("value"),
+    ).toBe("40");
     const cancel = screen.getByRole("button", { name: "Cancel" });
     fireEvent.click(cancel);
     fireEvent.click(cancel);
