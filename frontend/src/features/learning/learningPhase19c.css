@@ -46,20 +46,20 @@
 }
 
 .learning-response-status:has(.job-resilience-actions) {
-  border-color: #d8d0f0;
-  color: #4b426e;
-  background: #f7f5ff;
-  box-shadow: inset 3px 0 0 #6553b8;
+  border-color: #b9cec1;
+  color: #245e3c;
+  background: #f4f8f5;
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .learning-response-status:has(.job-resilience-actions)
   > p:not(.request-id) {
-  color: #4b426e;
+  color: #245e3c;
   font-weight: 800;
 }
 
 .learning-response-status:has(.job-resilience-actions) > .request-id {
-  color: #6b6286;
+  color: #617168;
 }
 
 .learning-response-status .job-resilience-actions {
@@ -73,7 +73,7 @@
 .learning-response-status .job-resilience-actions > p[role="status"] {
   grid-column: 1;
   margin: 0;
-  color: #51448f;
+  color: #245e3c;
   font-size: 0.84rem;
   font-weight: 800;
 }
@@ -83,7 +83,7 @@
   width: 100%;
   height: 8px;
   grid-column: 1 / -1;
-  accent-color: #6553b8;
+  accent-color: var(--accent);
 }
 
 .learning-response-status .job-resilience-actions__buttons {
@@ -96,9 +96,9 @@
   min-height: var(--minimum-interactive-target);
   margin: 0;
   padding: 7px 12px;
-  border: 1px solid #bdb2e4;
+  border: 1px solid #b9cec1;
   border-radius: 9px;
-  color: #51448f;
+  color: #245e3c;
   background: #ffffff;
   font-weight: 800;
 }
@@ -106,8 +106,8 @@
 .learning-response-status
   .job-resilience-actions__buttons
   button:hover:not(:disabled) {
-  border-color: #8f81c9;
-  background: #efebff;
+  border-color: #8fb29b;
+  background: #eef6f1;
 }
 
 .learning-panel-actions {
