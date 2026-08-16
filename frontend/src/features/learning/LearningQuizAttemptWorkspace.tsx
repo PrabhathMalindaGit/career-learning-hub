@@ -8,12 +8,14 @@ import {
   fetchQuizAttemptReview,
   fetchQuizForTaking,
 } from "./learningApi";
+import { quizScorePresentation } from "./quizScorePresentation";
 import type {
   LearningDocument,
   QuizAttemptReview,
   QuizForTaking,
 } from "./types";
 import "./learningWorkspace.css";
+import "./learningPhase19c.css";
 
 const attemptDateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -230,6 +232,7 @@ export function LearningQuizAttemptWorkspace() {
   }
 
   const { document, quiz, attempt } = loadState;
+  const performance = quizScorePresentation(attempt.attempt.scorePercent);
 
   return (
     <section className="workspace-section learning-workspace learning-quiz-review">
@@ -275,16 +278,17 @@ export function LearningQuizAttemptWorkspace() {
       </header>
 
       <section
-        className="learning-score-card"
-        aria-label="Server-authoritative quiz result"
+        className={`learning-score-card learning-score-card--${performance.level}`}
+        aria-label={`Quiz result: ${performance.label}`}
       >
         <div>
-          <p className="learning-kicker">Canonical server result</p>
+          <p className="learning-kicker">Official results</p>
           <h2>Quiz result</h2>
           <p>
             {attempt.attempt.correctCount} of{" "}
             {attempt.attempt.questionCount} correct
           </p>
+          <p className="learning-performance-label">{performance.label}</p>
         </div>
         <div className="learning-score-value">
           <span>Score</span>
@@ -297,8 +301,8 @@ export function LearningQuizAttemptWorkspace() {
       <section aria-labelledby="learning-review-title">
         <header className="learning-panel-header">
           <div>
-            <p className="learning-kicker">Read-only review</p>
-            <h2 id="learning-review-title">Answer review</h2>
+            <p className="learning-kicker">Answer review</p>
+            <h2 id="learning-review-title">Review your answers</h2>
           </div>
         </header>
         <ol className="learning-review-list">
@@ -338,19 +342,17 @@ export function LearningQuizAttemptWorkspace() {
                 ) : null}
                 {question.sourcePages.length > 0 ? (
                   <div className="learning-source-pages">
-                    <span>Source pages:</span>
+                    <span>Verified sources:</span>
                     {question.sourcePages.map((page) => (
                       <Link
                         key={page}
                         to={`/learning/documents/${documentId}`}
-                        aria-label={`Review source page ${page}`}
+                        aria-label={`View source page ${page} in the document workspace`}
                       >
-                        Page {page}
+                        View Page {page}
                       </Link>
                     ))}
-                    <span>
-                      Open Extracted Content in the document workspace.
-                    </span>
+                    <span>Open Extracted Content to review page-aware text.</span>
                   </div>
                 ) : null}
               </article>
