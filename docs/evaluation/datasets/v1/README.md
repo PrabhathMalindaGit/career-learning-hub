@@ -9,7 +9,7 @@ This directory contains the smallest frozen input set needed to execute the appr
 ## Contents
 
 - `resume_cases.json` - 4 synthetic Resume/target-role cases for the Resume AI rubric.
-- `interview_cases.json` - 4 synthetic role contexts with prepared answers for Interview question/feedback evaluation.
+- `interview_cases.json` - 4 synthetic role contexts with prepared answers for Interview question/feedback evaluation. Each case also freezes the exact content-affecting question-generation request: count, categories, difficulty mix, canonical question types and exact type counts. `requestId` is generated fresh per execution and `resumeVersionId` is omitted, so neither is treated as an evaluation variable.
 - `usability_fixture_bindings.json` - repeatable synthetic starting states for U1-U5.
 - `learning/learning_cases.json` - 6 Grounded Learning cases: 2 single-source, 2 multi-source and 2 unanswerable.
 - `learning/*.pdf` - 2 text-based synthetic four-page PDFs with stable page-level facts.
