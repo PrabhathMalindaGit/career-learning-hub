@@ -38,9 +38,9 @@
   text-underline-offset: 3px;
 }
 
-/* Keep the shared progress element inert everywhere except the bounded
-   Learning AI status surfaces. Interview already owns its visible progress
-   bar, while Resume keeps its existing compact status treatment. */
+/* The shared semantic progress element is visually exposed only inside
+   Learning status surfaces. Interview keeps its existing dedicated progress
+   bar and Resume keeps its existing compact job treatment. */
 .job-resilience-actions__progress {
   display: none;
 }
