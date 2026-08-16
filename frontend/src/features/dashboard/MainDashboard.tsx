@@ -22,44 +22,24 @@ import type {
 } from "./types";
 import { dashboardWindowDays } from "./types";
 import "./dashboard.css";
+import "./dashboardPhase19d.css";
 
-const ACTIVITY_LIMIT = 10;
-
-const quickStartActions = [
-  {
-    label: "Create Resume",
-    description: "Build a focused resume in Resume Studio.",
-    to: "/resumes?action=create",
-    icon: "resume",
-    tone: "forest",
-  },
-  {
-    label: "Start Interview Session",
-    description: "Create a private practice session for a target role.",
-    to: "/interviews?action=create",
-    icon: "interview",
-    tone: "ink",
-  },
-  {
-    label: "Upload Learning Document",
-    description: "Upload a private PDF to your learning library.",
-    to: "/learning?action=upload",
-    icon: "learning",
-    tone: "amber",
-  },
-] as const;
+const TREND_LIMIT = 5;
+const RECENT_DOCUMENT_LIMIT = 3;
+const ACTIVITY_LIMIT = 5;
 
 type DisplayError = {
   message: string;
   requestId?: string;
 };
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 4,
-  maximumFractionDigits: 6,
-});
+type ContinuationAction = {
+  label: string;
+  description: string;
+  to: string;
+  icon: "resume" | "interview" | "learning";
+  tone: "forest" | "ink" | "amber";
+};
 
 function countLabel(
   count: number,
@@ -126,12 +106,9 @@ function ErrorState({
 function QuickStartIcon({
   name,
 }: {
-  name: (typeof quickStartActions)[number]["icon"];
+  name: ContinuationAction["icon"];
 }) {
-  const paths: Record<
-    (typeof quickStartActions)[number]["icon"],
-    ReactNode
-  > = {
+  const paths: Record<ContinuationAction["icon"], ReactNode> = {
     resume: (
       <>
         <path d="M6 3h9l3 3v15H6z" />
@@ -163,25 +140,100 @@ function QuickStartIcon({
   );
 }
 
-function QuickStartActions() {
+function continuationActions(
+  data: DashboardProgress,
+): ContinuationAction[] {
+  const latestResume = data.resumeReadiness.latest;
+  const latestInterview =
+    data.interviews.trend[data.interviews.trend.length - 1];
+  const recentDocument = data.learning.recentDocuments[0];
+
+  const resume: ContinuationAction = latestResume
+    ? {
+        label: "Continue Resume",
+        description: `Open ${latestResume.targetRole} and keep refining it.`,
+        to: `/resumes/${latestResume.resumeId}`,
+        icon: "resume",
+        tone: "forest",
+      }
+    : {
+        label: "Create Resume",
+        description: "Build a focused Resume in Resume Studio.",
+        to: "/resumes?action=create",
+        icon: "resume",
+        tone: "forest",
+      };
+
+  const interview: ContinuationAction = latestInterview
+    ? {
+        label: "Continue Interview",
+        description: "Return to your latest scored practice session.",
+        to: `/interviews/${latestInterview.sessionId}`,
+        icon: "interview",
+        tone: "ink",
+      }
+    : data.interviews.activeSessions > 0
+      ? {
+          label: "Continue Interview",
+          description: "Open your active Interview practice.",
+          to: "/interviews",
+          icon: "interview",
+          tone: "ink",
+        }
+      : {
+          label: "Start Interview Session",
+          description: "Create a private practice session for a target role.",
+          to: "/interviews?action=create",
+          icon: "interview",
+          tone: "ink",
+        };
+
+  const learning: ContinuationAction = recentDocument
+    ? {
+        label: "Open Learning Document",
+        description: `Continue with ${recentDocument.title}.`,
+        to: `/learning/documents/${recentDocument.documentId}`,
+        icon: "learning",
+        tone: "amber",
+      }
+    : {
+        label: "Upload Learning Document",
+        description: "Add a private PDF to your Learning Workspace.",
+        to: "/learning?action=upload",
+        icon: "learning",
+        tone: "amber",
+      };
+
+  return [resume, interview, learning];
+}
+
+function ContinueWorkActions({
+  data,
+}: {
+  data: DashboardProgress;
+}) {
+  const actions = continuationActions(data);
+
   return (
     <nav
-      className="dashboard-quick-start"
-      aria-labelledby="dashboard-quick-start-title"
+      className="dashboard-quick-start dashboard-continue-work"
+      aria-labelledby="dashboard-continue-title"
     >
       <div className="dashboard-quick-start__header">
         <div>
-          <p className="dashboard-kicker">Create your next record</p>
-          <h2 id="dashboard-quick-start-title">Quick start</h2>
+          <p className="dashboard-kicker">Pick up where you left off</p>
+          <h2 id="dashboard-continue-title">Continue your work</h2>
         </div>
-        <p>Open one of the existing Career Learning Hub workflows.</p>
+        <p>
+          Open a recent owned workspace, or start a new record when none exists.
+        </p>
       </div>
 
       <div className="dashboard-quick-start__grid">
-        {quickStartActions.map((action) => (
+        {actions.map((action) => (
           <Link
             className={`dashboard-quick-start__link dashboard-quick-start__link--${action.tone}`}
-            key={action.to}
+            key={action.icon}
             to={action.to}
           >
             <span className="dashboard-quick-start__icon">
@@ -201,6 +253,45 @@ function QuickStartActions() {
         ))}
       </div>
     </nav>
+  );
+}
+
+function PerformanceWindowControls({
+  windowDays,
+  onChange,
+}: {
+  windowDays: DashboardWindowDays;
+  onChange(days: DashboardWindowDays): void;
+}) {
+  return (
+    <section
+      className="dashboard-performance-toolbar"
+      aria-labelledby="dashboard-performance-period-title"
+    >
+      <div>
+        <p className="dashboard-kicker">Performance</p>
+        <h2 id="dashboard-performance-period-title">Performance period</h2>
+        <p>
+          Resume, Interview and Quiz scores and trends below use this period.
+        </p>
+      </div>
+      <div
+        className="dashboard-window-options"
+        role="group"
+        aria-label="Performance period"
+      >
+        {dashboardWindowDays.map((days) => (
+          <button
+            key={days}
+            type="button"
+            aria-pressed={windowDays === days}
+            onClick={() => onChange(days)}
+          >
+            {days} days
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -262,9 +353,7 @@ function ScoreTrend({
               <div>
                 <strong>{point.label}</strong>
                 <small>
-                  {new Date(
-                    point.occurredAt,
-                  ).toLocaleDateString()}
+                  {new Date(point.occurredAt).toLocaleDateString()}
                 </small>
               </div>
               <div
@@ -277,10 +366,7 @@ function ScoreTrend({
               >
                 <span
                   style={{
-                    width: `${Math.max(
-                      0,
-                      Math.min(100, point.score),
-                    )}%`,
+                    width: `${Math.max(0, Math.min(100, point.score))}%`,
                   }}
                 />
               </div>
@@ -341,9 +427,7 @@ function LearningSummary({
             </span>
             <div>
               <strong>No Learning documents yet</strong>
-              <p>
-                Upload a private PDF to build the Learning Workspace.
-              </p>
+              <p>Upload a private PDF to build the Learning Workspace.</p>
             </div>
           </div>
         ) : (
@@ -363,9 +447,7 @@ function LearningSummary({
                 <small>
                   {countLabel(document.pageCount, "page")} ·{" "}
                   {countLabel(document.chunkCount, "chunk")} · Updated{" "}
-                  {new Date(
-                    document.updatedAt,
-                  ).toLocaleDateString()}
+                  {new Date(document.updatedAt).toLocaleDateString()}
                 </small>
               </div>
               <span
@@ -377,100 +459,6 @@ function LearningSummary({
           ))
         )}
       </div>
-    </section>
-  );
-}
-
-function AiUsageSummary({
-  data,
-}: {
-  data: DashboardProgress["aiUsage"];
-}) {
-  const costLabel =
-    data.estimatedCostEventCount === 0
-      ? "No cost estimates recorded"
-      : data.estimatedCostEventCount === data.requestCount
-        ? "Estimated cost"
-        : "Partial estimated cost";
-
-  return (
-    <section className="dashboard-panel dashboard-usage-panel">
-      <header className="dashboard-panel-header">
-        <div>
-          <p className="dashboard-kicker">Recorded usage</p>
-          <h2>AI usage</h2>
-        </div>
-        <span className="dashboard-chip">
-          {countLabel(data.requestCount, "request")}
-        </span>
-      </header>
-
-      {data.requestCount === 0 ? (
-        <div className="dashboard-empty-state dashboard-empty-state--dark">
-          <span className="dashboard-empty-state__icon" aria-hidden="true">
-            ✦
-          </span>
-          <div>
-            <strong>No AI usage yet</strong>
-            <p>Recorded AI requests will appear here.</p>
-            <small>No cost estimates recorded</small>
-          </div>
-        </div>
-      ) : (
-        <>
-          <dl className="dashboard-usage-grid">
-            <div>
-              <dt>Total tokens</dt>
-              <dd>{data.totalTokens.toLocaleString()}</dd>
-            </div>
-            <div>
-              <dt>Input / output</dt>
-              <dd>
-                {data.inputTokens.toLocaleString()} /{" "}
-                {data.outputTokens.toLocaleString()}
-              </dd>
-            </div>
-            <div>
-              <dt>Average latency</dt>
-              <dd>
-                {data.averageLatencyMs === null
-                  ? "Unavailable"
-                  : `${Math.round(data.averageLatencyMs)} ms`}
-              </dd>
-            </div>
-            <div>
-              <dt>{costLabel}</dt>
-              <dd>
-                {data.estimatedCostEventCount === 0
-                  ? "—"
-                  : currencyFormatter.format(
-                      data.estimatedCostUsd,
-                    )}
-              </dd>
-            </div>
-          </dl>
-          <p className="dashboard-cost-note">
-            Cost estimates are recorded usage metadata, not an invoice.
-          </p>
-
-          <div className="dashboard-feature-list">
-            {data.byFeature.length === 0 ? (
-              <div className="dashboard-empty-state dashboard-empty-state--dark">
-                <div>
-                  <strong>No feature breakdown recorded</strong>
-                </div>
-              </div>
-            ) : (
-              data.byFeature.map((feature) => (
-                <article key={feature.feature}>
-                  <span>{feature.feature}</span>
-                  <strong>{feature.requestCount}</strong>
-                </article>
-              ))
-            )}
-          </div>
-        </>
-      )}
     </section>
   );
 }
@@ -503,45 +491,32 @@ function DashboardSkeleton({
         <span />
         <span />
       </div>
-      <div className="dashboard-skeleton-card">
-        <span />
-        <span />
-      </div>
     </div>
   );
 }
 
-function hasRecordedData(data: DashboardProgress): boolean {
+function hasPerformanceInWindow(data: DashboardProgress): boolean {
   return (
     data.resumeReadiness.analysesInWindow > 0 ||
     data.interviews.attemptsInWindow > 0 ||
-    data.interviews.activeSessions > 0 ||
-    data.interviews.completedSessions > 0 ||
-    data.learning.documentCounts.total > 0 ||
-    data.learning.quizPerformance.attemptsInWindow > 0 ||
-    data.aiUsage.requestCount > 0
+    data.learning.quizPerformance.attemptsInWindow > 0
   );
 }
 
 export function MainDashboard() {
   const [windowDays, setWindowDays] =
     useState<DashboardWindowDays>(30);
-  const [progress, setProgress] =
-    useState<DashboardProgress>();
-  const [progressLoading, setProgressLoading] =
-    useState(true);
-  const [progressError, setProgressError] =
-    useState<DisplayError>();
+  const [progress, setProgress] = useState<DashboardProgress>();
+  const [progressLoading, setProgressLoading] = useState(true);
+  const [progressError, setProgressError] = useState<DisplayError>();
   const [progressRetry, setProgressRetry] = useState(0);
   const progressRequestId = useRef(0);
 
   const [activityPage, setActivityPage] = useState(1);
-  const [activity, setActivity] =
-    useState<DashboardActivityPage>();
-  const [activityLoading, setActivityLoading] =
-    useState(true);
-  const [activityError, setActivityError] =
-    useState<DisplayError>();
+  const [activityExpanded, setActivityExpanded] = useState(false);
+  const [activity, setActivity] = useState<DashboardActivityPage>();
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [activityError, setActivityError] = useState<DisplayError>();
   const [activityRetry, setActivityRetry] = useState(0);
   const activityRequestId = useRef(0);
 
@@ -556,8 +531,8 @@ export function MainDashboard() {
     void fetchProgressSnapshot(
       {
         windowDays,
-        trendLimit: 12,
-        recentDocumentLimit: 6,
+        trendLimit: TREND_LIMIT,
+        recentDocumentLimit: RECENT_DOCUMENT_LIMIT,
       },
       controller.signal,
     )
@@ -572,10 +547,7 @@ export function MainDashboard() {
           !isAbortError(error)
         ) {
           setProgressError(
-            displayError(
-              error,
-              "Progress could not be loaded.",
-            ),
+            displayError(error, "Progress could not be loaded."),
           );
         }
       })
@@ -615,10 +587,7 @@ export function MainDashboard() {
           !isAbortError(error)
         ) {
           setActivityError(
-            displayError(
-              error,
-              "Activity could not be loaded.",
-            ),
+            displayError(error, "Activity could not be loaded."),
           );
         }
       })
@@ -657,14 +626,12 @@ export function MainDashboard() {
 
   const quizTrend = useMemo(
     () =>
-      progress?.learning.quizPerformance.trend.map(
-        (point) => ({
-          id: point.attemptId,
-          score: point.scorePercent,
-          occurredAt: point.completedAt,
-          label: `${point.correctCount} of ${point.questionCount} correct`,
-        }),
-      ) ?? [],
+      progress?.learning.quizPerformance.trend.map((point) => ({
+        id: point.attemptId,
+        score: point.scorePercent,
+        occurredAt: point.completedAt,
+        label: `${point.correctCount} of ${point.questionCount} correct`,
+      })) ?? [],
     [progress],
   );
 
@@ -683,56 +650,27 @@ export function MainDashboard() {
       aria-labelledby="main-dashboard-title"
     >
       <PageHeader
-        className="dashboard-heading"
+        className="dashboard-heading dashboard-heading--compact"
         heading={
           <>
-            <p className="eyebrow">
-              Career Learning Hub · Open Book + Rising Pathway
-            </p>
-            <h1 id="main-dashboard-title">Unified dashboard</h1>
+            <p className="eyebrow">Career Learning Hub</p>
+            <h1 id="main-dashboard-title">Dashboard</h1>
           </>
         }
         description={
           <>
             <p>
-              See owned progress across Resume Studio, Interview
-              Coach, Learning Workspace, quizzes, and AI usage for
-              the last {windowDays} days.
+              Continue your work and review recent progress across Resume Studio,
+              Interview Coach, and Learning Workspace.
             </p>
             {progress?.generatedAt ? (
               <small>
-                Updated{" "}
-                {new Date(progress.generatedAt).toLocaleString()}
+                Updated {new Date(progress.generatedAt).toLocaleString()}
               </small>
             ) : null}
           </>
         }
-        actions={
-          <div>
-            <span className="dashboard-control-label">
-              Progress window
-            </span>
-            <div
-              className="dashboard-window-options"
-              role="group"
-              aria-label="Progress window"
-            >
-              {dashboardWindowDays.map((days) => (
-                <button
-                  key={days}
-                  type="button"
-                  aria-pressed={windowDays === days}
-                  onClick={() => setWindowDays(days)}
-                >
-                  {days} days
-                </button>
-              ))}
-            </div>
-          </div>
-        }
       />
-
-      <QuickStartActions />
 
       <section
         className="dashboard-progress-section"
@@ -746,22 +684,27 @@ export function MainDashboard() {
           <ErrorState
             error={progressError}
             retryLabel="Retry progress"
-            onRetry={() =>
-              setProgressRetry((value) => value + 1)
-            }
+            onRetry={() => setProgressRetry((value) => value + 1)}
           />
         ) : null}
 
         {progress ? (
           <>
-            {!hasRecordedData(progress) ? (
+            <ContinueWorkActions data={progress} />
+
+            <PerformanceWindowControls
+              windowDays={windowDays}
+              onChange={setWindowDays}
+            />
+
+            {!hasPerformanceInWindow(progress) ? (
               <div className="dashboard-empty-banner">
                 <span aria-hidden="true">↗</span>
                 <div>
-                  <strong>No recorded dashboard data</strong>
+                  <strong>No performance recorded in this period</strong>
                   <p>
-                    This account has no owned records for the selected
-                    progress window.
+                    Resume analyses, scored Interview attempts, and Quiz results
+                    will appear here when available.
                   </p>
                 </div>
               </div>
@@ -773,16 +716,16 @@ export function MainDashboard() {
               <ScoreTrend
                 title="Resume analysis history"
                 kicker="Resume Studio"
-                description="Stored analysis scores in chronological order."
-                emptyTitle="No analysis history yet"
+                description="Your five most recent stored analysis scores in this period."
+                emptyTitle="No analysis history in this period"
                 emptyDescription="Resume analysis scores will form this history."
                 points={resumeTrend}
               />
               <ScoreTrend
                 title="Interview progress"
                 kicker="Interview Coach"
-                description="Completed feedback scores in chronological order."
-                emptyTitle="No Interview activity yet"
+                description="Your five most recent completed feedback scores in this period."
+                emptyTitle="No Interview feedback in this period"
                 emptyDescription="Completed feedback will form this progress view."
                 points={interviewTrend}
               />
@@ -790,12 +733,11 @@ export function MainDashboard() {
               <ScoreTrend
                 title="Quiz performance"
                 kicker="Learning Workspace"
-                description="Completed Quiz scores in chronological order."
-                emptyTitle="No Quiz results yet"
+                description="Your five most recent completed Quiz scores in this period."
+                emptyTitle="No Quiz results in this period"
                 emptyDescription="Completed Quiz attempts will appear here."
                 points={quizTrend}
               />
-              <AiUsageSummary data={progress.aiUsage} />
             </div>
           </>
         ) : null}
@@ -806,42 +748,36 @@ export function MainDashboard() {
         aria-label="Dashboard activity"
       >
         {!activity && activityLoading ? (
-          <DashboardSkeleton
-            label="Loading activity"
-            compact
-          />
+          <DashboardSkeleton label="Loading activity" compact />
         ) : null}
 
         {activityError ? (
           <ErrorState
             error={activityError}
             retryLabel="Retry activity"
-            onRetry={() =>
-              setActivityRetry((value) => value + 1)
-            }
+            onRetry={() => setActivityRetry((value) => value + 1)}
           />
         ) : null}
 
         {activity ? (
           <ActivityFeed
-            events={
-              activityMatchesPage ? activity.events : []
-            }
+            events={activityMatchesPage ? activity.events : []}
             pagination={activityPagination}
             currentPage={activityPage}
-            refreshing={activityLoading}
+            refreshing={activityLoading || !activityMatchesPage}
+            expanded={activityExpanded}
+            onExpand={() => setActivityExpanded(true)}
+            onCollapse={() => {
+              setActivityExpanded(false);
+              setActivityPage(1);
+            }}
             onPrevious={() =>
-              setActivityPage((page) =>
-                Math.max(1, page - 1),
-              )
+              setActivityPage((page) => Math.max(1, page - 1))
             }
             onNext={() =>
               setActivityPage((page) =>
                 Math.min(
-                  Math.max(
-                    1,
-                    activityPagination.pages,
-                  ),
+                  Math.max(1, activityPagination.pages),
                   page + 1,
                 ),
               )
