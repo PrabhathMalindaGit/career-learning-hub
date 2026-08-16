@@ -1,102 +1,66 @@
 # Current Execution Phase
 
-- Current execution phase: `PHASE 19B`
-- Name: `Interview Coach Refinements`
+- Current execution phase: `PHASE 20A`
+- Name: `Final Release Baseline & Evidence Freeze`
 - Status:
-  `COMPLETED / MERGED TO MAIN / CLOSED`
-- Phase integration branch:
-  `phase-19b-interview-coach-refinements`
-- Final Phase 19B branch head:
-  `ea4acb059ba18f0db9d55baff7ed183b0b14a286`
-- Phase 19B integration pull request:
-  `PR #16 — MERGED / CLOSED`
-- Main integration:
-  `COMPLETE`
-- Main merge commit:
-  `469c27f35011fb9b51e7d501d9f759fae757efb5`
-- Final pre-closeout phase checkpoint:
-  `5da65534e1f07f7905310d70272af068c71c4d42`
-- Task 8 pull request:
-  `PR #14 — MERGED / CLOSED`
-- Task 8 final accepted head:
-  `7c740e19db3fb834f0cbde609c2c503f8f22de66`
-- Task 8 merge commit:
-  `5da65534e1f07f7905310d70272af068c71c4d42`
-- Phase 19B implementation:
-  `COMPLETED`
-- Final live Gemini acceptance:
-  `PASSED`
-- Final human browser/responsive QA:
-  `PASSED / USER APPROVED`
-- Final automated acceptance evidence:
-  `FOCUSED BACKEND 34/34 PASS / FOCUSED FRONTEND 235/235 PASS /
-  SECURITY-OWNERSHIP-RESILIENCE BACKEND 54/54 PASS /
-  SECURITY-OWNERSHIP-RESILIENCE FRONTEND 77/77 PASS /
-  FULL BACKEND 479/479 PASS / FULL FRONTEND 1044/1044 PASS /
-  BACKEND+FRONTEND TYPECHECKS PASS /
-  BACKEND+FRONTEND PRODUCTION BUILDS PASS /
-  FINAL DIFF CHECK PASS / FINAL WORKTREE CLEAN`
-- Task 8 production-code changes:
-  `NONE`
-- Phase 19B closeout record:
-  `docs/planning/PHASE_19B_INTERVIEW_COACH_REFINEMENTS_CLOSEOUT.md`
-- Main baseline before Phase 19B integration:
-  `4cf7f0b9b75ca4b6233e9e697436709af32583d1`
-- Main baseline subject:
-  `Record Phase 19A post-merge closeout`
-- Completed predecessor:
-  `PHASE 19A — RESUME STUDIO REFINEMENTS / COMPLETED / MERGED`
-- Phase 19A completion:
-  `19A-1 RESUME EDITOR WORKSPACE — COMPLETED /
-  19A-2 RESUME COLLECTION, CREATION & GUIDED ENTRY — COMPLETED /
-  19A-3 RESUME SAVE, RECOVERY & EXPORT — COMPLETED /
-  19A-4 CANDIDATE PHOTO SUPPORT — COMPLETED / MERGED`
-- Phase 19A-4 pull request:
-  `PR #8 — MERGED`
-- Phase 19A-4 merge commit:
-  `7d153f8817004a9f0b62719fc2063ee974e3418e`
-- Phase 19A-4 final executable checkpoint:
-  `ff7e84572d029f01cf61f4fee873f11204a6a75e`
-- Phase 19A-4 final automated verification:
-  `FRONTEND 906/906 / BACKEND UNIT 206/206 /
-  BACKEND INTEGRATION 193/193 / BACKEND SECURITY 36/36 /
-  TOTAL 1,341/1,341 PASS / TYPECHECKS PASS / PRODUCTION BUILD PASS /
-  GIT DIFF CHECK PASS / CLEAN WORKTREE`
-- Phase 19A-4 human visual/functional QA:
-  `PASSED`
-- Phase 19A-4 PR-review findings:
-  `ALL RESOLVED`
-- Phase 19A-4 closeout record:
-  `docs/planning/PHASE_19A_4_CANDIDATE_PHOTO_SUPPORT_CLOSEOUT.md`
-- Phase 19A overall status:
-  `COMPLETED`
-- Phase 19B original issue allocation:
-  `CLH-UX-INTERVIEW-006 THROUGH CLH-UX-INTERVIEW-010 /
-  CLH-FEATURE-INTERVIEW-011 /
-  CLH-UX-INTERVIEW-012`
-- Phase 19B question-type feature rule:
-  `CLH-FEATURE-INTERVIEW-011 REQUIRED A BOUNDED ARCHITECTURE AUDIT /
-  DESIGN DECISION BEFORE IMPLEMENTATION — COMPLETED DURING PHASE 19B`
-- Phase 19B main integration:
-  `PR #16 MERGED / CLOSED /
-  MAIN 469c27f35011fb9b51e7d501d9f759fae757efb5`
-- Next gate:
-  `SEPARATELY REVIEW AND AUTHORIZE THE NEXT PHASE;
-  NO NEXT PHASE IS ACTIVE YET`
-- Manual deployment:
-  `NOT AUTHORIZED / NOT PERFORMED BY THE PHASE 19B
-  MAIN-INTEGRATION WORKFLOW`
+  `ACTIVE / EXECUTABLE BASELINE QUALIFIED / EVIDENCE RECORD QUALIFIED /
+  GOVERNANCE RECONCILIATION AUTHORIZED`
+- Phase branch:
+  `phase-20a-final-release-baseline-evidence-freeze`
+- Frozen executable product baseline:
+  `a2a3aa0ef5b9cf9583ce4aeae2d676f5f568a790`
+- Frozen baseline identity:
+  `MAIN MERGE COMMIT FOR PR #30 — POLISH RESUME ASSESSMENT ACTION UI`
+- Phase 20A initial plan and final executable-qualification checkpoint:
+  `b24bbb3d5506c5c292fcab1d925a4f032c322ec4`
+- Phase 20A evidence-record checkpoint before this governance reconciliation:
+  `0d428759bad62509be7824a0b340fe1e79f1c922`
+- Phase 20A authoritative evidence record:
+  `docs/planning/PHASE_20A_FINAL_RELEASE_BASELINE_EVIDENCE_FREEZE.md`
+- Fresh final automated acceptance evidence:
+  `BACKEND PRODUCTION TYPECHECK PASS / BACKEND TEST TYPECHECK PASS /
+  BACKEND UNIT 223/223 PASS / BACKEND INTEGRATION 249/249 PASS /
+  BACKEND SECURITY 43/43 PASS / BACKEND FULL 515/515 PASS /
+  BACKEND PRODUCTION BUILD PASS / FRONTEND TYPECHECK PASS /
+  FRONTEND FULL 1170/1170 PASS / FRONTEND PRODUCTION BUILD PASS /
+  ROOT WORKSPACE TYPECHECK PASS / ROOT WORKSPACE BUILD PASS /
+  FINAL DIFF CHECK PASS`
+- Final non-overlapping complete-suite count:
+  `1,685 PASSING TESTS — 515 BACKEND + 1,170 FRONTEND`
+- Security claim boundary:
+  `BACKEND SECURITY REGRESSION SUITE 43/43 PASS; NO SEPARATE DEDICATED
+  EXTERNAL OR REPOSITORY-WIDE SECURITY-SCANNER PASS IS CLAIMED`
+- Final human/live evidence chain:
+  `PHASE 19G INTEGRATED LIVE QA PASSED / NO REPRODUCIBLE PRODUCT DEFECT;
+  POST-19G PR #30 RESUME ASSESSMENT UI POLISH RECEIVED FOCUSED AUTOMATED
+  QUALIFICATION AND EXPLICIT HUMAN VISUAL APPROVAL`
+- Phase 19G status:
+  `COMPLETED / QUALIFIED / MERGED TO MAIN / CLOSED`
+- Phase 19G merge commit:
+  `66b1c6de2b7973b1dec768bb674dd200d8b9530f`
+- Post-19G Resume assessment UI polish:
+  `COMPLETED / QUALIFIED / MERGED VIA PR #30`
+- Post-19G Resume assessment UI merge commit and frozen product baseline:
+  `a2a3aa0ef5b9cf9583ce4aeae2d676f5f568a790`
+- Phase 19H:
+  `DROPPED / NOT REQUIRED; DO NOT REINTRODUCE WITHOUT SEPARATE USER DIRECTION`
+- Phase 20A scope:
+  `DOCUMENTATION / EVIDENCE / GOVERNANCE ONLY; NO PRODUCT FEATURE,
+  REDESIGN, BACKEND, API, SCHEMA, GEMINI, DEPENDENCY, OR DEPLOYMENT CHANGE`
+- Phase 20B through Phase 20E:
+  `PLANNED / INACTIVE / REQUIRE SEPARATE AUTHORIZATION AFTER PHASE 20A`
+- Manual deployment for the exact frozen release candidate:
+  `NOT AUTHORIZED / NOT PERFORMED BY PHASE 20A`
 - Branch deletion:
   `NOT AUTHORIZED / NOT PERFORMED`
-- Phase 19C through Phase 19H status:
-  `PLANNED / INACTIVE`
-- Phase 20 and Phase 21 status:
-  `PLANNED / INACTIVE`
-- Deferred item:
-  `CLH-FEATURE-AUTH-049 — THIRD-PARTY OAUTH /
-  SEPARATE FUTURE AUTHENTICATION DESIGN AND APPROVAL`
-- Historical execution statements below do not override this Phase 19B
-  current-authority block.
+- Current gate:
+  `VERIFY THIS DOCUMENTATION-ONLY GOVERNANCE COMMIT AND COMPLETE THE
+  PHASE 20A PULL-REQUEST / EXPLICIT MERGE-APPROVAL WORKFLOW`
+- Governance commit identity, final PR state, and merge state are verified
+  directly from Git/GitHub and are intentionally not recursively self-recorded
+  in this same current-authority block.
+- Historical execution statements below are retained as evidence and do not
+  override this Phase 20A current-authority block.
 
 ## Completed predecessor: G-5 and staging closeout
 
