@@ -2,94 +2,49 @@
 
 ## Purpose
 
-Full Application Browser Testing exercises the principal user workflows
-through a real Chromium browser. These Playwright browser workflow tests
-provide end-to-end coverage of the application's principal user journeys.
+Full Application Browser Testing exercises the principal Career Learning Hub user workflows through a real Chromium browser. Executable browser tests live in `tests/browser/`; this document is operational guidance only.
 
-Executable test code lives in `tests/browser/`. This guide and related plans
-and reports are documentation only.
+The suite covers authentication, protected routing, session persistence, Dashboard, Resume Studio, Interview Coach, Learning Workspace, ownership isolation, private PDF access, answer secrecy, responsive behavior, console health, and horizontal-overflow checks.
 
-The browser workflow suite covers registration, login, protected routing,
-session persistence, logout, Dashboard, Resume, Interview, and Learning
-workflows. It also checks User A/User B ownership isolation, private PDF
-access, Quiz answer secrecy, browser console errors, and horizontal overflow.
+## Browser matrix
 
-## Test matrix
+| Project | Viewport |
+| --- | --- |
+| `desktop` | 1440 × 900 |
+| `tablet` | 768 × 1024 |
+| `mobile` | 390 × 844 |
 
-| Project | Viewport | Current tests |
-| --- | --- | ---: |
-| `desktop` | 1440 × 900 | 9 |
-| `tablet` | 768 × 1024 | 9 |
-| `mobile` | 390 × 844 | 9 |
-
-The suite uses one worker, zero retries, a 45-second test timeout, and a
-10-second assertion timeout. These values are deliberate. One worker keeps
-the isolated MongoDB and shared local service lifecycle deterministic, while
-zero retries makes a failure visible instead of hiding it behind a rerun.
+The configured suite uses one worker and zero retries so failures remain visible and the isolated service lifecycle stays deterministic.
 
 ## Local services
 
-The Playwright configuration starts and stops everything the suite needs:
+The Playwright configuration starts and stops the local services required by the suite:
 
 - an isolated `MongoMemoryReplSet` database;
-- the Express backend on `127.0.0.1:8000`; and
+- the Express backend on `127.0.0.1:8000`;
 - the Vite frontend on `127.0.0.1:4173`.
 
-Do not connect this suite to MongoDB Atlas. Do not start persistent frontend,
-backend, or database services for it. The harness sets test-only configuration
-in the spawned process and does not read a repository `.env` file.
+Do not connect this suite to MongoDB Atlas or production services. Do not start persistent frontend, backend, or database services for the automated browser campaign unless a specific diagnostic requires it.
 
-Provider-backed jobs remain disabled. The suite must not call Gemini or any
-other AI provider.
+Provider-backed AI calls remain outside the default synthetic browser suite. The suite must not use real provider credentials.
 
 ## Synthetic data and cleanup
 
-Tests use generated `@example.test` identities and the tracked synthetic PDF
-at `tests/browser/fixtures/synthetic-learning.pdf`. Do not use real personal
-data, production exports, real resumes, private documents, or provider
-credentials.
+Use generated `@example.test` identities and tracked synthetic fixtures only. Do not use real personal data, production exports, real resumes, private documents, or provider credentials.
 
-Global setup removes tagged leftovers before the run. Per-test cleanup
-removes each synthetic user and all records owned by that user. Global
-teardown repeats the tagged cleanup and must report:
+Global/per-test cleanup must remove synthetic identities and owned data. The service harness must stop spawned frontend/backend/database processes and remove temporary runtime/private-storage artifacts after the run.
 
-```text
-users=0, owned=0
-```
+## Failure artifacts
 
-The service harness then stops the frontend, backend, and in-memory MongoDB
-processes and removes its temporary runtime and private storage.
+Failure-only screenshots and traces are written outside the repository under the configured temporary browser-test directory. Video remains disabled unless a separately approved diagnostic requires it.
 
-## Artifacts
-
-Failure-only screenshots and retained-on-failure traces are written outside
-the repository under `/private/tmp/career-learning-hub-phase14/`. Video is
-disabled. The HTML report and test results use the same temporary root.
-
-After a successful run, no screenshots, videos, traces, HTML report,
-test-results directory, private storage, runtime data, coverage output, or
-temporary log should remain.
+Generated browser reports, screenshots, traces, test-results directories, temporary private storage, runtime data, and logs must not be committed.
 
 ## Running the suite
 
-The preferred command is reserved as:
+The repository currently does not declare portable `npm run test:browser` or `npm run test:e2e` scripts. Full Application Browser Testing uses the separately approved bundled Playwright runtime until a repository-local runner is explicitly approved.
 
-```bash
-npm run test:browser
-```
-
-The temporary compatibility command is reserved as:
-
-```bash
-npm run test:e2e
-```
-
-Neither script is present yet. The repository does not declare Playwright and
-does not contain a portable local runner, so adding either script would create
-an undeclared or machine-specific dependency.
-
-For the currently authorized Codex-bundled runtime, obtain its Node executable
-and Node package directory from the workspace dependency report, then run:
+Use the discovered bundled Node executable and package directory at execution time:
 
 ```bash
 NODE_PATH="<bundled-node-modules>" \
@@ -98,119 +53,37 @@ NODE_PATH="<bundled-node-modules>" \
   test --config=tests/browser/playwright.config.cjs
 ```
 
-Do not replace the placeholders with a committed user-specific cache path.
-Do not use `npx` when it would download Playwright. Adding a portable
-repository command requires a separate approved dependency or runner
-decision.
+Do not commit a user-specific runtime/cache path. Do not use `npx` if it would download an undeclared Playwright dependency.
 
-To inspect the discovered tests without starting the local services, append
-`--list`.
+To inspect test discovery without starting services, append `--list`.
 
-## Phase 16G fresh integrated result — 2026-07-29
+## Verification expectations
 
-This is the fresh Phase 16G result from starting commit
-`c0325c42816c19c006c790a4e153e3caee88d5bc` (`Complete accessibility and
-performance review`). It is separate from the preserved Phase 14, Phase 15,
-Phase 16A-1, Phase 16C, Phase 16D, Phase 16E, and Phase 16F historical
-evidence.
+A successful complete browser campaign should verify the configured principal workflows across the supported projects and report exact pass/fail/skip counts. It should also confirm cleanup of synthetic data and spawned services.
 
-The direct bundled runner was invoked in this form, with the discovered
-workspace-runtime paths substituted only at execution time:
+Human visual QA remains separate from automated browser testing. Visible UI changes require human review at the relevant desktop/tablet/mobile breakpoints before final approval.
 
-```bash
-NODE_PATH="<bundled-node-modules>" \
-  "<bundled-node>" \
-  "<bundled-node-modules>/playwright/cli.js" \
-  test --config=tests/browser/playwright.config.cjs
-```
+## Final evidence boundary
 
-- Runner: Playwright 1.61.1 with Google Chrome 150.0.7871.187.
-- Projects: desktop 1440×900, tablet 768×1024, mobile 390×844.
-- Result: 27/27 passed in 1.9 minutes: desktop 9/9, tablet 9/9, mobile
-  9/9; one worker and zero retries.
-- Principal coverage: authentication bootstrap and routing, Dashboard,
-  Interview, Learning, User A/User B ownership, private PDF access, Quiz
-  answer secrecy, sidebar/drawer, Create actions, breadcrumbs, saved Resume
-  print, AI comparison, and Resume templates/design.
-- Authentication-bootstrap CLS was 0.0000 in all three projects. The existing
-  console/page-error and horizontal-overflow assertions collected no failure.
-- Setup and teardown each reported `users=0, owned=0`. Automated services
-  stopped, ports 4173/4174/8000 closed, and the isolated runtime, storage,
-  report, test-result, screenshot, trace, video, and log artifacts were
-  removed.
-- The run used synthetic `@example.test` data only. It did not call a
-  provider, connect to Atlas or cloud storage, deploy, use production data,
-  or access a legacy project.
+The Phase 20A final release evidence records the authoritative final automated application qualification:
 
-No historical result is presented as fresh Phase 16G evidence, no package
-script was added, and the suite name remains Full Application Browser
-Testing.
+- backend full suite: 515/515 passing;
+- frontend full suite: 1,170/1,170 passing;
+- non-overlapping complete-suite total: 1,685 passing tests;
+- backend production and test-source typechecks: PASS;
+- frontend typecheck: PASS;
+- backend/frontend/root production builds: PASS.
 
-## Phase 16G human approval and cleanup closeout
+The final human/live evidence chain includes Phase 19G integrated browser QA and focused human visual approval for the final Resume assessment-action polish.
 
-- The operator completed and approved authentication; desktop sidebar and
-  mobile drawer behavior; Create actions; breadcrumbs; Resume print; AI
-  comparison; Resume templates/design; Interview and Learning; keyboard and
-  focus; contrast; reduced motion; performance experience; ownership; trust;
-  and privacy.
-- The reviewed matrix was 1440×900, 1024×768, 768×1024, 390×844, 320×720,
-  and actual 200% browser zoom. Print review covered A4/Letter, current and
-  historical saved versions, multipage content, selectable text, hidden
-  application chrome, clipping, and grayscale hierarchy.
-- The accepted token is `PHASE_16G_FINAL_VERIFICATION_APPROVED`; approval
-  accepted: yes.
-- No provider request, Atlas/cloud-storage connection, deployment, production
-  data, real personal data, or legacy access occurred.
-- The headed review tab, frontend, backend, and isolated MongoDB stopped.
-  Cleanup removed both synthetic identities, 53 owned records, one
-  AuthSession, private storage, runtime data, and the outside-repository Phase
-  16G scripts. Final evidence is `users=0, owned=0, sessions=0`; ports 4173,
-  4174, and 8000 are closed.
-- Phase 16 and Phase 16G are `COMPLETED` / `APPROVED`. Phase 17 remains
-  `PLANNED` / `INACTIVE` and requires separate activation.
-
-No package script, browser specification, configuration, setup, teardown,
-fixture, product source, or executable-test behavior changed during Phase 16G
-closeout.
-
-## Phase 17 release-candidate result — 2026-07-30
-
-The Phase 17 release-candidate gate ran exactly once from
-`d95e0644572b6d605b3fa6b26f3cd13a717a4bc8`
-(`Add frontend coverage tooling`) with the documented bundled Playwright
-`1.61.1` runtime and Google Chrome `150.0.7871.187`.
-
-- Result: 27/27 passed in 52.7 seconds: desktop 9/9, tablet 9/9, and mobile
-  9/9; zero failed, zero skipped, one worker, and zero retries.
-- Authentication-bootstrap CLS was `0.0000` for desktop, tablet, and mobile.
-- Coverage included authentication and responsive routing, Dashboard,
-  Interview, private Learning PDF/chat/Flashcard/Quiz workflows, ownership
-  isolation, Quiz answer secrecy, sidebar/drawer, Create actions,
-  breadcrumbs, and Resume creation, versioning, validation, printing, AI
-  comparison, templates, and design controls.
-- The existing browser assertions for console health, page errors, and
-  horizontal overflow passed.
-- Setup and teardown each reported `users=0, owned=0`.
-- The run used synthetic `@example.test` identities and the tracked synthetic
-  PDF only. It did not call an AI provider, connect to Atlas or cloud storage,
-  deploy, use production or real personal data, or access a legacy project.
-- No browser test, configuration, fixture, product source, package script, or
-  dependency changed during the Phase 17 gate.
-- Generated browser runtime, storage, report, test-result, screenshot, trace,
-  video, HAR, and log output was removed. Ports 4173, 4174, and 8000 are
-  closed.
+Historical browser campaigns remain available through Git history when needed for traceability; they are not treated as newer evidence than the Phase 20A release freeze.
 
 ## Troubleshooting boundaries
 
-- Read the complete error and identify the failing layer before changing
-  anything.
-- Reproduce the failure and compare it with the last working configuration.
-- Keep repairs limited to browser-test path migration issues during Phase
-  16A-1.
-- Do not change application behavior, selectors, assertions, ownership rules,
-  authentication, private-file controls, or Quiz answer secrecy to obtain a
-  pass.
-- Do not enable retries or reduce browser coverage.
-- Stop after three unsuccessful code-changing attempts for the same root
-  failure and request human direction.
-- Never install or download a dependency as part of this workflow.
+- Read the complete error and identify the failing layer before changing anything.
+- Reproduce the failure before attempting a repair.
+- Do not change application behavior, ownership rules, authentication, private-file controls, or answer secrecy merely to obtain a passing browser test.
+- Do not enable retries to hide a deterministic failure.
+- Keep repairs bounded to the verified root cause.
+- Stop after three unsuccessful code-changing attempts for the same root failure and request human direction.
+- Never install or download an undeclared dependency as part of a routine browser-test run.

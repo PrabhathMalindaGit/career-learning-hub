@@ -83,5 +83,5 @@ npm run test:ci
 npm run build
 ```
 
-No legacy nested application directory or stale legacy path reference
-remains in the converted project.
+No stale nested application directory or outdated path reference remains in
+the current project.
