@@ -10,6 +10,7 @@ import {
   Outlet,
   useLocation,
 } from "react-router-dom";
+import { AccountSummary } from "./components/AccountSummary";
 import { BrandLockup } from "./components/BrandLockup";
 import { Dialog } from "./components/Dialog";
 import { useAuth } from "./features/auth/AuthProvider";
@@ -180,10 +181,10 @@ export function AppShell() {
         <CreateMenu />
         <PrimaryNavigation label="Primary navigation" />
         <div className="sidebar-session">
-          <div className="session-summary__text">
-            <span>{user?.profile.displayName}</span>
-            <small>{user?.email}</small>
-          </div>
+          <AccountSummary
+            displayName={user?.profile.displayName}
+            email={user?.email}
+          />
           <button
             className="sidebar-logout"
             type="button"
@@ -237,10 +238,10 @@ export function AppShell() {
           <PrimaryNavigation label="Mobile navigation" />
         </div>
         <div className="sidebar-session">
-          <div className="session-summary__text">
-            <span>{user?.profile.displayName}</span>
-            <small>{user?.email}</small>
-          </div>
+          <AccountSummary
+            displayName={user?.profile.displayName}
+            email={user?.email}
+          />
           <button
             className="sidebar-logout"
             type="button"

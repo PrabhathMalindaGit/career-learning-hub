@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { TechnicalDetails } from "./TechnicalDetails";
 
 export type StateSurfaceMode = "static" | "status" | "alert";
 
@@ -28,9 +29,7 @@ export function StateSurface({
     >
       {heading}
       {body}
-      {requestId ? (
-        <p className="request-id">Request ID: {requestId}</p>
-      ) : null}
+      <TechnicalDetails requestId={requestId} />
       {actions}
     </div>
   );

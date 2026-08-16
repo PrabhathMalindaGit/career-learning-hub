@@ -1,0 +1,9 @@
+.form-field input:disabled,
+.form-field select:disabled,
+.form-field textarea:disabled,
+.field-control:disabled {
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  cursor: not-allowed;
+  opacity: 0.78;
+}

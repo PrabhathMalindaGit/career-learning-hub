@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { StateSurface } from "./StateSurface";
 
 describe("StateSurface", () => {
-  it("renders caller-owned heading, body, actions, and request ID", () => {
+  it("renders caller-owned content and keeps Request ID in collapsed Technical details", () => {
     render(
       <StateSurface
         mode="static"
@@ -22,6 +22,9 @@ describe("StateSurface", () => {
       screen.getByRole("button", { name: "Caller-owned action" }),
     ).not.toBeNull();
     expect(heading.textContent).not.toContain("request-state-0001");
+    const summary = screen.getByText("Technical details");
+    const details = summary.closest("details") as HTMLDetailsElement;
+    expect(details.open).toBe(false);
     expect(
       screen.getByText("Request ID: request-state-0001"),
     ).not.toBeNull();
