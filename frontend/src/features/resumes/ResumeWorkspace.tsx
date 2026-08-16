@@ -227,6 +227,9 @@ function saveFailure(error: unknown): Notice {
   };
 }
 
+// Features 3.3–3.12 — Canonical Resume Studio workspace.
+// Owns editing/live preview, immutable version saves, appearance/photo/export,
+// role-aware assessment and recommendations, version history, and recovery.
 export function ResumeWorkspace() {
   const { resumeId } = useParams<{ resumeId: string }>();
   const { user } = useAuth();

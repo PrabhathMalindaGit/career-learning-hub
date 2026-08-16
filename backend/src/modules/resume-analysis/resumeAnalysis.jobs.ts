@@ -7,6 +7,9 @@ import {
 
 let registered = false;
 
+// Features 3.9–3.10 — Resume assessment job boundary.
+// Runs assessment work against the authorized saved Resume version and returns
+// validated job results that the workspace can review before applying changes.
 export function registerResumeAnalysisJobHandlers(): void {
   if (registered) return;
   registered = true;

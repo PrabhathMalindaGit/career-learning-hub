@@ -11,6 +11,9 @@ import { QuizQuestionModel } from "./quizQuestion.model.js";
 
 const activeJobStatuses = ["queued", "processing"] as const;
 
+// Feature 5.10 — Learning child-resource deletion boundary.
+// Performs owner-scoped transactional deletion/cascade rules while active jobs
+// remain authoritative blockers for the targeted resource.
 export async function deleteLearningConversation(input: {
   userId: string;
   documentId: string;

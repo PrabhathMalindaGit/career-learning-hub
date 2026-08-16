@@ -509,6 +509,9 @@ function hasPerformanceInWindow(data: DashboardProgress): boolean {
   );
 }
 
+// Features 2.1–2.5 — Dashboard.
+// Combines bounded progress outcomes, continuation/start shortcuts for the
+// three workspaces, and recent activity without owning those feature domains.
 export function MainDashboard() {
   const [windowDays, setWindowDays] =
     useState<DashboardWindowDays>(30);

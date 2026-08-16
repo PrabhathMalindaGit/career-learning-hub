@@ -174,6 +174,9 @@ function UsageSummary({ usage }: { usage: AiUsage }) {
   );
 }
 
+// Feature 6.10 — AI usage diagnostics.
+// Reads bounded aggregated usage metrics for Settings without exposing prompts,
+// generated content, private document content, or credential values.
 export function AiUsageDiagnosticsSettingsSection() {
   const [usage, setUsage] = useState<AiUsage>();
   const [loading, setLoading] = useState(true);

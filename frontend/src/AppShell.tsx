@@ -137,6 +137,9 @@ function CreateMenu() {
   );
 }
 
+// Features 1.3–1.6 — Authenticated application shell.
+// Centralizes desktop/mobile navigation, global creation shortcuts, account
+// context, and single-flight logout while protected feature routes render below.
 export function AppShell() {
   const { user, logout } = useAuth();
   const location = useLocation();

@@ -70,6 +70,8 @@ function RequestId({ value }: { value?: string }) {
   return value ? <p className="request-id">Request ID: {value}</p> : null;
 }
 
+// Feature 5.8.1 — Document-based flashcard generation.
+// Creates and tracks grounded flashcard sets, then opens ready sets for study.
 export function DocumentFlashcards({
   accountId,
   document,

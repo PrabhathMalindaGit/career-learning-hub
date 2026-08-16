@@ -203,6 +203,9 @@ function attemptAnswerText(
   return attempt.answer.text;
 }
 
+// Features 4.4–4.13 — Interview practice workspace.
+// Coordinates generated/manual questions, filters and pins, private notes,
+// saved attempts, explanations, AI feedback, and session lifecycle actions.
 export function InterviewSessionWorkspace() {
   const { sessionId = "" } = useParams();
   const [session, setSession] = useState<InterviewSessionDetail | null>(

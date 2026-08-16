@@ -8,6 +8,8 @@ type RequestSchemas = {
   query?: ZodTypeAny;
 };
 
+// Feature 7.7 — Request validation boundary.
+// Rejects malformed validated inputs before feature handlers persist or queue work.
 export function validate(schemas: RequestSchemas): RequestHandler {
   return (request, _response, next) => {
     const errors: Record<string, unknown> = {};

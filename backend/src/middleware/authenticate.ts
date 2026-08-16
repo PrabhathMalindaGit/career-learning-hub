@@ -26,6 +26,8 @@ function readBearerToken(authorization: string | undefined): string {
   return authorization.slice("Bearer ".length).trim();
 }
 
+// Features 7.1–7.2 — Authenticated request boundary.
+// Resolves the current session/user context used by owner-scoped protected APIs.
 export const authenticate: RequestHandler = asyncHandler(
   async (request, _response, next) => {
     const token = readBearerToken(request.get("authorization"));

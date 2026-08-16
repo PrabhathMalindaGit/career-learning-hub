@@ -70,6 +70,8 @@ function RequestId({ value }: { value?: string }) {
   ) : null;
 }
 
+// Feature 5.9.2 — Quiz-taking workspace.
+// Presents the saved quiz questions and records an explicit server-scored attempt.
 export function LearningQuizWorkspace() {
   const { documentId = "", quizId = "" } = useParams<{
     documentId: string;

@@ -39,6 +39,9 @@ function titleCase(value: string): string {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }
 
+// Features 3.1–3.2 — Resume collection and creation entry point.
+// Lists owned resumes and opens the shared creation flow without duplicating
+// editor, import, or assessment behavior in the collection page.
 export function ResumeListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();

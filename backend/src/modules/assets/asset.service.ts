@@ -35,6 +35,9 @@ function buildStorageKey(userId: string): string {
   return `${userId}/${year}/${month}/${randomUUID()}`;
 }
 
+// Feature 7.3 — Private asset boundary.
+// Centralizes owner-scoped asset storage/access rules used by private PDFs and
+// other protected files rather than exposing raw storage directly to clients.
 export async function assertAssetQuota(
   userId: string,
   incomingBytes: number,

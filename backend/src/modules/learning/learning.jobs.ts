@@ -19,6 +19,9 @@ import {
 
 let registered = false;
 
+// Features 5.2 and 5.7–5.9 — Learning background-job boundary.
+// Registers document processing and grounded AI generation work used by chat,
+// flashcards, and quizzes through the shared durable-job execution model.
 export function registerLearningJobHandlers(): void {
   if (registered) return;
   registered = true;
