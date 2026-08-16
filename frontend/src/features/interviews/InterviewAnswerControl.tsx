@@ -55,6 +55,9 @@ function rowsFor(question: InterviewQuestionDetail): number {
   return 9;
 }
 
+// Features 4.6 and 4.9 — Type-aware practice answer control.
+// Presents the correct answer experience for the selected question type and
+// emits one explicit saved attempt; Coding submissions remain text-only.
 export function InterviewAnswerControl({
   question,
   textValue,
