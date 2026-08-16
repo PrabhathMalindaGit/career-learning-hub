@@ -7,8 +7,8 @@ import type {
 export const INTERVIEW_POLLING_MAX_DURATION_MS = 5 * 60 * 1_000;
 const TRANSIENT_FAILURE_LIMIT = 3;
 
-export function interviewPollDelayForAttempt(attempt: number): number {
-  return [1_000, 2_000, 3_000, 5_000][attempt] ?? 8_000;
+export function interviewPollDelayForAttempt(_attempt: number): number {
+  return 1_000;
 }
 
 function defaultWait(
@@ -78,15 +78,6 @@ export async function pollInterviewJob(input: {
       return { reason: "timeout", job: lastJob };
     }
 
-    await wait(interviewPollDelayForAttempt(attempt), input.signal);
-
-    if (input.signal?.aborted) {
-      return { reason: "cancelled", job: lastJob };
-    }
-    if (now() - startedAt >= INTERVIEW_POLLING_MAX_DURATION_MS) {
-      return { reason: "timeout", job: lastJob };
-    }
-
     try {
       const job = await input.fetchJob(input.jobId, input.signal);
       const completedIdentity = resultIdentity(job);
@@ -138,6 +129,7 @@ export async function pollInterviewJob(input: {
       }
     }
 
+    await wait(interviewPollDelayForAttempt(attempt), input.signal);
     attempt += 1;
   }
 }

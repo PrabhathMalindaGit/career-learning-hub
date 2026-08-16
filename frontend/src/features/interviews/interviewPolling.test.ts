@@ -68,19 +68,20 @@ function job(
 }
 
 describe("interview polling", () => {
-  it("uses the approved bounded schedule", () => {
+  it("uses a steady one-second bounded delay between checks", () => {
     expect(
       [0, 1, 2, 3, 4, 20].map(
         polling.interviewPollDelayForAttempt,
       ),
-    ).toEqual([1_000, 2_000, 3_000, 5_000, 8_000, 8_000]);
+    ).toEqual([1_000, 1_000, 1_000, 1_000, 1_000, 1_000]);
     expect(polling.INTERVIEW_POLLING_MAX_DURATION_MS).toBe(
       5 * 60 * 1_000,
     );
   });
 
-  it("stops at a validated completed job with matching result identity", async () => {
+  it("checks immediately, then stops at a validated completed job with matching result identity", async () => {
     const updates: Job[] = [];
+    const delays: number[] = [];
     const fetchJob = vi
       .fn()
       .mockResolvedValueOnce(job("processing"))
@@ -92,9 +93,12 @@ describe("interview polling", () => {
       expectedResultId: questionId,
       fetchJob,
       onUpdate: (value) => updates.push(value),
-      wait: async () => undefined,
+      wait: async (delay) => {
+        delays.push(delay);
+      },
     });
 
+    expect(delays).toEqual([1_000]);
     expect(updates.map((value) => value.status)).toEqual([
       "processing",
       "completed",
@@ -208,10 +212,11 @@ describe("interview polling", () => {
 
   it("pauses at five minutes without marking the backend job failed", async () => {
     let now = 0;
+    const processing = job("processing");
     const result = await polling.pollInterviewJob({
       jobId,
       expectedType: "interview.question.explain",
-      fetchJob: vi.fn().mockResolvedValue(job("processing")),
+      fetchJob: vi.fn().mockResolvedValue(processing),
       now: () => now,
       wait: async (delay) => {
         now += delay;
@@ -223,13 +228,14 @@ describe("interview polling", () => {
 
     expect(result).toEqual({
       reason: "timeout",
-      job: undefined,
+      job: processing,
     });
   });
 
-  it("honors cancellation without an extra request", async () => {
+  it("honors cancellation after the immediate check without an extra request", async () => {
     const controller = new AbortController();
-    const fetchJob = vi.fn();
+    const processing = job("processing");
+    const fetchJob = vi.fn().mockResolvedValue(processing);
     const result = await polling.pollInterviewJob({
       jobId,
       expectedType: "interview.question.explain",
@@ -240,7 +246,7 @@ describe("interview polling", () => {
       },
     });
 
-    expect(result.reason).toBe("cancelled");
-    expect(fetchJob).not.toHaveBeenCalled();
+    expect(result).toEqual({ reason: "cancelled", job: processing });
+    expect(fetchJob).toHaveBeenCalledTimes(1);
   });
 });

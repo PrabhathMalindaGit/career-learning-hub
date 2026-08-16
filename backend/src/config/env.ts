@@ -201,7 +201,7 @@ const envSchema = z
 
     JOB_WORKER_ENABLED: booleanFromEnv.default(true),
     JOB_WORKER_ID: z.string().min(1).max(120).default("api-local-worker"),
-    JOB_POLL_INTERVAL_MS: z.coerce.number().int().min(250).max(60_000).default(1_000),
+    JOB_POLL_INTERVAL_MS: z.coerce.number().int().min(250).max(60_000).default(250),
     JOB_LEASE_SECONDS: z.coerce.number().int().min(15).max(900).default(60),
     JOB_MAX_CONCURRENCY: z.coerce.number().int().min(1).max(20).default(2),
     JOB_RETENTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
