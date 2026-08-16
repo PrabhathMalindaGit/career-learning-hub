@@ -1,0 +1,5 @@
+case_id,case_version,rubric_version,executable_checkpoint,model_identity,output_reference,validity_status,answer_relevance,specificity,actionability,internal_consistency,practice_only_framing,feedback_quality_points,rater_notes
+INT-01,1.0,1.0,,,,,,,,,,,
+INT-02,1.0,1.0,,,,,,,,,,,
+INT-03,1.0,1.0,,,,,,,,,,,
+INT-04,1.0,1.0,,,,,,,,,,,
