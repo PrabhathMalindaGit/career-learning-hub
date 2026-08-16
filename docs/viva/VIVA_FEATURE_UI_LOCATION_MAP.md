@@ -62,7 +62,6 @@ The current common UI vocabulary is:
 ## Stable feature-number index
 
 ### 1 — Access & Navigation
-
 - **1.1** Register
 - **1.2** Login
 - **1.3** Authenticated application shell
@@ -71,7 +70,6 @@ The current common UI vocabulary is:
 - **1.6** Logout/session handling
 
 ### 2 — Dashboard
-
 - **2.1** Progress overview
 - **2.2** Continue/Create Resume
 - **2.3** Continue/Start Interview
@@ -79,7 +77,6 @@ The current common UI vocabulary is:
 - **2.5** Recent activity
 
 ### 3 — Resume Studio
-
 - **3.1** Resume collection
 - **3.2** Resume creation
   - **3.2.1** Guided setup
@@ -97,7 +94,6 @@ The current common UI vocabulary is:
 - **3.12** Draft recovery / unsaved-change protection
 
 ### 4 — Interview Coach
-
 - **4.1** Interview session collection
 - **4.2** Create interview
 - **4.3** Career area / role / experience configuration
@@ -113,7 +109,6 @@ The current common UI vocabulary is:
 - **4.13** Session archive/restore/delete
 
 ### 5 — Learning Workspace
-
 - **5.1** PDF upload
 - **5.2** Document processing
 - **5.3** Document library
@@ -135,7 +130,6 @@ The current common UI vocabulary is:
 - **5.10** Learning resource deletion
 
 ### 6 — Settings & Gemini
-
 - **6.1** Gemini connection status
 - **6.2** Fixed Gemini model display
 - **6.3** Application-managed Gemini
@@ -149,7 +143,6 @@ The current common UI vocabulary is:
 - **6.11** Account/session information
 
 ### 7 — Shared Platform Controls
-
 - **7.1** Authentication/session security
 - **7.2** Ownership/authorization
 - **7.3** Private file storage
@@ -494,29 +487,157 @@ The current common UI vocabulary is:
 
 ### 4.1 Interview session collection
 
+- **UI path:** `Interviews`.
+- **Route:** `/interviews`.
+- **Screen / section:** `Interview Coach` → `Your sessions`.
+- **Control:** Heading `Create interview`; status filters `All`, `Active`, `Completed`, `Archived`; card `Open session`; per-card More actions; pager `Previous` / `Next`; failure `Retry list`.
+- **Visual / state behavior:** Status filter buttons expose selection with `aria-pressed`. Cards show target role, optional distinct session title, experience level, practice mode, lifecycle status, question count and last-updated date. Empty state changes with the selected status filter.
+- **What happens:** `Open session` navigates to `/interviews/:sessionId`; the heading/global create intent opens the same `InterviewCreateDialog`; list data remains owner-scoped.
+- **Frontend:** `InterviewSessionListPage.tsx`, `InterviewSessionCard.tsx`, `InterviewCreateDialog.tsx`.
+- **Frontend API / gateway:** `frontend/src/features/interviews/interviewApi.ts`.
+- **Backend:** `backend/src/modules/interviews/interview.controller.ts`, `interview.service.ts`, Interview routes/models.
+- **Representative tests:** `InterviewSessionListPage.test.tsx`, card lifecycle/delete tests and backend ownership/integration tests.
+- **Viva-ready explanation:** The list page is the session catalogue and lifecycle entry point; actual question/attempt work stays in the selected session workspace.
+
 ### 4.2 Create interview
+
+- **UI path:** `Interviews` → `Create interview`, or global `Create` → `Interview session`.
+- **Route:** `/interviews?action=create` opens the same dialog then clears the intent.
+- **Screen / section:** `Create interview` dialog.
+- **Control:** Required `Session title`, `Career area`, `Target role`, `Experience level`, `Practice mode`; optional Focus topics, Skill gaps and Additional context / Job description; `Cancel`; primary `Create interview`.
+- **Enabled when:** Required fields pass current bounds; custom tag inputs are valid; creation is not already busy.
+- **Visual / state behavior:** Multi-field errors focus `Review the highlighted fields.`; a single error focuses its field. During creation the primary action is disabled/`aria-busy` and changes to `Creating…`.
+- **What happens:** The client submits one owned Interview session; success navigates directly to `/interviews/:sessionId`.
+- **Frontend:** `InterviewCreateDialog.tsx`, `InterviewRoleSelector.tsx`, `InterviewSuggestedTagInput.tsx`.
+- **Backend:** session creation through `interview.controller.ts`, `interview.schemas.ts`, `interview.service.ts`.
+- **Representative tests:** `InterviewCreateDialog.test.tsx`, role selector/guidance/tag-input tests, Interview integration tests.
+- **Viva-ready explanation:** Session creation captures practice context once; question generation then consumes the saved session context rather than creating a separate AI-only session record.
 
 ### 4.3 Career area / role / experience configuration
 
+- **UI path:** Inside `Create interview`.
+- **Control:** `Career area` with predefined areas plus `Other / Custom`; `Target role`; `Experience level`; `Practice mode` values `Written practice` and `Study`; optional Focus topics / Skill gaps / Job description.
+- **Visual / state behavior:** Selecting a Career area updates deterministic local role/topic/skill suggestions. Suggested session titles update until the user takes ownership by editing the title themselves.
+- **What happens:** Career area is a frontend authoring aid; the persisted session stores the actual target role, experience, focus/skill context, optional job description and mode used by Interview workflows.
+- **Frontend:** `InterviewCreateDialog.tsx`, `interviewRoleGuidance.ts`, `InterviewRoleSelector.tsx`.
+- **Backend:** `interview.schemas.ts`, `interview.service.ts` for persisted session fields.
+- **Representative tests:** `InterviewRoleSelector.test.tsx`, `interviewRoleGuidance.test.ts`, cross-industry/wizard tests.
+- **Viva-ready explanation:** The taxonomy improves authoring without adding an unnecessary occupation service; the backend remains centred on the actual role/context the user chose.
+
 ### 4.4 AI question generation
+
+- **UI path:** Open active Interview → `Build the briefing` → `Add questions`.
+- **Route:** `/interviews/:sessionId`.
+- **Control:** `Question count` (1–20), category selection, question-type controls, balanced/exact type counts, primary `Generate questions`; shared job cancel/retry and `Resume status checks` when polling pauses.
+- **Enabled when:** Session is active, no generation is already pending, at least one question type is selected and any exact type counts sum to the selected Question count.
+- **Visual / state behavior:** Primary action changes to `Generating…` while its provider operation is active. Provider job surface shows `Question generation`, queued/processing state or paused status, a progress element and resilience actions. The workspace reminds users that AI is optional and manual practice remains usable without it.
+- **What happens:** A UUID request identity queues `interview.questions.generate`; the accepted job is polled. Completed generation refreshes the canonical question list/session count. Ambiguous transport/response failures preserve the same request intent rather than blindly generating a duplicate.
+- **Frontend:** `InterviewSessionWorkspace.tsx`, `InterviewQuestionTypeControls.tsx`, `InterviewCategorySelector.tsx`, `interviewApi.ts`, `interviewPolling.ts`.
+- **Backend:** `interview.jobs.ts`, `interviewAi.service.ts`, `interviewQuestionDistribution.ts`.
+- **Representative tests:** question-type/distribution/generation status/exact-count workspace tests; backend distribution, starter-code, retry/persistence and security tests.
+- **Viva-ready explanation:** Question generation is a durable, idempotency-aware background job. The browser polls status and rejects stale route/selection responses rather than treating the provider call as an immediate UI mutation.
 
 ### 4.5 Manual question creation
 
+- **UI path:** Open active Interview → `Build the briefing` → `Add manually`.
+- **Control:** `Question type`, `Category`, `Difficulty`, `Question`; type-specific optional/required fields; terminal `Add question`; `Close manual form` collapses the editor.
+- **Visual / state behavior:** Submit changes to `Adding…` while busy. Multiple Choice exposes 2–8 option rows, one `Correct` radio, `Add option` and `Remove option N`; Coding optionally exposes `Starter code`; non-MCQ types may store an optional `Model answer`.
+- **What happens:** The manual question is validated and added directly to the owned session without Gemini, then selected in the Question Index.
+- **Frontend:** `InterviewSessionWorkspace.tsx`, Interview question-type helpers.
+- **Backend:** manual-question controller/service/schema path and typed Interview question model.
+- **Representative tests:** manual MCQ/type authoring and Interview workspace/API tests.
+- **Viva-ready explanation:** Manual authoring is the non-AI baseline, so Interview Coach still provides useful structured practice if Gemini is unavailable or intentionally not used.
+
 ### 4.6 Question types
+
+- **Supported modern types:** Multiple Choice, Short Answer, Coding, Behavioral, Scenario-Based and Technical Explanation. Historical open-response records remain compatible internally without being exposed as a selectable modern type.
+- **UI path:** Generation controls, manual authoring, Question Index labels and Practice Desk answer controls.
+- **Control / behavior:** Multiple Choice uses option cards/radio selection; Short Answer uses concise written guidance; Coding uses a monospace text answer with optional generated/manual Starter code and `Copy` / `Insert into answer`; Behavioral, Scenario-Based and Technical Explanation use structured answer fields.
+- **Important boundary:** Coding submissions are explicitly shown as text and `Your submission is reviewed as text and is not executed.` No compiler/runtime/sandbox exists.
+- **What happens:** `InterviewAnswerControl` emits the correct typed answer shape; the backend validates it against the stored question type. Multiple Choice correctness is scored deterministically on the backend rather than by Gemini.
+- **Frontend:** `InterviewAnswerControl.tsx`, `InterviewStructuredAnswerFields.tsx`, `InterviewQuestionTypeControls.tsx`, `interviewStructuredAnswer.ts`.
+- **Backend:** `interviewQuestion.types.ts`, `interview.schemas.ts`, attempt/question services/models.
+- **Representative tests:** `InterviewAnswerControl*.test.tsx`, structured-answer tests, question-type contract/API/backend/security tests.
+- **Viva-ready explanation:** One Interview domain supports six type-aware practice experiences while keeping deterministic MCQ scoring and text-only Coding safety.
 
 ### 4.7 Question filtering and pinning
 
+- **UI path:** Open session → `Question index`.
+- **Control:** `Pinned only` checkbox; `Difficulty` (`All`, Easy, Medium, Hard); `Category` text filter; `Previous` / `Next`; selected question action `Pin question` / `Unpin`.
+- **Visual / state behavior:** Selected question uses an active `aria-pressed` card; pinned questions show a `◆ Pinned` label. Pin mutation is disabled only for the targeted pending question.
+- **What happens:** List filters reload the owned paginated question list; pinning persists on the canonical question and then refreshes the list without changing the question content.
+- **Frontend:** `InterviewSessionWorkspace.tsx`.
+- **Backend:** question list/pin endpoints through Interview controller/service.
+- **Representative tests:** Question Index/pinning/filter workspace tests and backend ownership coverage.
+- **Viva-ready explanation:** Filtering/pinning are organization tools around the same canonical questions, not duplicated question collections.
+
 ### 4.8 Private notes
+
+- **UI path:** Open session → select question → Practice Desk → `Private notes`.
+- **Control:** `Add note` or `Show note`; open editor offers `Hide`, `Save notes`, `Clear notes`.
+- **Enabled when:** Notes are editable only for active sessions; archived/completed sessions remain read-mostly/read-only according to lifecycle state.
+- **Visual / state behavior:** State communicates `Unsaved notes.`, `Saving…`, `Notes saved.` or `Notes cleared.`. Hide is withheld while unresolved note changes are being saved/failed, preventing accidental visual dismissal of unresolved work.
+- **What happens:** Notes are stored against the owned question and remain separate from submitted practice attempts and AI prompts unless a feature explicitly consumes them.
+- **Frontend:** `InterviewSessionWorkspace.tsx`.
+- **Backend:** Interview notes update in controller/service/question model.
+- **Representative tests:** `InterviewSessionWorkspace.questionIndexNotes.test.tsx` and Interview backend ownership tests.
+- **Viva-ready explanation:** Notes are private per-question study annotations, deliberately separated from immutable saved attempts.
 
 ### 4.9 Save practice attempt
 
+- **UI path:** Open active Written-practice session → select question → `Save another attempt`.
+- **Control:** Type-aware `InterviewAnswerControl`; terminal primary `Save attempt`, busy `Saving…`.
+- **Enabled when:** Session is active and in Written practice mode, the answer satisfies the selected question type, and no attempt write is already pending.
+- **What happens:** Every submit creates a new saved attempt. Legacy text responses remain compatible; modern answers use typed payloads. MCQ selection is scored deterministically and the correct answer is revealed only in the saved post-submit evaluation.
+- **Frontend:** `InterviewAnswerControl.tsx`, `InterviewSessionWorkspace.tsx`, `interviewApi.ts`.
+- **Backend:** `interview.controller.ts`, `interview.service.ts`, `interviewAttempt.model.ts` and typed attempt validation.
+- **Representative tests:** Answer-control/workspace question-type tests and typed-attempt integration/security tests.
+- **Viva-ready explanation:** Attempts are append-only practice records: resubmitting does not overwrite the earlier answer, which makes progress review meaningful.
+
 ### 4.10 Saved-attempt history
+
+- **UI path:** Open session → select question → `Saved attempts`.
+- **Control:** `Attempt status` filter; per-attempt `Review attempt`; pager `Previous` / `Next`.
+- **Visual / state behavior:** Status labels are `Saved`, `Feedback queued`, `Feedback processing`, `Feedback ready`, `Feedback unavailable`. Selected attempts show the stored answer, submitted timestamp, deterministic MCQ result or saved feedback when available.
+- **What happens:** Paginated attempt history can be filtered independently; selecting an attempt fetches the canonical owned attempt and keeps stale question/attempt responses fenced by current identities.
+- **Frontend:** `InterviewSessionWorkspace.tsx`.
+- **Backend:** Interview attempt list/detail controller/service/model paths.
+- **Representative tests:** `InterviewSessionWorkspace.savedAttempts.test.tsx`, attempt API/backend tests.
+- **Viva-ready explanation:** Saved Attempts are immutable review records, so the user can compare practice over time rather than seeing only the latest answer.
 
 ### 4.11 Question explanation
 
+- **UI path:** Open active session → select question → Practice Desk.
+- **Control:** `Request explanation` when no stored explanation exists; shared provider job resilience controls while generation is pending.
+- **Special MCQ rule:** Before an MCQ attempt, the UI states `Submit an attempt to unlock the explanation.` so explanation cannot leak answer-key guidance before submission.
+- **Visual / state behavior:** Completed content appears under `Guidance` → `Explanation` with `Copy` and any key points. Job surface labels the work `Question explanation` and can show progress/paused status.
+- **What happens:** Existing explanation is returned immediately when available; otherwise `interview.question.explain` is queued and polled, then the exact current question is refreshed only if route/question identity still matches.
+- **Frontend:** `InterviewSessionWorkspace.tsx`, `interviewApi.ts`, shared job controls.
+- **Backend:** `interview.jobs.ts`, `interviewAi.service.ts`.
+- **Representative tests:** explanation status/MCQ secrecy/type-aware feedback/explanation tests.
+- **Viva-ready explanation:** Explanation is optional AI study guidance with an MCQ secrecy gate and stale-selection protection.
+
 ### 4.12 AI feedback
 
+- **UI path:** Open active session → Saved Attempts → select a non-MCQ attempt without feedback → `Request feedback`.
+- **Enabled when:** Session is active; selected attempt is not MCQ; no feedback is already stored/pending; provider operation is free.
+- **Visual / state behavior:** Pending job surface labels work `Practice feedback`; completion presents `Model-generated practice guidance`, a score, summary, strengths, improvements, suggested answer outline and explicit disclaimer: it is not a hiring prediction, objective evaluation or guarantee.
+- **What happens:** `interview.attempt.feedback` is queued/polled against the exact attempt/question identity. Completed feedback is stored with the attempt. MCQ does not expose this action because correctness already has deterministic backend evaluation.
+- **Frontend:** `InterviewSessionWorkspace.tsx`, `interviewApi.ts`, shared `JobResilienceActions.tsx`.
+- **Backend:** `interview.jobs.ts`, `interviewAi.service.ts`, feedback persistence path.
+- **Representative tests:** type-aware feedback integration tests, Interview practice-feedback status/workspace tests.
+- **Viva-ready explanation:** AI feedback supplements a saved human answer; it does not determine MCQ correctness and the UI explicitly avoids presenting it as a hiring decision.
+
 ### 4.13 Session archive/restore/delete
+
+- **UI path:** Session workspace lifecycle actions and Interview collection card More actions.
+- **Control:** Active workspace: `Mark completed`, `Archive`; completed workspace: `Archive`. Archived card More actions: `Restore session` / busy `Restoring…`; all cards expose destructive `Delete permanently` through the overflow menu and a confirmation dialog.
+- **Visual / state behavior:** Workspace states `Completed sessions are read-mostly.` or `Archived sessions are read-only.` while preserving existing questions, notes, attempts and stored guidance. Card lifecycle badge shows Active/Completed/Archived; destructive red is reserved for confirmed permanent deletion.
+- **What happens:** Lifecycle status changes reuse the existing session-status endpoint. Restore returns an archived session to active and opens it. Permanent deletion removes the Interview session and its questions/attempts while preserving any source Resume data.
+- **Frontend:** `InterviewSessionWorkspace.tsx`, `InterviewSessionCard.tsx`, `InterviewDeleteDialog.tsx`, `interviewApi.ts`.
+- **Backend:** `interview.controller.ts`, `interview.service.ts` with owner-scoped lifecycle/deletion rules.
+- **Representative tests:** `InterviewSessionCard.restore.test.tsx`, session list/workspace lifecycle tests and deletion/ownership integration tests.
+- **Viva-ready explanation:** Archive is reversible lifecycle state; permanent deletion is a separate confirmed destructive operation, which keeps normal practice actions from being visually dominated by deletion.
 
 ## 5 — Learning Workspace
 
