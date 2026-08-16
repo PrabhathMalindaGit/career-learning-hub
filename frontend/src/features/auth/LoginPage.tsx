@@ -12,6 +12,7 @@ import {
 } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import {
+  authenticationReasonFromState,
   intendedLocationFromState,
 } from "./AuthRoute";
 import { BrandLockup } from "../../components/BrandLockup";
@@ -117,6 +118,13 @@ export function LoginPage() {
       <p className="auth-intro">
         Sign in to continue to your career and learning workspace.
       </p>
+
+      {authenticationReasonFromState(location.state) === "session-expired" ? (
+        <div className="authentication-session-notice" role="status">
+          <strong>Your session expired.</strong>{" "}
+          <span>Sign in again to continue.</span>
+        </div>
+      ) : null}
 
       <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {Object.keys(errors).length > 1 ? (
