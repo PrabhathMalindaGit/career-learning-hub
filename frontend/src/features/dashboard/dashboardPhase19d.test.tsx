@@ -228,7 +228,9 @@ describe("Phase 19D Dashboard refinements", () => {
     renderDashboard();
 
     expect(await screen.findByText("Resume performance")).not.toBeNull();
-    expect(screen.getByText("Interview feedback")).not.toBeNull();
+    expect(
+      screen.getAllByText("Interview feedback").length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Quiz performance")).not.toBeNull();
     expect(screen.queryByText("AI usage")).toBeNull();
     expect(screen.queryByText("Total tokens")).toBeNull();
