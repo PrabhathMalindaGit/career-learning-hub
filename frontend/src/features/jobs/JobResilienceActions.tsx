@@ -14,6 +14,9 @@ function actionErrorMessage(error: unknown): string {
     : "The job action could not be completed.";
 }
 
+// Features 7.5–7.6 — Shared job resilience controls.
+// Presents progress-aware cancel/retry actions used by Resume, Interview, and
+// Learning durable jobs without owning feature-specific persistence.
 export function JobResilienceActions({
   job,
   onCancel,
