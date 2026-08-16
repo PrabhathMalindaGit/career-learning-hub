@@ -146,8 +146,7 @@ function renderAuthRoute(initialEntry: InitialEntry) {
   return router;
 }
 
-async function fillLoginForm() {
-  const user = userEvent.setup();
+async function fillLoginForm(user = userEvent.setup()) {
   await user.type(
     screen.getByRole("textbox", { name: "Email address" }),
     "phase19e@example.test",
@@ -156,8 +155,7 @@ async function fillLoginForm() {
   return user;
 }
 
-async function fillRegistrationForm() {
-  const user = userEvent.setup();
+async function fillRegistrationForm(user = userEvent.setup()) {
   await user.type(
     screen.getByRole("textbox", { name: "Display name" }),
     "Phase 19E User",
@@ -224,12 +222,12 @@ describe("Phase 19E runtime session expiry contract", () => {
       screen.getByRole("button", { name: "Trigger protected request" }),
     );
 
-    await waitFor(() => {
-      expect(router.state.location.pathname).toBe("/login");
-    });
     expect(
-      screen.getByText("Your session expired. Sign in again to continue."),
+      await screen.findByText(
+        "Your session expired. Sign in again to continue.",
+      ),
     ).not.toBeNull();
+    expect(router.state.location.pathname).toBe("/login");
 
     const loginUser = await fillLoginForm();
     await loginUser.click(screen.getByRole("button", { name: "Sign in" }));
@@ -416,6 +414,8 @@ describe("Phase 19E authentication form contract", () => {
     expect(details.open).toBe(false);
     expect(screen.getByText("Request ID: login-request-id-0001")).not.toBeNull();
     expect(document.body.textContent).not.toContain("SyntheticPassword1");
+    expect(document.body.textContent).not.toContain("synthetic-access-token");
+    expect(document.body.textContent).not.toContain("synthetic-refresh-token");
 
     await user.click(summary);
     expect(details.open).toBe(true);
@@ -462,7 +462,7 @@ describe("Phase 19E authentication form contract", () => {
     ).toBeNull();
   });
 
-  it("disables password visibility controls while Login and Registration are busy", async () => {
+  it("disables password visibility and submit controls while Login is busy", async () => {
     const pendingLogin = deferred<AuthenticationResponse>();
     vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
     vi.mocked(authApi.login).mockReturnValue(pendingLogin.promise);
@@ -471,8 +471,35 @@ describe("Phase 19E authentication form contract", () => {
     const loginUser = await fillLoginForm();
     await loginUser.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(screen.getByRole("button", { name: "Show password" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Signing in…" })).toBeDisabled();
+    const toggle = screen.getByRole("button", {
+      name: "Show password",
+    }) as HTMLButtonElement;
+    const submit = screen.getByRole("button", {
+      name: "Signing in…",
+    }) as HTMLButtonElement;
+    expect(toggle.disabled).toBe(true);
+    expect(submit.disabled).toBe(true);
+  });
+
+  it("disables password visibility and submit controls while Registration is busy", async () => {
+    const pendingRegistration = deferred<AuthenticationResponse>();
+    vi.mocked(authApi.refreshSession).mockRejectedValue(noSessionError());
+    vi.mocked(authApi.register).mockReturnValue(pendingRegistration.promise);
+    renderAuthRoute("/register");
+    await screen.findByRole("heading", { name: "Create your account" });
+    const registerUser = await fillRegistrationForm();
+    await registerUser.click(
+      screen.getByRole("button", { name: "Create account" }),
+    );
+
+    const toggle = screen.getByRole("button", {
+      name: "Show password",
+    }) as HTMLButtonElement;
+    const submit = screen.getByRole("button", {
+      name: "Creating account…",
+    }) as HTMLButtonElement;
+    expect(toggle.disabled).toBe(true);
+    expect(submit.disabled).toBe(true);
   });
 
   it("keeps deferred authentication features out of the refined forms", async () => {
@@ -480,9 +507,15 @@ describe("Phase 19E authentication form contract", () => {
     renderAuthRoute("/login");
     await screen.findByRole("heading", { name: "Welcome back" });
 
-    expect(screen.queryByRole("link", { name: /forgot|reset password/i })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /forgot|reset password/i }),
+    ).toBeNull();
     expect(screen.queryByRole("checkbox", { name: /remember/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: /continue with google|oauth/i })).toBeNull();
-    expect(screen.queryByText(/multi-factor|verification code|passkey/i)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /continue with google|oauth/i }),
+    ).toBeNull();
+    expect(
+      screen.queryByText(/multi-factor|verification code|passkey/i),
+    ).toBeNull();
   });
 });
