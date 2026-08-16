@@ -7,6 +7,7 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
+import { LearningChildDeletion } from "./LearningChildDeletion";
 import {
   createLearningConversation,
   listLearningConversations,
@@ -16,6 +17,7 @@ import type {
   LearningDocument,
   LearningPagination,
 } from "./types";
+import "./learningPhase19c.css";
 
 const CONVERSATION_LIMIT = 10;
 const MAX_CONVERSATION_TITLE = 200;
@@ -29,18 +31,14 @@ function safeError(error: unknown, fallback: string): SafeError {
   if (error instanceof ApiError) {
     return {
       message: error.message,
-      ...(error.requestId === undefined
-        ? {}
-        : { requestId: error.requestId }),
+      ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
     };
   }
   return { message: fallback };
 }
 
 function RequestId({ value }: { value?: string }) {
-  return value ? (
-    <p className="request-id">Request ID: {value}</p>
-  ) : null;
+  return value ? <p className="request-id">Request ID: {value}</p> : null;
 }
 
 function formatDate(value: string): string {
@@ -58,9 +56,7 @@ export function DocumentConversations({
   document: LearningDocument;
 }) {
   const navigate = useNavigate();
-  const [conversations, setConversations] = useState<
-    LearningConversation[]
-  >([]);
+  const [conversations, setConversations] = useState<LearningConversation[]>([]);
   const [pagination, setPagination] = useState<LearningPagination>();
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -70,9 +66,7 @@ export function DocumentConversations({
   const [createError, setCreateError] = useState<SafeError>();
   const [creating, setCreating] = useState(false);
   const listSequence = useRef(0);
-  const createController = useRef<AbortController | undefined>(
-    undefined,
-  );
+  const createController = useRef<AbortController | undefined>(undefined);
   const createInFlight = useRef(false);
 
   useEffect(() => {
@@ -100,12 +94,7 @@ export function DocumentConversations({
       controller.signal,
     )
       .then((result) => {
-        if (
-          controller.signal.aborted ||
-          current !== listSequence.current
-        ) {
-          return;
-        }
+        if (controller.signal.aborted || current !== listSequence.current) return;
         setConversations(result.conversations);
         setPagination(result.pagination);
       })
@@ -113,15 +102,10 @@ export function DocumentConversations({
         if (controller.signal.aborted) return;
         setConversations([]);
         setPagination(undefined);
-        setLoadError(
-          safeError(error, "Your conversations could not be loaded."),
-        );
+        setLoadError(safeError(error, "Your conversations could not be loaded."));
       })
       .finally(() => {
-        if (
-          !controller.signal.aborted &&
-          current === listSequence.current
-        ) {
+        if (!controller.signal.aborted && current === listSequence.current) {
           setLoading(false);
         }
       });
@@ -145,6 +129,14 @@ export function DocumentConversations({
     setRetryVersion((current) => current + 1);
   }, []);
 
+  const handleDeleted = useCallback(() => {
+    if (conversations.length === 1 && page > 1) {
+      setPage((current) => Math.max(1, current - 1));
+      return;
+    }
+    setRetryVersion((current) => current + 1);
+  }, [conversations.length, page]);
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (createInFlight.current) return;
@@ -154,9 +146,7 @@ export function DocumentConversations({
       return;
     }
     if (normalized.length > MAX_CONVERSATION_TITLE) {
-      setCreateError({
-        message: `Use ${MAX_CONVERSATION_TITLE} characters or fewer.`,
-      });
+      setCreateError({ message: `Use ${MAX_CONVERSATION_TITLE} characters or fewer.` });
       return;
     }
 
@@ -184,9 +174,7 @@ export function DocumentConversations({
       );
     } catch (error) {
       if (!controller.signal.aborted) {
-        setCreateError(
-          safeError(error, "Conversation could not be created."),
-        );
+        setCreateError(safeError(error, "Conversation could not be created."));
       }
     } finally {
       if (createController.current === controller) {
@@ -198,18 +186,12 @@ export function DocumentConversations({
   };
 
   return (
-    <section
-      className="learning-conversations"
-      aria-labelledby="learning-conversations-title"
-    >
+    <section className="learning-conversations" aria-labelledby="learning-conversations-title">
       <header className="learning-panel-header">
         <div>
           <p className="learning-kicker">Grounded chat</p>
           <h2 id="learning-conversations-title">Conversations</h2>
-          <p>
-            Questions are answered from this document’s validated extracted
-            content.
-          </p>
+          <p>Questions are answered from this document’s validated extracted content.</p>
         </div>
         <button
           type="button"
@@ -235,11 +217,7 @@ export function DocumentConversations({
             }}
           />
         </label>
-        <button
-          type="submit"
-          className="learning-primary-button"
-          disabled={creating}
-        >
+        <button type="submit" className="learning-primary-button" disabled={creating}>
           {creating ? "Creating…" : "Create conversation"}
         </button>
       </form>
@@ -255,17 +233,10 @@ export function DocumentConversations({
           Loading conversations…
         </div>
       ) : loadError ? (
-        <div
-          className="learning-state learning-state--error learning-state--compact"
-          role="alert"
-        >
+        <div className="learning-state learning-state--error learning-state--compact" role="alert">
           <p>{loadError.message}</p>
           <RequestId value={loadError.requestId} />
-          <button
-            type="button"
-            className="learning-secondary-button"
-            onClick={retry}
-          >
+          <button type="button" className="learning-secondary-button" onClick={retry}>
             Try conversations again
           </button>
         </div>
@@ -278,9 +249,7 @@ export function DocumentConversations({
         <ul className="learning-conversation-list">
           {conversations.map((conversation) => (
             <li key={conversation.id}>
-              <article
-                aria-labelledby={`learning-conversation-title-${conversation.id}`}
-              >
+              <article aria-labelledby={`learning-conversation-title-${conversation.id}`}>
                 <div>
                   <p className="learning-kicker">Document conversation</p>
                   <h3 id={`learning-conversation-title-${conversation.id}`}>
@@ -294,25 +263,28 @@ export function DocumentConversations({
                     </span>
                     <span>
                       {conversation.lastMessageAt ? "Last message" : "Updated"}{" "}
-                      <time
-                        dateTime={
-                          conversation.lastMessageAt ?? conversation.updatedAt
-                        }
-                      >
-                        {formatDate(
-                          conversation.lastMessageAt ?? conversation.updatedAt,
-                        )}
+                      <time dateTime={conversation.lastMessageAt ?? conversation.updatedAt}>
+                        {formatDate(conversation.lastMessageAt ?? conversation.updatedAt)}
                       </time>
                     </span>
                   </div>
                 </div>
-                <Link
-                  className="learning-document-link"
-                  to={`/learning/documents/${document.id}/conversations/${conversation.id}`}
-                  aria-label={`Open ${conversation.title} conversation`}
-                >
-                  Open conversation
-                </Link>
+                <div className="learning-conversation-card-actions">
+                  <Link
+                    className="learning-document-link"
+                    to={`/learning/documents/${document.id}/conversations/${conversation.id}`}
+                    aria-label={`Open ${conversation.title} conversation`}
+                  >
+                    Open conversation
+                  </Link>
+                  <LearningChildDeletion
+                    kind="conversation"
+                    id={conversation.id}
+                    documentId={document.id}
+                    title={conversation.title}
+                    onDeleted={handleDeleted}
+                  />
+                </div>
               </article>
             </li>
           ))}
@@ -320,10 +292,7 @@ export function DocumentConversations({
       )}
 
       {pagination && pagination.pages > 1 ? (
-        <nav
-          className="learning-pagination"
-          aria-label="Conversation pages"
-        >
+        <nav className="learning-pagination" aria-label="Conversation pages">
           <button
             type="button"
             className="learning-secondary-button"
@@ -333,9 +302,7 @@ export function DocumentConversations({
           >
             Previous
           </button>
-          <span>
-            Conversation page {page} of {pagination.pages}
-          </span>
+          <span>Conversation page {page} of {pagination.pages}</span>
           <button
             type="button"
             className="learning-secondary-button"

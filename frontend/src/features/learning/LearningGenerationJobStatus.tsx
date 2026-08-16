@@ -41,7 +41,7 @@ export function LearningGenerationJobStatus({
         .join(" ")}
       body={message}
       actions={actions}
-      requestId={requestId}
+      requestId={failed ? requestId : undefined}
     />
   );
 }

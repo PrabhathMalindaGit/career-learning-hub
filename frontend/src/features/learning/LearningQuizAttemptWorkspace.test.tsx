@@ -119,7 +119,7 @@ beforeEach(() => {
 });
 
 describe("Learning quiz attempt workspace", () => {
-  it("shows canonical score and immutable selected-versus-correct review", async () => {
+  it("shows the saved score with user-facing performance semantics and selected-versus-correct review", async () => {
     renderReview();
 
     expect(screen.getByText("Loading attempt review…")).not.toBeNull();
@@ -136,8 +136,10 @@ describe("Learning quiz attempt workspace", () => {
     expect(screen.getByText("1 of 2 correct")).not.toBeNull();
     expect(screen.getByText("50%")).not.toBeNull();
     expect(
-      screen.getByRole("region", { name: "Server-authoritative quiz result" }),
+      screen.getByRole("region", { name: "Quiz result: Developing" }),
     ).not.toBeNull();
+    expect(screen.getByText("Official results")).not.toBeNull();
+    expect(screen.getByText("Developing")).not.toBeNull();
     expect(screen.getByText("Correct")).not.toBeNull();
     expect(screen.getByText("Incorrect")).not.toBeNull();
     expect(screen.getAllByText("Selected answer")).toHaveLength(2);
@@ -152,7 +154,12 @@ describe("Learning quiz attempt workspace", () => {
   });
 
   it("omits an explanation surface when the server provides no explanation text", async () => {
-    const result = await learningApi.fetchQuizAttemptReview(documentId, quizId, attemptId, 3);
+    const result = await learningApi.fetchQuizAttemptReview(
+      documentId,
+      quizId,
+      attemptId,
+      3,
+    );
     vi.mocked(learningApi.fetchQuizAttemptReview).mockResolvedValue({
       ...result,
       review: result.review.map((question) => ({
@@ -185,18 +192,21 @@ describe("Learning quiz attempt workspace", () => {
     expect(screen.queryByText(attemptId)).toBeNull();
   });
 
-  it("renders only canonical source-page controls and a fresh-attempt action", async () => {
+  it("renders only verified source-page controls and a fresh-attempt action", async () => {
     renderReview();
 
     expect(
-      await screen.findByRole("link", { name: "Review source page 1" }),
+      await screen.findByRole("link", {
+        name: "View source page 1 in the document workspace",
+      }),
     ).not.toBeNull();
+    expect(screen.getAllByText("Verified sources:")).toHaveLength(2);
     expect(
       screen.getByRole("link", { name: "Take quiz again" }).getAttribute("href"),
     ).toBe(`/learning/documents/${documentId}/quizzes/${quizId}`);
   });
 
-  it("rejects a completed attempt that does not match the canonical quiz count", async () => {
+  it("rejects a completed attempt that does not match the quiz count", async () => {
     vi.mocked(learningApi.fetchQuizAttemptReview).mockResolvedValue({
       attempt: {
         id: attemptId,

@@ -13,6 +13,7 @@ import {
   normalizeSafeJob,
   retryJob,
 } from "../jobs/jobResilience";
+import { LearningChildDeletion } from "./LearningChildDeletion";
 import {
   createQuizGeneration,
   fetchLearningQuizJob,
@@ -31,6 +32,7 @@ import type {
   LearningQuizJob,
   QuizSummary,
 } from "./types";
+import "./learningPhase19c.css";
 
 const QUIZ_LIMIT = 10;
 const MAX_TITLE = 200;
@@ -57,18 +59,14 @@ function safeError(error: unknown, fallback: string): SafeError {
   if (error instanceof ApiError) {
     return {
       message: error.message,
-      ...(error.requestId === undefined
-        ? {}
-        : { requestId: error.requestId }),
+      ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
     };
   }
   return { message: fallback };
 }
 
 function RequestId({ value }: { value?: string }) {
-  return value ? (
-    <p className="request-id">Request ID: {value}</p>
-  ) : null;
+  return value ? <p className="request-id">Request ID: {value}</p> : null;
 }
 
 export function DocumentQuizzes({
@@ -88,6 +86,7 @@ export function DocumentQuizzes({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<SafeError>();
   const [listVersion, setListVersion] = useState(0);
+  const [generationOpen, setGenerationOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [questionCount, setQuestionCount] = useState("5");
   const [focus, setFocus] = useState("");
@@ -102,15 +101,9 @@ export function DocumentQuizzes({
     useState<GenerationState>({ status: "idle" });
   const [acceptedRequestId, setAcceptedRequestId] = useState<string>();
   const listSequence = useRef(0);
-  const createController = useRef<AbortController | undefined>(
-    undefined,
-  );
-  const pollController = useRef<AbortController | undefined>(
-    undefined,
-  );
-  const completionController = useRef<AbortController | undefined>(
-    undefined,
-  );
+  const createController = useRef<AbortController | undefined>(undefined);
+  const pollController = useRef<AbortController | undefined>(undefined);
+  const completionController = useRef<AbortController | undefined>(undefined);
   const createInFlight = useRef(false);
   const intent = useRef<
     | {
@@ -127,6 +120,7 @@ export function DocumentQuizzes({
     setQuizzes([]);
     setPagination(undefined);
     setLoadError(undefined);
+    setGenerationOpen(false);
     setTitle("");
     setQuestionCount("5");
     setFocus("");
@@ -240,6 +234,7 @@ export function DocumentQuizzes({
         setPendingJob(undefined);
         setPendingQuizId(undefined);
         setGenerationState({ status: "completed" });
+        setGenerationOpen(false);
         setListVersion((current) => current + 1);
         navigate(
           `/learning/documents/${document.id}/quizzes/${job.result.quizId}`,
@@ -277,8 +272,7 @@ export function DocumentQuizzes({
           if (
             !controller.signal.aborted &&
             identityRef.current === expectedIdentity &&
-            (update.status === "queued" ||
-              update.status === "processing")
+            (update.status === "queued" || update.status === "processing")
           ) {
             setPendingJob(update);
             setResilienceJob(update);
@@ -295,10 +289,7 @@ export function DocumentQuizzes({
           }
           if (result.reason === "paused") {
             setPendingJob(result.job ?? job);
-            setGenerationState({
-              status: "paused",
-              cause: result.cause,
-            });
+            setGenerationState({ status: "paused", cause: result.cause });
             return;
           }
           if (result.reason !== "terminal") return;
@@ -310,8 +301,7 @@ export function DocumentQuizzes({
             setGenerationState({
               status: "failed",
               error: {
-                message:
-                  result.job.error?.message ?? "Quiz generation failed.",
+                message: result.job.error?.message ?? "Quiz generation failed.",
               },
             });
             setListVersion((current) => current + 1);
@@ -346,11 +336,25 @@ export function DocumentQuizzes({
     if (!resilienceJob) return;
     const cancelled = await cancelJob(resilienceJob.id, signal);
     if (signal.aborted) return;
-    if (cancelled.id !== resilienceJob.id || cancelled.type !== "learning.quiz.generate") {
-      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    if (
+      cancelled.id !== resilienceJob.id ||
+      cancelled.type !== "learning.quiz.generate"
+    ) {
+      throw new ApiError(
+        502,
+        "INVALID_LEARNING_RESPONSE",
+        "The server returned an invalid learning response.",
+      );
     }
     if (cancelled.status !== "cancelled") {
-      setResilienceJob({ ...resilienceJob, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt });
+      setResilienceJob({
+        ...resilienceJob,
+        status: "processing",
+        phase: cancelled.phase,
+        phaseSequence: cancelled.phaseSequence,
+        canRetry: cancelled.canRetry,
+        updatedAt: cancelled.updatedAt,
+      });
       return;
     }
     pollController.current?.abort();
@@ -371,7 +375,11 @@ export function DocumentQuizzes({
     const retried = await retryJob(resilienceJob.id, signal);
     if (signal.aborted) return;
     if (retried.type !== "learning.quiz.generate") {
-      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+      throw new ApiError(
+        502,
+        "INVALID_LEARNING_RESPONSE",
+        "The server returned an invalid learning response.",
+      );
     }
     runPolling(
       { id: retried.id, type: "learning.quiz.generate", status: "queued" },
@@ -406,9 +414,7 @@ export function DocumentQuizzes({
       parsedCount < 1 ||
       parsedCount > MAX_QUESTIONS
     ) {
-      setCreateError({
-        message: "Choose between 1 and 100 questions.",
-      });
+      setCreateError({ message: "Choose between 1 and 100 questions." });
       return;
     }
     const normalizedFocus = focus.trim();
@@ -475,102 +481,54 @@ export function DocumentQuizzes({
     }
   };
 
+  const handleDeleted = useCallback(() => {
+    if (quizzes.length === 1 && page > 1) {
+      setPage((current) => Math.max(1, current - 1));
+      return;
+    }
+    setListVersion((current) => current + 1);
+  }, [page, quizzes.length]);
+
   const generationDisabled =
     document.status !== "ready" || creating || pendingJob !== undefined;
+  const showGenerationForm =
+    generationOpen || (!loading && !loadError && quizzes.length === 0);
 
   return (
-    <section
-      className="learning-quizzes"
-      aria-labelledby="learning-quizzes-title"
-    >
+    <section className="learning-quizzes" aria-labelledby="learning-quizzes-title">
       <header className="learning-panel-header">
         <div>
-          <p className="learning-kicker">Grounded assessment</p>
+          <p className="learning-kicker">Document-based quiz</p>
           <h2 id="learning-quizzes-title">Quizzes</h2>
-          <p>
-            Generate multiple-choice quizzes from this document, then
-            submit answers for server-authoritative scoring.
-          </p>
+          <p>Create quizzes from this document and return to saved quizzes.</p>
         </div>
-        <button
-          type="button"
-          className="learning-secondary-button"
-          disabled={loading}
-          onClick={() => setListVersion((current) => current + 1)}
-        >
-          Refresh quizzes
-        </button>
+        <div className="learning-panel-actions">
+          <button
+            type="button"
+            className="learning-primary-button"
+            aria-expanded={showGenerationForm}
+            aria-controls="learning-quiz-generation"
+            disabled={document.status !== "ready" || pendingJob !== undefined}
+            onClick={() => setGenerationOpen((current) => !current)}
+          >
+            {showGenerationForm ? "Close creator" : "Create quiz"}
+          </button>
+          <button
+            type="button"
+            className="learning-secondary-button"
+            disabled={loading}
+            onClick={() => setListVersion((current) => current + 1)}
+          >
+            Refresh quizzes
+          </button>
+        </div>
       </header>
 
       {document.status !== "ready" ? (
         <div className="learning-state learning-state--compact">
-          Document processing must finish before quizzes can be generated.
+          Document processing must finish before quizzes can be created.
         </div>
       ) : null}
-
-      <form className="learning-quiz-form" onSubmit={submit}>
-        <label htmlFor="learning-quiz-title-input">
-          <span>Quiz title</span>
-          <input
-            id="learning-quiz-title-input"
-            name="quizTitle"
-            autoComplete="off"
-            value={title}
-            maxLength={MAX_TITLE}
-            disabled={generationDisabled}
-            onChange={(event) => {
-              setTitle(event.target.value);
-              setCreateError(undefined);
-            }}
-          />
-        </label>
-        <label htmlFor="learning-quiz-count">
-          <span>Question count</span>
-          <input
-            id="learning-quiz-count"
-            name="questionCount"
-            autoComplete="off"
-            type="number"
-            min="1"
-            max={MAX_QUESTIONS}
-            value={questionCount}
-            disabled={generationDisabled}
-            onChange={(event) => {
-              setQuestionCount(event.target.value);
-              setCreateError(undefined);
-            }}
-          />
-        </label>
-        <label className="learning-quiz-focus" htmlFor="learning-quiz-focus">
-          <span>Focus (optional)</span>
-          <textarea
-            id="learning-quiz-focus"
-            name="quizFocus"
-            autoComplete="off"
-            rows={3}
-            maxLength={MAX_FOCUS}
-            value={focus}
-            disabled={generationDisabled}
-            onChange={(event) => {
-              setFocus(event.target.value);
-              setCreateError(undefined);
-            }}
-          />
-        </label>
-        {createError ? (
-          <div className="learning-error learning-quiz-form-error" role="alert">
-            <p>{createError.message}</p>
-            <RequestId value={createError.requestId} />
-          </div>
-        ) : null}
-        <button
-          type="submit"
-          className="learning-primary-button"
-          disabled={generationDisabled}
-        >
-          {creating ? "Starting generation…" : "Generate quiz"}
-        </button>
-      </form>
 
       <QuizGenerationStatus
         state={generationState}
@@ -607,7 +565,7 @@ export function DocumentQuizzes({
       ) : quizzes.length === 0 ? (
         <div className="learning-state learning-state--compact">
           <h3>No quizzes yet.</h3>
-          <p>Generate a quiz when you are ready to test your recall.</p>
+          <p>Create a quiz when you are ready to test your recall.</p>
         </div>
       ) : (
         <ul
@@ -629,15 +587,20 @@ export function DocumentQuizzes({
                     <p className="learning-collection-type">Quiz</p>
                     <h3>{quiz.title}</h3>
                   </div>
-                  <span
-                    className={`learning-status learning-status--${quiz.status}`}
-                  >
+                  <span className={`learning-status learning-status--${quiz.status}`}>
                     {quiz.status === "generating"
                       ? "Generating"
                       : quiz.status === "failed"
                         ? "Generation failed"
                         : "Ready to take"}
                   </span>
+                  <LearningChildDeletion
+                    kind="quiz"
+                    id={quiz.id}
+                    title={quiz.title}
+                    disabled={quiz.status === "generating"}
+                    onDeleted={handleDeleted}
+                  />
                 </div>
                 <div className="learning-collection-meta">
                   <span>
@@ -653,9 +616,7 @@ export function DocumentQuizzes({
                   </span>
                 </div>
                 {quiz.generationError ? (
-                  <p className="learning-row-error">
-                    {quiz.generationError.message}
-                  </p>
+                  <p className="learning-row-error">{quiz.generationError.message}</p>
                 ) : null}
                 {quiz.status === "ready" ? (
                   <Link
@@ -685,9 +646,7 @@ export function DocumentQuizzes({
           >
             Previous
           </button>
-          <span>
-            Quiz page {page} of {pagination.pages}
-          </span>
+          <span>Quiz page {page} of {pagination.pages}</span>
           <button
             type="button"
             className="learning-secondary-button"
@@ -698,6 +657,82 @@ export function DocumentQuizzes({
             Next
           </button>
         </nav>
+      ) : null}
+
+      {showGenerationForm ? (
+        <section
+          id="learning-quiz-generation"
+          className="learning-generation-panel"
+          aria-labelledby="learning-quiz-generation-title"
+        >
+          <div className="learning-generation-heading">
+            <p className="learning-kicker">New quiz</p>
+            <h3 id="learning-quiz-generation-title">Create quiz</h3>
+          </div>
+          <form className="learning-quiz-form" onSubmit={submit}>
+            <label htmlFor="learning-quiz-title-input">
+              <span>Quiz title</span>
+              <input
+                id="learning-quiz-title-input"
+                name="quizTitle"
+                autoComplete="off"
+                value={title}
+                maxLength={MAX_TITLE}
+                disabled={generationDisabled}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  setCreateError(undefined);
+                }}
+              />
+            </label>
+            <label htmlFor="learning-quiz-count">
+              <span>Question count</span>
+              <input
+                id="learning-quiz-count"
+                name="questionCount"
+                autoComplete="off"
+                type="number"
+                min="1"
+                max={MAX_QUESTIONS}
+                value={questionCount}
+                disabled={generationDisabled}
+                onChange={(event) => {
+                  setQuestionCount(event.target.value);
+                  setCreateError(undefined);
+                }}
+              />
+            </label>
+            <label className="learning-quiz-focus" htmlFor="learning-quiz-focus">
+              <span>Focus (optional)</span>
+              <textarea
+                id="learning-quiz-focus"
+                name="quizFocus"
+                autoComplete="off"
+                rows={2}
+                maxLength={MAX_FOCUS}
+                value={focus}
+                disabled={generationDisabled}
+                onChange={(event) => {
+                  setFocus(event.target.value);
+                  setCreateError(undefined);
+                }}
+              />
+            </label>
+            {createError ? (
+              <div className="learning-error learning-quiz-form-error" role="alert">
+                <p>{createError.message}</p>
+                <RequestId value={createError.requestId} />
+              </div>
+            ) : null}
+            <button
+              type="submit"
+              className="learning-primary-button"
+              disabled={generationDisabled}
+            >
+              {creating ? "Starting generation…" : "Generate quiz"}
+            </button>
+          </form>
+        </section>
       ) : null}
     </section>
   );
@@ -731,13 +766,15 @@ function QuizGenerationStatus({
           </p>
         }
         requestId={requestId}
-        actions={job ? (
-          <JobResilienceActions
-            job={normalizeSafeJob(job)}
-            onCancel={onCancel}
-            onRetry={onRetry}
-          />
-        ) : undefined}
+        actions={
+          job ? (
+            <JobResilienceActions
+              job={normalizeSafeJob(job)}
+              onCancel={onCancel}
+              onRetry={onRetry}
+            />
+          ) : undefined
+        }
       />
     );
   }
@@ -745,12 +782,7 @@ function QuizGenerationStatus({
     return (
       <LearningGenerationJobStatus
         status="paused"
-        message={
-          <p>
-            Generation checks are paused locally. The backend job is not
-            claimed as failed or cancelled.
-          </p>
-        }
+        message={<p>Generation checks are paused locally. The generation may still be continuing.</p>}
         requestId={requestId}
         actions={
           <>
@@ -777,24 +809,21 @@ function QuizGenerationStatus({
     return (
       <LearningGenerationJobStatus
         status="cancelled"
-        message="Quiz generation was cancelled. No completed quiz is claimed."
-        actions={job ? (
-          <JobResilienceActions
-            job={normalizeSafeJob(job)}
-            onCancel={onCancel}
-            onRetry={onRetry}
-          />
-        ) : undefined}
+        message="Quiz generation was cancelled."
+        actions={
+          job ? (
+            <JobResilienceActions
+              job={normalizeSafeJob(job)}
+              onCancel={onCancel}
+              onRetry={onRetry}
+            />
+          ) : undefined
+        }
       />
     );
   }
   if (state.status === "completed") {
-    return (
-      <LearningGenerationJobStatus
-        status="completed"
-        message="Canonical quiz questions are ready."
-      />
-    );
+    return <LearningGenerationJobStatus status="completed" message="Quiz is ready." />;
   }
   if (state.status === "failed" || state.status === "unavailable") {
     return (
@@ -802,13 +831,15 @@ function QuizGenerationStatus({
         status={state.status}
         message={<p>{state.error.message}</p>}
         requestId={state.error.requestId}
-        actions={job ? (
-          <JobResilienceActions
-            job={normalizeSafeJob(job)}
-            onCancel={onCancel}
-            onRetry={onRetry}
-          />
-        ) : undefined}
+        actions={
+          job ? (
+            <JobResilienceActions
+              job={normalizeSafeJob(job)}
+              onCancel={onCancel}
+              onRetry={onRetry}
+            />
+          ) : undefined
+        }
       />
     );
   }

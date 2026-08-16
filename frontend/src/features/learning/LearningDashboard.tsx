@@ -34,6 +34,7 @@ import type {
   LearningPagination,
 } from "./types";
 import "./learningWorkspace.css";
+import "./learningPhase19c.css";
 
 const PAGE_LIMIT = 10;
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
@@ -53,10 +54,7 @@ const statusOptions: Array<{
 ];
 
 function statusLabel(status: LearningDocumentStatus): string {
-  return (
-    statusOptions.find((option) => option.value === status)?.label ??
-    status
-  );
+  return statusOptions.find((option) => option.value === status)?.label ?? status;
 }
 
 function formatDate(value: string): string {
@@ -80,9 +78,7 @@ function safeError(error: unknown, fallback: string): SafeError {
   if (error instanceof ApiError) {
     return {
       message: error.message,
-      ...(error.requestId === undefined
-        ? {}
-        : { requestId: error.requestId }),
+      ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
     };
   }
   return { message: fallback };
@@ -131,22 +127,15 @@ export function LearningDashboard() {
     useState<UploadFieldErrors>({});
   const [uploadError, setUploadError] = useState<SafeError>();
   const [uploading, setUploading] = useState(false);
-  const [processingCheck, setProcessingCheck] =
-    useState<ProcessingCheck>();
+  const [processingCheck, setProcessingCheck] = useState<ProcessingCheck>();
   const requestSequence = useRef(0);
   const uploadTriggerRef = useRef<HTMLButtonElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadErrorSummaryRef = useRef<HTMLDivElement>(null);
-  const uploadControllerRef = useRef<AbortController | undefined>(
-    undefined,
-  );
-  const pollControllerRef = useRef<AbortController | undefined>(
-    undefined,
-  );
-  const canonicalRefreshStartedAt = useRef<number | undefined>(
-    undefined,
-  );
+  const uploadControllerRef = useRef<AbortController | undefined>(undefined);
+  const pollControllerRef = useRef<AbortController | undefined>(undefined);
+  const canonicalRefreshStartedAt = useRef<number | undefined>(undefined);
 
   const refresh = useCallback(() => {
     setRefreshVersion((current) => current + 1);
@@ -180,9 +169,7 @@ export function LearningDashboard() {
         if (controller.signal.aborted) return;
         setDocuments([]);
         setPagination(undefined);
-        setLoadError(
-          safeError(error, "Your documents could not be loaded."),
-        );
+        setLoadError(safeError(error, "Your documents could not be loaded."));
       })
       .finally(() => {
         if (
@@ -198,8 +185,7 @@ export function LearningDashboard() {
 
   const hasProcessingDocument = documents.some(
     (document) =>
-      document.status === "uploaded" ||
-      document.status === "processing",
+      document.status === "uploaded" || document.status === "processing",
   );
 
   useEffect(() => {
@@ -207,8 +193,7 @@ export function LearningDashboard() {
       canonicalRefreshStartedAt.current = undefined;
       return;
     }
-    const startedAt =
-      canonicalRefreshStartedAt.current ?? Date.now();
+    const startedAt = canonicalRefreshStartedAt.current ?? Date.now();
     canonicalRefreshStartedAt.current = startedAt;
     if (Date.now() - startedAt >= CANONICAL_REFRESH_LIMIT_MS) return;
     const timer = window.setTimeout(refresh, CANONICAL_REFRESH_MS);
@@ -253,9 +238,9 @@ export function LearningDashboard() {
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {
-    const errorFields = Object.keys(
-      uploadFieldErrors,
-    ) as (keyof UploadFieldErrors)[];
+    const errorFields = Object.keys(uploadFieldErrors) as (
+      keyof UploadFieldErrors
+    )[];
     if (errorFields.length > 1) {
       uploadErrorSummaryRef.current?.focus();
     } else if (errorFields[0] === "title") {
@@ -266,10 +251,7 @@ export function LearningDashboard() {
   }, [uploadFieldErrors]);
 
   const runProcessingCheck = useCallback(
-    (
-      documentId: string,
-      job: AcceptedLearningJob | LearningJob,
-    ) => {
+    (documentId: string, job: AcceptedLearningJob | LearningJob) => {
       pollControllerRef.current?.abort();
       const controller = new AbortController();
       pollControllerRef.current = controller;
@@ -280,9 +262,9 @@ export function LearningDashboard() {
         documentId,
         fetchJob: fetchLearningJob,
         signal: controller.signal,
-        onUpdate: (job) => {
+        onUpdate: (update) => {
           if (!controller.signal.aborted) {
-            setProcessingCheck({ state: "checking", documentId, job });
+            setProcessingCheck({ state: "checking", documentId, job: update });
           }
         },
       })
@@ -332,11 +314,28 @@ export function LearningDashboard() {
     const currentJob = processingCheck.job;
     const cancelled = await cancelJob(currentJob.id, signal);
     if (signal.aborted) return;
-    if (cancelled.id !== currentJob.id || cancelled.type !== "learning.document.process") {
-      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    if (
+      cancelled.id !== currentJob.id ||
+      cancelled.type !== "learning.document.process"
+    ) {
+      throw new ApiError(
+        502,
+        "INVALID_LEARNING_RESPONSE",
+        "The server returned an invalid learning response.",
+      );
     }
     if (cancelled.status !== "cancelled") {
-      setProcessingCheck({ ...current, job: { ...currentJob, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt } });
+      setProcessingCheck({
+        ...current,
+        job: {
+          ...currentJob,
+          status: "processing",
+          phase: cancelled.phase,
+          phaseSequence: cancelled.phaseSequence,
+          canRetry: cancelled.canRetry,
+          updatedAt: cancelled.updatedAt,
+        },
+      });
       return;
     }
     pollControllerRef.current?.abort();
@@ -360,7 +359,11 @@ export function LearningDashboard() {
     const retried = await retryJob(processingCheck.job.id, signal);
     if (signal.aborted) return;
     if (retried.type !== "learning.document.process") {
-      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+      throw new ApiError(
+        502,
+        "INVALID_LEARNING_RESPONSE",
+        "The server returned an invalid learning response.",
+      );
     }
     runProcessingCheck(processingCheck.documentId, {
       id: retried.id,
@@ -385,9 +388,7 @@ export function LearningDashboard() {
     if (uploading) return;
     const normalizedTitle = title.trim();
     const nextFieldErrors: UploadFieldErrors = {};
-    if (!normalizedTitle) {
-      nextFieldErrors.title = "Enter a document title.";
-    }
+    if (!normalizedTitle) nextFieldErrors.title = "Enter a document title.";
     if (!file) {
       nextFieldErrors.file = "Choose a PDF file.";
     } else if (
@@ -398,10 +399,7 @@ export function LearningDashboard() {
       nextFieldErrors.file = "Choose a PDF file no larger than 15 MB.";
     }
     setUploadFieldErrors(nextFieldErrors);
-    if (Object.keys(nextFieldErrors).length > 0) {
-      return;
-    }
-    if (!file) return;
+    if (Object.keys(nextFieldErrors).length > 0 || !file) return;
 
     uploadControllerRef.current?.abort();
     const controller = new AbortController();
@@ -423,17 +421,13 @@ export function LearningDashboard() {
       setUploadOpen(false);
       setDocuments((current) => [
         result.document,
-        ...current.filter(
-          (document) => document.id !== result.document.id,
-        ),
+        ...current.filter((item) => item.id !== result.document.id),
       ]);
       runProcessingCheck(result.document.id, result.job);
       refresh();
     } catch (error) {
       if (controller.signal.aborted) return;
-      setUploadError(
-        safeError(error, "The PDF could not be uploaded."),
-      );
+      setUploadError(safeError(error, "The PDF could not be uploaded."));
     } finally {
       if (!controller.signal.aborted) setUploading(false);
     }
@@ -465,37 +459,24 @@ export function LearningDashboard() {
           >
             Upload PDF
           </button>
-          <button
-            type="button"
-            className="secondary-button learning-secondary-button"
-            disabled={loading}
-            onClick={refresh}
-          >
-            Refresh documents
-          </button>
         </div>
       </header>
 
       {uploadOpen ? (
         <section
           id="learning-upload-form"
-          className="learning-upload-panel"
+          className="learning-upload-panel learning-upload-panel--compact"
           aria-labelledby="learning-upload-title"
         >
           <div>
             <p className="learning-kicker">New document</p>
             <h2 id="learning-upload-title">Upload a private PDF</h2>
             <p id="learning-upload-guidance">
-              PDF only, up to 15 MB. Scanned or image-only PDFs may fail
-              because OCR is not supported. These checks are guidance;
-              server validation remains authoritative.
+              PDF only, up to 15 MB. Text-based PDFs work best; scanned or
+              image-only files are not supported.
             </p>
           </div>
-          <form
-            className="learning-upload-form"
-            onSubmit={submitUpload}
-            noValidate
-          >
+          <form className="learning-upload-form" onSubmit={submitUpload} noValidate>
             {Object.keys(uploadFieldErrors).length > 1 ? (
               <div
                 className="validation-summary"
@@ -507,9 +488,7 @@ export function LearningDashboard() {
                 <ul>
                   {uploadFieldErrors.title ? (
                     <li>
-                      <a href="#learning-upload-title-input">
-                        Document title
-                      </a>
+                      <a href="#learning-upload-title-input">Document title</a>
                     </li>
                   ) : null}
                   {uploadFieldErrors.file ? (
@@ -547,10 +526,7 @@ export function LearningDashboard() {
               />
             </div>
             {uploadFieldErrors.title ? (
-              <p
-                className="field-error"
-                id="learning-upload-title-error"
-              >
+              <p className="field-error" id="learning-upload-title-error">
                 {uploadFieldErrors.title}
               </p>
             ) : null}
@@ -571,9 +547,7 @@ export function LearningDashboard() {
                 disabled={uploading}
                 aria-invalid={Boolean(uploadFieldErrors.file)}
                 aria-describedby={`learning-upload-guidance${
-                  uploadFieldErrors.file
-                    ? " learning-upload-file-error"
-                    : ""
+                  uploadFieldErrors.file ? " learning-upload-file-error" : ""
                 }`}
                 onChange={(event) => {
                   const selected = event.target.files?.[0];
@@ -581,9 +555,7 @@ export function LearningDashboard() {
                   if (
                     selected &&
                     (selected.type !== "application/pdf" ||
-                      !selected.name
-                        .toLocaleLowerCase()
-                        .endsWith(".pdf") ||
+                      !selected.name.toLocaleLowerCase().endsWith(".pdf") ||
                       selected.size > MAX_PDF_BYTES)
                   ) {
                     setUploadFieldErrors((current) => ({
@@ -605,16 +577,11 @@ export function LearningDashboard() {
                 }`}
                 aria-live="polite"
               >
-                {file
-                  ? `Selected: ${file.name}`
-                  : "Choose a PDF from your device."}
+                {file ? `Selected: ${file.name}` : "Choose a PDF from your device."}
               </p>
             </div>
             {uploadFieldErrors.file ? (
-              <p
-                className="field-error"
-                id="learning-upload-file-error"
-              >
+              <p className="field-error" id="learning-upload-file-error">
                 {uploadFieldErrors.file}
               </p>
             ) : null}
@@ -622,9 +589,7 @@ export function LearningDashboard() {
               <div className="learning-error" role="alert">
                 <p>{uploadError.message}</p>
                 {uploadError.requestId ? (
-                  <p className="request-id">
-                    Request ID: {uploadError.requestId}
-                  </p>
+                  <p className="request-id">Request ID: {uploadError.requestId}</p>
                 ) : null}
               </div>
             ) : null}
@@ -639,11 +604,11 @@ export function LearningDashboard() {
               </button>
               <button
                 type="button"
-                className="secondary-button learning-secondary-button"
+                className="learning-tertiary-button"
                 disabled={uploading}
                 onClick={closeUpload}
               >
-                Cancel upload
+                Cancel
               </button>
             </div>
           </form>
@@ -660,15 +625,12 @@ export function LearningDashboard() {
                 onRetry={retryProcessing}
               />
             ) : (
-              <p>Upload accepted. Checking the canonical processing status.</p>
+              <p>Upload accepted. Checking processing status.</p>
             )
           ) : null}
           {processingCheck.state === "paused" ? (
             <>
-              <p>
-                Status checks are paused. Processing may still be
-                continuing on the server.
-              </p>
+              <p>Status checks are paused. Processing may still be continuing.</p>
               <button
                 type="button"
                 className="learning-secondary-button"
@@ -716,9 +678,7 @@ export function LearningDashboard() {
           <select
             value={status}
             onChange={(event) => {
-              setStatus(
-                event.target.value as "" | LearningDocumentStatus,
-              );
+              setStatus(event.target.value as "" | LearningDocumentStatus);
               setPage(1);
             }}
           >
@@ -729,12 +689,21 @@ export function LearningDashboard() {
             ))}
           </select>
         </label>
-        {pagination ? (
-          <p>
-            {pagination.total}{" "}
-            {pagination.total === 1 ? "document" : "documents"}
-          </p>
-        ) : null}
+        <div className="learning-library-toolbar-actions">
+          {pagination ? (
+            <p>
+              {pagination.total} {pagination.total === 1 ? "document" : "documents"}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            className="secondary-button learning-secondary-button"
+            disabled={loading}
+            onClick={refresh}
+          >
+            Refresh documents
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -765,11 +734,7 @@ export function LearningDashboard() {
           mode="static"
           className="learning-state"
           heading={<h2>No documents yet</h2>}
-          body={
-            <p>
-              No documents match this view. Upload a private PDF to begin.
-            </p>
-          }
+          body={<p>No documents match this view. Upload a private PDF to begin.</p>}
         />
       ) : (
         <ol className="learning-document-list">
@@ -780,9 +745,7 @@ export function LearningDashboard() {
                 aria-labelledby={`learning-document-title-${document.id}`}
               >
                 <header className="learning-document-card-header">
-                  <div className="learning-document-mark" aria-hidden="true">
-                    PDF
-                  </div>
+                  <div className="learning-document-mark" aria-hidden="true">PDF</div>
                   <span
                     className={`learning-status learning-status--${document.status}`}
                   >
@@ -794,25 +757,20 @@ export function LearningDashboard() {
                   <h2 id={`learning-document-title-${document.id}`}>
                     {document.title}
                   </h2>
-                  <p className="learning-filename">
-                    {document.originalFilename}
-                  </p>
+                  <p className="learning-filename">{document.originalFilename}</p>
                   <div className="learning-document-facts">
                     {document.pageCount > 0 ? (
                       <span>
-                        {document.pageCount}{" "}
-                        {document.pageCount === 1 ? "page" : "pages"}
+                        {document.pageCount} {document.pageCount === 1 ? "page" : "pages"}
                       </span>
                     ) : null}
                     {document.chunkCount > 0 ? (
                       <span>
-                        {document.chunkCount} extracted{" "}
-                        {document.chunkCount === 1 ? "section" : "sections"}
+                        {document.chunkCount} extracted {document.chunkCount === 1 ? "section" : "sections"}
                       </span>
                     ) : null}
                   </div>
-                  {document.status === "failed" &&
-                  document.processingError ? (
+                  {document.status === "failed" && document.processingError ? (
                     <p className="learning-row-error">
                       {document.processingError.message}
                     </p>

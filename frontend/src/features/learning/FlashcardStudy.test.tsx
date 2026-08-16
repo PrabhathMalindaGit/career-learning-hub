@@ -15,6 +15,10 @@ const learningWorkspaceCss = readFileSync(
   resolve(process.cwd(), "src/features/learning/learningWorkspace.css"),
   "utf8",
 );
+const phase19cCss = readFileSync(
+  resolve(process.cwd(), "src/features/learning/learningPhase19c.css"),
+  "utf8",
+);
 
 const cards: Flashcard[] = [
   {
@@ -48,7 +52,7 @@ function renderStudy(activeCards = cards, activeSetId = setId) {
 }
 
 describe("Flashcard study", () => {
-  it("shows the canonical question with the answer hidden initially", () => {
+  it("reserves the saved answer area while keeping it inaccessible initially", () => {
     renderStudy();
 
     expect(
@@ -58,7 +62,10 @@ describe("Flashcard study", () => {
       screen.getByRole("progressbar", { name: "Flashcard study progress" }),
     ).toHaveProperty("value", 1);
     expect(screen.getByText("What does **bounded** mean?")).not.toBeNull();
-    expect(screen.queryByText("<strong>It remains plain text.</strong>")).toBeNull();
+    const answer = document.getElementById("learning-flashcard-answer");
+    expect(answer?.getAttribute("aria-hidden")).toBe("true");
+    expect(answer?.classList.contains("learning-study-answer--hidden")).toBe(true);
+    expect(screen.queryByRole("region", { name: "Flashcard answer" })).toBeNull();
     expect(screen.getByText("Card 1 of 2")).not.toBeNull();
     expect(document.querySelector("strong strong")).toBeNull();
   });
@@ -86,7 +93,9 @@ describe("Flashcard study", () => {
     expect(document.querySelector("script")).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Hide answer" }));
-    expect(screen.queryByText("<strong>It remains plain text.</strong>")).toBeNull();
+    const answer = document.getElementById("learning-flashcard-answer");
+    expect(answer?.getAttribute("aria-hidden")).toBe("true");
+    expect(screen.queryByRole("region", { name: "Flashcard answer" })).toBeNull();
     expect(
       screen
         .getByRole("button", { name: "Reveal answer" })
@@ -108,7 +117,7 @@ describe("Flashcard study", () => {
 
     expect(screen.getByText("Card 2 of 2")).not.toBeNull();
     expect(screen.getByText("What is the second question?")).not.toBeNull();
-    expect(screen.queryByText("The second answer.")).toBeNull();
+    expect(document.getElementById("learning-flashcard-answer")?.getAttribute("aria-hidden")).toBe("true");
     expect(
       (screen.getByRole("button", {
         name: "Next flashcard",
@@ -117,17 +126,17 @@ describe("Flashcard study", () => {
     expect(screen.getByText("End of set")).not.toBeNull();
   });
 
-  it("shows only canonical source-page controls and a factual source note", async () => {
+  it("shows only verified source-page controls with actionable labels", async () => {
     const user = userEvent.setup();
     renderStudy();
     await user.click(screen.getByRole("button", { name: "Reveal answer" }));
 
-    expect(screen.getByRole("button", { name: "Page 1" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Page 3" })).not.toBeNull();
-    expect(screen.queryByRole("button", { name: "Page 0" })).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Page 3" }));
+    expect(screen.getByRole("button", { name: "View Page 1" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "View Page 3" })).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "View Page 0" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "View Page 3" }));
     expect(
-      screen.getByText(/Page 3 is a validated reference for this stored flashcard/),
+      screen.getByText(/Page 3 supports this saved flashcard/),
     ).not.toBeNull();
     expect(
       screen
@@ -154,12 +163,15 @@ describe("Flashcard study", () => {
     );
 
     expect(screen.getByText("Card 1 of 1")).not.toBeNull();
-    expect(screen.queryByText("<strong>It remains plain text.</strong>")).toBeNull();
+    expect(document.getElementById("learning-flashcard-answer")?.getAttribute("aria-hidden")).toBe("true");
     expect(storageWrite).not.toHaveBeenCalled();
     storageWrite.mockRestore();
   });
 
-  it("defines responsive wrapping and reduced-motion safeguards for UI-LA2 surfaces", () => {
+  it("defines stable reveal, responsive wrapping, and reduced-motion safeguards", () => {
+    expect(phase19cCss).toContain(".learning-study-answer--reserved");
+    expect(phase19cCss).toContain(".learning-study-answer--hidden");
+    expect(phase19cCss).toContain("visibility: hidden");
     expect(learningWorkspaceCss).toMatch(
       /\.learning-flashcard-set-list[\s\S]*minmax\(min\(100%, 270px\), 1fr\)/,
     );

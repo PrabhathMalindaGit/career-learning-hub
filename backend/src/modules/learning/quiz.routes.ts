@@ -3,6 +3,9 @@ import { authenticate } from "../../middleware/authenticate.js";
 import { validate } from "../../middleware/validate.js";
 import { asyncHandler } from "../../shared/asyncHandler.js";
 import {
+  deleteLearningQuizController,
+} from "./learningChildDeletion.controller.js";
+import {
   getQuizAttemptController,
   listAllQuizAttemptsController,
   getQuizController,
@@ -44,6 +47,13 @@ quizRouter.get(
   validate({ params: quizParamsSchema }),
   requireOwnedQuiz,
   asyncHandler(getQuizController),
+);
+
+quizRouter.delete(
+  "/:quizId",
+  validate({ params: quizParamsSchema }),
+  requireOwnedQuiz,
+  asyncHandler(deleteLearningQuizController),
 );
 
 quizRouter.post(

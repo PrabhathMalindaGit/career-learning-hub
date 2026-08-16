@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { phaseLabel, type SafeJob } from "./jobResilience";
+import "./jobProgressPresentation.css";
 
 interface JobResilienceActionsProps {
   job: SafeJob;
@@ -71,6 +72,12 @@ export function JobResilienceActions({
       <p role="status" aria-live="polite">
         {statusMessage}
       </p>
+      <progress
+        className="job-resilience-actions__progress"
+        max={100}
+        value={job.progress}
+        aria-label={`${job.progress}% complete`}
+      />
       <div className="job-resilience-actions__buttons">
         {canCancel ? (
           <button

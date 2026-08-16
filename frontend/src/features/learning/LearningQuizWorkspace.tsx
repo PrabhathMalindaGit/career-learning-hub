@@ -15,6 +15,7 @@ import {
   submitQuizAttempt,
 } from "./learningApi";
 import { QuizTaker } from "./QuizTaker";
+import { quizScorePresentation } from "./quizScorePresentation";
 import type {
   LearningDocument,
   LearningPagination,
@@ -23,6 +24,7 @@ import type {
   QuizForTaking,
 } from "./types";
 import "./learningWorkspace.css";
+import "./learningPhase19c.css";
 
 const ATTEMPT_LIMIT = 10;
 const attemptDateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -249,13 +251,7 @@ export function LearningQuizWorkspace() {
       controller.abort();
       historySequence.current += 1;
     };
-  }, [
-    attemptPage,
-    documentId,
-    historyVersion,
-    identity,
-    quizId,
-  ]);
+  }, [attemptPage, documentId, historyVersion, identity, quizId]);
 
   const submitAnswers = useCallback(
     async (selections: QuizAnswerSelection[]) => {
@@ -424,6 +420,7 @@ export function LearningQuizWorkspace() {
   }
 
   const { document, quiz } = loadState;
+  const quizActive = answers.size > 0 || submitting || uncertain;
 
   return (
     <section className="workspace-section learning-workspace learning-quiz-workspace">
@@ -452,15 +449,13 @@ export function LearningQuizWorkspace() {
             {quiz.questionCount === 1 ? "question" : "questions"}
           </p>
         </div>
-        <span className="learning-status learning-status--ready">
-          Ready
-        </span>
+        <span className="learning-status learning-status--ready">Ready</span>
       </header>
 
       {quiz.questions.length === 0 ? (
         <div className="learning-state">
           <h2>No quiz questions available</h2>
-          <p>No questions were fabricated for this empty canonical quiz.</p>
+          <p>This saved quiz does not contain any questions.</p>
         </div>
       ) : (
         <>
@@ -504,126 +499,128 @@ export function LearningQuizWorkspace() {
         </>
       )}
 
-      <section
-        className="learning-attempt-history"
-        aria-labelledby="learning-attempt-history-title"
-      >
-        <header className="learning-panel-header">
-          <div>
-            <p className="learning-kicker">Immutable record</p>
-            <h2 id="learning-attempt-history-title">Attempt history</h2>
-          </div>
-          <button
-            type="button"
-            className="learning-secondary-button"
-            disabled={historyLoading}
-            onClick={() =>
-              setHistoryVersion((current) => current + 1)
-            }
-          >
-            Refresh attempts
-          </button>
-        </header>
-        {historyLoading ? (
-          <div className="learning-state learning-state--compact" role="status">
-            Loading attempt history…
-          </div>
-        ) : historyError ? (
-          <div
-            className="learning-state learning-state--error learning-state--compact"
-            role="alert"
-          >
-            <p>{historyError.message}</p>
-            <RequestId value={historyError.requestId} />
+      {quizActive ? (
+        <div className="learning-quiz-focus-note" role="status">
+          Attempt history is hidden while you complete this quiz so the
+          questions stay in focus.
+        </div>
+      ) : (
+        <section
+          className="learning-attempt-history"
+          aria-labelledby="learning-attempt-history-title"
+        >
+          <header className="learning-panel-header">
+            <div>
+              <p className="learning-kicker">Saved attempts</p>
+              <h2 id="learning-attempt-history-title">Attempt history</h2>
+            </div>
             <button
               type="button"
               className="learning-secondary-button"
-              onClick={() =>
-                setHistoryVersion((current) => current + 1)
-              }
+              disabled={historyLoading}
+              onClick={() => setHistoryVersion((current) => current + 1)}
             >
-              Try attempt history again
+              Refresh attempts
             </button>
-          </div>
-        ) : attempts.length === 0 ? (
-          <div className="learning-state learning-state--compact">
-            <h3>No completed attempts yet.</h3>
-            <p>Submit this quiz to create an immutable attempt.</p>
-          </div>
-        ) : (
-          <ol className="learning-attempt-list">
-            {attempts.map((attempt) => (
-              <li key={attempt.id}>
-                <article
-                  aria-label={`Completed quiz attempt ${attemptDateFormatter.format(
-                    new Date(attempt.completedAt),
-                  )}`}
-                >
-                  <div className="learning-attempt-result">
-                    <span className="learning-collection-type">
-                      Server score
-                    </span>
-                    <strong>
-                      {scoreFormatter.format(attempt.scorePercent)}%
-                    </strong>
-                    <span>
-                      {attempt.correctCount} of {attempt.questionCount} correct
-                    </span>
-                  </div>
-                  <time dateTime={attempt.completedAt}>
-                    {attemptDateFormatter.format(
-                      new Date(attempt.completedAt),
-                    )}
-                  </time>
-                  <Link
-                    className="learning-document-link"
-                    to={`/learning/documents/${documentId}/quizzes/${quizId}/attempts/${attempt.id}`}
-                    aria-label={`Review attempt completed ${attemptDateFormatter.format(
-                      new Date(attempt.completedAt),
-                    )}`}
-                  >
-                    Review attempt
-                  </Link>
-                </article>
-              </li>
-            ))}
-          </ol>
-        )}
-        {attemptPagination && attemptPagination.pages > 1 ? (
-          <nav
-            className="learning-pagination"
-            aria-label="Quiz attempt pages"
-          >
-            <button
-              type="button"
-              className="learning-secondary-button"
-              aria-label="Previous attempt page"
-              disabled={attemptPage <= 1 || historyLoading}
-              onClick={() =>
-                setAttemptPage((current) => current - 1)
-              }
+          </header>
+          {historyLoading ? (
+            <div className="learning-state learning-state--compact" role="status">
+              Loading attempt history…
+            </div>
+          ) : historyError ? (
+            <div
+              className="learning-state learning-state--error learning-state--compact"
+              role="alert"
             >
-              Previous
-            </button>
-            <span>
-              Attempt page {attemptPage} of {attemptPagination.pages}
-            </span>
-            <button
-              type="button"
-              className="learning-secondary-button"
-              aria-label="Next attempt page"
-              disabled={
-                attemptPage >= attemptPagination.pages || historyLoading
-              }
-              onClick={() =>
-                setAttemptPage((current) => current + 1)
-              }
+              <p>{historyError.message}</p>
+              <RequestId value={historyError.requestId} />
+              <button
+                type="button"
+                className="learning-secondary-button"
+                onClick={() => setHistoryVersion((current) => current + 1)}
+              >
+                Try attempt history again
+              </button>
+            </div>
+          ) : attempts.length === 0 ? (
+            <div className="learning-state learning-state--compact">
+              <h3>No completed attempts yet.</h3>
+              <p>Submit this quiz to save your first attempt.</p>
+            </div>
+          ) : (
+            <ol className="learning-attempt-list">
+              {attempts.map((attempt) => {
+                const performance = quizScorePresentation(attempt.scorePercent);
+                return (
+                  <li key={attempt.id}>
+                    <article
+                      className={`learning-attempt-card learning-attempt-card--${performance.level}`}
+                      aria-label={`Completed quiz attempt ${attemptDateFormatter.format(
+                        new Date(attempt.completedAt),
+                      )}`}
+                    >
+                      <div className="learning-attempt-result">
+                        <span className="learning-collection-type">Score</span>
+                        <strong>
+                          {scoreFormatter.format(attempt.scorePercent)}%
+                        </strong>
+                        <span className="learning-performance-label">
+                          {performance.label}
+                        </span>
+                        <span>
+                          {attempt.correctCount} of {attempt.questionCount} correct
+                        </span>
+                      </div>
+                      <time dateTime={attempt.completedAt}>
+                        {attemptDateFormatter.format(new Date(attempt.completedAt))}
+                      </time>
+                      <Link
+                        className="learning-document-link"
+                        to={`/learning/documents/${documentId}/quizzes/${quizId}/attempts/${attempt.id}`}
+                        aria-label={`Review attempt completed ${attemptDateFormatter.format(
+                          new Date(attempt.completedAt),
+                        )}`}
+                      >
+                        Review attempt
+                      </Link>
+                    </article>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          {attemptPagination && attemptPagination.pages > 1 ? (
+            <nav
+              className="learning-pagination"
+              aria-label="Quiz attempt pages"
             >
-              Next
-            </button>
-          </nav>
-        ) : null}
-      </section>
+              <button
+                type="button"
+                className="learning-secondary-button"
+                aria-label="Previous attempt page"
+                disabled={attemptPage <= 1 || historyLoading}
+                onClick={() => setAttemptPage((current) => current - 1)}
+              >
+                Previous
+              </button>
+              <span>
+                Attempt page {attemptPage} of {attemptPagination.pages}
+              </span>
+              <button
+                type="button"
+                className="learning-secondary-button"
+                aria-label="Next attempt page"
+                disabled={
+                  attemptPage >= attemptPagination.pages || historyLoading
+                }
+                onClick={() => setAttemptPage((current) => current + 1)}
+              >
+                Next
+              </button>
+            </nav>
+          ) : null}
+        </section>
+      )}
     </section>
   );
 }

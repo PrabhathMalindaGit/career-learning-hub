@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Flashcard } from "./types";
+import "./learningPhase19c.css";
 
 interface FlashcardStudyProps {
   cards: Flashcard[];
@@ -34,7 +35,7 @@ export function FlashcardStudy({
     return (
       <div className="learning-state learning-state--compact">
         <h2>No flashcards available</h2>
-        <p>This set does not contain canonical stored flashcards.</p>
+        <p>This set does not contain saved flashcards.</p>
       </div>
     );
   }
@@ -83,41 +84,42 @@ export function FlashcardStudy({
           </button>
         </div>
 
-        {revealed ? (
-          <div
-            id="learning-flashcard-answer"
-            className="learning-study-answer"
-            role="region"
-            aria-label="Flashcard answer"
-          >
-            <p className="learning-study-label">Back · Answer</p>
-            <p className="learning-study-content">{card.back}</p>
-            {card.sourcePages.length > 0 ? (
-              <div
-                className="learning-source-pages"
-                aria-label="Validated flashcard source pages"
-              >
-                {card.sourcePages.map((page) => (
-                  <button
-                    type="button"
-                    key={page}
-                    onClick={() => setSelectedSourcePage(page)}
-                  >
-                    Page {page}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+        <div
+          id="learning-flashcard-answer"
+          className={`learning-study-answer learning-study-answer--reserved${
+            revealed ? "" : " learning-study-answer--hidden"
+          }`}
+          role={revealed ? "region" : undefined}
+          aria-label={revealed ? "Flashcard answer" : undefined}
+          aria-hidden={!revealed}
+        >
+          <p className="learning-study-label">Back · Answer</p>
+          <p className="learning-study-content">{card.back}</p>
+          {revealed && card.sourcePages.length > 0 ? (
+            <div
+              className="learning-source-pages"
+              aria-label="Verified flashcard sources"
+            >
+              {card.sourcePages.map((page) => (
+                <button
+                  type="button"
+                  key={page}
+                  onClick={() => setSelectedSourcePage(page)}
+                >
+                  View Page {page}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </article>
 
       {selectedSourcePage !== undefined ? (
         <aside className="learning-source-note" aria-live="polite">
           <p>
-            Page {selectedSourcePage} is a validated reference for this
-            stored flashcard. Review the document’s Extracted Content view
-            for the authoritative page-aware text.
+            Page {selectedSourcePage} supports this saved flashcard. Open the
+            document workspace and choose Extracted Content to review the
+            page-aware text.
           </p>
           <Link
             className="learning-back-link"

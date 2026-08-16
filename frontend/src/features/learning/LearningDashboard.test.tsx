@@ -395,7 +395,9 @@ describe("Learning PDF upload", () => {
     expect(
       screen.getByText("Choose a PDF file no larger than 15 MB."),
     ).not.toBeNull();
-    expect(screen.getByText(/OCR is not supported/i)).not.toBeNull();
+    expect(
+      screen.getByText(/scanned or image-only files are not supported/i),
+    ).not.toBeNull();
   });
 
   it("reports the selected PDF filename without claiming drag and drop", async () => {
@@ -589,14 +591,12 @@ describe("Learning PDF upload", () => {
     expect(signal?.aborted).toBe(true);
   });
 
-  it("restores focus when the inline upload form is cancelled", async () => {
+  it("restores focus when the compact upload form is cancelled", async () => {
     renderLibrary();
     const trigger = screen.getByRole("button", { name: "Upload PDF" });
     await userEvent.click(trigger);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Cancel upload" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(document.activeElement).toBe(trigger);
   });

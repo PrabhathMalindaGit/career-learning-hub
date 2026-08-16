@@ -1,0 +1,375 @@
+/* Phase 19C — bounded Learning Workspace refinements. */
+
+.learning-tabs {
+  scroll-snap-type: inline proximity;
+  scrollbar-gutter: stable;
+}
+
+.learning-tabs button {
+  scroll-snap-align: center;
+}
+
+.learning-tabs button[aria-selected="true"] {
+  box-shadow:
+    0 5px 14px rgba(20, 45, 31, 0.08),
+    inset 0 -3px 0 var(--accent);
+}
+
+.learning-study-answer--reserved {
+  min-height: 190px;
+}
+
+.learning-study-answer--hidden {
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.learning-source-pages button::before,
+.learning-source-pages a::before {
+  margin-right: 0.35rem;
+  content: "▤";
+  font-size: 0.9em;
+  line-height: 1;
+}
+
+.learning-source-pages button,
+.learning-source-pages a {
+  text-underline-offset: 3px;
+}
+
+/* The shared semantic progress element is visually exposed only inside
+   Learning status surfaces. Interview keeps its existing dedicated progress
+   bar and Resume keeps its existing compact job treatment. */
+.job-resilience-actions__progress {
+  display: none;
+}
+
+.learning-response-status:has(.job-resilience-actions) {
+  border-color: #b9cec1;
+  color: #245e3c;
+  background: #f4f8f5;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.learning-response-status:has(.job-resilience-actions)
+  > p:not(.request-id) {
+  color: #245e3c;
+  font-weight: 800;
+}
+
+.learning-response-status:has(.job-resilience-actions) > .request-id {
+  color: #617168;
+}
+
+.learning-response-status .job-resilience-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  width: 100%;
+  gap: 9px 14px;
+  align-items: center;
+}
+
+.learning-response-status .job-resilience-actions > p[role="status"] {
+  grid-column: 1;
+  margin: 0;
+  color: #245e3c;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.learning-response-status .job-resilience-actions__progress {
+  display: block;
+  width: 100%;
+  height: 8px;
+  grid-column: 1 / -1;
+  accent-color: var(--accent);
+}
+
+.learning-response-status .job-resilience-actions__buttons {
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: flex-end;
+}
+
+.learning-response-status .job-resilience-actions__buttons button {
+  min-height: var(--minimum-interactive-target);
+  margin: 0;
+  padding: 7px 12px;
+  border: 1px solid #b9cec1;
+  border-radius: 9px;
+  color: #245e3c;
+  background: #ffffff;
+  font-weight: 800;
+}
+
+.learning-response-status
+  .job-resilience-actions__buttons
+  button:hover:not(:disabled) {
+  border-color: #8fb29b;
+  background: #eef6f1;
+}
+
+.learning-panel-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.learning-conversation-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.learning-conversation-card-actions .learning-child-deletion,
+.learning-collection-card-heading > .learning-child-deletion {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+.learning-collection-card-heading:has(> .learning-child-deletion) {
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+}
+
+.learning-collection-card-heading > .learning-child-deletion {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+/* Empty study collections already expose the creator, so suppress the
+   otherwise redundant Close creator control. */
+.learning-flashcard-sets:not(:has(.learning-flashcard-set-list))
+  > .learning-panel-header
+  .learning-panel-actions
+  > .learning-primary-button[aria-expanded="true"],
+.learning-quizzes:not(:has(.learning-quiz-set-list))
+  > .learning-panel-header
+  .learning-panel-actions
+  > .learning-primary-button[aria-expanded="true"] {
+  display: none;
+}
+
+.learning-generation-panel {
+  margin-top: 26px;
+  padding: 20px;
+  border: 1px solid #c9d9cd;
+  border-radius: 18px;
+  background: #fbfdfb;
+}
+
+.learning-generation-heading h3 {
+  margin: 0;
+  color: #26362c;
+}
+
+.learning-generation-panel .learning-flashcard-form,
+.learning-generation-panel .learning-quiz-form {
+  margin-top: 16px;
+  padding: 18px;
+  border-top-width: 3px;
+  box-shadow: none;
+}
+
+.learning-generation-panel .learning-flashcard-focus,
+.learning-generation-panel .learning-quiz-focus {
+  max-width: 720px;
+}
+
+.learning-upload-panel--compact {
+  grid-template-columns: minmax(190px, 0.55fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: 22px;
+}
+
+.learning-upload-panel--compact .learning-upload-form {
+  gap: 13px;
+}
+
+.learning-upload-panel--compact input[type="file"] {
+  min-height: 76px;
+  padding: 15px;
+}
+
+.learning-tertiary-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.learning-tertiary-button:hover:not(:disabled) {
+  color: #28342d;
+  background: #eef3ef;
+}
+
+.learning-tertiary-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  outline-offset: 3px;
+}
+
+.learning-tertiary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.learning-library-toolbar-actions {
+  display: flex;
+  align-items: end;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.learning-library-toolbar-actions p {
+  margin: 0;
+  align-self: center;
+}
+
+.learning-quiz-focus-note {
+  margin-top: 24px;
+  padding: 12px 14px;
+  border: 1px solid #d5dfd7;
+  border-radius: 11px;
+  color: var(--text-muted);
+  background: #f8faf8;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.learning-performance-label {
+  color: inherit;
+  font-weight: 850;
+}
+
+.learning-score-card--needs-review {
+  border-color: #d9a9a3;
+  border-top-color: #a84a42;
+  background:
+    linear-gradient(135deg, rgba(249, 232, 230, 0.92), transparent 62%),
+    #fffdf8;
+}
+
+.learning-score-card--needs-review .learning-score-value strong,
+.learning-score-card--needs-review .learning-performance-label {
+  color: #8a332d;
+}
+
+.learning-score-card--developing {
+  border-color: #dccb9e;
+  border-top-color: #a77920;
+  background:
+    linear-gradient(135deg, rgba(250, 243, 222, 0.94), transparent 62%),
+    #fffdf8;
+}
+
+.learning-score-card--developing .learning-score-value strong,
+.learning-score-card--developing .learning-performance-label {
+  color: #7b5919;
+}
+
+.learning-score-card--strong .learning-performance-label {
+  color: #27683e;
+}
+
+.learning-attempt-card--needs-review {
+  border-left-color: #a84a42 !important;
+}
+
+.learning-attempt-card--needs-review .learning-attempt-result > strong,
+.learning-attempt-card--needs-review .learning-performance-label {
+  color: #8a332d;
+}
+
+.learning-attempt-card--developing {
+  border-left-color: #a77920 !important;
+}
+
+.learning-attempt-card--developing .learning-attempt-result > strong,
+.learning-attempt-card--developing .learning-performance-label {
+  color: #7b5919;
+}
+
+.learning-attempt-card--strong {
+  border-left-color: #2f7d4a !important;
+}
+
+.learning-attempt-card--strong .learning-attempt-result > strong,
+.learning-attempt-card--strong .learning-performance-label {
+  color: #27683e;
+}
+
+@media (max-width: 900px) {
+  .learning-upload-panel--compact {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .learning-response-status .job-resilience-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .learning-response-status .job-resilience-actions__buttons {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .learning-panel-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .learning-panel-actions > * {
+    flex: 1 1 180px;
+  }
+
+  .learning-library-toolbar-actions {
+    width: 100%;
+    align-items: stretch;
+    justify-content: space-between;
+  }
+
+  .learning-conversation-card-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .learning-conversation-card-actions .learning-document-link {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 390px) {
+  .learning-panel-actions,
+  .learning-library-toolbar-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .learning-panel-actions > *,
+  .learning-library-toolbar-actions > * {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
+  .learning-generation-panel {
+    padding: 16px;
+  }
+}

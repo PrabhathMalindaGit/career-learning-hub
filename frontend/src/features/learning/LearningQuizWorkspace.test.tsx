@@ -66,7 +66,10 @@ const quiz: QuizForTaking = {
   ],
 };
 
-function historyAttempt(id = attemptId): QuizAttemptSummary {
+function historyAttempt(
+  id = attemptId,
+  overrides: Partial<QuizAttemptSummary> = {},
+): QuizAttemptSummary {
   return {
     id,
     documentId,
@@ -76,6 +79,7 @@ function historyAttempt(id = attemptId): QuizAttemptSummary {
     scorePercent: 100,
     completedAt: createdAt,
     createdAt,
+    ...overrides,
   };
 }
 
@@ -133,6 +137,29 @@ describe("Learning quiz workspace", () => {
     expect(screen.getByText("No completed attempts yet.")).not.toBeNull();
     expect(screen.queryByText(/correct answer/i)).toBeNull();
     expect(screen.queryByText(/explanation/i)).toBeNull();
+  });
+
+  it("hides attempt history while the current quiz has an active answer draft", async () => {
+    vi.mocked(learningApi.listQuizAttempts).mockResolvedValue({
+      attempts: [historyAttempt()],
+      pagination: { page: 1, limit: 10, total: 1, pages: 1 },
+    });
+    renderWorkspace();
+
+    expect(
+      await screen.findByRole("heading", { name: "Attempt history" }),
+    ).not.toBeNull();
+    expect(screen.getByRole("link", { name: /Review attempt/i })).not.toBeNull();
+
+    await userEvent.click(
+      screen.getByRole("radio", { name: "The server boundary" }),
+    );
+
+    expect(screen.queryByRole("heading", { name: "Attempt history" })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Review attempt/i })).toBeNull();
+    expect(
+      screen.getByText(/Attempt history is hidden while you complete this quiz/i),
+    ).not.toBeNull();
   });
 
   it("keeps the in-memory draft after safe failure and blocks duplicate submission", async () => {
@@ -236,7 +263,7 @@ describe("Learning quiz workspace", () => {
     expect(learningApi.submitQuizAttempt).toHaveBeenCalledTimes(1);
   });
 
-  it("shows paginated immutable attempt links", async () => {
+  it("shows paginated saved attempts with score-aware semantics", async () => {
     vi.mocked(learningApi.listQuizAttempts).mockResolvedValue({
       attempts: [historyAttempt()],
       pagination: { page: 1, limit: 10, total: 11, pages: 2 },
@@ -249,7 +276,8 @@ describe("Learning quiz workspace", () => {
     expect(
       screen.getByRole("article", { name: /Completed quiz attempt/i }),
     ).not.toBeNull();
-    expect(screen.getByText("Server score")).not.toBeNull();
+    expect(screen.getByText("Score")).not.toBeNull();
+    expect(screen.getByText("Strong result")).not.toBeNull();
     await userEvent.click(
       screen.getByRole("button", { name: "Next attempt page" }),
     );
@@ -259,6 +287,24 @@ describe("Learning quiz workspace", () => {
       { page: 2, limit: 10 },
       expect.any(AbortSignal),
     );
+  });
+
+  it("uses a needs-review label for a low saved score", async () => {
+    vi.mocked(learningApi.listQuizAttempts).mockResolvedValue({
+      attempts: [
+        historyAttempt(attemptId, {
+          correctCount: 0,
+          scorePercent: 25,
+        }),
+      ],
+      pagination: { page: 1, limit: 10, total: 1, pages: 1 },
+    });
+    renderWorkspace();
+
+    expect(await screen.findByText("Needs review")).not.toBeNull();
+    expect(
+      screen.getByRole("article", { name: /Completed quiz attempt/i }).classList,
+    ).toContain("learning-attempt-card--needs-review");
   });
 
   it("clears private draft state when account identity changes", async () => {
@@ -297,10 +343,7 @@ describe("Learning quiz workspace", () => {
   });
 
   it("keeps quiz drafts and attempt data out of browser storage", async () => {
-    const localStorageWrite = vi.spyOn(
-      Storage.prototype,
-      "setItem",
-    );
+    const localStorageWrite = vi.spyOn(Storage.prototype, "setItem");
     renderWorkspace();
 
     await screen.findByRole("heading", {
