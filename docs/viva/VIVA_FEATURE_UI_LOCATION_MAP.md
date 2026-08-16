@@ -2,723 +2,771 @@
 
 ## Purpose
 
-This guide is the authoritative viva-preparation map for the current Career Learning Hub implementation. It links stable feature numbers to visible UI locations, exact user controls, state/visual behavior, and the principal frontend/backend/shared/test implementation locations.
+This is the authoritative viva-preparation map for the current Career Learning Hub implementation. It links stable feature numbers to the visible UI, exact controls and states, principal frontend/backend implementation boundaries, representative automated evidence, and a short viva-ready explanation.
 
 Career Learning Hub is an integrated authenticated web application comprising Resume Studio, Interview Coach and Learning Workspace, supported by shared authentication, persistence, private storage, background processing and controlled Gemini integration.
 
-## How to read each feature entry
-
-Detailed entries use the following fields where relevant:
-
-- **UI path** — navigation path a user follows.
-- **Route** — current React Router route or route family.
-- **Screen / section** — visible workspace or panel.
-- **Control** — exact user-facing button, link, input or state surface.
-- **Control location** — where the control appears within the current screen.
-- **Enabled when** — prerequisite state for an action.
-- **Visual / state behavior** — normal, hover, selected, disabled, busy, success, warning, error or destructive behavior supported by current source/CSS.
-- **What happens** — immediate user-visible result and important control-flow boundary.
-- **Frontend** — principal component/file.
-- **Frontend API / gateway** — client API module when relevant.
-- **Backend** — principal route/controller/service/job boundary when relevant.
-- **Shared contract** — cross-layer contract/type file when relevant.
-- **Representative tests** — existing automated evidence useful for locating or explaining the behavior.
-- **Viva-ready explanation** — short explanation suitable for an examiner question.
-
-## Canonical protected-route map
-
-```text
-/login
-/register
-/dashboard
-/resumes
-/resumes/:resumeId
-/interviews
-/interviews/:sessionId
-/learning
-/learning/documents/:documentId
-/learning/documents/:documentId/conversations/:conversationId
-/learning/documents/:documentId/flashcards/:setId
-/learning/documents/:documentId/quizzes/:quizId
-/learning/documents/:documentId/quizzes/:quizId/attempts/:attemptId
-/settings
-```
-
-The application does not define a separate Activity route or a separate study-set rename route.
-
-## Shared visual/action language
-
-The current common UI vocabulary is:
-
-- **Primary** — solid Career Learning Hub green (`--accent: #287a4a`) with white text; hover uses darker green (`--accent-dark: #1e6039`).
-- **Secondary** — light/neutral supporting action using the shared border/surface-muted treatment.
-- **Quiet / tertiary** — low-emphasis action; transparent by default with restrained hover treatment.
-- **Destructive** — solid red (`#a33b3b`) with darker red hover (`#842424`).
-- **Disabled** — non-interactive muted state. Shared buttons use reduced opacity; feature-specific controls may define a more precise disabled presentation.
-- **Busy** — the action remains identifiable while the label/status changes, for example `Saving…`, `Creating…`, `Uploading…`, `Generating…` or `Testing…`.
-- **Active navigation/tab/filter** — selected treatment identifies the current context. Main navigation uses a pale green active background with a green inset indicator.
-- **Status surfaces** — success, warning, error and information feedback communicate state rather than acting as primary actions.
-
-## Stable feature-number index
-
-### 1 — Access & Navigation
-- **1.1** Register
-- **1.2** Login
-- **1.3** Authenticated application shell
-- **1.4** Sidebar/mobile navigation
-- **1.5** Global Create menu
-- **1.6** Logout/session handling
-
-### 2 — Dashboard
-- **2.1** Progress overview
-- **2.2** Continue/Create Resume
-- **2.3** Continue/Start Interview
-- **2.4** Open/Upload Learning document
-- **2.5** Recent activity
-
-### 3 — Resume Studio
-- **3.1** Resume collection
-- **3.2** Resume creation
-  - **3.2.1** Guided setup
-  - **3.2.2** Start blank
-  - **3.2.3** Import PDF
-- **3.3** Resume editor
-- **3.4** Live preview
-- **3.5** Save new immutable version
-- **3.6** Design/template controls
-- **3.7** Candidate photo
-- **3.8** Print / Save as PDF
-- **3.9** AI-assisted role assessment
-- **3.10** AI recommendations
-- **3.11** Version history
-- **3.12** Draft recovery / unsaved-change protection
-
-### 4 — Interview Coach
-- **4.1** Interview session collection
-- **4.2** Create interview
-- **4.3** Career area / role / experience configuration
-- **4.4** AI question generation
-- **4.5** Manual question creation
-- **4.6** Question types
-- **4.7** Question filtering and pinning
-- **4.8** Private notes
-- **4.9** Save practice attempt
-- **4.10** Saved-attempt history
-- **4.11** Question explanation
-- **4.12** AI feedback
-- **4.13** Session archive/restore/delete
-
-### 5 — Learning Workspace
-- **5.1** PDF upload
-- **5.2** Document processing
-- **5.3** Document library
-- **5.4** Overview / summary
-- **5.5** Secure original PDF viewer
-- **5.6** Extracted page-aware content
-- **5.7** Grounded Chat
-  - **5.7.1** Create conversation
-  - **5.7.2** Send question
-  - **5.7.3** Source-page references
-- **5.8** Flashcards
-  - **5.8.1** Generate
-  - **5.8.2** Study
-  - **5.8.3** Reveal answer / navigation
-- **5.9** Quizzes
-  - **5.9.1** Generate
-  - **5.9.2** Take quiz
-  - **5.9.3** Review saved attempt
-- **5.10** Learning resource deletion
-
-### 6 — Settings & Gemini
-- **6.1** Gemini connection status
-- **6.2** Fixed Gemini model display
-- **6.3** Application-managed Gemini
-- **6.4** Personal Gemini key
-- **6.5** Save and test key
-- **6.6** Test connection
-- **6.7** Replace key
-- **6.8** Disconnect
-- **6.9** Delete personal key
-- **6.10** AI usage diagnostics
-- **6.11** Account/session information
-
-### 7 — Shared Platform Controls
-- **7.1** Authentication/session security
-- **7.2** Ownership/authorization
-- **7.3** Private file storage
-- **7.4** Background jobs
-- **7.5** Progress polling
-- **7.6** Cancel/retry handling
-- **7.7** Validation before persistence
-- **7.8** Error/request-ID handling
-- **7.9** Responsive/accessibility behavior
+> **Claim boundary:** this guide describes the current implemented application. It does not claim formal WCAG certification, enterprise availability/SLA guarantees, token streaming, WebSockets/SSE, compiler/code execution, or a separate Learning study-set rename feature.
 
 ---
+
+# Find it fast — one-page feature index
+
+## 1 — Access & Navigation
+
+- **1.1 Register** — `/register` → `Create account`
+- **1.2 Login** — `/login` → `Sign in`
+- **1.3 Authenticated application shell** — protected routes inside `AppShell`
+- **1.4 Sidebar/mobile navigation** — Dashboard, Resumes, Interviews, Learning, Settings
+- **1.5 Global Create menu** — Resume, Interview session, Learning document
+- **1.6 Logout/session handling** — `Log out`; Settings also has `Sign out of this session`
+
+## 2 — Dashboard
+
+- **2.1 Progress overview** — `/dashboard` → Performance period and outcome/trend panels
+- **2.2 Continue/Create Resume** — first Continue-your-work card
+- **2.3 Continue/Start Interview** — second Continue-your-work card
+- **2.4 Open/Upload Learning document** — third Continue-your-work card
+- **2.5 Recent activity** — `/dashboard` → `Recent activity` / `View all activity`
+
+## 3 — Resume Studio
+
+- **3.1 Resume collection** — `/resumes` → `Your resumes`
+- **3.2 Resume creation** — `Create Resume`
+  - **3.2.1 Guided setup** — `Guided setup`
+  - **3.2.2 Start blank** — `Start blank`
+  - **3.2.3 Import PDF** — `Import PDF`
+- **3.3 Resume editor** — `/resumes/:resumeId` → editable Resume content
+- **3.4 Live preview** — beside/below editor depending on viewport
+- **3.5 Save new immutable version** — `Save new version`
+- **3.6 Design/template controls** — `Resume appearance` → `Customize`
+- **3.7 Candidate photo** — `Candidate photo`
+- **3.8 Print / Save as PDF** — `Print / Save as PDF` → `Open print dialog`
+- **3.9 AI-assisted role assessment** — `Role-aware assessment` → `Run AI-assisted assessment`
+- **3.10 AI recommendations** — completed assessment → `Apply selected suggestions`
+- **3.11 Version history** — version timeline / read-only snapshot
+- **3.12 Draft recovery / unsaved-change protection** — recovery and navigation dialogs
+
+## 4 — Interview Coach
+
+- **4.1 Interview session collection** — `/interviews` → `Your sessions`
+- **4.2 Create interview** — `Create interview`
+- **4.3 Career area / role / experience configuration** — creation dialog
+- **4.4 AI question generation** — session → `Generate questions`
+- **4.5 Manual question creation** — session → `Add manually`
+- **4.6 Question types** — MCQ, Short Answer, Coding, Behavioral, Scenario-Based, Technical Explanation
+- **4.7 Question filtering and pinning** — Question Index filters and `Pin question`
+- **4.8 Private notes** — selected question → `Private notes`
+- **4.9 Save practice attempt** — `Save attempt`
+- **4.10 Saved-attempt history** — `Saved attempts`
+- **4.11 Question explanation** — `Request explanation`
+- **4.12 AI feedback** — saved non-MCQ attempt → `Request feedback`
+- **4.13 Session archive/restore/delete** — lifecycle actions and card More menu
+
+## 5 — Learning Workspace
+
+- **5.1 PDF upload** — `/learning` → `Upload PDF`
+- **5.2 Document processing** — upload-processing job status and resilience controls
+- **5.3 Document library** — `/learning` → Document status filter / `Open workspace`
+- **5.4 Overview / summary** — document → `Overview`
+- **5.5 Secure original PDF viewer** — document → `Original PDF`
+- **5.6 Extracted page-aware content** — document → `Extracted Content`
+- **5.7 Grounded Chat** — document → `Grounded Chat`
+  - **5.7.1 Create conversation** — `Create conversation`
+  - **5.7.2 Send question** — conversation → `Send question`
+  - **5.7.3 Source-page references** — assistant answer → `Page N`
+- **5.8 Flashcards** — document → `Flashcards`
+  - **5.8.1 Generate** — `Create flashcards` → `Generate flashcards`
+  - **5.8.2 Study** — ready set → `Study set`
+  - **5.8.3 Reveal answer / navigation** — `Reveal answer`, Previous, Next
+- **5.9 Quizzes** — document → `Quizzes`
+  - **5.9.1 Generate** — `Create quiz` → `Generate quiz`
+  - **5.9.2 Take quiz** — ready quiz → `Take quiz`
+  - **5.9.3 Review saved attempt** — `Review attempt`
+- **5.10 Learning resource deletion** — document/conversation/flashcard-set/quiz deletion controls
+
+## 6 — Settings & Gemini
+
+- **6.1 Gemini connection status** — `/settings` → `Gemini connection`
+- **6.2 Fixed Gemini model display** — Model → `gemini-3.6-flash`
+- **6.3 Application-managed Gemini** — `Use application-managed Gemini` when available
+- **6.4 Personal Gemini key** — `Connect a personal key`
+- **6.5 Save and test key** — `Save and test`
+- **6.6 Test connection** — `Test connection`
+- **6.7 Replace key** — `Replace key`
+- **6.8 Disconnect** — `Disconnect` for application-managed mode
+- **6.9 Delete personal key** — destructive `Delete key` + confirmation
+- **6.10 AI usage diagnostics** — `AI usage & diagnostics`
+- **6.11 Account/session information** — `Account information`, `Current session`
+
+## 7 — Shared Platform Controls
+
+- **7.1 Authentication/session security** — protected routes and authenticated API middleware
+- **7.2 Ownership/authorization** — user-scoped reads/writes across domains
+- **7.3 Private file storage** — owner-scoped Asset abstraction and short-lived access
+- **7.4 Background jobs** — durable worker/lease execution
+- **7.5 Progress polling** — bounded status polling from feature workspaces
+- **7.6 Cancel/retry handling** — shared `Cancel` / `Retry`
+- **7.7 Validation before persistence** — Zod request/job/result validation
+- **7.8 Error/request-ID handling** — safe errors plus Request ID correlation
+- **7.9 Responsive/accessibility behavior** — keyboard/focus/ARIA/responsive presentation
+
+---
+
+# Button, color and state reference
+
+## Global action language
+
+| Role | Current visual language | Typical examples |
+|---|---|---|
+| Primary constructive action | Solid Career Learning Hub green (`--accent: #287a4a`) with white text; darker green hover (`--accent-dark: #1e6039`) | Create, Save, Generate, Submit |
+| Secondary | Neutral/light bordered control | Cancel, Retry, Refresh, Test connection |
+| Quiet / tertiary | Lowest-emphasis transparent/light action | Discard/supporting navigation actions |
+| Destructive | Red (`#a33b3b`) with darker red hover (`#842424`) | Permanent deletion / credential deletion |
+| Disabled | Non-interactive muted presentation | Prerequisite not satisfied or request busy |
+| Busy | Action remains identifiable but label/status changes | `Saving…`, `Creating…`, `Uploading…`, `Generating…`, `Testing…` |
+| Selected / active | Pale-green/selected treatment or `aria-pressed` / `aria-selected` state | Main navigation, tabs, filters, selected question |
+| Status | Success, warning, error and information surfaces | Saved, queued, processing, failed, stale, ready |
+
+### Important specific exception — Feature 3.9
+
+`Run AI-assisted assessment` is deliberately **less visually dominant** than Feature 3.5 `Save new version`. Its scoped Resume assessment styling uses:
+
+- normal border `#b9cec1`
+- normal text `#245e3c`
+- normal background `#eef6f1`
+- hover border `#aac2b3`
+- hover background `#e5f0e9`
+- disabled border `#c8d5cd`
+- disabled text `#66756c`
+- disabled background `#f1f5f2`
+- disabled opacity `1`
+
+This keeps the canonical user-controlled save action as the strongest constructive action in Resume Studio.
+
+---
+
+# Where is it in the code? — quick index
+
+| Area | Principal frontend | Principal backend / shared boundary |
+|---|---|---|
+| Routing / shell | `frontend/src/routing/router.tsx`, `frontend/src/AppShell.tsx` | `backend/src/middleware/authenticate.ts` |
+| Authentication | `frontend/src/features/auth/LoginPage.tsx`, `RegisterPage.tsx`, `AuthProvider.tsx` | `backend/src/modules/auth/`, `backend/src/middleware/authenticate.ts` |
+| Dashboard | `frontend/src/features/dashboard/MainDashboard.tsx`, `ProgressWidgets.tsx`, `dashboardApi.ts` | dashboard/progress APIs and existing domain services |
+| Resume collection/create | `ResumeListPage.tsx`, `ResumeCreateDialog.tsx` | `backend/src/modules/resumes/`, `backend/src/modules/resume-analysis/` |
+| Resume workspace | `ResumeWorkspace.tsx`, `ResumeEditor.tsx`, `ResumePreview.tsx` | Resume controller/service/models |
+| Resume AI | `AiRecommendations.tsx`, `ResumeWorkspace.tsx`, `resumePolling.ts` | `resumeAnalysis.jobs.ts`, `resumeAnalysis.service.ts` |
+| Interview collection/create | `InterviewSessionListPage.tsx`, `InterviewCreateDialog.tsx` | `backend/src/modules/interviews/` |
+| Interview practice | `InterviewSessionWorkspace.tsx`, `InterviewAnswerControl.tsx` | `interview.jobs.ts`, `interviewAi.service.ts`, Interview service/models |
+| Learning library | `LearningDashboard.tsx` | Learning routes/services + `learning.jobs.ts` |
+| Learning document | `LearningDocumentWorkspace.tsx` | Learning document/chunk services + private Asset service |
+| Grounded Chat | `DocumentConversations.tsx`, `LearningConversationWorkspace.tsx` | `learning.jobs.ts`, `learningChat.service.ts` |
+| Flashcards | `DocumentFlashcards.tsx`, `FlashcardStudy.tsx` | `learning.jobs.ts`, `learningAssessment.service.ts` |
+| Quizzes | `DocumentQuizzes.tsx`, `LearningQuizWorkspace.tsx`, `LearningQuizAttemptWorkspace.tsx` | `learning.jobs.ts`, quiz models/services |
+| Learning deletion | `LearningDocumentDeletion.tsx`, `LearningChildDeletion.tsx` | `learningChildDeletion.service.ts`, document cascade deletion |
+| Settings / Gemini | `SettingsPage.tsx`, `GeminiConnectionSettings.tsx`, `geminiSettingsApi.ts` | `aiProvider.service.ts`, `credentialVault.ts`, `geminiPolicy.ts` |
+| AI usage | `AiUsageDiagnosticsSettings.tsx` | dashboard/progress aggregation + AI usage records |
+| Private assets | feature gateways/viewers | `backend/src/modules/assets/asset.service.ts`, storage abstraction |
+| Durable jobs | `JobResilienceActions.tsx`, feature polling modules | `backend/src/jobs/job.worker.ts`, queue/registry/execution modules |
+| Validation | feature forms + API parsers | `backend/src/middleware/validate.ts`, feature Zod schemas |
+| Request diagnostics | `ApiError` / Request ID displays | `backend/src/middleware/requestContext.ts`, error middleware/logger |
+
+---
+
+# Detailed feature map
 
 ## 1 — Access & Navigation
 
 ### 1.1 Register
 
-- **UI path:** Public entry → `Create an account` from Login, or `/register` directly.
-- **Route:** `/register`.
-- **Screen / section:** `Create your account` authentication screen.
-- **Control:** `Create account`; fields `Display name`, `Email address`, `Password`; password visibility button is exposed accessibly as `Show password` / `Hide password`.
-- **Control location:** Primary submit action below the registration form; `Sign in` switch appears beneath the form.
-- **Enabled when:** The form is not busy. Client validation requires a 2–100 character display name, valid email, and a 12–128 character password containing uppercase, lowercase and a number.
-- **Visual / state behavior:** `Create account` uses the shared primary green treatment. During submission it is disabled/`aria-busy` and changes to `Creating account…`. Validation errors are surfaced inline and in a focusable summary; safe Request ID details can be disclosed for API errors.
-- **What happens:** A successful registration creates the account/session through the authentication API and returns the user to the intended safe location, normally the protected application.
-- **Frontend:** `frontend/src/features/auth/RegisterPage.tsx`, `AuthenticationShell.tsx`, `AuthProvider.tsx`.
-- **Backend:** `backend/src/modules/auth/auth.routes.ts`, `auth.controller.ts`, `auth.service.ts`, `authSession.model.ts`, `token.service.ts`.
-- **Representative tests:** `frontend/src/features/auth/authenticationPhase19e.test.tsx` and existing backend authentication/security tests.
-- **Viva-ready explanation:** Registration is a public-only route. The browser performs usability validation first, while the backend remains authoritative for account/session creation and protected access.
+- **UI path / route:** Public → `/register`.
+- **Controls:** `Display name`, `Email address`, `Password`, `Show password` / `Hide password`, primary `Create account`, and `Sign in` link.
+- **State:** Client validation precedes submission; the busy label is `Creating account…`; validation and safe API errors remain on the page.
+- **Code:** `RegisterPage.tsx`, `AuthenticationShell.tsx`, `AuthProvider.tsx`; backend `modules/auth/*`.
+- **Evidence:** authentication frontend tests and backend auth/security coverage.
+- **Viva:** Registration is public-only; the backend remains authoritative for account/session creation.
 
 ### 1.2 Login
 
-- **UI path:** Public entry → `/login`; Registration also links back with `Sign in`.
-- **Route:** `/login`.
-- **Screen / section:** `Welcome back` authentication screen.
-- **Control:** `Sign in`; fields `Email address`, `Password`; password visibility button is exposed as `Show password` / `Hide password`.
-- **Control location:** Primary submit action below the credentials form; `Create an account` appears beneath the form.
-- **Enabled when:** The form is not busy and client-side email/password checks pass.
-- **Visual / state behavior:** `Sign in` is a shared primary green button. During authentication it becomes disabled/`aria-busy` and reads `Signing in…`. Genuine expired-session routing displays `Your session expired. Sign in again to continue.`. API failures keep the user on Login with safe error text and optional Request ID details.
-- **What happens:** `AuthProvider` establishes the authenticated client state and the router returns the user to the preserved safe internal destination.
-- **Frontend:** `frontend/src/features/auth/LoginPage.tsx`, `AuthProvider.tsx`, `AuthRoute.tsx`.
-- **Backend:** `backend/src/modules/auth/auth.routes.ts`, `auth.controller.ts`, `auth.service.ts`, `authSession.model.ts`, `token.service.ts`.
-- **Representative tests:** `frontend/src/features/auth/authenticationPhase19e.test.tsx`, `AuthProvider.test.tsx`, and backend auth/security coverage.
-- **Viva-ready explanation:** Login is intentionally separated from the protected shell. A successful session unlocks protected routes; session expiry redirects back to Login while preserving the safe intended destination.
+- **UI path / route:** Public → `/login`.
+- **Controls:** `Email address`, `Password`, visibility toggle, primary `Sign in`, `Create an account` link.
+- **State:** Busy label `Signing in…`; expired sessions can surface `Your session expired. Sign in again to continue.`.
+- **What happens:** A successful authenticated state returns the user to a safe intended protected route.
+- **Code:** `LoginPage.tsx`, `AuthProvider.tsx`, `AuthRoute.tsx`; backend auth/session services.
+- **Viva:** Authentication is separated from protected application rendering and unsafe external return destinations are not used.
 
 ### 1.3 Authenticated application shell
 
-- **UI path:** Any protected feature after authentication.
-- **Route:** Parent shell for `/dashboard`, `/resumes`, `/interviews`, `/learning`, `/settings` and their child workspaces.
-- **Screen / section:** Persistent desktop sidebar or mobile header/drawer surrounding the routed feature content.
-- **Control:** Career Learning Hub brand link, global `Create`, primary navigation, account summary and `Log out`.
-- **Control location:** Desktop controls remain in the left sidebar; mobile uses a top header and modal navigation drawer.
-- **Visual / state behavior:** The shell uses shared focus-visible treatment and responsive layout rules; child features render in the `<main id="main-content">` area and the `Skip to main content` link supports keyboard navigation.
-- **What happens:** The shell supplies common navigation/session controls while React Router renders the selected protected workspace through `Outlet`.
-- **Frontend:** `frontend/src/AppShell.tsx`; route composition in `frontend/src/routing/router.tsx`.
-- **Backend:** Protected APIs rely on `backend/src/middleware/authenticate.ts` for current user/session context.
-- **Representative tests:** `frontend/src/routing/router.test.tsx`, shell/auth/logout regression tests.
-- **Viva-ready explanation:** The application shell is shared infrastructure: it avoids duplicating navigation and session controls inside Resume, Interview and Learning while each domain keeps its own workspace logic.
+- **UI path:** Any protected route.
+- **Visible UI:** Career Learning Hub brand, Create control, navigation, account block, logout and `<main id="main-content">`.
+- **Code:** `frontend/src/AppShell.tsx`, `frontend/src/routing/router.tsx`.
+- **Viva:** One shared shell prevents Resume, Interview and Learning from duplicating navigation/session behavior.
 
 ### 1.4 Sidebar/mobile navigation
 
-- **UI path:** Authenticated shell.
-- **Route destinations:** `/dashboard`, `/resumes`, `/interviews`, `/learning`, `/settings`.
-- **Control:** `Dashboard`, `Resumes`, `Interviews`, `Learning`, `Settings`; mobile `Menu` / `Close`.
-- **Control location:** Vertical left sidebar on wider layouts. On narrow layouts the `Menu` button opens the `Navigation` drawer.
-- **Visual / state behavior:** Normal nav text is neutral; hover uses a light surface. The active destination uses darker green text, pale green background and an inset green left indicator. Mobile drawer opening/closing uses the existing accessible Dialog focus-return behavior.
-- **What happens:** Selecting a nav item changes the protected route; mobile navigation closes as route location changes.
-- **Frontend:** `frontend/src/AppShell.tsx`; shared rules in `frontend/src/styles.css`; routes in `frontend/src/routing/router.tsx`.
-- **Viva-ready explanation:** Desktop and mobile navigation use the same destination list, so responsiveness changes presentation rather than creating a separate navigation model.
+- **Controls:** `Dashboard`, `Resumes`, `Interviews`, `Learning`, `Settings`; mobile `Menu` / `Close`.
+- **State:** Current destination has the active selected treatment; mobile uses an accessible drawer/dialog flow.
+- **Viva:** Desktop and mobile are two responsive presentations of the same route model.
 
 ### 1.5 Global Create menu
 
-- **UI path:** Authenticated shell → `Create`.
-- **Control:** `Create`, then `Resume`, `Interview session`, or `Learning document`.
-- **Control location:** Near the top of the desktop sidebar; repeated inside the mobile navigation drawer.
-- **Visual / state behavior:** `Create` uses the primary green shell treatment and darkens when hovered/open. Menu items appear in a bordered surface and gain a light hover background.
-- **What happens:** The menu uses existing feature routes with query intent rather than duplicating creation logic:
-  - `Resume` → `/resumes?action=create`
-  - `Interview session` → `/interviews?action=create`
-  - `Learning document` → `/learning?action=upload`
-- **Frontend:** `frontend/src/AppShell.tsx`; destination pages own the actual creation/upload flows.
-- **Viva-ready explanation:** The Create menu is only a shortcut dispatcher. Each destination feature remains authoritative for validation, persistence and workflow state.
+- **Controls:** `Create` → `Resume`, `Interview session`, `Learning document`.
+- **Destinations:** `/resumes?action=create`, `/interviews?action=create`, `/learning?action=upload`.
+- **Viva:** It is a shortcut dispatcher only; each feature still owns validation and persistence.
 
 ### 1.6 Logout/session handling
 
-- **UI path:** Authenticated shell → account/session area.
-- **Control:** `Log out`.
-- **Control location:** Bottom of the desktop sidebar and bottom of the mobile navigation drawer beneath the account summary.
-- **Enabled when:** No logout request is already pending.
-- **Visual / state behavior:** Neutral bordered control. During logout it is disabled and changes to `Logging out…`; a ref prevents duplicate logout requests.
-- **What happens:** `AuthProvider.logout()` ends/clears the current client session state. Mobile logout closes the drawer before invoking the same shared handler.
-- **Frontend:** `frontend/src/AppShell.tsx`, `frontend/src/features/auth/AuthProvider.tsx`.
-- **Backend:** Authentication/session route/service and `authSession.model.ts`; protected requests are rejected by `authenticate.ts` when the session is absent, revoked or expired.
-- **Representative tests:** `frontend/src/features/auth/logoutPhase19e.test.tsx`, `AuthProvider.test.tsx`.
-- **Viva-ready explanation:** Logout is single-flight so the desktop and mobile controls cannot create duplicate session-ending calls; the same protected-route boundary then prevents access with an invalid session.
+- **Controls:** Shell `Log out`; Settings `Sign out of this session`.
+- **State:** Shell logout becomes `Logging out…` and is single-flight.
+- **Backend:** session/auth enforcement through auth services and `authenticate.ts`.
+- **Viva:** Ending the session and protected-route enforcement are separate but coordinated controls.
 
 ## 2 — Dashboard
 
 ### 2.1 Progress overview
 
-- **UI path:** `Dashboard`.
-- **Route:** `/dashboard`.
-- **Screen / section:** `Unified dashboard` → `Performance period`, performance summary, latest Resume readiness and trend panels.
-- **Control:** `7 days`, `30 days`, `90 days`, `365 days`; retry controls appear only on failures.
-- **Control location:** Performance-period selector sits immediately above the outcome metrics/trends it controls.
-- **Visual / state behavior:** Selected period is exposed with `aria-pressed`. Loading uses skeleton/status surfaces; failures use a safe alert with `Retry progress` and Request ID when available. Outcome cards keep raw percentages primary and add semantic interpretation such as `Needs review`, `Developing` or `Strong result` when a numeric score exists.
-- **What happens:** `fetchProgressSnapshot` reloads bounded Resume, Interview and Quiz performance for the selected period. Stale requests are aborted/identity-checked before state replacement.
-- **Frontend:** `frontend/src/features/dashboard/MainDashboard.tsx`, `ProgressWidgets.tsx`, `dashboardScorePresentation.ts`, `dashboardApi.ts`.
-- **Representative tests:** `frontend/src/features/dashboard/MainDashboard.test.tsx`, `dashboardScorePresentation.test.ts`, `dashboardPhase19d.test.tsx`, `dashboardApi.test.ts`.
-- **Viva-ready explanation:** The Dashboard summarizes existing owned domain data; it does not become another source of truth for Resume, Interview or Learning records.
+- **UI path:** `/dashboard` → `Performance period`.
+- **Controls:** `7 days`, `30 days`, `90 days`, `365 days`; retry controls on failure.
+- **State:** period buttons expose selection; loading uses skeleton/status surfaces; results retain raw numeric outcomes plus bounded interpretation.
+- **Code:** `MainDashboard.tsx`, `ProgressWidgets.tsx`, `dashboardScorePresentation.ts`, `dashboardApi.ts`.
+- **Viva:** Dashboard reads existing domain progress instead of becoming a second source of truth.
 
 ### 2.2 Continue/Create Resume
 
-- **UI path:** `Dashboard` → `Continue your work`.
-- **Control:** `Continue Resume` when a latest analyzed Resume exists; otherwise `Create Resume`.
-- **Control location:** First card in the three-card Continue-your-work section near the top of the Dashboard.
-- **Visual / state behavior:** The Resume continuation card uses the Dashboard forest treatment. When available it shows the target role plus the latest readiness percentage; otherwise it shows creation guidance.
-- **What happens:** `Continue Resume` opens `/resumes/:resumeId`; `Create Resume` opens `/resumes?action=create`.
-- **Frontend:** `frontend/src/features/dashboard/MainDashboard.tsx` → Resume route owned by `frontend/src/features/resumes/`.
-- **Viva-ready explanation:** The Dashboard decides whether to continue or create from the existing progress snapshot; Resume Studio still owns the actual Resume workflow.
+- **Location:** First `Continue your work` card.
+- **Control:** `Continue Resume` when an existing target is available; otherwise `Create Resume`.
+- **Destination:** `/resumes/:resumeId` or `/resumes?action=create`.
 
 ### 2.3 Continue/Start Interview
 
-- **UI path:** `Dashboard` → `Continue your work`.
-- **Control:** `Continue Interview` when scored/active practice exists; otherwise `Start Interview Session`.
-- **Control location:** Middle continuation card.
-- **Visual / state behavior:** Existing scored feedback is summarized as `Latest feedback N%`; an active session without a recent scored point uses `Open your active Interview practice.`.
-- **What happens:** A specific latest scored session opens `/interviews/:sessionId`; an active-session fallback opens `/interviews`; the creation fallback opens `/interviews?action=create`.
-- **Frontend:** `frontend/src/features/dashboard/MainDashboard.tsx` → Interview route owned by `frontend/src/features/interviews/`.
-- **Viva-ready explanation:** The shortcut reuses existing Interview state and routes; it does not create or score interviews itself.
+- **Location:** Second continuation card.
+- **Control:** `Continue Interview` or `Start Interview Session`.
+- **Destination:** existing session/list context or `/interviews?action=create`.
 
 ### 2.4 Open/Upload Learning document
 
-- **UI path:** `Dashboard` → `Continue your work`.
-- **Control:** `Open Learning Document` when a recent document exists; otherwise `Upload Learning Document`.
-- **Control location:** Third continuation card.
-- **Visual / state behavior:** Existing document card shows title plus normalized document status; empty-state action explains that a private PDF can be added.
-- **What happens:** Existing document opens `/learning/documents/:documentId`; upload fallback opens `/learning?action=upload`.
-- **Frontend:** `frontend/src/features/dashboard/MainDashboard.tsx` → Learning route owned by `frontend/src/features/learning/`.
-- **Viva-ready explanation:** The Dashboard gives a direct route back into the latest Learning document or the existing upload flow without duplicating document processing.
+- **Location:** Third continuation card.
+- **Control:** `Open Learning Document` or `Upload Learning Document`.
+- **Destination:** `/learning/documents/:documentId` or `/learning?action=upload`.
 
 ### 2.5 Recent activity
 
-- **UI path:** `Dashboard` → `Recent activity`.
-- **Route:** `/dashboard`; there is intentionally no separate Activity route.
-- **Control:** `View all activity`; expanded view adds `Previous`, `Next`, and `Show recent activity only`.
-- **Control location:** Activity panel below the progress/continuation content.
-- **Enabled when:** `View all activity` appears only when total activity exceeds the collapsed events. Pager actions follow page boundaries.
-- **Visual / state behavior:** Collapsed chip shows `N recent`; expanded chip shows `TOTAL total`. Initial collapsed requests use five events; expanded pages use ten. Refreshing can show `Updating activity`; errors expose `Retry activity` and a safe Request ID.
-- **What happens:** Expansion resets to page 1 and requests the expanded page size; collapse returns to page 1/limit 5. Request identity plus `AbortController` prevents obsolete mode/page responses from replacing current activity.
-- **Frontend:** `frontend/src/features/dashboard/MainDashboard.tsx`, `ActivityFeed.tsx`, `dashboardApi.ts`.
-- **Representative tests:** `frontend/src/features/dashboard/MainDashboard.test.tsx`, `dashboardPhase19d.test.tsx`, `dashboardApi.test.ts`.
-- **Viva-ready explanation:** Recent Activity is a bounded audit-style summary of recorded user activity on the Dashboard, with explicit expansion rather than a separate feature page.
+- **Location:** Dashboard `Recent activity` panel; no separate Activity route.
+- **Controls:** `View all activity`; expanded mode adds Previous/Next and `Show recent activity only`.
+- **State:** collapsed and expanded modes use bounded page sizes and stale-request protection.
+- **Code:** `MainDashboard.tsx`, `ActivityFeed.tsx`, `dashboardApi.ts`.
+- **Viva:** Activity is a bounded dashboard audit-style feed, not another application area.
 
 ## 3 — Resume Studio
 
 ### 3.1 Resume collection
 
-- **UI path:** `Resumes`.
-- **Route:** `/resumes`.
-- **Screen / section:** `Resume Studio` → `Your resumes` collection.
-- **Control:** `Create Resume`, `Open Resume`, per-card More actions/delete control, `Previous`, `Next`, failure `Retry list`.
-- **Control location:** `Create Resume` is the heading action; `Open Resume` is the dominant action on each Resume card.
-- **Visual / state behavior:** Collection cards show title, status, version, appearance metadata and updated date. Empty state offers `Create your first resume`; loading uses skeleton cards.
-- **What happens:** Opening a card navigates to `/resumes/:resumeId`; creation opens the shared Resume creation dialog. Permanent deletion is separately confirmed and owner-scoped.
-- **Frontend:** `frontend/src/features/resumes/ResumeListPage.tsx`, `ResumeDeleteDialog.tsx`, `ResumeMiniDocument.tsx`.
-- **Frontend API / gateway:** `frontend/src/features/resumes/resumeApi.ts`.
-- **Backend:** `backend/src/modules/resumes/resume.routes.ts`, `resume.controller.ts`, `resume.service.ts`.
-- **Representative tests:** `ResumeListPage.test.tsx` and Resume deletion/API integration tests.
-- **Viva-ready explanation:** The collection page is a catalogue and entry point. Editing/versioning stays inside the canonical Resume workspace rather than being duplicated on cards.
+- **Route:** `/resumes` → `Your resumes`.
+- **Controls:** `Create Resume`, card `Open Resume`, More/delete control, Previous/Next, `Retry list`.
+- **State:** cards show status/version/design metadata; empty state offers `Create your first resume`.
+- **Code:** `ResumeListPage.tsx`, `ResumeDeleteDialog.tsx`, `resumeApi.ts`; backend Resume controller/service.
 
 ### 3.2 Resume creation
 
-- **UI path:** `Resumes` → `Create Resume`, or global `Create` → `Resume`.
-- **Route:** `/resumes?action=create` opens the same dialog and then clears the query intent.
-- **Screen / section:** `Create Resume` dialog.
-- **Control:** `Guided setup`, `Start blank`, `Import PDF`, `Cancel`.
-- **Visual / state behavior:** Guided setup carries a visible `Recommended` badge. All three choices lead into bounded subflows inside the same dialog.
-- **What happens:** The selected method either creates a validated Resume directly or stages/imports data before the canonical `/resumes/:resumeId` workspace opens.
-- **Frontend:** `frontend/src/features/resumes/ResumeCreateDialog.tsx`.
-- **Frontend API / gateway:** `frontend/src/features/resumes/resumeApi.ts`.
-- **Backend:** `backend/src/modules/resumes/`, plus `backend/src/modules/resume-analysis/` for PDF import processing.
-- **Representative tests:** `ResumeCreateDialog.test.tsx`, `ResumePdfUpload.test.tsx`, `resumeApi.test.ts` and Resume creation/PDF-import integration tests.
-- **Viva-ready explanation:** Creation is one shared flow with three deliberate entry methods; it does not create separate Resume data models.
+- **Entry:** `Create Resume` or global Create → Resume.
+- **Choices:** `Guided setup`, `Start blank`, `Import PDF`.
+- **Code:** `ResumeCreateDialog.tsx` and related guided/import components.
 
 #### 3.2.1 Guided setup
 
-- **Control:** `Guided setup` → the guided Resume setup form and final guided creation action.
-- **What happens:** Deterministic role/skill/experience/education guidance remains editable and optional before canonical Resume content is created.
-- **Frontend:** `ResumeGuidedSetup.tsx`, role/skill guidance helpers, `ResumeAchievementBuilder.tsx`.
-- **Viva-ready explanation:** Guidance assists structured entry but does not silently invent or lock candidate information.
+- **Behavior:** structured editable guidance assists entry; it does not silently lock/invent candidate facts.
+- **Code:** `ResumeGuidedSetup.tsx` and deterministic guidance helpers.
 
 #### 3.2.2 Start blank
 
-- **Control:** `Start blank`; field `Resume title`; actions `Back` and `Create blank resume`.
-- **Enabled when:** Title trims to 1–120 characters and creation is not already busy.
-- **Visual / state behavior:** Creation action becomes disabled/`aria-busy` and reads `Creating…` while the request is active.
-- **What happens:** A blank canonical Resume is created and immediately opened in Resume Studio.
-- **Frontend:** `ResumeCreateDialog.tsx` → `createResume()` in `resumeApi.ts`.
-- **Viva-ready explanation:** Blank creation is the minimum path: only the title is required before the normal editor becomes authoritative.
+- **Controls:** `Resume title`, `Back`, `Create blank resume`; busy `Creating…`.
+- **Behavior:** creates the minimum canonical Resume then opens `/resumes/:resumeId`.
 
 #### 3.2.3 Import PDF
 
-- **Control:** `Import PDF`; `Imported resume title`; private PDF picker; `Import private PDF`; status/resilience actions; final `Confirm and open in editor`.
-- **Enabled when:** A valid title and one PDF no larger than 15 MB are selected; confirmation occurs only after a completed validated Import Review.
-- **Visual / state behavior:** Initial action reads `Checking import…` while active. Job state shows `Import queued/processing/...`, `N% checked`, shared cancel/retry actions and `Check status` if polling pauses. Missing Gemini connection shows `PDF import needs a connected Gemini account.` with `Open Settings`.
-- **What happens:** The PDF is privately uploaded and processed as a background job. `Import Review` shows extracted evidence and an optional detected candidate-photo choice. No Resume is adopted until the user explicitly selects `Confirm and open in editor`.
-- **Frontend:** `ResumeCreateDialog.tsx`, `ResumePdfUpload.tsx`, `ResumeImportPhotoChoices.tsx`, `resumePolling.ts`.
-- **Backend:** `resumeAnalysis.jobs.ts`, `resumeAnalysis.service.ts`, `resumeParsing.service.ts`, private Asset services and Resume confirmation path.
-- **Representative tests:** Resume PDF-import contract/integration tests and candidate-photo import tests.
-- **Viva-ready explanation:** Import is staged deliberately: parsing/AI output is reviewed before it becomes user-owned Resume content, and the source PDF remains private.
+- **Controls:** `Imported resume title`, PDF picker, `Import private PDF`, job controls, final `Confirm and open in editor`.
+- **Constraints:** one private PDF, current client/backend size limit 15 MB.
+- **State:** background import progress; `Check status` if polling pauses; Import Review appears before adoption.
+- **Viva:** extraction/AI output is staged for review before it becomes editable Resume content.
 
 ### 3.3 Resume editor
 
-- **UI path:** `Resumes` → `Open Resume`.
 - **Route:** `/resumes/:resumeId`.
-- **Screen / section:** Main Resume Studio workspace → canonical editor.
-- **Control:** Direct editable Resume sections, validation links and section-specific add/remove/edit controls.
-- **Enabled when:** The workspace is loaded, not applying/saving, and no recovery decision blocks editing.
-- **Visual / state behavior:** Validation summary `Review the highlighted resume content` links directly to the affected editor field. Editing a historical snapshot returns the user to the current draft before accepting changes.
-- **What happens:** Edits modify the local canonical draft only. They do not alter stored Resume content until Feature 3.5 creates a new version.
-- **Frontend:** `ResumeWorkspace.tsx`, `ResumeEditor.tsx`, `resumeDraft.ts`.
-- **Backend:** Persistence occurs through Resume version APIs/services only on explicit save.
-- **Representative tests:** `ResumeEditor.test.tsx`, `ResumeWorkspace.test.tsx`, draft/validation tests.
-- **Viva-ready explanation:** The editor separates draft state from persisted immutable versions, which makes unsaved changes explicit and recoverable.
+- **Behavior:** edits local canonical draft state; validation links focus the relevant field; persistence occurs only through explicit version save.
+- **Code:** `ResumeWorkspace.tsx`, `ResumeEditor.tsx`, `resumeDraft.ts`.
 
 ### 3.4 Live preview
 
-- **UI path:** Same `/resumes/:resumeId` workspace, beside/below the editor depending on width.
-- **Control:** No separate submit action; it reacts to the current draft and preview appearance selection.
-- **Visual / state behavior:** All three templates preserve realistic document proportions; desktop uses the established editor/preview layout and narrower layouts allow the preview to remain scrollable/readable.
-- **What happens:** `ResumePreview` renders the current draft immediately without persisting it. Printable/historical preview variants reuse the same canonical rendering architecture.
-- **Frontend:** `ResumePreview.tsx`, template registry/renderers, Resume preview/print CSS.
-- **Representative tests:** Resume preview/template/live-preview/print-parity tests.
-- **Viva-ready explanation:** Preview is presentation-only; changing the preview cannot bypass the explicit save/version workflow.
+- **Location:** same workspace, alongside/below the editor according to width.
+- **Behavior:** renders current draft immediately without persisting it.
+- **Code:** `ResumePreview.tsx`, template/rendering registry and Resume CSS.
 
 ### 3.5 Save new immutable version
 
-- **UI path:** Open Resume → workspace heading actions.
-- **Control:** `Save new version`; keyboard shortcut shown as `⌘S` on Mac or `Ctrl+S`; quiet `Discard changes` appears when a draft is dirty.
-- **Enabled when:** There are unsaved changes; no save/apply/print conflict is active; the user is not viewing a historical snapshot; recovery has been resolved; no blocking conflict exists.
-- **Visual / state behavior:** `Save new version` is the workspace's highest-emphasis constructive green action. Canonical status cycles among `Version N saved`, `Unsaved changes`, `Saving…`, `Save failed`, or `Recovery decision required`.
-- **What happens:** Client validation runs first; the backend then validates/persists a new immutable version with expected-current-version conflict protection. Successful save updates history and cleans obsolete local recovery data.
-- **Frontend:** `ResumeWorkspace.tsx`, `resumeApi.ts`, `resumeDraft.ts`.
-- **Backend:** `resume.controller.ts`, `resume.service.ts`, Resume validation/version models.
-- **Representative tests:** `ResumeWorkspace.test.tsx`, save/recovery tests, `resumeVersionPersistence.integration.test.ts`.
-- **Viva-ready explanation:** Existing versions are never overwritten. Each accepted save creates a new auditable snapshot, which also gives AI assessment a stable version target.
+- **Control:** primary `Save new version`; keyboard shortcut `⌘S` / `Ctrl+S`; dirty draft may expose `Discard changes`.
+- **Enabled when:** a valid dirty current draft exists and recovery/save/apply/print/conflict blockers are clear.
+- **States:** `Version N saved`, `Unsaved changes`, `Saving…`, `Save failed`, `Recovery decision required`.
+- **Behavior:** creates a new immutable server version rather than overwriting an earlier version.
+- **Viva:** immutable saves make AI results and history traceable to a stable Resume version.
 
 ### 3.6 Design/template controls
 
-- **UI path:** Open Resume → `Resume appearance`.
-- **Control:** `Customize` / `Close customization`; Template choices; Typography choices; Color choices; `Reset changes`; `Save appearance`.
-- **Control location:** Appearance panel above the editor/assessment content.
-- **Visual / state behavior:** Current summary displays Template • Font • Palette • Paper size. Template cards identify `Selected` and include `Best for`; changes preview immediately. Dirty state reads `Unsaved appearance changes`; save reads `Saving appearance…` then `Resume design saved.`.
-- **What happens:** Appearance selection updates preview immediately but only `Save appearance` persists approved template/font/palette choices. Paper size is intentionally controlled by Feature 3.8.
-- **Frontend:** `ResumeDesignControls.tsx`, `resumeTemplateRegistry.ts`, appearance CSS.
-- **Backend:** Resume design update path in `resume.controller.ts` / `resume.service.ts`.
-- **Representative tests:** template registry, appearance controls and visual/print contract tests.
-- **Viva-ready explanation:** Content versions and presentation settings are separate concerns: historical saved content uses the current Resume design by the product's existing design contract.
+- **Panel:** `Resume appearance` → `Customize` / `Close customization`.
+- **Controls:** Template, Typography, Color, `Reset changes`, `Save appearance`.
+- **State:** preview changes immediately; persistence occurs only on Save appearance.
+- **Viva:** content versioning and Resume presentation are deliberately separate concerns.
 
 ### 3.7 Candidate photo
 
-- **UI path:** Open Resume → `Candidate photo` panel.
-- **Control:** `Choose photo` / `Replace photo`; `Hide from Resume` / `Show on Resume`; destructive `Remove photo`; confirmation `Keep photo` / `Remove photo`; failure `Retry saved photo`.
-- **Enabled when:** No presentation mutation/recovery blocker is active. Accepted uploads are JPEG/PNG/WebP, maximum 2 MiB, 4096×4096 and 16 MP.
-- **Visual / state behavior:** Status is `Not added`, `Shown` or `Hidden`; busy state reads `Saving candidate photo…`.
-- **What happens:** Photo bytes use private Asset storage and authoritative backend validation. Show/hide changes presentation state; removal does not rewrite Resume version content.
-- **Frontend:** `ResumeCandidatePhotoControls.tsx`, candidate-photo gateway/validation helpers, `ResumeWorkspace.tsx`.
-- **Backend:** `resumePhoto.service.ts`, `asset.service.ts`, Resume design/service boundaries.
-- **Representative tests:** candidate-photo component/API/asset-policy/integration/security tests.
-- **Viva-ready explanation:** The photo is optional private presentation data at the Resume level, not part of the versioned Resume content or AI assessment payload.
+- **Panel:** `Candidate photo`.
+- **Controls:** `Choose photo` / `Replace photo`, Show/Hide on Resume, destructive `Remove photo`, retry source when needed.
+- **Behavior:** private Asset-backed optional presentation data, separate from versioned Resume content and assessment payload.
 
 ### 3.8 Print / Save as PDF
 
-- **UI path:** Open Resume → `Print / Save as PDF`.
-- **Control:** `Paper size` (`A4` / `Letter`) and `Open print dialog`.
-- **Enabled when:** A saved current/historical version is selected; recovery, source loading, presentation mutation, photo loading/error, print preparation and unsaved-current-draft blockers are clear.
-- **Visual / state behavior:** Readiness states include `Ready to print / save as PDF` or an explicit reason why export is blocked. Busy action reads `Preparing print…`; page-size persistence reads `Saving paper size…`.
-- **What happens:** The application uses native browser printing; the user chooses `Save as PDF` and is instructed to disable browser `Headers and footers` for the final file.
-- **Frontend:** `ResumePrintControls.tsx`, `resumePrint.ts`, printable `ResumePreview`.
-- **Backend:** Paper-size preference persists through the existing Resume design endpoint; no separate PDF rendering backend is introduced.
-- **Representative tests:** `ResumePrintControls.test.tsx`, `resumePrint.test.ts`, print-parity/preview tests.
-- **Viva-ready explanation:** Export deliberately reuses browser print/PDF support instead of adding a second document-rendering architecture.
+- **Panel:** `Print / Save as PDF`.
+- **Controls:** Paper size A4/Letter, `Open print dialog`; busy `Preparing print…`.
+- **Behavior:** uses browser-native print/PDF from a saved eligible Resume representation; unsaved current draft blocks export.
 
 ### 3.9 AI-assisted role assessment
 
-- **UI path:** `Resumes` → open Resume → `Role-aware assessment`.
-- **Route:** `/resumes/:resumeId`.
-- **Control:** Inputs `Target role`, `Company (optional)`, `Job description (optional)`; action `Run AI-assisted assessment`; paused-status action `Check status`; shared cancel/retry controls while the background job is active.
-- **Control location:** Role-aware assessment panel beside/below the main editor/preview content in the canonical workspace.
-- **Enabled when:** There is no unsaved draft, no recovery decision, assessment is not busy, and trimmed Target role contains at least 2 characters.
-- **Visual / state behavior:** If the draft is dirty, the workspace states `Save or discard draft changes before assessing this resume.`. Busy label is `Checking assessment…`; progress shows `N% checked`. The assessment action intentionally uses a restrained pale-green scoped treatment rather than the stronger Feature 3.5 save action:
-  - normal border `#b9cec1`
-  - normal text `#245e3c`
-  - normal background `#eef6f1`
-  - hover border `#aac2b3`
-  - hover background `#e5f0e9`
-  - disabled border `#c8d5cd`
-  - disabled text `#66756c`
-  - disabled background `#f1f5f2`
-  - disabled opacity `1`
-- **What happens:** `queueResumeAnalysis()` sends the current **saved** `versionId` plus target context. The durable `resume.analyze` job is polled; completion is accepted only when job kind/type, Resume ID, Resume version ID and fetched analysis identity/score all match the expected saved version.
-- **Frontend:** `ResumeWorkspace.tsx`, `ResumeAssessmentActionUi.css`, `resumeApi.ts`, `resumePolling.ts`, shared `JobResilienceActions.tsx`.
-- **Backend:** `resumeAnalysis.routes.ts`, `resumeAnalysis.controller.ts`, `resumeAnalysis.jobs.ts`, `resumeAnalysis.service.ts`.
-- **Representative tests:** `ResumeAssessmentActionUi.test.tsx`, `ResumeWorkspace.test.tsx`, `resumeJobIdempotency.integration.test.ts`, AI retry/persistence and response-validation tests.
-- **Viva-ready explanation:** Assessment is bound to a saved immutable Resume version. That prevents an AI result from being confused with later unsaved edits and lets the UI reject a mismatched/stale result.
+- **Panel:** `Role-aware assessment`.
+- **Controls:** `Target role`, optional Company / Job description, `Run AI-assisted assessment`, `Check status`, shared Cancel/Retry.
+- **Enabled when:** current draft is saved, recovery is resolved, Target role is valid and no assessment is already busy.
+- **State:** bounded queued/processing progress; result is accepted only when job/Resume/version identities match.
+- **Code:** `ResumeWorkspace.tsx`, `ResumeAssessmentActionUi.css`, `resumePolling.ts`; backend `resumeAnalysis.jobs.ts`, `resumeAnalysis.service.ts`.
+- **Viva:** assessment is bound to a saved immutable Resume version, not an ambiguous unsaved draft.
 
 ### 3.10 AI recommendations
 
-- **UI path:** Same Resume workspace → `AI-assisted assessment` result after Feature 3.9 completes.
-- **Control:** Suggestion selection controls; `Apply selected suggestions`; confirmation `Cancel` / `Create new version`.
-- **Enabled when:** A non-stale completed assessment exists, at least one suggestion is selected, and no apply operation is active.
-- **Visual / state behavior:** Result state is `Awaiting assessment`, `Assessment running`, `Completed result` or `Stale assessment`. The panel shows the assessment gauge, four 25-point categories, strengths, review points, potential missing keywords and explicit suggested rewrites. Stale results cannot be applied.
-- **What happens:** Selected suggestion IDs are submitted explicitly. Successful application creates another immutable Resume version and marks the prior assessment stale.
-- **Frontend:** `AiRecommendations.tsx`, `ResumeSuggestionComparison.tsx`, `ResumeWorkspace.tsx`, `resumeApi.ts`.
-- **Backend:** Resume analysis suggestion application in `resumeAnalysis.controller.ts` / `resumeAnalysis.service.ts` plus Resume version persistence.
-- **Representative tests:** Resume recommendation/assessment/workspace and persistence tests.
-- **Viva-ready explanation:** AI does not silently rewrite the candidate's Resume. The user selects changes, confirms them, and receives a new immutable version that can be reviewed or compared.
+- **Controls:** suggestion selection, `Apply selected suggestions`, confirmation `Create new version`.
+- **State:** Awaiting, running, completed or stale; stale suggestions cannot be applied.
+- **Behavior:** selected recommendations are user-controlled and create another immutable version rather than silently rewriting the Resume.
 
 ### 3.11 Version history
 
-- **UI path:** Open Resume → version timeline below the main workspace.
-- **Control:** View/select version controls and timeline `Previous` / `Next`; when a snapshot is open, `Return to current draft`.
-- **Visual / state behavior:** Current and historical sources are labelled. A selected historical version opens as `Read-only version N` with a `Read-only` badge and saved timestamp; loading uses a dedicated snapshot skeleton.
-- **What happens:** `fetchResumeVersion` loads the owned immutable snapshot without replacing current persisted content. Historical content is rendered with current Resume design, per the existing design contract.
-- **Frontend:** `ResumeVersionTimeline.tsx`, snapshot path in `ResumeWorkspace.tsx`, `ResumePreview.tsx`.
-- **Backend:** Resume version list/fetch boundaries in `resume.controller.ts` / `resume.service.ts` and ResumeVersion model.
-- **Representative tests:** `ResumeVersionTimeline.test.tsx`, Resume workspace/version persistence tests.
-- **Viva-ready explanation:** Version history provides read-only evidence of earlier saved content while keeping the editable current draft separate.
+- **Controls:** version timeline, Previous/Next, `Return to current draft` from a snapshot.
+- **State:** historical version is explicitly `Read-only version N`.
+- **Viva:** previous saved content remains inspectable without becoming editable current state.
 
 ### 3.12 Draft recovery / unsaved-change protection
 
-- **UI path:** Automatic within `/resumes/:resumeId` when unsaved session recovery exists or the user attempts to navigate away with dirty work.
-- **Control:** Recovery dialog `Restore recovered draft` / destructive `Discard recovery`; stale recovery `Review recovered draft` / destructive `Discard recovery`; navigation protection `Keep editing` / destructive `Leave without saving`.
-- **Visual / state behavior:** Workspace status can become `Recovery decision required`. Recovery cleanup/write failures are surfaced as warning/error notices; stale recovery is reviewed rather than silently applied.
-- **What happens:** Bounded recovery data is held in session storage under the authenticated user/Resume/version identity. Same-baseline recovery may be restored; stale recovery requires explicit review; successful saves remove obsolete recovery. Browser `beforeunload` and React Router blocking protect dirty work.
-- **Frontend:** `ResumeWorkspace.tsx`, `resumeRecovery.ts`, `resumeRecoveryWriter.ts`, `ResumeRecoveryReview.tsx`.
-- **Backend:** The server remains canonical; recovery never replaces backend version identity without an explicit save.
-- **Representative tests:** `ResumeRecoveryReview.test.tsx`, `resumeRecovery.test.ts`, `resumeRecoveryWriter.test.ts`, `ResumeWorkspace.snapshotEditing.test.tsx`, `ResumeWorkspace.test.tsx`.
-- **Viva-ready explanation:** Recovery protects local unsaved editing while still respecting the server's immutable-version model; stale recovered work is never silently merged into a newer version.
+- **Controls:** `Restore recovered draft`, `Review recovered draft`, destructive `Discard recovery`, `Keep editing`, destructive `Leave without saving`.
+- **Behavior:** bounded session recovery protects unsaved work while the server remains canonical; stale recovery is reviewed rather than silently merged.
 
 ## 4 — Interview Coach
 
 ### 4.1 Interview session collection
 
-- **UI path:** `Interviews`.
-- **Route:** `/interviews`.
-- **Screen / section:** `Interview Coach` → `Your sessions`.
-- **Control:** Heading `Create interview`; status filters `All`, `Active`, `Completed`, `Archived`; card `Open session`; per-card More actions; pager `Previous` / `Next`; failure `Retry list`.
-- **Visual / state behavior:** Status filter buttons expose selection with `aria-pressed`. Cards show target role, optional distinct session title, experience level, practice mode, lifecycle status, question count and last-updated date. Empty state changes with the selected status filter.
-- **What happens:** `Open session` navigates to `/interviews/:sessionId`; the heading/global create intent opens the same `InterviewCreateDialog`; list data remains owner-scoped.
-- **Frontend:** `InterviewSessionListPage.tsx`, `InterviewSessionCard.tsx`, `InterviewCreateDialog.tsx`.
-- **Frontend API / gateway:** `frontend/src/features/interviews/interviewApi.ts`.
-- **Backend:** `backend/src/modules/interviews/interview.controller.ts`, `interview.service.ts`, Interview routes/models.
-- **Representative tests:** `InterviewSessionListPage.test.tsx`, card lifecycle/delete tests and backend ownership/integration tests.
-- **Viva-ready explanation:** The list page is the session catalogue and lifecycle entry point; actual question/attempt work stays in the selected session workspace.
+- **Route:** `/interviews` → `Your sessions`.
+- **Controls:** `Create interview`; All/Active/Completed/Archived filters; `Open session`; More actions; Previous/Next.
+- **Code:** `InterviewSessionListPage.tsx`, `InterviewSessionCard.tsx`, `interviewApi.ts`.
 
 ### 4.2 Create interview
 
-- **UI path:** `Interviews` → `Create interview`, or global `Create` → `Interview session`.
-- **Route:** `/interviews?action=create` opens the same dialog then clears the intent.
-- **Screen / section:** `Create interview` dialog.
-- **Control:** Required `Session title`, `Career area`, `Target role`, `Experience level`, `Practice mode`; optional Focus topics, Skill gaps and Additional context / Job description; `Cancel`; primary `Create interview`.
-- **Enabled when:** Required fields pass current bounds; custom tag inputs are valid; creation is not already busy.
-- **Visual / state behavior:** Multi-field errors focus `Review the highlighted fields.`; a single error focuses its field. During creation the primary action is disabled/`aria-busy` and changes to `Creating…`.
-- **What happens:** The client submits one owned Interview session; success navigates directly to `/interviews/:sessionId`.
-- **Frontend:** `InterviewCreateDialog.tsx`, `InterviewRoleSelector.tsx`, `InterviewSuggestedTagInput.tsx`.
-- **Backend:** session creation through `interview.controller.ts`, `interview.schemas.ts`, `interview.service.ts`.
-- **Representative tests:** `InterviewCreateDialog.test.tsx`, role selector/guidance/tag-input tests, Interview integration tests.
-- **Viva-ready explanation:** Session creation captures practice context once; question generation then consumes the saved session context rather than creating a separate AI-only session record.
+- **Controls:** required Session title, Career area, Target role, Experience level, Practice mode; optional focus topics/skill gaps/job description; `Create interview`.
+- **State:** focusable validation summary; busy `Creating…`.
+- **Behavior:** creates one owner-scoped practice session and opens it.
 
 ### 4.3 Career area / role / experience configuration
 
-- **UI path:** Inside `Create interview`.
-- **Control:** `Career area` with predefined areas plus `Other / Custom`; `Target role`; `Experience level`; `Practice mode` values `Written practice` and `Study`; optional Focus topics / Skill gaps / Job description.
-- **Visual / state behavior:** Selecting a Career area updates deterministic local role/topic/skill suggestions. Suggested session titles update until the user takes ownership by editing the title themselves.
-- **What happens:** Career area is a frontend authoring aid; the persisted session stores the actual target role, experience, focus/skill context, optional job description and mode used by Interview workflows.
-- **Frontend:** `InterviewCreateDialog.tsx`, `interviewRoleGuidance.ts`, `InterviewRoleSelector.tsx`.
-- **Backend:** `interview.schemas.ts`, `interview.service.ts` for persisted session fields.
-- **Representative tests:** `InterviewRoleSelector.test.tsx`, `interviewRoleGuidance.test.ts`, cross-industry/wizard tests.
-- **Viva-ready explanation:** The taxonomy improves authoring without adding an unnecessary occupation service; the backend remains centred on the actual role/context the user chose.
+- **Controls:** Career area including `Other / Custom`, Target role, Experience level, Written practice/Study mode.
+- **Behavior:** local deterministic guidance helps author the saved real role/context.
 
 ### 4.4 AI question generation
 
-- **UI path:** Open active Interview → `Build the briefing` → `Add questions`.
-- **Route:** `/interviews/:sessionId`.
-- **Control:** `Question count` (1–20), category selection, question-type controls, balanced/exact type counts, primary `Generate questions`; shared job cancel/retry and `Resume status checks` when polling pauses.
-- **Enabled when:** Session is active, no generation is already pending, at least one question type is selected and any exact type counts sum to the selected Question count.
-- **Visual / state behavior:** Primary action changes to `Generating…` while its provider operation is active. Provider job surface shows `Question generation`, queued/processing state or paused status, a progress element and resilience actions. The workspace reminds users that AI is optional and manual practice remains usable without it.
-- **What happens:** A UUID request identity queues `interview.questions.generate`; the accepted job is polled. Completed generation refreshes the canonical question list/session count. Ambiguous transport/response failures preserve the same request intent rather than blindly generating a duplicate.
-- **Frontend:** `InterviewSessionWorkspace.tsx`, `InterviewQuestionTypeControls.tsx`, `InterviewCategorySelector.tsx`, `interviewApi.ts`, `interviewPolling.ts`.
-- **Backend:** `interview.jobs.ts`, `interviewAi.service.ts`, `interviewQuestionDistribution.ts`.
-- **Representative tests:** question-type/distribution/generation status/exact-count workspace tests; backend distribution, starter-code, retry/persistence and security tests.
-- **Viva-ready explanation:** Question generation is a durable, idempotency-aware background job. The browser polls status and rejects stale route/selection responses rather than treating the provider call as an immediate UI mutation.
+- **Controls:** Question count, categories, question types/counts, `Generate questions`; shared job resilience and `Resume status checks`.
+- **State:** `Generating…`, progress and queued/processing/paused/terminal states.
+- **Backend:** `interview.jobs.ts`, `interviewAi.service.ts`.
+- **Viva:** generation is a durable request with request identity and polling rather than a direct fragile UI mutation.
 
 ### 4.5 Manual question creation
 
-- **UI path:** Open active Interview → `Build the briefing` → `Add manually`.
-- **Control:** `Question type`, `Category`, `Difficulty`, `Question`; type-specific optional/required fields; terminal `Add question`; `Close manual form` collapses the editor.
-- **Visual / state behavior:** Submit changes to `Adding…` while busy. Multiple Choice exposes 2–8 option rows, one `Correct` radio, `Add option` and `Remove option N`; Coding optionally exposes `Starter code`; non-MCQ types may store an optional `Model answer`.
-- **What happens:** The manual question is validated and added directly to the owned session without Gemini, then selected in the Question Index.
-- **Frontend:** `InterviewSessionWorkspace.tsx`, Interview question-type helpers.
-- **Backend:** manual-question controller/service/schema path and typed Interview question model.
-- **Representative tests:** manual MCQ/type authoring and Interview workspace/API tests.
-- **Viva-ready explanation:** Manual authoring is the non-AI baseline, so Interview Coach still provides useful structured practice if Gemini is unavailable or intentionally not used.
+- **Controls:** `Add manually`, Question type, Category, Difficulty, Question, type-specific fields, `Add question`.
+- **Viva:** manual authoring preserves meaningful Interview functionality without AI availability.
 
 ### 4.6 Question types
 
-- **Supported modern types:** Multiple Choice, Short Answer, Coding, Behavioral, Scenario-Based and Technical Explanation. Historical open-response records remain compatible internally without being exposed as a selectable modern type.
-- **UI path:** Generation controls, manual authoring, Question Index labels and Practice Desk answer controls.
-- **Control / behavior:** Multiple Choice uses option cards/radio selection; Short Answer uses concise written guidance; Coding uses a monospace text answer with optional generated/manual Starter code and `Copy` / `Insert into answer`; Behavioral, Scenario-Based and Technical Explanation use structured answer fields.
-- **Important boundary:** Coding submissions are explicitly shown as text and `Your submission is reviewed as text and is not executed.` No compiler/runtime/sandbox exists.
-- **What happens:** `InterviewAnswerControl` emits the correct typed answer shape; the backend validates it against the stored question type. Multiple Choice correctness is scored deterministically on the backend rather than by Gemini.
-- **Frontend:** `InterviewAnswerControl.tsx`, `InterviewStructuredAnswerFields.tsx`, `InterviewQuestionTypeControls.tsx`, `interviewStructuredAnswer.ts`.
-- **Backend:** `interviewQuestion.types.ts`, `interview.schemas.ts`, attempt/question services/models.
-- **Representative tests:** `InterviewAnswerControl*.test.tsx`, structured-answer tests, question-type contract/API/backend/security tests.
-- **Viva-ready explanation:** One Interview domain supports six type-aware practice experiences while keeping deterministic MCQ scoring and text-only Coding safety.
+- **Modern types:** Multiple Choice, Short Answer, Coding, Behavioral, Scenario-Based, Technical Explanation.
+- **Important safety boundary:** Coding answers are submitted/reviewed as text and **are not executed**.
+- **MCQ:** correctness is evaluated deterministically on the backend.
 
 ### 4.7 Question filtering and pinning
 
-- **UI path:** Open session → `Question index`.
-- **Control:** `Pinned only` checkbox; `Difficulty` (`All`, Easy, Medium, Hard); `Category` text filter; `Previous` / `Next`; selected question action `Pin question` / `Unpin`.
-- **Visual / state behavior:** Selected question uses an active `aria-pressed` card; pinned questions show a `◆ Pinned` label. Pin mutation is disabled only for the targeted pending question.
-- **What happens:** List filters reload the owned paginated question list; pinning persists on the canonical question and then refreshes the list without changing the question content.
-- **Frontend:** `InterviewSessionWorkspace.tsx`.
-- **Backend:** question list/pin endpoints through Interview controller/service.
-- **Representative tests:** Question Index/pinning/filter workspace tests and backend ownership coverage.
-- **Viva-ready explanation:** Filtering/pinning are organization tools around the same canonical questions, not duplicated question collections.
+- **Controls:** `Pinned only`, Difficulty, Category, Previous/Next, `Pin question` / `Unpin`.
+- **State:** selected question and pinned status are explicit.
 
 ### 4.8 Private notes
 
-- **UI path:** Open session → select question → Practice Desk → `Private notes`.
-- **Control:** `Add note` or `Show note`; open editor offers `Hide`, `Save notes`, `Clear notes`.
-- **Enabled when:** Notes are editable only for active sessions; archived/completed sessions remain read-mostly/read-only according to lifecycle state.
-- **Visual / state behavior:** State communicates `Unsaved notes.`, `Saving…`, `Notes saved.` or `Notes cleared.`. Hide is withheld while unresolved note changes are being saved/failed, preventing accidental visual dismissal of unresolved work.
-- **What happens:** Notes are stored against the owned question and remain separate from submitted practice attempts and AI prompts unless a feature explicitly consumes them.
-- **Frontend:** `InterviewSessionWorkspace.tsx`.
-- **Backend:** Interview notes update in controller/service/question model.
-- **Representative tests:** `InterviewSessionWorkspace.questionIndexNotes.test.tsx` and Interview backend ownership tests.
-- **Viva-ready explanation:** Notes are private per-question study annotations, deliberately separated from immutable saved attempts.
+- **Controls:** `Add note` / `Show note`, `Save notes`, `Clear notes`, `Hide`.
+- **States:** Unsaved, Saving, Saved/Cleared; lifecycle state controls editability.
 
 ### 4.9 Save practice attempt
 
-- **UI path:** Open active Written-practice session → select question → `Save another attempt`.
-- **Control:** Type-aware `InterviewAnswerControl`; terminal primary `Save attempt`, busy `Saving…`.
-- **Enabled when:** Session is active and in Written practice mode, the answer satisfies the selected question type, and no attempt write is already pending.
-- **What happens:** Every submit creates a new saved attempt. Legacy text responses remain compatible; modern answers use typed payloads. MCQ selection is scored deterministically and the correct answer is revealed only in the saved post-submit evaluation.
-- **Frontend:** `InterviewAnswerControl.tsx`, `InterviewSessionWorkspace.tsx`, `interviewApi.ts`.
-- **Backend:** `interview.controller.ts`, `interview.service.ts`, `interviewAttempt.model.ts` and typed attempt validation.
-- **Representative tests:** Answer-control/workspace question-type tests and typed-attempt integration/security tests.
-- **Viva-ready explanation:** Attempts are append-only practice records: resubmitting does not overwrite the earlier answer, which makes progress review meaningful.
+- **Control:** type-aware answer control → `Save attempt`; busy `Saving…`.
+- **Behavior:** each submission is a separate saved attempt; it does not overwrite prior practice.
 
 ### 4.10 Saved-attempt history
 
-- **UI path:** Open session → select question → `Saved attempts`.
-- **Control:** `Attempt status` filter; per-attempt `Review attempt`; pager `Previous` / `Next`.
-- **Visual / state behavior:** Status labels are `Saved`, `Feedback queued`, `Feedback processing`, `Feedback ready`, `Feedback unavailable`. Selected attempts show the stored answer, submitted timestamp, deterministic MCQ result or saved feedback when available.
-- **What happens:** Paginated attempt history can be filtered independently; selecting an attempt fetches the canonical owned attempt and keeps stale question/attempt responses fenced by current identities.
-- **Frontend:** `InterviewSessionWorkspace.tsx`.
-- **Backend:** Interview attempt list/detail controller/service/model paths.
-- **Representative tests:** `InterviewSessionWorkspace.savedAttempts.test.tsx`, attempt API/backend tests.
-- **Viva-ready explanation:** Saved Attempts are immutable review records, so the user can compare practice over time rather than seeing only the latest answer.
+- **Panel:** `Saved attempts`.
+- **Controls:** Attempt status filter, `Review attempt`, Previous/Next.
+- **State labels:** Saved, Feedback queued/processing/ready/unavailable.
 
 ### 4.11 Question explanation
 
-- **UI path:** Open active session → select question → Practice Desk.
-- **Control:** `Request explanation` when no stored explanation exists; shared provider job resilience controls while generation is pending.
-- **Special MCQ rule:** Before an MCQ attempt, the UI states `Submit an attempt to unlock the explanation.` so explanation cannot leak answer-key guidance before submission.
-- **Visual / state behavior:** Completed content appears under `Guidance` → `Explanation` with `Copy` and any key points. Job surface labels the work `Question explanation` and can show progress/paused status.
-- **What happens:** Existing explanation is returned immediately when available; otherwise `interview.question.explain` is queued and polled, then the exact current question is refreshed only if route/question identity still matches.
-- **Frontend:** `InterviewSessionWorkspace.tsx`, `interviewApi.ts`, shared job controls.
-- **Backend:** `interview.jobs.ts`, `interviewAi.service.ts`.
-- **Representative tests:** explanation status/MCQ secrecy/type-aware feedback/explanation tests.
-- **Viva-ready explanation:** Explanation is optional AI study guidance with an MCQ secrecy gate and stale-selection protection.
+- **Control:** `Request explanation` when absent.
+- **MCQ rule:** explanation remains locked until an attempt so answer-key guidance is not revealed before submission.
+- **Backend:** `interview.question.explain` durable job.
 
 ### 4.12 AI feedback
 
-- **UI path:** Open active session → Saved Attempts → select a non-MCQ attempt without feedback → `Request feedback`.
-- **Enabled when:** Session is active; selected attempt is not MCQ; no feedback is already stored/pending; provider operation is free.
-- **Visual / state behavior:** Pending job surface labels work `Practice feedback`; completion presents `Model-generated practice guidance`, a score, summary, strengths, improvements, suggested answer outline and explicit disclaimer: it is not a hiring prediction, objective evaluation or guarantee.
-- **What happens:** `interview.attempt.feedback` is queued/polled against the exact attempt/question identity. Completed feedback is stored with the attempt. MCQ does not expose this action because correctness already has deterministic backend evaluation.
-- **Frontend:** `InterviewSessionWorkspace.tsx`, `interviewApi.ts`, shared `JobResilienceActions.tsx`.
-- **Backend:** `interview.jobs.ts`, `interviewAi.service.ts`, feedback persistence path.
-- **Representative tests:** type-aware feedback integration tests, Interview practice-feedback status/workspace tests.
-- **Viva-ready explanation:** AI feedback supplements a saved human answer; it does not determine MCQ correctness and the UI explicitly avoids presenting it as a hiring decision.
+- **Control:** `Request feedback` for eligible saved non-MCQ attempts.
+- **Result:** `Model-generated practice guidance` with score, summary, strengths, improvements and outline plus explicit non-hiring-prediction disclaimer.
+- **Viva:** feedback supplements stored human practice; it is not a hiring decision.
 
 ### 4.13 Session archive/restore/delete
 
-- **UI path:** Session workspace lifecycle actions and Interview collection card More actions.
-- **Control:** Active workspace: `Mark completed`, `Archive`; completed workspace: `Archive`. Archived card More actions: `Restore session` / busy `Restoring…`; all cards expose destructive `Delete permanently` through the overflow menu and a confirmation dialog.
-- **Visual / state behavior:** Workspace states `Completed sessions are read-mostly.` or `Archived sessions are read-only.` while preserving existing questions, notes, attempts and stored guidance. Card lifecycle badge shows Active/Completed/Archived; destructive red is reserved for confirmed permanent deletion.
-- **What happens:** Lifecycle status changes reuse the existing session-status endpoint. Restore returns an archived session to active and opens it. Permanent deletion removes the Interview session and its questions/attempts while preserving any source Resume data.
-- **Frontend:** `InterviewSessionWorkspace.tsx`, `InterviewSessionCard.tsx`, `InterviewDeleteDialog.tsx`, `interviewApi.ts`.
-- **Backend:** `interview.controller.ts`, `interview.service.ts` with owner-scoped lifecycle/deletion rules.
-- **Representative tests:** `InterviewSessionCard.restore.test.tsx`, session list/workspace lifecycle tests and deletion/ownership integration tests.
-- **Viva-ready explanation:** Archive is reversible lifecycle state; permanent deletion is a separate confirmed destructive operation, which keeps normal practice actions from being visually dominated by deletion.
+- **Workspace controls:** `Mark completed`, `Archive`.
+- **Archived card:** `Restore session` / `Restoring…`.
+- **Deletion:** confirmed destructive `Delete permanently`.
+- **Viva:** Archive is reversible lifecycle state; permanent deletion is a separate destructive operation.
 
 ## 5 — Learning Workspace
 
 ### 5.1 PDF upload
 
+- **UI path / route:** `/learning` → `Upload PDF`.
+- **Panel:** `Upload a private PDF`.
+- **Controls:** `Document title`, `PDF file`, primary `Upload document`, `Cancel`.
+- **Constraints:** PDF only, up to **15 MB**. Current UI states: `Text-based PDFs work best; scanned or image-only files are not supported.`
+- **States:** validation summary `Review the highlighted fields.`; busy `Uploading…`; safe error with optional Request ID.
+- **What happens:** the PDF enters private Asset storage, an owned Learning document is created and Feature 5.2 processing begins.
+- **Frontend:** `LearningDashboard.tsx`, `learningApi.ts`.
+- **Backend:** Learning document upload path, `asset.service.ts`, `learning.jobs.ts`.
+- **Viva:** upload and processing are separate so large document extraction/summary work does not block the request/response lifecycle.
+
 ### 5.2 Document processing
+
+- **Observed UI:** after upload, `Upload accepted. Checking processing status.`; document states Uploaded → Processing → Ready or Processing failed.
+- **Controls:** shared Cancel/Retry where safe; paused local polling exposes `Resume status checks`; document card/workspace can also `Refresh document status`.
+- **Backend:** `learning.document.process` in `learning.jobs.ts` → `documentProcessing.service.ts`; job work fence validates the document state.
+- **Limitation shown by current UI:** failed scanned files may report that OCR is not supported.
+- **Viva:** extraction/summary is durable background work with explicit progress and terminal state instead of pretending the upload itself completed processing.
 
 ### 5.3 Document library
 
+- **UI path:** `/learning`.
+- **Controls:** `Document status` with All statuses / Uploaded / Processing / Ready / Processing failed / Deleting; `Refresh documents`; card `Open workspace`; Previous/Next.
+- **State:** cards show PDF status, title, original filename, page/section counts when available and updated time. Loading/failure/empty views are explicit.
+- **Frontend:** `LearningDashboard.tsx`.
+- **Backend:** owner-scoped document listing and document service/model.
+- **Viva:** the library is the catalogue; content-specific study tools only activate on an owned ready document.
+
 ### 5.4 Overview / summary
+
+- **UI path:** open a ready document → `Overview` tab.
+- **Visible content:** Pages, Extracted sections, Processed time, stored `Summary`, stored `Key points`.
+- **What happens:** reads persisted validated processing output; opening Overview does not regenerate it.
+- **Frontend:** `LearningDocumentWorkspace.tsx`.
+- **Viva:** the document workspace separates canonical stored processing output from later optional AI study interactions.
 
 ### 5.5 Secure original PDF viewer
 
+- **UI path:** document → `Original PDF`.
+- **Visible UI:** `Secure PDF viewer`, `Short-lived access`; expired/error state exposes `Refresh secure PDF access`.
+- **Behavior:** obtains owner-authorized short-lived source access, fetches/validates the PDF response, builds a browser object URL, uses `no-referrer`, and revokes local viewer access when leaving/expiring.
+- **Boundary:** source bytes remain behind the private Asset abstraction; the UI does not expose a permanent public storage URL.
+- **Frontend:** `LearningDocumentWorkspace.tsx` (`SecurePdfViewer`).
+- **Backend:** `asset.service.ts`, signed/private storage routes.
+- **Viva:** short-lived authorization limits exposure while still letting the browser render the user's original document.
+
 ### 5.6 Extracted page-aware content
+
+- **UI path:** document → `Extracted Content`.
+- **Visible UI:** section number, Page/Pages range, word count and extracted text.
+- **Controls:** Previous/Next; failure `Try extracted content again`.
+- **Behavior:** reads validated saved chunks page-by-page; no regeneration is triggered by paging.
+- **Frontend:** `LearningDocumentWorkspace.tsx` (`ExtractedContentReader`).
+- **Backend:** Learning chunk list/service/model.
+- **Viva:** page-aware chunks are the evidence layer used by grounded features and provide a reviewable bridge back to the PDF.
 
 ### 5.7 Grounded Chat
 
+- **UI path:** document → `Grounded Chat`.
+- **Boundary:** chat is available only when the document is Ready; processing/failed documents explain why chat is unavailable.
+
 #### 5.7.1 Create conversation
+
+- **Controls:** `Create conversation`; conversation `Title`; terminal `Create conversation`; `Refresh conversations`.
+- **List action:** `Open conversation`; conversation deletion is available through the More/delete flow.
+- **Frontend:** `DocumentConversations.tsx`.
+- **Backend:** conversation create/list service/model, owner-scoped to the document.
+- **Viva:** a conversation is a stored child resource of one document, so messages cannot float outside their evidence context.
 
 #### 5.7.2 Send question
 
+- **Route:** `/learning/documents/:documentId/conversations/:conversationId`.
+- **Screen:** `Ask the document`.
+- **Control:** `Question` textarea → `Send question`; busy `Sending…`.
+- **Uncertain network outcome:** button becomes `Retry same question`; secondary `Start a different question` deliberately abandons the preserved request identity.
+- **Job states:** queued/processing progress; shared Cancel/Retry; paused status → `Resume response checks`.
+- **Backend:** `learning.chat.respond` in `learning.jobs.ts` → `learningChat.service.ts`.
+- **Viva:** request identity and canonical message refresh prevent an uncertain client response from becoming an accidental duplicate chat question.
+
 #### 5.7.3 Source-page references
+
+- **Observed UI:** assistant messages expose source buttons `Page N`.
+- **What happens:** selecting a page displays a note explaining that it is a validated reference and directs the user to the document's Extracted Content for authoritative page-aware text.
+- **Validation:** completed job source pages are reconciled against the canonical stored assistant message before the UI accepts completion.
+- **Viva:** Grounded Chat is not presented as unsupported free-form knowledge; the stored answer carries validated references back to the uploaded document.
 
 ### 5.8 Flashcards
 
 #### 5.8.1 Generate
 
+- **UI path:** document → `Flashcards`.
+- **Controls:** `Create flashcards` / `Close creator`, `Refresh sets`; form `Set title`, `Card count`, `Focus (optional)`, primary `Generate flashcards`.
+- **State:** busy `Starting generation…`; queued/processing/paused/completed/failed/cancelled surfaces; `Resume generation checks`; shared Cancel/Retry.
+- **Backend:** `learning.flashcards.generate` → `learningAssessment.service.ts`.
+- **Viva:** the set exists as an owned resource and generation completion is reconciled against the canonical set/card count before study opens.
+
 #### 5.8.2 Study
 
+- **Control:** ready collection card → `Study set`.
+- **Route:** `/learning/documents/:documentId/flashcards/:setId`.
+- **Screen:** `Study flashcards` with `Card X of Y` and progress.
+- **Frontend:** `FlashcardStudy.tsx` and flashcard-set workspace.
+
 #### 5.8.3 Reveal answer / navigation
+
+- **Controls:** primary `Reveal answer` / `Hide answer`; `Previous`, `Next`; source actions `View Page N`.
+- **State:** moving cards hides the answer and clears the selected source page; boundary text reports Beginning/End/Continue studying.
+- **Viva:** answer reveal is deliberately user-controlled and source references remain available after reveal.
 
 ### 5.9 Quizzes
 
 #### 5.9.1 Generate
 
+- **UI path:** document → `Quizzes`.
+- **Controls:** `Create quiz` / `Close creator`, `Refresh quizzes`; form `Quiz title`, `Question count`, `Focus (optional)`, `Generate quiz`.
+- **State:** same durable generation vocabulary as flashcards; ready collection action `Take quiz`.
+- **Backend:** `learning.quiz.generate` → `learningAssessment.service.ts`.
+- **Viva:** generated quiz content is persisted and validated before the taking route opens.
+
 #### 5.9.2 Take quiz
+
+- **Route:** `/learning/documents/:documentId/quizzes/:quizId`.
+- **Screen:** `Quiz taking`.
+- **Controls:** one choice per question; final `Submit quiz`; busy `Submitting quiz…`.
+- **Enabled when:** every question has one selected choice and no submission/reconciliation lock is active.
+- **Behavior:** server records/scores the attempt and redirects to its saved review. If outcome is genuinely uncertain, the UI requires `Reconcile submission` before another submit.
+- **Frontend:** `LearningQuizWorkspace.tsx`, `QuizTaker.tsx`.
+- **Viva:** submission uncertainty is reconciled against saved attempt history to avoid casual duplicate attempts.
 
 #### 5.9.3 Review saved attempt
 
+- **Entry:** quiz Attempt history → `Review attempt`.
+- **Route:** `/learning/documents/:documentId/quizzes/:quizId/attempts/:attemptId`.
+- **Visible UI:** `Official results`, `Quiz result`, score percentage, correct count, semantic performance label, `Review your answers`.
+- **Per question:** Selected answer, Correct answer, optional explanation and verified `View Page N` sources.
+- **Control:** `Take quiz again` returns to the quiz workspace.
+- **Frontend:** `LearningQuizAttemptWorkspace.tsx`.
+- **Viva:** review is read-only canonical evidence of one saved server-scored attempt.
+
 ### 5.10 Learning resource deletion
+
+- **Document deletion:** `Delete document` opens confirmation; user types the exact document title; terminal destructive action `Delete document`; active deletion uses a durable delete job/cascade.
+- **Child deletion:** conversation / flashcard set / quiz More control → `Delete`; confirmation terminal action `Delete permanently`.
+- **Safety:** child deletion is owner-scoped and transactional; an active targeted chat/flashcard/quiz generation job blocks deletion. Quiz deletion cascades questions/attempts; flashcard-set deletion cascades cards; conversation deletion cascades messages.
+- **Frontend:** `LearningDocumentDeletion.tsx`, `LearningChildDeletion.tsx`.
+- **Backend:** `learningChildDeletion.service.ts`, document cascade deletion, private Asset cleanup.
+- **Viva:** destructive operations are explicit and resource-aware rather than a generic client-side removal.
 
 ## 6 — Settings & Gemini
 
 ### 6.1 Gemini connection status
 
+- **UI path / route:** Settings → `/settings` → `Gemini connection`.
+- **Badge/state:** `Connected` or `Disconnected`; summary states `Managed by Career Learning Hub`, `Personal key`, or that AI features require a connection.
+- **Frontend:** `GeminiConnectionSettings.tsx`, `geminiSettingsApi.ts`.
+- **Backend:** AI provider settings routes/services.
+
 ### 6.2 Fixed Gemini model display
+
+- **Visible UI:** `Model` → **`gemini-3.6-flash`**, described as fixed for secure, predictable AI workflows.
+- **Canonical policy:** `backend/src/modules/ai/geminiPolicy.ts` exports `GEMINI_RELEASE_MODEL = "gemini-3.6-flash"`.
+- **Viva:** the UI does not expose arbitrary provider/model switching in the current release.
 
 ### 6.3 Application-managed Gemini
 
+- **Control:** when disconnected and administrator-managed availability is reported, primary `Use application-managed Gemini`.
+- **Behavior:** activates the administrator-managed Gemini credential source through the authenticated settings API; secret material is never sent to the browser.
+- **Backend:** `aiProvider.service.ts` provider preference/activation logic.
+
 ### 6.4 Personal Gemini key
+
+- **Control:** `Connect a personal key` (or `Connect personal key` from another connected mode).
+- **Form:** `Personal Gemini API key`; password field; help states the key is tested before encrypted storage and cleared from the form after the request.
+- **Viva:** plaintext exists transiently for the submitted request; stored credential material is encrypted server-side.
 
 ### 6.5 Save and test key
 
+- **Control:** primary `Save and test`; busy `Testing…`.
+- **Enabled when:** candidate key meets the bounded input length and no settings mutation is already busy.
+- **Behavior:** backend tests Gemini before encrypted credential storage/activation; success reports connected/replaced-and-tested state.
+
 ### 6.6 Test connection
+
+- **Control:** `Test connection` when Gemini is connected.
+- **Behavior:** validates the currently authorized credential source against the fixed Gemini model without returning credential plaintext.
 
 ### 6.7 Replace key
 
+- **Control:** personal mode → `Replace key` → same secure password entry → `Save and test`.
+- **Concurrency:** credential revision is supplied so stale replacement can be rejected.
+- **Backend:** `aiProvider.service.ts`, `credentialVault.ts`.
+
 ### 6.8 Disconnect
+
+- **Control:** application-managed mode → `Disconnect`.
+- **Behavior:** switches the user's provider preference to disconnected; it does not expose/delete an administrator secret.
 
 ### 6.9 Delete personal key
 
+- **Control:** personal mode → destructive `Delete key`.
+- **Dialog:** `Delete personal Gemini key?`; safest initial action `Keep key`; terminal destructive `Delete key`.
+- **Behavior:** new AI jobs remain disconnected; already authorized work follows the existing execution lease. Stored encrypted credential is removed after applicable lease-drain rules.
+- **Backend:** `aiProvider.service.ts`, `credentialVault.ts`, credential/lease models.
+- **Viva:** disconnecting a preference and deleting user-owned encrypted credential material are intentionally different operations.
+
 ### 6.10 AI usage diagnostics
 
+- **Panel:** `AI usage & diagnostics`.
+- **Window:** last 30 days.
+- **Visible metrics:** Requests, Successful, Failed, Input tokens, Output tokens, Total tokens, Average response time, Estimated usage cost.
+- **Disclosure:** cost values are estimates, not invoices; coverage wording explains whether all recorded requests had estimates.
+- **Control:** `Show technical details` expands feature-level request/token/cost totals; failure exposes `Retry AI usage` and optional Request ID.
+- **Privacy boundary:** aggregated diagnostics do not display prompts, generated content, private document text, or credential values.
+- **Frontend:** `AiUsageDiagnosticsSettings.tsx`.
+
 ### 6.11 Account/session information
+
+- **Panel:** `Account information` shows Display name, Email, optional Headline and Account status.
+- **Panel:** `Current session` → secondary `Sign out of this session`.
+- **Frontend:** `SettingsPage.tsx`, `AuthProvider.tsx`.
+- **Viva:** Settings combines AI/account/session controls but does not become a general user-profile editing system.
 
 ## 7 — Shared Platform Controls
 
 ### 7.1 Authentication/session security
 
+- **Observed UI:** unauthenticated users see Login/Register; protected routes render only after auth state is established; expired sessions return to Login with an appropriate message.
+- **Relied on by:** Dashboard, Resume, Interview, Learning and Settings.
+- **Frontend:** `AuthProvider.tsx`, route guards, `AppShell.tsx`.
+- **Backend:** `middleware/authenticate.ts`, auth/session/token services.
+- **Evidence:** auth frontend tests plus backend authentication/security suites.
+- **Viva:** UI hiding is not the security boundary; protected APIs independently require valid authenticated session context.
+
 ### 7.2 Ownership/authorization
+
+- **Observed behavior:** collections and detail routes return only records belonging to the authenticated user; private child resources also bind to parent/document/session identity.
+- **Examples:** Resume/version/photo/analysis; Interview session/question/attempt; Learning document/conversation/message/set/quiz/attempt; Asset records.
+- **Backend:** feature services consistently query with `userId`/owned parent identities.
+- **Evidence:** integration/security tests covering cross-user resource access and deletion.
+- **Viva:** authentication identifies the user; ownership checks decide whether that user may access the specific record.
 
 ### 7.3 Private file storage
 
+- **Observed UI:** private Resume PDF import/candidate photo and Learning PDF viewer; Learning original access is explicitly short-lived.
+- **Backend:** `asset.service.ts`, asset policy/signing and storage abstraction.
+- **Controls:** MIME/size/purpose policy, quota, owner-scoped reads, signed/short-lived download targets, cleanup/deletion.
+- **Viva:** application records reference private assets; raw storage is not treated as a public file directory.
+
 ### 7.4 Background jobs
+
+- **Relied on by:** Resume PDF import/assessment, Interview generation/explanation/feedback, Learning document processing/chat/flashcards/quizzes/delete.
+- **Backend:** `job.worker.ts`, job queue/registry/execution/model modules and feature job registries.
+- **Controls:** durable claim/lease identity, heartbeat, bounded concurrency, attempt timeout, phase/progress, active-execution assertion, persistence phase and completion/failure/retry handling.
+- **Viva:** long AI/document work is moved out of HTTP request duration while preserving explicit job identity and safe persistence boundaries.
 
 ### 7.5 Progress polling
 
+- **Observed UI:** percentage/progress surfaces and explicit status text across Resume, Interview and Learning.
+- **Frontend:** feature-specific polling modules plus canonical API fetches.
+- **Safety:** AbortController/request identity prevents stale route/resource polling from replacing a newer view; local timeout/transport pause does not automatically imply backend job failure.
+- **Viva:** polling delivers progress only; the release does not claim token streaming, SSE or WebSockets.
+
 ### 7.6 Cancel/retry handling
+
+- **Shared UI:** `JobResilienceActions.tsx` → `Cancel`, `Retry`, progress meter and phase label.
+- **Rules:** Cancel appears for queued/processing work when allowed and not in the persistence phase; Retry appears only when canonical job metadata says retry is allowed.
+- **Relied on by:** Resume, Interview and Learning durable jobs.
+- **Viva:** retry/cancel capability is server-driven rather than inferred from a generic error button.
 
 ### 7.7 Validation before persistence
 
+- **Observed UI:** forms surface client-side field guidance; server responses may return safe validation errors.
+- **Backend:** `middleware/validate.ts` parses body/params/query with Zod before handlers; registered jobs parse stored payloads; feature services validate provider/generated result structures before canonical persistence.
+- **Viva:** client validation improves usability, while server/job/result validation remains authoritative for data integrity.
+
 ### 7.8 Error/request-ID handling
 
+- **Observed UI:** safe failure surfaces across authentication, Resume, Interview, Learning, Dashboard and Settings can show `Request ID: …` when the backend supplies a trusted identifier.
+- **Backend:** `requestContext.ts` accepts only a bounded trusted request-ID pattern or generates a UUID, returns it in `x-request-id`, and attaches it to structured request logging.
+- **Privacy:** logging uses hashed client IP information rather than exposing raw IP in these request events.
+- **Viva:** Request IDs support support/debug correlation without exposing stack traces or sensitive internal error objects to the user.
+
 ### 7.9 Responsive/accessibility behavior
+
+- **Observed UI:** desktop sidebar becomes mobile header/drawer; Resume editor/preview, Interview workspace and Learning panels adapt at reduced width; content remains scrollable/readable rather than requiring a second mobile application.
+- **Keyboard/focus:** skip link; visible focus treatment; dialog initial/return focus; validation summaries focus relevant fields; Resume Save keyboard shortcut; Learning tab ArrowLeft/ArrowRight/Home/End handling; pager controls expose disabled boundaries.
+- **Semantic/ARIA examples:** landmarks, headings, `role="status"`, `role="alert"`, `aria-live`, `aria-busy`, `aria-expanded`, `aria-pressed`, `aria-selected`, tablist/tab/tabpanel, labelled progress controls and accessible action names.
+- **Evidence:** component/regression tests cover many keyboard/state/ARIA contracts plus human visual QA in visible frontend phases.
+- **Claim boundary:** this is implemented accessibility/responsive behavior; **no formal WCAG certification is claimed**.
+- **Viva:** accessibility is integrated into reusable components and feature workflows rather than added as one isolated screen.
+
+---
+
+# Viva demonstration sequence
+
+Use this order so each section naturally proves the next architectural point:
+
+```text
+Login
+-> Dashboard
+-> Resume Studio: open -> edit -> Save new version -> role assessment -> results
+-> Interview Coach: open/create session -> question -> Save attempt -> feedback
+-> Learning: open document -> Overview/Original/Extracted -> Grounded Chat -> Flashcards -> Quiz
+-> Settings: Gemini connection -> fixed model -> credential controls -> AI usage/account/session
+-> architecture/security/background-job explanation
+```
+
+## Suggested examiner narration
+
+1. **Login:** “Authentication establishes the protected user context; API authorization remains server-side.”
+2. **Dashboard:** “This is an aggregate view of the three domains, not a second data source.”
+3. **Resume:** “The key design is immutable user-controlled versions. AI assessment is attached to a saved version and suggestions require confirmation.”
+4. **Interview:** “Manual practice works without AI; AI generation/explanation/feedback are optional durable jobs. Coding answers are text-only and never executed.”
+5. **Learning:** “The uploaded PDF is private. Processing produces page-aware stored evidence; chat/flashcards/quizzes are grounded against the processed document.”
+6. **Settings:** “Gemini is fixed to `gemini-3.6-flash`. Users may use the application-managed source when available or an encrypted personal key; plaintext is not returned to the browser.”
+7. **Architecture/security:** “Cross-cutting controls are authentication, ownership, private assets, durable jobs, polling/cancel/retry, validation before persistence and request-ID diagnostics.”
+
+---
+
+# High-value viva questions
+
+**Why immutable Resume versions?**  They preserve a stable user-controlled record, make history auditable and give assessment/suggestion workflows an exact content identity.
+
+**Why background jobs instead of waiting for Gemini in the HTTP request?**  Long/variable work needs durable identity, progress, timeout/cancellation/retry and safe persistence boundaries. The frontend can poll without assuming the browser connection equals job execution.
+
+**How do you prevent AI from silently modifying user data?**  Resume recommendations require explicit selection/confirmation; Interview AI creates questions/guidance around stored records; Learning generation persists validated bounded outputs. Feature services validate model output before canonical persistence.
+
+**How is private user data protected?**  Protected API sessions, owner-scoped database access, a private Asset abstraction, short-lived document access, encrypted personal Gemini credentials and no plaintext credential echo to the browser.
+
+**Does Grounded Chat guarantee that every statement is true?**  No. The application grounds the workflow in validated document chunks and stores page references, but AI output can still be imperfect; the page-aware source links let the user review the underlying document evidence.
+
+**Does Interview Coding execute code?**  No. Coding answers are stored/reviewed as text; there is no compiler or execution sandbox.
+
+**Do you claim WCAG certification?**  No. The application implements responsive layouts, semantic/ARIA patterns, focus/keyboard behavior and tested accessibility-oriented interactions, but no formal WCAG certification claim is made.
+
+**Do you stream AI tokens?**  No. The current application uses durable background jobs and progress/status polling; it does not claim SSE, WebSocket or token-streaming delivery.
