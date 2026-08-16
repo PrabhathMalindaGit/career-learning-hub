@@ -1,16 +1,19 @@
+import type { CSSProperties } from "react";
+import { Pager } from "../../components/Pager";
+import { StateSurface } from "../../components/StateSurface";
 import type {
   DashboardActivityItem,
   DashboardActivityPage,
 } from "./types";
-import type { CSSProperties } from "react";
-import { Pager } from "../../components/Pager";
-import { StateSurface } from "../../components/StateSurface";
 
 interface ActivityFeedProps {
   events: DashboardActivityItem[];
   pagination: DashboardActivityPage["pagination"];
   currentPage: number;
   refreshing: boolean;
+  expanded: boolean;
+  onExpand(): void;
+  onCollapse(): void;
   onPrevious(): void;
   onNext(): void;
 }
@@ -27,18 +30,16 @@ const activityLabels: Readonly<Record<string, string>> = {
   "interview.session.created": "Interview session created",
   "interview.session.completed": "Interview session completed",
   "interview.question.created": "Interview question created",
-  "interview.questions.generated": "Interview questions generated",
-  "interview.question.explained": "Interview question explained",
+  "interview.questions.generated": "Interview questions created",
+  "interview.question.explained": "Interview guidance created",
   "interview.attempt.recorded": "Interview attempt recorded",
-  "interview.attempt.feedback.completed":
-    "Interview feedback completed",
+  "interview.attempt.feedback.completed": "Interview feedback completed",
   "learning.document.uploaded": "Learning document uploaded",
   "learning.document.processed": "Learning document processed",
   "learning.document.deleted": "Learning document deleted",
-  "learning.flashcards.generated": "Flashcards generated",
-  "learning.quiz.generated": "Quiz generated",
-  "learning.chat.response.generated":
-    "Document chat response generated",
+  "learning.flashcards.generated": "Flashcards created",
+  "learning.quiz.generated": "Quiz created",
+  "learning.chat.response.generated": "Learning chat answered",
   "quiz.completed": "Quiz completed",
 };
 
@@ -68,10 +69,18 @@ export function ActivityFeed({
   pagination,
   currentPage,
   refreshing,
+  expanded,
+  onExpand,
+  onCollapse,
   onPrevious,
   onNext,
 }: ActivityFeedProps) {
   const totalPages = Math.max(1, pagination.pages);
+  const hasMoreActivity =
+    pagination.pages > 1 || pagination.total > events.length;
+  const chipLabel = expanded
+    ? `${pagination.total} total`
+    : `${events.length} recent`;
 
   return (
     <section
@@ -83,9 +92,7 @@ export function ActivityFeed({
           <p className="dashboard-kicker">Across your workspace</p>
           <h2 id="activity-feed-title">Recent activity</h2>
         </div>
-        <span className="dashboard-chip">
-          {pagination.total} total
-        </span>
+        <span className="dashboard-chip">{chipLabel}</span>
       </header>
 
       {refreshing && events.length > 0 ? (
@@ -138,22 +145,41 @@ export function ActivityFeed({
         )}
       </div>
 
-      <Pager
-        className="dashboard-pagination"
-        label="Activity pagination"
-        currentPage={`Page ${currentPage} of ${totalPages}`}
-        previousLabel="Previous"
-        nextLabel="Next"
-        previousAriaLabel="Previous activity page"
-        nextAriaLabel="Next activity page"
-        previousDisabled={currentPage <= 1}
-        nextDisabled={
-          pagination.pages === 0 || currentPage >= pagination.pages
-        }
-        busy={refreshing}
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+      {!expanded && hasMoreActivity ? (
+        <div className="dashboard-activity-disclosure">
+          <button type="button" onClick={onExpand}>
+            View all activity
+          </button>
+        </div>
+      ) : null}
+
+      {expanded ? (
+        <div className="dashboard-activity-expanded-controls">
+          <Pager
+            className="dashboard-pagination"
+            label="Activity pagination"
+            currentPage={`Page ${currentPage} of ${totalPages}`}
+            previousLabel="Previous"
+            nextLabel="Next"
+            previousAriaLabel="Previous activity page"
+            nextAriaLabel="Next activity page"
+            previousDisabled={currentPage <= 1}
+            nextDisabled={
+              pagination.pages === 0 || currentPage >= pagination.pages
+            }
+            busy={refreshing}
+            onPrevious={onPrevious}
+            onNext={onNext}
+          />
+          <button
+            className="dashboard-activity-collapse"
+            type="button"
+            onClick={onCollapse}
+          >
+            Show recent activity only
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }

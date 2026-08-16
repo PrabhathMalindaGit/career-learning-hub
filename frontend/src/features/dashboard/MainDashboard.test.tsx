@@ -143,17 +143,7 @@ function progressFixture(): DashboardProgress {
           estimatedCostUsd: 0.0123,
         },
       ],
-      daily: [
-        {
-          date: "2026-07-23",
-          requestCount: 2,
-          successCount: 1,
-          failureCount: 1,
-          inputTokens: 1200,
-          outputTokens: 400,
-          estimatedCostUsd: 0.0123,
-        },
-      ],
+      daily: [],
     },
   };
 }
@@ -220,6 +210,7 @@ function emptyProgressFixture(): DashboardProgress {
 function activityPage(
   page = 1,
   pages = 1,
+  limit = 5,
 ): DashboardActivityPage {
   return {
     events: [
@@ -239,8 +230,8 @@ function activityPage(
     ],
     pagination: {
       page,
-      limit: 10,
-      total: pages * 10,
+      limit,
+      total: pages * limit,
       pages,
     },
   };
@@ -297,7 +288,7 @@ describe("MainDashboard", () => {
     expect(screen.getByText("Loading activity")).not.toBeNull();
   });
 
-  it("renders a clear page heading and returned domain metrics", async () => {
+  it("renders the compact dashboard header and semantic user outcome metrics", async () => {
     renderDashboard();
 
     expect(
@@ -308,65 +299,63 @@ describe("MainDashboard", () => {
     ).not.toBeNull();
     expect(
       screen.getByText(
-        "See owned progress across Resume Studio, Interview Coach, Learning Workspace, quizzes, and AI usage for the last 30 days.",
+        "Continue your work and review recent progress across Resume Studio, Interview Coach, and Learning Workspace.",
       ),
     ).not.toBeNull();
     expect(
-      screen.getByRole("group", { name: "Progress window" }),
-    ).not.toBeNull();
-    expect(
-      screen.getByRole("button", { name: "7 days" }),
+      screen.getByRole("group", { name: "Performance period" }),
     ).not.toBeNull();
     expect(
       screen
         .getByRole("button", { name: "30 days" })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(
-      screen.getByRole("button", { name: "90 days" }),
-    ).not.toBeNull();
-    expect(
-      screen.getByRole("button", { name: "365 days" }),
-    ).not.toBeNull();
-    expect(await screen.findByText("84%")).not.toBeNull();
+
+    expect(await screen.findByText("82%")).not.toBeNull();
     expect(screen.getByText("76%")).not.toBeNull();
     expect(screen.getByText("75%")).not.toBeNull();
+    expect(screen.getByText("84%")).not.toBeNull();
+    expect(screen.getAllByText("Strong result")).toHaveLength(3);
     expect(
       screen.getByText("Distributed systems notes"),
     ).not.toBeNull();
-    expect(screen.getByText("1,600")).not.toBeNull();
-    expect(screen.getByText("840 ms")).not.toBeNull();
 
     const scoreMeters = screen.getAllByRole("meter");
     expect(scoreMeters).toHaveLength(4);
-    expect(scoreMeters[0]?.getAttribute("aria-valuenow")).toBe(
-      "84",
-    );
-    expect(scoreMeters[0]?.getAttribute("aria-valuemin")).toBe(
-      "0",
-    );
-    expect(scoreMeters[0]?.getAttribute("aria-valuemax")).toBe(
-      "100",
-    );
+    expect(
+      screen.getByRole("meter", {
+        name: "Resume readiness: 84 out of 100",
+      }),
+    ).not.toBeNull();
   });
 
-  it("presents the real bounded Resume readiness value as the dashboard feature visual", async () => {
+  it("uses owned dashboard data to build richer contextual continuation links", async () => {
     renderDashboard();
 
-    const readiness = await screen.findByRole("meter", {
-      name: "Resume readiness: 84 out of 100",
+    const continuation = await screen.findByRole("navigation", {
+      name: "Continue your work",
     });
-    expect(readiness.getAttribute("aria-valuenow")).toBe("84");
-    expect(readiness.getAttribute("aria-valuemin")).toBe("0");
-    expect(readiness.getAttribute("aria-valuemax")).toBe("100");
     expect(
-      screen.getAllByText("Platform engineer").length,
-    ).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Keyword match")).not.toBeNull();
-    expect(screen.getByText("20 / 25")).not.toBeNull();
+      within(continuation)
+        .getByRole("link", { name: /Continue Resume/i })
+        .getAttribute("href"),
+    ).toBe("/resumes/resume-1");
+    expect(within(continuation).getByText("Platform engineer · 84% readiness")).not.toBeNull();
+    expect(
+      within(continuation)
+        .getByRole("link", { name: /Continue Interview/i })
+        .getAttribute("href"),
+    ).toBe("/interviews/session-1");
+    expect(within(continuation).getByText("Latest feedback 82%")).not.toBeNull();
+    expect(
+      within(continuation)
+        .getByRole("link", { name: /Open Learning Document/i })
+        .getAttribute("href"),
+    ).toBe("/learning/documents/document-1");
+    expect(within(continuation).getByText("Distributed systems notes · Ready")).not.toBeNull();
   });
 
-  it("renders truthful module empty states without a fabricated Resume score or trend", async () => {
+  it("falls back to creation actions and purposeful empty states when no work exists", async () => {
     vi.mocked(
       dashboardApi.fetchProgressSnapshot,
     ).mockResolvedValue(emptyProgressFixture());
@@ -374,46 +363,41 @@ describe("MainDashboard", () => {
     renderDashboard();
 
     expect(
-      await screen.findByText("No Resume analysis yet"),
+      await screen.findByText("No performance recorded in this period"),
     ).not.toBeNull();
+    expect(screen.getByText("No Resume analysis yet")).not.toBeNull();
     expect(
-      screen.getByText("No Interview activity yet"),
+      screen.getByText("No scored feedback in this period."),
     ).not.toBeNull();
+    expect(screen.queryByText("Unavailable")).toBeNull();
+    expect(screen.queryByText("Needs review")).toBeNull();
+    expect(screen.queryByText("Developing")).toBeNull();
+    expect(screen.queryByText("Strong result")).toBeNull();
+
+    const continuation = screen.getByRole("navigation", {
+      name: "Continue your work",
+    });
     expect(
-      screen.getByText("No Learning documents yet"),
-    ).not.toBeNull();
-    expect(screen.getByText("No AI usage yet")).not.toBeNull();
-    expect(
-      screen.queryByRole("meter", {
-        name: /Resume readiness:/,
+      within(continuation).getByRole("link", {
+        name: /Create Resume/i,
       }),
-    ).toBeNull();
-    expect(screen.queryByText(/continue work/i)).toBeNull();
-  });
-
-  it("uses structured skeletons without placeholder names, scores, or dates", () => {
-    vi.mocked(
-      dashboardApi.fetchProgressSnapshot,
-    ).mockReturnValue(
-      new Promise<DashboardProgress>(() => undefined),
-    );
-    vi.mocked(
-      dashboardApi.fetchDashboardActivity,
-    ).mockReturnValue(
-      new Promise<DashboardActivityPage>(() => undefined),
-    );
-
-    const { container } = renderDashboard();
-
+    ).not.toBeNull();
     expect(
-      container.querySelectorAll(".dashboard-skeleton-card").length,
-    ).toBeGreaterThanOrEqual(4);
-    expect(container.textContent).not.toMatch(
-      /(?:\d{1,3}%|sample|demo|platform engineer|updated \d)/i,
-    );
+      within(continuation).getByRole("link", {
+        name: /Start Interview Session/i,
+      }),
+    ).not.toBeNull();
+    expect(
+      within(continuation).getByRole("link", {
+        name: /Upload Learning Document/i,
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Practice interview" }),
+    ).not.toBeNull();
   });
 
-  it("does not render legacy branding, plans, provider claims, or raw record IDs", async () => {
+  it("does not expose internal AI diagnostics, provider claims, or raw record IDs", async () => {
     renderDashboard();
 
     await screen.findAllByText("Platform engineer");
@@ -421,178 +405,46 @@ describe("MainDashboard", () => {
 
     expect(content).toContain("Career Learning Hub");
     expect(content).not.toMatch(
-      /AI Resume Analyser|Resume Builder|Pro plan|recruiter approved|certified ATS|provider|continue work/i,
+      /AI usage|Total tokens|Input \/ output|Average latency|Estimated cost|resume-analysis|provider/i,
     );
     expect(content).not.toMatch(
       /analysis-1|resume-1|version-1|attempt-1|document-1|activity-1/i,
     );
   });
 
-  it("renders long returned labels without substituting or truncating their values", async () => {
-    const fixture = progressFixture();
-    const targetRole =
-      "Platform reliability and distributed systems engineering specialist for a deliberately long synthetic role";
-    const documentTitle =
-      "Distributed systems learning notes with a deliberately long synthetic title for responsive wrapping";
-    const feature =
-      "resume-analysis-with-a-deliberately-long-synthetic-feature-label";
-    vi.mocked(
-      dashboardApi.fetchProgressSnapshot,
-    ).mockResolvedValue({
-      ...fixture,
-      resumeReadiness: {
-        ...fixture.resumeReadiness,
-        latest: fixture.resumeReadiness.latest
-          ? {
-              ...fixture.resumeReadiness.latest,
-              targetRole,
-            }
-          : null,
-        trend: fixture.resumeReadiness.trend.map((point) => ({
-          ...point,
-          targetRole,
-        })),
-      },
-      learning: {
-        ...fixture.learning,
-        recentDocuments: fixture.learning.recentDocuments.map(
-          (document) => ({
-            ...document,
-            title: documentTitle,
-          }),
-        ),
-      },
-      aiUsage: {
-        ...fixture.aiUsage,
-        byFeature: fixture.aiUsage.byFeature.map((entry) => ({
-          ...entry,
-          feature,
-        })),
-      },
-    });
-
+  it("requests bounded trend and document summaries for the dashboard", async () => {
     renderDashboard();
 
-    expect(
-      (await screen.findAllByText(targetRole)).length,
-    ).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(documentTitle)).not.toBeNull();
-    expect(screen.getByText(feature)).not.toBeNull();
-  });
-
-  it("renders exactly the three approved quick-start workflow links", () => {
-    renderDashboard();
-
-    const quickStart = screen.getByRole("navigation", {
-      name: "Quick start",
-    });
-    const links = within(quickStart).getAllByRole("link");
-
-    expect(links).toHaveLength(3);
-    expect(
-      within(quickStart)
-        .getByRole("link", { name: /Create Resume/ })
-        .getAttribute("href"),
-    ).toBe("/resumes?action=create");
-    expect(
-      within(quickStart)
-        .getByRole("link", {
-          name: /Start Interview Session/,
-        })
-        .getAttribute("href"),
-    ).toBe("/interviews?action=create");
-    expect(
-      within(quickStart)
-        .getByRole("link", {
-          name: /Upload Learning Document/,
-        })
-        .getAttribute("href"),
-    ).toBe("/learning?action=upload");
-    expect(
-      within(quickStart).queryByRole("button"),
-    ).toBeNull();
-  });
-
-  it("shows factual zero counts and unavailable null scores", async () => {
-    vi.mocked(
-      dashboardApi.fetchProgressSnapshot,
-    ).mockResolvedValue(emptyProgressFixture());
-
-    renderDashboard();
-
-    expect(
-      await screen.findByText("No recorded dashboard data"),
-    ).not.toBeNull();
-    expect(
-      screen.getAllByText("Unavailable").length,
-    ).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText("0 requests").length,
-    ).toBeGreaterThan(0);
-    expect(
-      screen.queryByText(/sample|demo|streak/i),
-    ).toBeNull();
-  });
-
-  it("uses singular labels for returned counts of one", async () => {
-    const fixture = progressFixture();
-    vi.mocked(
-      dashboardApi.fetchProgressSnapshot,
-    ).mockResolvedValue({
-      ...fixture,
-      resumeReadiness: {
-        ...fixture.resumeReadiness,
-        analysesInWindow: 1,
-        analyzedResumesInWindow: 1,
-      },
-      interviews: {
-        ...fixture.interviews,
-        attemptsInWindow: 1,
-        feedbackCompletedInWindow: 1,
-      },
-      learning: {
-        ...fixture.learning,
-        quizPerformance: {
-          ...fixture.learning.quizPerformance,
-          totalQuestionsAnswered: 1,
-          totalCorrectAnswers: 1,
+    await waitFor(() => {
+      expect(
+        dashboardApi.fetchProgressSnapshot,
+      ).toHaveBeenCalledWith(
+        {
+          windowDays: 30,
+          trendLimit: 5,
+          recentDocumentLimit: 3,
         },
-      },
-      aiUsage: {
-        ...fixture.aiUsage,
-        requestCount: 1,
-        successCount: 1,
-        failureCount: 0,
-        estimatedCostEventCount: 1,
-      },
+        expect.any(AbortSignal),
+      );
     });
-
-    renderDashboard();
-
-    expect(
-      await screen.findByText("1 analysis across 1 resume"),
-    ).not.toBeNull();
-    expect(screen.getByText("1 scored of 1 attempt")).not.toBeNull();
-    expect(screen.getByText("1 of 1 answer correct")).not.toBeNull();
-    expect(
-      screen.getAllByText("1 request").length,
-    ).toBeGreaterThanOrEqual(2);
-    expect(
-      screen.getAllByText("1 point").length,
-    ).toBeGreaterThanOrEqual(3);
+    await waitFor(() => {
+      expect(
+        dashboardApi.fetchDashboardActivity,
+      ).toHaveBeenCalledWith(
+        { page: 1, limit: 5 },
+        expect.any(AbortSignal),
+      );
+    });
   });
 
-  it("requests all four approved windows and communicates the active selection", async () => {
+  it("requests all four approved performance periods and communicates the active selection", async () => {
     renderDashboard();
     const user = userEvent.setup();
 
     await waitFor(() => {
       expect(
         dashboardApi.fetchProgressSnapshot,
-      ).toHaveBeenCalledWith(
-        expect.objectContaining({ windowDays: 30 }),
-        expect.any(AbortSignal),
-      );
+      ).toHaveBeenCalledTimes(1);
     });
 
     for (const windowDays of [7, 90, 365] as const) {
@@ -604,7 +456,11 @@ describe("MainDashboard", () => {
         expect(
           dashboardApi.fetchProgressSnapshot,
         ).toHaveBeenLastCalledWith(
-          expect.objectContaining({ windowDays }),
+          expect.objectContaining({
+            windowDays,
+            trendLimit: 5,
+            recentDocumentLimit: 3,
+          }),
           expect.any(AbortSignal),
         );
       });
@@ -635,59 +491,21 @@ describe("MainDashboard", () => {
     );
     expect(firstSignal?.aborted).toBe(true);
 
-    const fresh = {
-      ...progressFixture(),
-      window: {
-        ...progressFixture().window,
-        days: 7,
-      },
+    const fresh = progressFixture();
+    second.resolve({
+      ...fresh,
       resumeReadiness: {
-        ...progressFixture().resumeReadiness,
-        latest: (() => {
-          const latest =
-            progressFixture().resumeReadiness.latest;
-          if (!latest) {
-            throw new Error("Expected a resume analysis fixture.");
-          }
-          return { ...latest, score: 91 };
-        })(),
+        ...fresh.resumeReadiness,
+        averageScoreInWindow: 91,
       },
-    };
-    second.resolve(fresh);
+    });
     expect(await screen.findByText("91%")).not.toBeNull();
 
     first.resolve(progressFixture());
     await waitFor(() => {
-      expect(screen.queryByText("84%")).toBeNull();
+      expect(screen.queryByText("82%")).toBeNull();
     });
   });
-
-  it.each([
-    [0, 0, "No cost estimates recorded"],
-    [3, 1, "Partial estimated cost"],
-    [3, 3, "Estimated cost"],
-  ] as const)(
-    "labels %i requests with %i cost estimates as %s",
-    async (requestCount, estimatedCostEventCount, label) => {
-      const fixture = progressFixture();
-      vi.mocked(
-        dashboardApi.fetchProgressSnapshot,
-      ).mockResolvedValue({
-        ...fixture,
-        aiUsage: {
-          ...fixture.aiUsage,
-          requestCount,
-          successCount: requestCount,
-          failureCount: 0,
-          estimatedCostEventCount,
-        },
-      });
-
-      renderDashboard();
-
-      expect(await screen.findByText(label)).not.toBeNull();
-    },
-  );
 
   it("keeps progress visible when activity fails and retries only activity", async () => {
     vi.mocked(
@@ -703,7 +521,7 @@ describe("MainDashboard", () => {
     renderDashboard();
     const user = userEvent.setup();
 
-    expect(await screen.findByText("84%")).not.toBeNull();
+    expect(await screen.findByText("82%")).not.toBeNull();
     expect(
       await screen.findByText(
         "Activity is temporarily unavailable.",
@@ -756,9 +574,7 @@ describe("MainDashboard", () => {
     expect(
       screen.getByText("Request ID: progress-request-id-1"),
     ).not.toBeNull();
-    expect(
-      screen.queryByText("must not render"),
-    ).toBeNull();
+    expect(screen.queryByText("must not render")).toBeNull();
 
     vi.mocked(
       dashboardApi.fetchProgressSnapshot,
@@ -777,7 +593,7 @@ describe("MainDashboard", () => {
     ).toHaveBeenCalledTimes(1);
   });
 
-  it("renders safe activity labels in returned order without metadata", async () => {
+  it("renders safe activity labels in returned order without private event names", async () => {
     renderDashboard();
 
     const feed = await screen.findByRole("region", {
@@ -787,106 +603,129 @@ describe("MainDashboard", () => {
     expect(rows[0]?.textContent).toContain("Quiz completed");
     expect(rows[1]?.textContent).toContain("Recorded activity");
     expect(feed.textContent).not.toContain("unknown.private.event");
-    expect(feed.textContent).not.toContain("resource");
     expect(feed.textContent).not.toContain("metadata");
+    expect(within(feed).getByText("2 recent")).not.toBeNull();
   });
 
-  it("bounds activity pagination and navigates Previous and Next", async () => {
+  it("switches activity to ten-per-page browsing and returns to the five-item summary", async () => {
     vi.mocked(dashboardApi.fetchDashboardActivity)
-      .mockResolvedValueOnce(activityPage(1, 2))
-      .mockResolvedValueOnce(activityPage(2, 2))
-      .mockResolvedValueOnce(activityPage(1, 2));
+      .mockResolvedValueOnce(activityPage(1, 2, 5))
+      .mockResolvedValueOnce(activityPage(1, 2, 10))
+      .mockResolvedValueOnce(activityPage(2, 2, 10))
+      .mockResolvedValueOnce(activityPage(1, 2, 5));
     renderDashboard();
     const user = userEvent.setup();
 
-    const previous = await screen.findByRole("button", {
-      name: "Previous activity page",
+    expect(
+      await screen.findByRole("button", { name: "View all activity" }),
+    ).not.toBeNull();
+    expect(screen.getByText("2 recent")).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Previous activity page" }),
+    ).toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: "View all activity" }),
+    );
+    await waitFor(() => {
+      expect(dashboardApi.fetchDashboardActivity).toHaveBeenLastCalledWith(
+        { page: 1, limit: 10 },
+        expect.any(AbortSignal),
+      );
     });
+    expect(await screen.findByText("20 total")).not.toBeNull();
+
     const next = screen.getByRole("button", {
       name: "Next activity page",
     });
-    expect((previous as HTMLButtonElement).disabled).toBe(true);
-    expect((next as HTMLButtonElement).disabled).toBe(false);
-
     await user.click(next);
     await screen.findByText("Page 2 of 2");
-    expect((next as HTMLButtonElement).disabled).toBe(true);
-    expect((previous as HTMLButtonElement).disabled).toBe(false);
+    await waitFor(() => {
+      expect(dashboardApi.fetchDashboardActivity).toHaveBeenLastCalledWith(
+        { page: 2, limit: 10 },
+        expect.any(AbortSignal),
+      );
+    });
 
-    await user.click(previous);
-    await screen.findByText("Page 1 of 2");
-    expect(
-      dashboardApi.fetchDashboardActivity,
-    ).toHaveBeenLastCalledWith(
-      expect.objectContaining({ page: 1, limit: 10 }),
-      expect.any(AbortSignal),
-    );
-  });
-
-  it("does not present an in-flight activity page as empty", async () => {
-    const nextPage = deferred<DashboardActivityPage>();
-    vi.mocked(dashboardApi.fetchDashboardActivity)
-      .mockResolvedValueOnce(activityPage(1, 2))
-      .mockReturnValueOnce(nextPage.promise);
-    renderDashboard();
-    const user = userEvent.setup();
-
-    await screen.findByText("Page 1 of 2");
     await user.click(
       screen.getByRole("button", {
-        name: "Next activity page",
-      }),
-    );
-
-    expect(
-      await screen.findByText(
-        "Loading selected activity page",
-      ),
-    ).not.toBeNull();
-    expect(
-      screen.queryByText(
-        "No recorded activity is available.",
-      ),
-    ).toBeNull();
-  });
-
-  it("aborts an obsolete activity page and ignores its stale response", async () => {
-    const initial = activityPage(1, 3);
-    const secondPage = deferred<DashboardActivityPage>();
-    const thirdPage = deferred<DashboardActivityPage>();
-    vi.mocked(dashboardApi.fetchDashboardActivity)
-      .mockResolvedValueOnce(initial)
-      .mockReturnValueOnce(secondPage.promise)
-      .mockReturnValueOnce(thirdPage.promise);
-    renderDashboard();
-    const user = userEvent.setup();
-
-    await screen.findByText("Page 1 of 3");
-    await user.click(
-      screen.getByRole("button", {
-        name: "Next activity page",
+        name: "Show recent activity only",
       }),
     );
     await waitFor(() => {
       expect(
         dashboardApi.fetchDashboardActivity,
-      ).toHaveBeenCalledTimes(2);
+      ).toHaveBeenLastCalledWith(
+        { page: 1, limit: 5 },
+        expect.any(AbortSignal),
+      );
+    });
+    expect(
+      screen.queryByRole("button", { name: "Previous activity page" }),
+    ).toBeNull();
+  });
+
+  it("does not present an in-flight expanded activity page as empty", async () => {
+    const nextPage = deferred<DashboardActivityPage>();
+    vi.mocked(dashboardApi.fetchDashboardActivity)
+      .mockResolvedValueOnce(activityPage(1, 2, 5))
+      .mockResolvedValueOnce(activityPage(1, 2, 10))
+      .mockReturnValueOnce(nextPage.promise);
+    renderDashboard();
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole("button", { name: "View all activity" }),
+    );
+    await screen.findByText("20 total");
+    await user.click(
+      screen.getByRole("button", { name: "Next activity page" }),
+    );
+
+    expect(
+      await screen.findByText("Loading selected activity page"),
+    ).not.toBeNull();
+    expect(
+      screen.queryByText("No recorded activity is available."),
+    ).toBeNull();
+  });
+
+  it("aborts an obsolete expanded activity page and ignores its stale response", async () => {
+    const secondPage = deferred<DashboardActivityPage>();
+    const thirdPage = deferred<DashboardActivityPage>();
+    vi.mocked(dashboardApi.fetchDashboardActivity)
+      .mockResolvedValueOnce(activityPage(1, 3, 5))
+      .mockResolvedValueOnce(activityPage(1, 3, 10))
+      .mockReturnValueOnce(secondPage.promise)
+      .mockReturnValueOnce(thirdPage.promise);
+    renderDashboard();
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole("button", { name: "View all activity" }),
+    );
+    await screen.findByText("Page 1 of 3");
+    await user.click(
+      screen.getByRole("button", { name: "Next activity page" }),
+    );
+    await waitFor(() => {
+      expect(
+        dashboardApi.fetchDashboardActivity,
+      ).toHaveBeenCalledTimes(3);
     });
     const pageTwoSignal = vi.mocked(
       dashboardApi.fetchDashboardActivity,
-    ).mock.calls[1]?.[1];
+    ).mock.calls[2]?.[1];
 
     await user.click(
-      screen.getByRole("button", {
-        name: "Next activity page",
-      }),
+      screen.getByRole("button", { name: "Next activity page" }),
     );
     expect(pageTwoSignal?.aborted).toBe(true);
 
-    thirdPage.resolve(activityPage(3, 3));
+    thirdPage.resolve(activityPage(3, 3, 10));
     expect(await screen.findByText("Page 3 of 3")).not.toBeNull();
 
-    secondPage.resolve(activityPage(2, 3));
+    secondPage.resolve(activityPage(2, 3, 10));
     await waitFor(() => {
       expect(screen.queryByText("Page 2 of 3")).toBeNull();
     });

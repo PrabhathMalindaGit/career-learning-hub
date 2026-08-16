@@ -1,4 +1,5 @@
 import { PageHeader } from "../../components/PageHeader";
+import { AiUsageDiagnosticsSettingsSection } from "./AiUsageDiagnosticsSettings";
 import { useAuth } from "./AuthProvider";
 import { GeminiConnectionSettingsSection } from "./GeminiConnectionSettings";
 
@@ -22,13 +23,14 @@ export function SettingsPage() {
         }
         description={
           <p>
-            Review your account, Gemini connection, and current browser session.
+            Review your Gemini connection, AI usage, account, and current browser session.
           </p>
         }
       />
 
       <div className="settings-content-grid">
         <GeminiConnectionSettingsSection />
+        <AiUsageDiagnosticsSettingsSection />
 
         <section
           className="settings-panel"

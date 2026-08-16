@@ -21,6 +21,12 @@ vi.mock("./AuthProvider", () => ({
   useAuth: vi.fn(),
 }));
 
+vi.mock("./AiUsageDiagnosticsSettings", () => ({
+  AiUsageDiagnosticsSettingsSection: () => (
+    <section aria-label="AI usage & diagnostics" />
+  ),
+}));
+
 vi.mock("../../api/apiClient", async () => {
   const actual = await vi.importActual<typeof apiClient>(
     "../../api/apiClient",
@@ -93,13 +99,18 @@ describe("SettingsPage", () => {
     mockSettingsRead();
   });
 
-  it("renders the approved page and account-information hierarchy", () => {
+  it("renders the approved page, AI diagnostics, and account-information hierarchy", () => {
     render(<SettingsPage />);
 
     expect(
       screen.getByRole("heading", {
         level: 1,
         name: "Settings",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("region", {
+        name: "AI usage & diagnostics",
       }),
     ).not.toBeNull();
 
