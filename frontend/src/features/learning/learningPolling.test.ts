@@ -34,14 +34,14 @@ function job(status: "queued" | "processing" | "completed") {
 }
 
 describe("Learning processing polling", () => {
-  it("uses the required bounded polling schedule", () => {
+  it("uses the responsive bounded polling schedule", () => {
     expect([0, 1, 2, 3, 4, 5].map(pollingDelayForAttempt)).toEqual([
       1_000,
+      1_000,
+      2_000,
       2_000,
       3_000,
-      5_000,
-      8_000,
-      8_000,
+      3_000,
     ]);
   });
 
