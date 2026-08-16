@@ -1,3 +1,6 @@
+/* Feature 3.9 — Resume assessment action.
+   Keep assessment visually secondary to Feature 3.5 "Save new version",
+   which remains the workspace's highest-emphasis constructive action. */
 .resume-analysis-runner .resume-button-row {
   margin-top: 14px;
 }
