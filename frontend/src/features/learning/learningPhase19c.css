@@ -118,6 +118,30 @@
   gap: 10px;
 }
 
+.learning-conversation-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.learning-conversation-card-actions .learning-child-deletion,
+.learning-collection-card-heading > .learning-child-deletion {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+.learning-collection-card-heading:has(> .learning-child-deletion) {
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+}
+
+.learning-collection-card-heading > .learning-child-deletion {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
 /* Empty study collections already expose the creator, so suppress the
    otherwise redundant Close creator control. */
 .learning-flashcard-sets:not(:has(.learning-flashcard-set-list))
@@ -319,6 +343,16 @@
     width: 100%;
     align-items: stretch;
     justify-content: space-between;
+  }
+
+  .learning-conversation-card-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .learning-conversation-card-actions .learning-document-link {
+    min-width: 0;
+    flex: 1 1 auto;
   }
 }
 
