@@ -99,6 +99,9 @@ export interface InterviewCreateDialogProps {
   onCreated(sessionId: string): void;
 }
 
+// Features 4.2–4.3 — Interview session authoring.
+// Captures career area, target role, experience level, practice mode, and
+// optional focus context used to create an owned practice session.
 export function InterviewCreateDialog({
   open,
   returnFocusRef,
