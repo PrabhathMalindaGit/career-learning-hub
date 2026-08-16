@@ -10,7 +10,7 @@ These CSV files are collection structures only. Blank result fields are intentio
 
 - `usability_campaign_metadata.csv` - one study/campaign-level reproducibility record containing the environment and baseline fields required by the usability protocol.
 - `usability_observations.csv` - Stream B U1-U5 task records linked to `usability_campaign_metadata.csv` through `campaign_id`.
-- `sus_responses.csv` - standard 10-item raw SUS responses and score field.
+- `sus_responses.csv` - standard 10-item raw SUS responses and score field linked to the same usability campaign through `campaign_id`.
 - `accessibility_campaign_metadata.csv` - one accessibility-campaign environment/baseline record containing the fields required by the accessibility protocol.
 - `accessibility_checks.csv` - A-01 through A-29 linked to `accessibility_campaign_metadata.csv` through `campaign_id`, with blank observation/result fields.
 - `ai_resume_scoring.csv` - one blank row per frozen Resume case.
@@ -21,9 +21,9 @@ These CSV files are collection structures only. Blank result fields are intentio
 
 ## Campaign metadata linkage
 
-Before later execution, create a stable non-secret `campaign_id` in the appropriate campaign metadata CSV and use the same value on every associated observation/check row.
+Before later execution, create a stable non-secret `campaign_id` in the appropriate campaign metadata CSV and use the same value on every associated observation/check/response row.
 
-The usability campaign record preserves the protocol-required executable/repository identity, browser/version, device/viewport, zoom, date, fixture version, reset method, ethics reference and non-secret Gemini configuration identity.
+The usability campaign record preserves the protocol-required executable/repository identity, browser/version, device/viewport, zoom, date, fixture version, reset method, ethics reference and non-secret Gemini configuration identity. Both `usability_observations.csv` and `sus_responses.csv` must use that same `campaign_id` so task outcomes and SUS responses cannot be pooled across different executable/environment baselines.
 
 The accessibility campaign record preserves the protocol-required executable checkpoint, date, browser/version, operating system, viewport, zoom level and fixture version.
 
