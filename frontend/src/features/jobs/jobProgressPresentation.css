@@ -2,27 +2,27 @@
 
 .resume-job-status,
 .interview-workspace .interview-job-status {
-  border-color: #d8d0f0;
-  color: #4b426e;
-  background: #f7f5ff;
-  box-shadow: inset 3px 0 0 #6553b8;
+  border-color: #b9cec1;
+  color: #245e3c;
+  background: #f4f8f5;
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .resume-job-status {
   padding: 14px 16px;
-  border: 1px solid #d8d0f0;
+  border: 1px solid #b9cec1;
   border-radius: 12px;
 }
 
 .resume-job-status > span,
 .interview-workspace .interview-job-status > span,
 .interview-workspace .interview-job-status > strong {
-  color: #51448f;
+  color: #245e3c;
 }
 
 .resume-job-status .job-resilience-actions > p[role="status"],
 .interview-workspace .interview-job-status .job-resilience-actions > p[role="status"] {
-  color: #51448f;
+  color: #245e3c;
   font-weight: 800;
 }
 
@@ -30,18 +30,18 @@
   display: block;
   width: 100%;
   height: 8px;
-  accent-color: #6553b8;
+  accent-color: var(--accent);
 }
 
 .interview-workspace .interview-job-status progress {
-  accent-color: #6553b8;
+  accent-color: var(--accent);
 }
 
 .resume-job-status .job-resilience-actions__buttons button,
 .interview-workspace .interview-job-status .job-resilience-actions__buttons button,
 .interview-workspace .interview-job-status > button {
-  border-color: #bdb2e4;
-  color: #51448f;
+  border-color: #b9cec1;
+  color: #245e3c;
   background: #ffffff;
 }
 
@@ -51,6 +51,6 @@
   .job-resilience-actions__buttons
   button:hover:not(:disabled),
 .interview-workspace .interview-job-status > button:hover:not(:disabled) {
-  border-color: #8f81c9;
-  background: #efebff;
+  border-color: #8fb29b;
+  background: #eef6f1;
 }
