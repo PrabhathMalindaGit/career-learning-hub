@@ -61,6 +61,8 @@ function RequestId({ value }: { value?: string }) {
   ) : null;
 }
 
+// Feature 5.9.3 — Saved quiz-attempt review.
+// Presents the canonical stored result, score, answers, and source evidence.
 export function LearningQuizAttemptWorkspace() {
   const {
     documentId = "",
