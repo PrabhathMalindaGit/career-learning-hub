@@ -32,6 +32,7 @@ import type {
   LearningFlashcardJob,
   LearningPagination,
 } from "./types";
+import "./learningPhase19c.css";
 
 const SET_LIMIT = 10;
 const MAX_SET_TITLE = 200;
@@ -89,6 +90,7 @@ export function DocumentFlashcards({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<SafeError>();
   const [listVersion, setListVersion] = useState(0);
+  const [generationOpen, setGenerationOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [count, setCount] = useState("10");
   const [focus, setFocus] = useState("");
@@ -103,15 +105,9 @@ export function DocumentFlashcards({
     useState<GenerationState>({ status: "idle" });
   const [acceptedRequestId, setAcceptedRequestId] = useState<string>();
   const listSequence = useRef(0);
-  const createController = useRef<AbortController | undefined>(
-    undefined,
-  );
-  const pollController = useRef<AbortController | undefined>(
-    undefined,
-  );
-  const completionController = useRef<AbortController | undefined>(
-    undefined,
-  );
+  const createController = useRef<AbortController | undefined>(undefined);
+  const pollController = useRef<AbortController | undefined>(undefined);
+  const completionController = useRef<AbortController | undefined>(undefined);
   const createInFlight = useRef(false);
   const intent = useRef<
     | {
@@ -128,6 +124,7 @@ export function DocumentFlashcards({
     setSets([]);
     setPagination(undefined);
     setLoadError(undefined);
+    setGenerationOpen(false);
     setTitle("");
     setCount("10");
     setFocus("");
@@ -251,9 +248,7 @@ export function DocumentFlashcards({
           cardResult.pagination.pages > 1 ||
           cardResult.pagination.total !== expectedCount ||
           cardResult.cards.length !== expectedCount ||
-          cardResult.cards.some(
-            (card, index) => card.cardIndex !== index,
-          )
+          cardResult.cards.some((card, index) => card.cardIndex !== index)
         ) {
           throw new ApiError(
             502,
@@ -264,6 +259,7 @@ export function DocumentFlashcards({
         setPendingJob(undefined);
         setPendingSetId(undefined);
         setGenerationState({ status: "completed" });
+        setGenerationOpen(false);
         setListVersion((current) => current + 1);
         navigate(
           `/learning/documents/${document.id}/flashcards/${job.result.setId}`,
@@ -301,8 +297,7 @@ export function DocumentFlashcards({
           if (
             !controller.signal.aborted &&
             identityRef.current === expectedIdentity &&
-            (update.status === "queued" ||
-              update.status === "processing")
+            (update.status === "queued" || update.status === "processing")
           ) {
             setPendingJob(update);
             setResilienceJob(update);
@@ -310,49 +305,41 @@ export function DocumentFlashcards({
           }
         },
       })
-        .then(
-          async (
-            result: LearningPollResult<LearningFlashcardJob>,
-          ) => {
-            if (
-              controller.signal.aborted ||
-              identityRef.current !== expectedIdentity
-            ) {
-              return;
-            }
-            if (result.reason === "paused") {
-              setPendingJob(result.job ?? job);
-              setGenerationState({
-                status: "paused",
-                cause: result.cause,
-              });
-              return;
-            }
-            if (result.reason !== "terminal") return;
-            setResilienceJob(result.job);
-            if (result.job.status === "completed") {
-              await refreshCanonicalCompletion(
-                result.job,
-                expectedIdentity,
-              );
-            } else if (result.job.status === "failed") {
-              setPendingJob(undefined);
-              setGenerationState({
-                status: "failed",
-                error: {
-                  message:
-                    result.job.error?.message ??
-                    "Flashcard generation failed.",
-                },
-              });
-              setListVersion((current) => current + 1);
-            } else {
-              setPendingJob(undefined);
-              setGenerationState({ status: "cancelled" });
-              setListVersion((current) => current + 1);
-            }
-          },
-        )
+        .then(async (result: LearningPollResult<LearningFlashcardJob>) => {
+          if (
+            controller.signal.aborted ||
+            identityRef.current !== expectedIdentity
+          ) {
+            return;
+          }
+          if (result.reason === "paused") {
+            setPendingJob(result.job ?? job);
+            setGenerationState({
+              status: "paused",
+              cause: result.cause,
+            });
+            return;
+          }
+          if (result.reason !== "terminal") return;
+          setResilienceJob(result.job);
+          if (result.job.status === "completed") {
+            await refreshCanonicalCompletion(result.job, expectedIdentity);
+          } else if (result.job.status === "failed") {
+            setPendingJob(undefined);
+            setGenerationState({
+              status: "failed",
+              error: {
+                message:
+                  result.job.error?.message ?? "Flashcard generation failed.",
+              },
+            });
+            setListVersion((current) => current + 1);
+          } else {
+            setPendingJob(undefined);
+            setGenerationState({ status: "cancelled" });
+            setListVersion((current) => current + 1);
+          }
+        })
         .catch((error: unknown) => {
           if (
             controller.signal.aborted ||
@@ -378,11 +365,25 @@ export function DocumentFlashcards({
     if (!resilienceJob) return;
     const cancelled = await cancelJob(resilienceJob.id, signal);
     if (signal.aborted) return;
-    if (cancelled.id !== resilienceJob.id || cancelled.type !== "learning.flashcards.generate") {
-      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+    if (
+      cancelled.id !== resilienceJob.id ||
+      cancelled.type !== "learning.flashcards.generate"
+    ) {
+      throw new ApiError(
+        502,
+        "INVALID_LEARNING_RESPONSE",
+        "The server returned an invalid learning response.",
+      );
     }
     if (cancelled.status !== "cancelled") {
-      setResilienceJob({ ...resilienceJob, status: "processing", phase: cancelled.phase, phaseSequence: cancelled.phaseSequence, canRetry: cancelled.canRetry, updatedAt: cancelled.updatedAt });
+      setResilienceJob({
+        ...resilienceJob,
+        status: "processing",
+        phase: cancelled.phase,
+        phaseSequence: cancelled.phaseSequence,
+        canRetry: cancelled.canRetry,
+        updatedAt: cancelled.updatedAt,
+      });
       return;
     }
     pollController.current?.abort();
@@ -403,7 +404,11 @@ export function DocumentFlashcards({
     const retried = await retryJob(resilienceJob.id, signal);
     if (signal.aborted) return;
     if (retried.type !== "learning.flashcards.generate") {
-      throw new ApiError(502, "INVALID_LEARNING_RESPONSE", "The server returned an invalid learning response.");
+      throw new ApiError(
+        502,
+        "INVALID_LEARNING_RESPONSE",
+        "The server returned an invalid learning response.",
+      );
     }
     runPolling(
       {
@@ -503,6 +508,9 @@ export function DocumentFlashcards({
     }
   };
 
+  const showGenerationForm =
+    generationOpen || (!loading && !loadError && sets.length === 0);
+
   return (
     <section
       className="learning-flashcard-sets"
@@ -510,83 +518,31 @@ export function DocumentFlashcards({
     >
       <header className="learning-panel-header">
         <div>
-          <p className="learning-kicker">Grounded recall</p>
+          <p className="learning-kicker">Document-based flashcards</p>
           <h2 id="learning-flashcard-sets-title">Flashcard sets</h2>
-          <p>
-            Generate immutable study cards from this document’s validated
-            extracted content.
-          </p>
+          <p>Create study cards from this document and return to saved sets.</p>
         </div>
-        <button
-          type="button"
-          className="learning-secondary-button"
-          disabled={loading}
-          onClick={() => setListVersion((current) => current + 1)}
-        >
-          Refresh flashcard sets
-        </button>
+        <div className="learning-panel-actions">
+          <button
+            type="button"
+            className="learning-primary-button"
+            aria-expanded={showGenerationForm}
+            aria-controls="learning-flashcard-generation"
+            disabled={pendingJob !== undefined}
+            onClick={() => setGenerationOpen((current) => !current)}
+          >
+            {showGenerationForm ? "Close creator" : "Create flashcards"}
+          </button>
+          <button
+            type="button"
+            className="learning-secondary-button"
+            disabled={loading}
+            onClick={() => setListVersion((current) => current + 1)}
+          >
+            Refresh sets
+          </button>
+        </div>
       </header>
-
-      <form className="learning-flashcard-form" onSubmit={submit}>
-        <label htmlFor="learning-flashcard-title">
-          <span>Set title</span>
-          <input
-            id="learning-flashcard-title"
-            value={title}
-            maxLength={MAX_SET_TITLE}
-            disabled={creating || pendingJob !== undefined}
-            onChange={(event) => {
-              setTitle(event.target.value);
-              setCreateError(undefined);
-            }}
-          />
-        </label>
-        <label htmlFor="learning-flashcard-count">
-          <span>Card count</span>
-          <input
-            id="learning-flashcard-count"
-            type="number"
-            min="1"
-            max={MAX_FLASHCARDS}
-            value={count}
-            disabled={creating || pendingJob !== undefined}
-            onChange={(event) => {
-              setCount(event.target.value);
-              setCreateError(undefined);
-            }}
-          />
-        </label>
-        <label
-          className="learning-flashcard-focus"
-          htmlFor="learning-flashcard-focus"
-        >
-          <span>Focus (optional)</span>
-          <textarea
-            id="learning-flashcard-focus"
-            rows={3}
-            maxLength={MAX_FOCUS_LENGTH}
-            value={focus}
-            disabled={creating || pendingJob !== undefined}
-            onChange={(event) => {
-              setFocus(event.target.value);
-              setCreateError(undefined);
-            }}
-          />
-        </label>
-        {createError ? (
-          <div className="learning-error learning-flashcard-form-error" role="alert">
-            <p>{createError.message}</p>
-            <RequestId value={createError.requestId} />
-          </div>
-        ) : null}
-        <button
-          type="submit"
-          className="learning-primary-button"
-          disabled={creating || pendingJob !== undefined}
-        >
-          {creating ? "Starting generation…" : "Generate flashcards"}
-        </button>
-      </form>
 
       <GenerationStatus
         state={generationState}
@@ -623,7 +579,7 @@ export function DocumentFlashcards({
       ) : sets.length === 0 ? (
         <div className="learning-state learning-state--compact">
           <h3>No flashcard sets yet.</h3>
-          <p>Generate a set when you are ready to study this document.</p>
+          <p>Create a set when you are ready to study this document.</p>
         </div>
       ) : (
         <ul
@@ -657,9 +613,7 @@ export function DocumentFlashcards({
                 </div>
                 <div className="learning-collection-meta">
                   <span>
-                    {set.cardCount === 1
-                      ? "1 card"
-                      : `${set.cardCount} cards`}
+                    {set.cardCount === 1 ? "1 card" : `${set.cardCount} cards`}
                   </span>
                   <span>
                     Created{" "}
@@ -691,10 +645,7 @@ export function DocumentFlashcards({
       )}
 
       {pagination && pagination.pages > 1 ? (
-        <nav
-          className="learning-pagination"
-          aria-label="Flashcard-set pages"
-        >
+        <nav className="learning-pagination" aria-label="Flashcard-set pages">
           <button
             type="button"
             className="learning-secondary-button"
@@ -717,6 +668,82 @@ export function DocumentFlashcards({
             Next
           </button>
         </nav>
+      ) : null}
+
+      {showGenerationForm ? (
+        <section
+          id="learning-flashcard-generation"
+          className="learning-generation-panel"
+          aria-labelledby="learning-flashcard-generation-title"
+        >
+          <div className="learning-generation-heading">
+            <p className="learning-kicker">New set</p>
+            <h3 id="learning-flashcard-generation-title">Create flashcards</h3>
+          </div>
+          <form className="learning-flashcard-form" onSubmit={submit}>
+            <label htmlFor="learning-flashcard-title">
+              <span>Set title</span>
+              <input
+                id="learning-flashcard-title"
+                value={title}
+                maxLength={MAX_SET_TITLE}
+                disabled={creating || pendingJob !== undefined}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  setCreateError(undefined);
+                }}
+              />
+            </label>
+            <label htmlFor="learning-flashcard-count">
+              <span>Card count</span>
+              <input
+                id="learning-flashcard-count"
+                type="number"
+                min="1"
+                max={MAX_FLASHCARDS}
+                value={count}
+                disabled={creating || pendingJob !== undefined}
+                onChange={(event) => {
+                  setCount(event.target.value);
+                  setCreateError(undefined);
+                }}
+              />
+            </label>
+            <label
+              className="learning-flashcard-focus"
+              htmlFor="learning-flashcard-focus"
+            >
+              <span>Focus (optional)</span>
+              <textarea
+                id="learning-flashcard-focus"
+                rows={2}
+                maxLength={MAX_FOCUS_LENGTH}
+                value={focus}
+                disabled={creating || pendingJob !== undefined}
+                onChange={(event) => {
+                  setFocus(event.target.value);
+                  setCreateError(undefined);
+                }}
+              />
+            </label>
+            {createError ? (
+              <div
+                className="learning-error learning-flashcard-form-error"
+                role="alert"
+              >
+                <p>{createError.message}</p>
+                <RequestId value={createError.requestId} />
+              </div>
+            ) : null}
+            <button
+              type="submit"
+              className="learning-primary-button"
+              disabled={creating || pendingJob !== undefined}
+            >
+              {creating ? "Starting generation…" : "Generate flashcards"}
+            </button>
+          </form>
+        </section>
       ) : null}
     </section>
   );
@@ -750,13 +777,15 @@ function GenerationStatus({
           </p>
         }
         requestId={requestId}
-        actions={job ? (
-          <JobResilienceActions
-            job={normalizeSafeJob(job)}
-            onCancel={onCancel}
-            onRetry={onRetry}
-          />
-        ) : undefined}
+        actions={
+          job ? (
+            <JobResilienceActions
+              job={normalizeSafeJob(job)}
+              onCancel={onCancel}
+              onRetry={onRetry}
+            />
+          ) : undefined
+        }
       />
     );
   }
@@ -766,8 +795,8 @@ function GenerationStatus({
         status="paused"
         message={
           <p>
-            Generation checks are paused locally. This does not mean the
-            backend job failed or was cancelled.
+            Generation checks are paused locally. The generation may still be
+            continuing.
           </p>
         }
         requestId={requestId}
@@ -796,14 +825,16 @@ function GenerationStatus({
     return (
       <LearningGenerationJobStatus
         status="cancelled"
-        message="Flashcard generation was cancelled. No completed set is claimed."
-        actions={job ? (
-          <JobResilienceActions
-            job={normalizeSafeJob(job)}
-            onCancel={onCancel}
-            onRetry={onRetry}
-          />
-        ) : undefined}
+        message="Flashcard generation was cancelled."
+        actions={
+          job ? (
+            <JobResilienceActions
+              job={normalizeSafeJob(job)}
+              onCancel={onCancel}
+              onRetry={onRetry}
+            />
+          ) : undefined
+        }
       />
     );
   }
@@ -811,7 +842,7 @@ function GenerationStatus({
     return (
       <LearningGenerationJobStatus
         status="completed"
-        message="Canonical flashcards are ready."
+        message="Flashcards are ready."
       />
     );
   }
@@ -821,13 +852,15 @@ function GenerationStatus({
         status={state.status}
         message={<p>{state.error.message}</p>}
         requestId={state.error.requestId}
-        actions={job ? (
-          <JobResilienceActions
-            job={normalizeSafeJob(job)}
-            onCancel={onCancel}
-            onRetry={onRetry}
-          />
-        ) : undefined}
+        actions={
+          job ? (
+            <JobResilienceActions
+              job={normalizeSafeJob(job)}
+              onCancel={onCancel}
+              onRetry={onRetry}
+            />
+          ) : undefined
+        }
       />
     );
   }
