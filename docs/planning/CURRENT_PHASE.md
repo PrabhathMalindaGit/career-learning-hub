@@ -2,11 +2,11 @@
 
 ## Current activity
 
-- Activity: `PHASE 20B-3 — TASK-BASED USABILITY EVALUATION PROTOCOL`
-- Status: `ACTIVE / DOCUMENTATION-ONLY / METHOD DESIGN / PARTICIPANT EXECUTION BLOCKED`
-- Branch: `phase-20b-3-usability-evaluation-protocol`
-- Base `main` commit: `41dcc7cd6f11b5fad603c845c525b318c0a578eb`
-- Base identity: `MERGE OF PR #36 — PHASE 20B-2 ENGINEERING EVIDENCE MATRIX`
+- Activity: `PHASE 20B-4/6/7 — EVALUATION METHOD DESIGN FREEZE`
+- Status: `ACTIVE / DOCUMENTATION-ONLY / METHOD DESIGN / NO RESULTS`
+- Branch: `phase-20b-4-6-7-evaluation-method-design-freeze`
+- Base `main` commit: `7142e6dde8281db1852d365989f25c4d10e5265b`
+- Base identity: `MERGE OF PR #37 — PHASE 20B-3 TASK-BASED USABILITY EVALUATION PROTOCOL`
 - Current qualified executable checkpoint: `6b80f91d7016971d58ed9628e8818fabf00d1cd2`
 - Current qualification evidence: `docs/planning/POST_PR33_EXECUTABLE_QUALIFICATION_CHECKPOINT.md`
 - Historical Phase 20A evidence: `docs/planning/PHASE_20A_FINAL_RELEASE_BASELINE_EVIDENCE_FREEZE.md`
@@ -14,25 +14,24 @@
 - Ethics gate: `docs/evaluation/PHASE_20B_ETHICS_AND_PARTICIPANT_SAFETY_GATE.md`
 - Master evaluation protocol: `docs/evaluation/PHASE_20B_UNIVERSITY_EVALUATION_PROTOCOL.md`
 - Engineering evidence matrix: `docs/evaluation/PHASE_20B_ENGINEERING_EVIDENCE_MATRIX.md`
-- Current usability protocol: `docs/evaluation/USABILITY_EVALUATION_PROTOCOL.md`
+- Usability protocol: `docs/evaluation/USABILITY_EVALUATION_PROTOCOL.md`
+- SUS protocol: `docs/evaluation/SUS_EVALUATION_PROTOCOL.md`
+- Accessibility protocol: `docs/evaluation/ACCESSIBILITY_EVALUATION_PROTOCOL.md`
+- Resume AI rubric: `docs/evaluation/AI_RESUME_EVALUATION_RUBRIC.md`
+- Interview AI rubric: `docs/evaluation/AI_INTERVIEW_EVALUATION_RUBRIC.md`
+- Grounded Learning AI rubric: `docs/evaluation/AI_LEARNING_GROUNDED_QA_EVALUATION_RUBRIC.md`
 
 ## Purpose
 
-Freeze the task-based usability evaluation method for Objective O7 without recruiting participants or collecting results.
+Freeze the remaining independent evaluation methodologies that do not require participant recruitment or ethics-dependent sample decisions:
 
-This slice defines:
+1. `20B-4` — standard System Usability Scale procedure;
+2. `20B-6` — selected accessibility evaluation protocol;
+3. `20B-7` — feature-specific Resume, Interview and Grounded Learning AI-quality rubrics.
 
-- five fixed representative tasks;
-- `SUCCESS / PARTIAL / FAILED` criteria;
-- separate validity handling for environment invalidation, withdrawal and not-run tasks;
-- a consistent timing method and 10-minute task maximum;
-- recoverable-error and moderator-assistance definitions;
-- observer instructions;
-- standard evaluation-environment rules;
-- task-state reset and contamination controls;
-- later reproducible task-performance metrics and claim boundaries.
+This combined slice reduces unnecessary branch/PR overhead while preserving the methodological separation required by Objective O7.
 
-No participant result is created by this slice.
+No participant, accessibility or AI-quality result is created by this slice.
 
 ## Objective O7 evidence model
 
@@ -43,110 +42,145 @@ Objective O7 remains split into four independent evidence streams:
 - **C — Selected accessibility evidence**;
 - **D — Feature-specific AI-output-quality evidence**.
 
-Phase 20B-3 designs **Stream B** only. It does not collect Stream B evidence yet.
+Current combined design work touches the methods for:
+
+- Stream B: SUS only;
+- Stream C: selected accessibility;
+- Stream D: Resume, Interview and Grounded Learning AI output quality.
+
+The streams remain analytically separate even though their documentation is implemented on one branch.
 
 ## Current authorization
 
 The user has explicitly authorized:
 
-`APPROVE PHASE 20B-3 — TASK-BASED USABILITY EVALUATION PROTOCOL`
+`APPROVE PHASE 20B-4/6/7 — EVALUATION METHOD DESIGN FREEZE`
 
 Authorized repository work is limited to documentation needed to:
 
-1. create the frozen task-based usability protocol;
-2. update the Phase 20B plan/progress pointer;
-3. update this current execution scope.
+1. freeze the SUS administration/scoring method;
+2. freeze selected accessibility procedures/results scale;
+3. freeze separate Resume, Interview and Grounded Learning AI-quality rubrics;
+4. update the Phase 20B plan/progress pointer;
+5. update this current execution scope.
 
-No participant execution, product implementation or new evaluation-result collection is authorized.
+No evaluation campaign, result collection or product change is authorized.
 
-## Phase 20B-3 task set
+## Phase 20B-4 — SUS method
 
-The protocol freezes this task order:
+The SUS protocol freezes:
 
-```text
-U1 — Access & Navigation
-U2 — Resume Studio
-U3 — Interview Coach
-U4 — Grounded Learning
-U5 — Study Materials
-```
+- one administration after the approved system/task exposure;
+- the standard 10 SUS items in standard order;
+- one 1–5 response scale from Strongly disagree to Strongly agree;
+- odd items scored as `response - 1`;
+- even items scored as `5 - response`;
+- adjusted sum multiplied by `2.5`;
+- resulting `0–100` SUS score explicitly treated as a score, **not a percentage**;
+- no imputation for missing responses;
+- one missing/invalid item invalidates the individual SUS score under protocol version 1.0;
+- group reporting of valid `n`, mean, median, minimum and maximum;
+- task-performance evidence and SUS evidence kept separate.
 
-Each participant, if later permitted, must use equivalent resettable synthetic/de-identified study state.
+SUS administration remains participant-derived data collection and is blocked by the ethics gate.
 
-### U1 — Access & Navigation
+## Phase 20B-6 — selected accessibility method
 
-Authenticate using a prepared study account, locate Resume, Interview, Learning and Settings, and return to Dashboard.
+The accessibility protocol freezes `29` selected checks across:
 
-### U2 — Resume Studio
+- authentication;
+- application shell/navigation;
+- Resume Studio;
+- Interview Coach;
+- Learning Workspace;
+- Settings/Gemini.
 
-Edit the prepared synthetic Resume, save a new version, request an assessment, locate the score and inspect the recommendation state without automatically applying a recommendation.
+Selected behaviour categories include:
 
-### U3 — Interview Coach
+- keyboard-only operation;
+- visible/logical focus;
+- dialog focus management;
+- labels/instructions;
+- validation/error identification;
+- status/save feedback;
+- `200%` browser zoom/reflow;
+- reduced-width responsive navigation.
 
-Answer prepared Multiple Choice and written questions, save an attempt, find the saved attempt and inspect feedback/explanation.
-
-### U4 — Grounded Learning
-
-View the prepared document's original PDF and extracted text, ask a supplied grounded question, and use the source/page reference to trace supporting content.
-
-### U5 — Study Materials
-
-Reveal answers on prepared flashcards, complete a prepared quiz, submit it and open the saved result/review.
-
-## Task scoring model
-
-For a valid task use exactly:
-
-```text
-SUCCESS
-PARTIAL
-FAILED
-```
-
-- `SUCCESS` requires all applicable required outcomes within 10 minutes with no counted directional moderator assistance.
-- `PARTIAL` means the primary outcome is reached but a required secondary outcome is missing, or directional assistance was required.
-- `FAILED` means the primary outcome is not reached within 10 minutes, the valid task is abandoned, or the moderator must perform an essential task action.
-
-Separate validity values prevent non-participant failures from being misclassified:
+Every check uses exactly:
 
 ```text
-VALID
-INVALID_ENVIRONMENT
-WITHDRAWN
-NOT_RUN
+PASS
+FAIL
+NOT ASSESSED
 ```
 
-`INVALID_ENVIRONMENT`, `WITHDRAWN` and `NOT_RUN` are excluded from valid completion-rate denominators.
+Any selected-check pass rate must disclose its denominator and excluded `NOT ASSESSED` count. It must never be described as a WCAG-conformance percentage.
 
-## Timing, error and assistance rules
+## Phase 20B-7A — Resume AI quality
 
-- maximum active task window: `10 minutes`;
-- timer starts after the prompt is fully read and the participant indicates readiness;
-- normal hesitation, loading, navigation and recoverable mistakes do not pause the clock;
-- confirmed external/setup failure invalidates the task rather than creating a participant failure;
-- recoverable errors are counted as discrete self-corrected error episodes;
-- reasonable page scanning/reading is not an error;
-- directional hints naming a control/location/sequence count as assistance;
-- neutral repetition of the task goal does not count as assistance;
-- an approved accessibility accommodation is not assistance or an error.
+The Resume rubric uses a `0 / 1 / 2` ordinal scale for:
 
-## Evaluation environment boundary
+1. factual preservation;
+2. target-role relevance;
+3. actionability;
+4. clarity;
+5. internal consistency.
 
-The later study should use one consistent environment unless an approved accommodation requires otherwise:
+Material fabrication is tracked separately as:
 
-- approved Career Learning Hub evaluation baseline;
-- Chrome stable;
-- desktop/laptop presentation;
-- target viewport approximately `1440 × 900`;
-- browser zoom `100%`;
-- clean study browser profile/session;
-- equivalent reset study state per participant;
-- synthetic/de-identified records only by default;
-- study-managed Gemini for U2/U4 where required;
-- current release-path model recorded as `gemini-3.6-flash` when AI is exercised;
-- no participant personal API keys.
+```text
+NONE
+MINOR_AMBIGUITY
+MATERIAL_FABRICATION
+```
 
-Actual browser version, device/viewport, protocol version, executable identity, fixture version and non-secret model/configuration identity must be recorded when the study is eventually conducted.
+A high rubric total cannot erase a material-fabrication finding.
+
+The rubric does not measure employer ATS equivalence, hiring probability or guaranteed employment outcome.
+
+## Phase 20B-7B — Interview AI quality
+
+Question generation and feedback are scored separately.
+
+Generated-question criteria:
+
+1. role relevance;
+2. experience-level appropriateness;
+3. clarity;
+4. useful coverage;
+5. redundancy control.
+
+Feedback criteria:
+
+1. relevance to submitted answer;
+2. specificity;
+3. actionability;
+4. internal consistency;
+5. practice-only/non-hiring framing.
+
+The rubric does not treat Interview scores as employer judgment or hiring probability. Text coding-question evaluation does not imply compiler/runtime correctness.
+
+## Phase 20B-7C — Grounded Learning AI quality
+
+Frozen future case types:
+
+```text
+ANSWERABLE_SINGLE
+ANSWERABLE_MULTI
+UNANSWERABLE
+```
+
+The rubric keeps separate:
+
+- answer documentary support;
+- citation/source-page correctness;
+- completeness against frozen reference facts;
+- unsupported-question/abstention handling;
+- material unsupported-claim flags.
+
+Metric numerators/denominators are explicitly defined. The protocol prohibits collapsing these dimensions into one vague overall AI accuracy figure.
+
+Current Learning retrieval must be described according to the actual implementation; lexical/source-based retrieval must not be relabelled as vector/embedding retrieval without evidence.
 
 ## Ethics and participant-safety gate
 
@@ -154,28 +188,42 @@ Current gate state remains:
 
 `BLOCKED / AWAITING MODULE OR SUPERVISOR CONFIRMATION`
 
-Phase 20B-3 does not bypass or change that gate.
+This combined method-design slice does not change that gate.
 
-Until authoritative module/supervisor direction is recorded and the gate explicitly passes, do not:
+Until authoritative direction is recorded and the gate explicitly passes, do not:
 
 - recruit participants;
-- conduct usability sessions;
-- collect task observations/times/errors/assistance;
-- administer SUS/questionnaires;
-- collect participant recordings or identifying information.
+- conduct formal/pilot participant usability sessions;
+- administer SUS;
+- collect participant observations or questionnaire data;
+- collect participant demographic data or recordings;
+- create a participant count or participant-derived result.
 
-## Prerequisites before later participant execution
+## Phase 20B-5 remains separate and blocked
 
-At minimum, later participant sessions remain blocked until:
+Phase 20B-5 — Participant/Sample Plan is **not** included in this combined authorization.
 
-1. the ethics/module gate passes under recorded conditions;
-2. `20B-5` defines permitted participant eligibility/recruitment/sample/stopping rules;
-3. `20B-8` provides the frozen synthetic/de-identified study fixtures;
-4. `20B-9` provides the frozen evidence-collection template;
-5. the executable/environment identity and reset process are recorded;
-6. study-managed AI needed by U2/U4 is functioning.
+Do not freeze:
 
-If SUS will be used in the same study, `20B-4` must also be frozen before the first session.
+- participant eligibility;
+- recruitment route;
+- participant target count;
+- sample description;
+- participant stopping rule;
+
+until authoritative module/supervisor/ethics guidance and realistic recruitment feasibility are known.
+
+No participant number is invented by Phase 20B-4/6/7.
+
+## Phase 20B-8/9 remain unstarted
+
+Not authorized in this slice:
+
+- creation of synthetic Resume/Interview/Learning evaluation cases or PDFs (`20B-8`);
+- creation of CSV/machine-readable evidence collection templates (`20B-9`);
+- population of any results.
+
+The current documents define the fields/semantics that those later assets must preserve.
 
 ## Current executable qualification evidence
 
@@ -183,9 +231,9 @@ The current qualified executable checkpoint remains:
 
 `6b80f91d7016971d58ed9628e8818fabf00d1cd2`
 
-PR #34, PR #35 and PR #36 were documentation-only integration work around that qualified executable content.
+PR #34 through PR #37 are documentation-only integrations around that qualified executable content.
 
-Recorded fresh qualification evidence remains:
+Recorded qualification evidence remains:
 
 - root workspace production typecheck — PASS;
 - backend test-source typecheck — PASS;
@@ -195,22 +243,11 @@ Recorded fresh qualification evidence remains:
 - complete backend suite — 515/515 PASS;
 - complete frontend suite — 1,170/1,170 PASS;
 - frontend/backend production builds — PASS;
-- non-overlapping complete-suite total — **1,685 PASSING TESTS**;
-- qualified worktree — CLEAN.
+- non-overlapping complete-suite total — **1,685 PASSING TESTS**.
 
-This engineering evidence is separate from participant usability evidence and must not be relabelled as a task-success rate or SUS result.
+This engineering evidence remains separate from SUS, accessibility and AI-output-quality evidence.
 
-## Phase 20B-2 status
-
-Phase 20B-2 — Engineering Evidence Matrix is:
-
-`COMPLETED / QUALIFIED / MERGED VIA PR #36`
-
-The matrix remains the authoritative Stream A mapping:
-
-`docs/evaluation/PHASE_20B_ENGINEERING_EVIDENCE_MATRIX.md`
-
-## Out of scope for Phase 20B-3
+## Out of scope for Phase 20B-4/6/7
 
 No changes are authorized to:
 
@@ -227,17 +264,17 @@ No changes are authorized to:
 - application features/UI;
 - deployment resources.
 
-The current authorization also does **not** permit:
+Also not authorized:
 
 - participant recruitment/data collection;
-- usability study execution;
 - SUS administration;
-- participant eligibility/sample/recruitment decisions;
-- accessibility campaign execution;
-- formal AI-quality scoring/result collection;
-- synthetic evaluation fixture creation;
-- evaluation-result population;
+- participant/sample decisions;
+- accessibility campaign execution/results;
+- AI-quality campaign execution/scoring/results;
+- synthetic evaluation fixtures;
+- collection templates;
 - deployment;
+- PR creation before local qualification and explicit approval;
 - merge;
 - branch deletion.
 
@@ -269,19 +306,35 @@ The current authorization also does **not** permit:
 
 ### Phase 20B-3 — Task-Based Usability Evaluation Protocol
 
-`ACTIVE / DOCUMENTATION-ONLY / CURRENTLY AUTHORIZED / PARTICIPANT EXECUTION BLOCKED`
+`COMPLETED / QUALIFIED / MERGED VIA PR #37`
 
-### Planned Phase 20B work — inactive pending separate authorization
+### Phase 20B-4/6/7 — Evaluation Method Design Freeze
 
-- `20B-4` — SUS procedure;
-- `20B-5` — participant/sample plan;
-- `20B-6` — selected accessibility protocol;
-- `20B-7` — feature-specific AI-quality rubrics;
-- `20B-8` — synthetic evaluation cases;
-- `20B-9` — collection templates;
-- participant/accessibility/AI evaluation campaigns;
-- `20B-10` — analysis of actual evidence;
-- `20B-11` — final O7 evaluation evidence record and integration gate.
+`ACTIVE / DOCUMENTATION-ONLY / CURRENTLY AUTHORIZED / NO RESULTS`
+
+### Phase 20B-5 — Participant/Sample Plan
+
+`PLANNED / NOT AUTHORIZED / BLOCKED BY ETHICS-MODULE GUIDANCE`
+
+### Phase 20B-8/9 — Evaluation Execution Pack
+
+`PLANNED / NOT AUTHORIZED`
+
+Includes frozen synthetic evaluation cases and machine-readable collection templates.
+
+### Evaluation campaigns
+
+`NOT AUTHORIZED`
+
+Participant-facing work remains ethics-gated. Accessibility/AI campaigns require frozen execution inputs/templates first.
+
+### Phase 20B-10 — Results Analysis
+
+`PLANNED / NOT AUTHORIZED / REQUIRES ACTUAL EVIDENCE`
+
+### Phase 20B-11 — Final O7 Evidence Record
+
+`PLANNED / NOT AUTHORIZED`
 
 ### Phase 20C — Final Screenshots & Technical Evidence
 
@@ -295,28 +348,30 @@ The current authorization also does **not** permit:
 
 `PLANNED / INACTIVE / REQUIRES SEPARATE AUTHORIZATION`
 
-## Completion gate for Phase 20B-3
+## Completion gate for Phase 20B-4/6/7
 
-Before PR creation for this slice:
+Before PR creation for this combined slice:
 
-1. branch must remain based on `main @ 41dcc7cd6f11b5fad603c845c525b318c0a578eb`;
+1. branch must remain based on `main @ 7142e6dde8281db1852d365989f25c4d10e5265b`;
 2. changed files must remain documentation only;
-3. the usability protocol must contain U1–U5 in the fixed order;
-4. every task must define participant-facing wording, required outcomes, primary outcome and `SUCCESS / PARTIAL / FAILED` rules;
-5. validity handling must distinguish `VALID / INVALID_ENVIRONMENT / WITHDRAWN / NOT_RUN`;
-6. timing, recoverable-error, assistance and observer rules must be explicit;
-7. participant execution must remain blocked by the ethics gate;
-8. no participant result, sample size, SUS value, accessibility result or AI-quality result may be invented;
-9. 20B-4+ must remain inactive;
-10. `git diff --check origin/main...HEAD` must pass locally;
-11. non-documentation changed-path check must return no output;
-12. final local working tree must be clean;
-13. no application test rerun is required if the branch remains documentation-only;
-14. PR creation requires explicit approval after local qualification;
-15. merge requires separate explicit approval of the exact qualified head SHA.
+3. SUS wording/scale/scoring/missing-data rules must be frozen and no SUS result invented;
+4. accessibility checks must have IDs/procedures/expected results and use `PASS / FAIL / NOT ASSESSED`;
+5. accessibility claims must remain below full WCAG certification;
+6. Resume, Interview and Learning AI rubrics must remain separate;
+7. AI rubric scoring rules/metric denominators must be explicit;
+8. no employer ATS, hiring probability, guaranteed truth, vague AI-accuracy or learning-improvement claim may be created;
+9. 20B-5 remains blocked and no participant count is invented;
+10. 20B-8/9 remain unstarted;
+11. ethics gate remains blocked unless real authoritative guidance is supplied;
+12. `git diff --check origin/main...HEAD` must pass locally;
+13. non-documentation changed-path check must return no output;
+14. final local working tree must be clean;
+15. no application test rerun is required if the branch remains documentation-only;
+16. PR creation requires explicit approval after local qualification;
+17. merge requires separate explicit approval of the exact qualified head SHA.
 
 ## Current approval boundary
 
-The current approval authorizes only Phase 20B-3 usability-method documentation.
+The current approval authorizes only Phase 20B-4/6/7 evaluation-method documentation.
 
-It does not authorize Phase 20B-4 through 20B-11, participant activity, product changes, deployment, merge or branch deletion.
+It does not authorize Phase 20B-5, Phase 20B-8 through 20B-11, participant activity, evaluation-result collection, product changes, deployment, merge or branch deletion.
