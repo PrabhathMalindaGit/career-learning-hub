@@ -9,6 +9,9 @@ interface FlashcardStudyProps {
   setId: string;
 }
 
+// Features 5.8.2–5.8.3 — Flashcard study experience.
+// Keeps answer reveal explicit and provides bounded previous/next navigation
+// plus source-page references for each stored card.
 export function FlashcardStudy({
   cards,
   documentId,
