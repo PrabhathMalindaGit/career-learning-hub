@@ -17,6 +17,7 @@ import type {
   LearningDocument,
   LearningPagination,
 } from "./types";
+import "./learningPhase19c.css";
 
 const CONVERSATION_LIMIT = 10;
 const MAX_CONVERSATION_TITLE = 200;
