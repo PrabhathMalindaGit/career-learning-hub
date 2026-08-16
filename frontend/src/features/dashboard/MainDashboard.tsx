@@ -26,7 +26,8 @@ import "./dashboardPhase19d.css";
 
 const TREND_LIMIT = 5;
 const RECENT_DOCUMENT_LIMIT = 3;
-const ACTIVITY_LIMIT = 5;
+const RECENT_ACTIVITY_LIMIT = 5;
+const EXPANDED_ACTIVITY_LIMIT = 10;
 
 type DisplayError = {
   message: string;
@@ -47,6 +48,11 @@ function countLabel(
   plural = `${singular}s`,
 ): string {
   return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function statusLabel(status: string): string {
+  if (status.length === 0) return status;
+  return `${status[0]?.toUpperCase() ?? ""}${status.slice(1)}`;
 }
 
 function isAbortError(error: unknown): boolean {
@@ -151,7 +157,7 @@ function continuationActions(
   const resume: ContinuationAction = latestResume
     ? {
         label: "Continue Resume",
-        description: `Open ${latestResume.targetRole} and keep refining it.`,
+        description: `${latestResume.targetRole} · ${Math.round(latestResume.score)}% readiness`,
         to: `/resumes/${latestResume.resumeId}`,
         icon: "resume",
         tone: "forest",
@@ -167,7 +173,7 @@ function continuationActions(
   const interview: ContinuationAction = latestInterview
     ? {
         label: "Continue Interview",
-        description: "Return to your latest scored practice session.",
+        description: `Latest feedback ${Math.round(latestInterview.score)}%`,
         to: `/interviews/${latestInterview.sessionId}`,
         icon: "interview",
         tone: "ink",
@@ -191,7 +197,7 @@ function continuationActions(
   const learning: ContinuationAction = recentDocument
     ? {
         label: "Open Learning Document",
-        description: `Continue with ${recentDocument.title}.`,
+        description: `${recentDocument.title} · ${statusLabel(recentDocument.status)}`,
         to: `/learning/documents/${recentDocument.documentId}`,
         icon: "learning",
         tone: "amber",
@@ -519,6 +525,9 @@ export function MainDashboard() {
   const [activityError, setActivityError] = useState<DisplayError>();
   const [activityRetry, setActivityRetry] = useState(0);
   const activityRequestId = useRef(0);
+  const activityLimit = activityExpanded
+    ? EXPANDED_ACTIVITY_LIMIT
+    : RECENT_ACTIVITY_LIMIT;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -572,7 +581,7 @@ export function MainDashboard() {
     void fetchDashboardActivity(
       {
         page: activityPage,
-        limit: ACTIVITY_LIMIT,
+        limit: activityLimit,
       },
       controller.signal,
     )
@@ -600,7 +609,7 @@ export function MainDashboard() {
     return () => {
       controller.abort();
     };
-  }, [activityPage, activityRetry]);
+  }, [activityLimit, activityPage, activityRetry]);
 
   const resumeTrend = useMemo(
     () =>
@@ -635,14 +644,21 @@ export function MainDashboard() {
     [progress],
   );
 
-  const activityMatchesPage =
-    activity?.pagination.page === activityPage;
-  const activityPagination = activity?.pagination ?? {
-    page: activityPage,
-    limit: ACTIVITY_LIMIT,
-    total: 0,
-    pages: 0,
-  };
+  const activityMatchesRequest =
+    activity?.pagination.page === activityPage &&
+    activity.pagination.limit === activityLimit;
+  const knownActivityTotal = activity?.pagination.total ?? 0;
+  const activityPagination = activityMatchesRequest && activity
+    ? activity.pagination
+    : {
+        page: activityPage,
+        limit: activityLimit,
+        total: knownActivityTotal,
+        pages:
+          knownActivityTotal === 0
+            ? 0
+            : Math.ceil(knownActivityTotal / activityLimit),
+      };
 
   return (
     <section
@@ -761,12 +777,15 @@ export function MainDashboard() {
 
         {activity ? (
           <ActivityFeed
-            events={activityMatchesPage ? activity.events : []}
+            events={activityMatchesRequest ? activity.events : []}
             pagination={activityPagination}
             currentPage={activityPage}
-            refreshing={activityLoading || !activityMatchesPage}
+            refreshing={activityLoading || !activityMatchesRequest}
             expanded={activityExpanded}
-            onExpand={() => setActivityExpanded(true)}
+            onExpand={() => {
+              setActivityPage(1);
+              setActivityExpanded(true);
+            }}
             onCollapse={() => {
               setActivityExpanded(false);
               setActivityPage(1);
