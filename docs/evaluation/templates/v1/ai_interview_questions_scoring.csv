@@ -1,5 +1,1 @@
-case_id,case_version,rubric_version,executable_checkpoint,model_identity,output_reference,validity_status,role_relevance,experience_level_appropriateness,clarity,useful_coverage,redundancy_control,question_quality_points,rater_notes
-INT-01,1.0,1.0,,,,,,,,,,,
-INT-02,1.0,1.0,,,,,,,,,,,
-INT-03,1.0,1.0,,,,,,,,,,,
-INT-04,1.0,1.0,,,,,,,,,,,
+case_id,case_version,rubric_version,question_unit_id,question_index,executable_checkpoint,model_identity,output_reference,validity_status,role_relevance,experience_level_appropriateness,clarity,rater_notes
