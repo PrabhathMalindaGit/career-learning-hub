@@ -174,17 +174,14 @@ describe("Learning child resource deletion", () => {
   });
 
   it("uses owner-scoped not-found behavior for foreign conversations", async () => {
-    const owner = await registerTestUser(app, {
-      email: "learning-child-delete-chat-owner@example.com",
-      displayName: "Learning Child Delete Chat Owner",
-    });
+    const foreignOwnerId = new Types.ObjectId().toString();
     const other = await registerTestUser(app, {
       email: "learning-child-delete-chat-other@example.com",
       displayName: "Learning Child Delete Chat Other",
     });
-    const document = await createReadyDocument(owner.userId, "Chat Private");
+    const document = await createReadyDocument(foreignOwnerId, "Chat Private");
     const { conversation, message } = await createConversationFixture(
-      owner.userId,
+      foreignOwnerId,
       document._id.toString(),
     );
 
@@ -251,16 +248,16 @@ describe("Learning child resource deletion", () => {
   });
 
   it("uses owner-scoped not-found behavior for foreign flashcard sets", async () => {
-    const owner = await registerTestUser(app, {
-      email: "learning-child-delete-flashcards-owner@example.com",
-      displayName: "Learning Child Delete Flashcards Owner",
-    });
+    const foreignOwnerId = new Types.ObjectId().toString();
     const other = await registerTestUser(app, {
       email: "learning-child-delete-flashcards-other@example.com",
       displayName: "Learning Child Delete Flashcards Other",
     });
-    const document = await createReadyDocument(owner.userId, "Flashcard Private");
-    const { set, card } = await createFlashcardFixture(owner.userId, document._id.toString());
+    const document = await createReadyDocument(foreignOwnerId, "Flashcard Private");
+    const { set, card } = await createFlashcardFixture(
+      foreignOwnerId,
+      document._id.toString(),
+    );
 
     const response = await request(app)
       .delete(`/api/v1/flashcard-sets/${set._id.toString()}`)
@@ -329,17 +326,14 @@ describe("Learning child resource deletion", () => {
   });
 
   it("uses owner-scoped not-found behavior for foreign quizzes", async () => {
-    const owner = await registerTestUser(app, {
-      email: "learning-child-delete-quiz-owner@example.com",
-      displayName: "Learning Child Delete Quiz Owner",
-    });
+    const foreignOwnerId = new Types.ObjectId().toString();
     const other = await registerTestUser(app, {
       email: "learning-child-delete-quiz-other@example.com",
       displayName: "Learning Child Delete Quiz Other",
     });
-    const document = await createReadyDocument(owner.userId, "Quiz Private");
+    const document = await createReadyDocument(foreignOwnerId, "Quiz Private");
     const { quiz, question, attempt } = await createQuizFixture(
-      owner.userId,
+      foreignOwnerId,
       document._id.toString(),
     );
 
