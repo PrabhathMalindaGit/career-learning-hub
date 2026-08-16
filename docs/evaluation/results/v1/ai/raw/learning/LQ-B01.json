@@ -1,0 +1,19 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "LQ-B01",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "case_version": "1.0",
+  "case_type": "ANSWERABLE_SINGLE",
+  "document_fixture_id": "LEARN-B-WETLAND-01",
+  "document_id": "6a8215c3fcfac3c65e882685",
+  "conversation_id": "6a8215d5fcfac3c65e8827fa",
+  "job_id": "6a8215d5fcfac3c65e882809",
+  "question": "Which three native plant species are included in the restoration planting plan?",
+  "formal_output": {
+    "answer": "The three native plant species included in the restoration planting plan are smooth cordgrass, saltmeadow rush, and sea purslane.",
+    "sourcePages": [2],
+    "assistantMessageId": "6a8215d8fcfac3c65e88283c"
+  }
+}
