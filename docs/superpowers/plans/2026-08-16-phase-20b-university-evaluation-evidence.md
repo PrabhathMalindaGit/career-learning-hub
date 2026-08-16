@@ -58,7 +58,7 @@ Do not freeze eligibility, recruitment route, target count, sample description, 
 Separate Resume, Interview and Grounded Learning rubrics remain authoritative.
 
 ### Task 8 — Frozen synthetic evaluation inputs
-`AUTHORIZED / IMPLEMENTED ON CURRENT BRANCH / AWAITING LOCAL QUALIFICATION`
+`IMPLEMENTED / LOCALLY QUALIFIED AT e47d3156... / PR #39 OPEN / REVIEW REPAIR REQUIRES REQUALIFICATION`
 
 Authoritative directory: `docs/evaluation/datasets/v1/`
 
@@ -72,26 +72,31 @@ Frozen scope:
 
 Dataset identities and PDF SHA-256 values are recorded in `dataset_manifest.json`.
 
-The two PDFs were rendered and visually inspected, and text extraction was verified before repository integration.
+The two PDFs were rendered and visually inspected, and text extraction was verified before repository integration. Local qualification later reconfirmed both as four-page, text-extractable PDFs through macOS PDFKit.
 
 No AI outputs are generated or scored in Task 8.
 
 ### Task 9 — Evidence-collection templates
-`AUTHORIZED / IMPLEMENTED ON CURRENT BRANCH / AWAITING LOCAL QUALIFICATION`
+`IMPLEMENTED / PR #39 OPEN / REVIEW REPAIR REQUIRES REQUALIFICATION`
 
 Authoritative directory: `docs/evaluation/templates/v1/`
 
-Frozen files:
+Frozen structures after PR #39 review repair:
 
-- `usability_observations.csv`;
+- `usability_campaign_metadata.csv`;
+- `usability_observations.csv` linked through `campaign_id`;
 - `sus_responses.csv`;
-- `accessibility_checks.csv`;
+- `accessibility_campaign_metadata.csv`;
+- `accessibility_checks.csv` linked through `campaign_id`;
 - `ai_resume_scoring.csv`;
-- `ai_interview_questions_scoring.csv`;
+- `ai_interview_questions_scoring.csv` for per-question IQ-01 to IQ-03 values;
+- `ai_interview_question_sets_scoring.csv` for set-level IQ-04 and IQ-05 values;
 - `ai_interview_feedback_scoring.csv`;
 - `ai_learning_grounded_qa_scoring.csv`.
 
-Static case/check identifiers are pre-populated where useful. Participant responses, observations, status values and AI/accessibility results remain blank.
+Static case/check identifiers are pre-populated where useful. Participant responses, observations, metadata values, status values and AI/accessibility results remain blank.
+
+PR #39 review repair preserves the reproducibility fields required by the usability/accessibility protocols and removes ambiguity between Interview question-level and set-level scoring.
 
 ### Task 10 — Conduct evaluation and analyse actual evidence
 `PLANNED / NOT AUTHORIZED`
@@ -113,17 +118,38 @@ Only after actual evidence exists, produce the final O7 results/evidence record 
 6. PDF hashes are recorded in the manifest.
 7. No result may be pre-populated merely to demonstrate a template.
 
+## PR #39 review-repair record
+
+PR #39 was opened after local qualification at exact head `e47d3156f235606f8e93f174685efedc984be9a2`.
+
+Final pre-merge verification found four unresolved Codex P2 review findings:
+
+1. the documented raw `git diff --check` contract treated generated PDF internals as line-oriented text;
+2. usability observations lacked a linked campaign-level reproducibility/environment record;
+3. accessibility checks lacked a linked campaign-level environment record;
+4. Interview question scoring mixed per-question IQ-01 to IQ-03 with set-level IQ-04/IQ-05.
+
+Repairs stay on the same branch and inside `docs/` only. The PDF repair does **not** modify repository configuration; instead, text changes use `git diff --check` with PDF paths excluded, while PDFs are qualified by frozen SHA-256 plus macOS PDFKit page/text checks.
+
+Because review repair moves the PR head, the prior exact-head merge approval is stale. Requalification and a new exact-head merge approval are mandatory before merge.
+
 ## Current qualification boundary
 
-Before PR creation, the user must verify:
+Before final merge approval, the user must verify:
 
 - exact working-branch HEAD;
 - merge base/ancestry against `origin/main`;
 - all changed paths remain under `docs/`;
-- `git diff --check origin/main...HEAD` produces no output;
+- all JSON inputs still parse;
+- all CSV templates still parse and preserve expected row structures;
+- usability/accessibility campaign metadata templates exist and observation/check rows link through `campaign_id`;
+- Interview question-unit and question-set templates preserve separate scoring units;
+- both PDF SHA-256 values match the frozen manifest;
+- both PDFs open as four-page, text-extractable documents through macOS PDFKit;
+- `git diff --check origin/main...HEAD -- . ':(exclude,glob)**/*.pdf'` produces no output;
 - final working tree is clean.
 
-Expected new execution-pack paths are under:
+Expected execution-pack paths remain under:
 
 - `docs/evaluation/datasets/v1/**`
 - `docs/evaluation/templates/v1/**`
@@ -135,14 +161,14 @@ plus modifications to:
 
 No application test rerun is required if all changed paths remain under `docs/`.
 
-PR creation requires separate explicit approval after local qualification. Merge requires a later exact-head approval.
+Merge requires a new separate exact-head approval after repair qualification.
 
 ## Current authorization
 
 Authorized:
 
 - Task 8 synthetic/de-identified fixture creation;
-- Task 9 empty machine-readable collection-template creation;
+- Task 9 empty machine-readable collection-template creation and bounded same-branch review repair;
 - planning/progress updates for those tasks.
 
 Not authorized:
@@ -153,6 +179,7 @@ Not authorized:
 - accessibility/AI campaign execution or scoring;
 - Task 10/11 results work;
 - executable product changes;
+- repository/product configuration changes;
 - deployment;
-- merge;
+- merge at any head not separately approved after qualification;
 - branch deletion.
