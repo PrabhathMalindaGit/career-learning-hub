@@ -340,6 +340,9 @@ export async function withAiIdempotency<T>(input: {
   }
 }
 
+// Features 6.1–6.9 — Gemini source and credential preference boundary.
+// Resolves the authenticated user's allowed connection mode without exposing
+// stored credential plaintext through the settings API.
 export async function listProviderSettings(userId: string) {
   const [preference, credentials] = await Promise.all([
     AiProviderPreferenceModel.findOne({ userId }).lean(),
