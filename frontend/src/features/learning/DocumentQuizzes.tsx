@@ -13,6 +13,7 @@ import {
   normalizeSafeJob,
   retryJob,
 } from "../jobs/jobResilience";
+import { LearningChildDeletion } from "./LearningChildDeletion";
 import {
   createQuizGeneration,
   fetchLearningQuizJob,
@@ -480,6 +481,14 @@ export function DocumentQuizzes({
     }
   };
 
+  const handleDeleted = useCallback(() => {
+    if (quizzes.length === 1 && page > 1) {
+      setPage((current) => Math.max(1, current - 1));
+      return;
+    }
+    setListVersion((current) => current + 1);
+  }, [page, quizzes.length]);
+
   const generationDisabled =
     document.status !== "ready" || creating || pendingJob !== undefined;
   const showGenerationForm =
@@ -578,15 +587,20 @@ export function DocumentQuizzes({
                     <p className="learning-collection-type">Quiz</p>
                     <h3>{quiz.title}</h3>
                   </div>
-                  <span
-                    className={`learning-status learning-status--${quiz.status}`}
-                  >
+                  <span className={`learning-status learning-status--${quiz.status}`}>
                     {quiz.status === "generating"
                       ? "Generating"
                       : quiz.status === "failed"
                         ? "Generation failed"
                         : "Ready to take"}
                   </span>
+                  <LearningChildDeletion
+                    kind="quiz"
+                    id={quiz.id}
+                    title={quiz.title}
+                    disabled={quiz.status === "generating"}
+                    onDeleted={handleDeleted}
+                  />
                 </div>
                 <div className="learning-collection-meta">
                   <span>
@@ -602,9 +616,7 @@ export function DocumentQuizzes({
                   </span>
                 </div>
                 {quiz.generationError ? (
-                  <p className="learning-row-error">
-                    {quiz.generationError.message}
-                  </p>
+                  <p className="learning-row-error">{quiz.generationError.message}</p>
                 ) : null}
                 {quiz.status === "ready" ? (
                   <Link
@@ -634,9 +646,7 @@ export function DocumentQuizzes({
           >
             Previous
           </button>
-          <span>
-            Quiz page {page} of {pagination.pages}
-          </span>
+          <span>Quiz page {page} of {pagination.pages}</span>
           <button
             type="button"
             className="learning-secondary-button"
