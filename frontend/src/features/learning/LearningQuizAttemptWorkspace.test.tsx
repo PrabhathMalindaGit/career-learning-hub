@@ -200,7 +200,7 @@ describe("Learning quiz attempt workspace", () => {
         name: "View source page 1 in the document workspace",
       }),
     ).not.toBeNull();
-    expect(screen.getByText("Verified sources:")).not.toBeNull();
+    expect(screen.getAllByText("Verified sources:")).toHaveLength(2);
     expect(
       screen.getByRole("link", { name: "Take quiz again" }).getAttribute("href"),
     ).toBe(`/learning/documents/${documentId}/quizzes/${quizId}`);
