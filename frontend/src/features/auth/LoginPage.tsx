@@ -159,8 +159,7 @@ export function LoginPage() {
 
       {authenticationReasonFromState(location.state) === "session-expired" ? (
         <div className="authentication-session-notice" role="status">
-          <strong>Your session expired.</strong>{" "}
-          <span>Sign in again to continue.</span>
+          Your session expired. Sign in again to continue.
         </div>
       ) : null}
 
