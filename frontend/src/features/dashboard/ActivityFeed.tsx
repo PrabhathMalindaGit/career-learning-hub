@@ -78,6 +78,9 @@ export function ActivityFeed({
   const totalPages = Math.max(1, pagination.pages);
   const hasMoreActivity =
     pagination.pages > 1 || pagination.total > events.length;
+  const chipLabel = expanded
+    ? `${pagination.total} total`
+    : `${events.length} recent`;
 
   return (
     <section
@@ -89,7 +92,7 @@ export function ActivityFeed({
           <p className="dashboard-kicker">Across your workspace</p>
           <h2 id="activity-feed-title">Recent activity</h2>
         </div>
-        <span className="dashboard-chip">{pagination.total} total</span>
+        <span className="dashboard-chip">{chipLabel}</span>
       </header>
 
       {refreshing && events.length > 0 ? (
