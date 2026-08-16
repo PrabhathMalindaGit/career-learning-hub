@@ -16,7 +16,7 @@
 
 The initially created branch `phase-20b-8-9-evaluation-execution-pack` remains untouched at the base commit. A low-level Git ref update was blocked by the connector safety layer after the binary PDF tree was created, so the implementation continues on `phase-20b-8-9-evaluation-execution-pack-v2`, created directly from the valid dataset commit. No branch deletion is authorized.
 
-PR #39 was opened after local qualification at `e47d3156f235606f8e93f174685efedc984be9a2`. Final pre-merge review identified four P2 evidence-design/qualification-contract findings. Repairs remain on the same documentation-only branch; the old exact-head merge approval is stale and a new local qualification plus exact-head merge approval is required before merge.
+PR #39 was opened after local qualification at `e47d3156f235606f8e93f174685efedc984be9a2`. Final pre-merge review identified four P2 evidence-design/qualification-contract findings; those were repaired and requalified locally at `dbb9fff75fd30098148889e03b91c5063c95de04`. A fresh exact-head Codex review then identified two additional P2 reproducibility findings: Interview cases did not freeze the exact content-affecting question-generation request, and SUS responses were not linked to the usability campaign metadata. Those second-round repairs remain on the same documentation-only branch. Every prior exact-head merge approval is stale; a new local qualification plus exact-head merge approval is required before merge.
 
 ## Purpose
 
@@ -38,10 +38,12 @@ Authoritative directory: `docs/evaluation/datasets/v1/`
 Frozen synthetic scope:
 
 - 4 Resume/target-role cases: `RSM-01` through `RSM-04`;
-- 4 Interview role/prepared-answer cases: `INT-01` through `INT-04`;
+- 4 Interview role/prepared-answer cases: `INT-01` through `INT-04`, each with a frozen content-affecting generation request covering count, categories, difficulty mix, canonical question types and exact type counts;
 - 2 text-based four-page Learning PDFs with exact source-text mirrors and SHA-256 identifiers;
 - 6 Grounded Learning cases: 2 `ANSWERABLE_SINGLE`, 2 `ANSWERABLE_MULTI`, 2 `UNANSWERABLE`;
 - fixed U1-U5 usability fixture bindings, including prepared Resume, Interview, Learning, flashcard and quiz state.
+
+For Interview generation, `requestId` is generated fresh per execution because it is an idempotency field rather than an evaluation variable, and `resumeVersionId` is omitted for the synthetic cases. All other content-affecting generation fields are frozen per case.
 
 All content is fictional. No real participant CV, private study document, personal API key or direct participant identifier is included.
 
@@ -55,7 +57,7 @@ Frozen CSV structures:
 
 - `usability_campaign_metadata.csv` for the protocol-required study baseline/environment record;
 - `usability_observations.csv`, linked through `campaign_id`;
-- `sus_responses.csv`;
+- `sus_responses.csv`, linked to the same usability campaign through `campaign_id` while preserving all ten raw SUS item fields;
 - `accessibility_campaign_metadata.csv` for the protocol-required accessibility baseline/environment record;
 - `accessibility_checks.csv` with A-01 through A-29, linked through `campaign_id`;
 - `ai_resume_scoring.csv`;
@@ -120,7 +122,7 @@ Those counts remain engineering evidence only.
 
 ## Current final-stage roadmap
 
-- Phase 20B-8/9 — `ACTIVE / PR #39 REVIEW REPAIR`
+- Phase 20B-8/9 — `ACTIVE / PR #39 SECOND-ROUND REVIEW REPAIR`
 - Phase 20B-5 — `BLOCKED / NOT AUTHORIZED`
 - Evaluation campaigns — `NOT AUTHORIZED`
 - Phase 20B-10 Results Analysis — `PLANNED / NOT AUTHORIZED`
@@ -137,12 +139,12 @@ Before final merge approval:
 2. changed paths must remain under `docs/`;
 3. dataset/template version identifiers must be present;
 4. Resume cases must preserve known facts and prohibited inventions;
-5. Interview cases must preserve role/experience context and prepared answers;
+5. Interview cases must preserve role/experience context, prepared answers, and an exact content-affecting generation request whose count/difficulty/type counts are internally valid;
 6. both Learning PDFs must be text based and match their source/reference records;
 7. Learning cases must include single-source, multi-source and unanswerable cases;
 8. U1-U5 bindings must identify repeatable synthetic starting state;
 9. CSV templates must contain no invented results;
-10. SUS template must preserve all ten raw item fields;
+10. SUS template must preserve all ten raw item fields and link every later response to the usability campaign through `campaign_id`;
 11. accessibility templates must preserve A-01 through A-29 and a linked campaign-level environment record;
 12. AI templates must preserve rubric-specific fields and frozen case IDs, with Interview IQ-01 to IQ-03 recorded per generated question and IQ-04 to IQ-05 recorded at set level;
 13. `20B-5` remains blocked and no participant count is invented;
@@ -161,6 +163,6 @@ The user has authorized:
 
 `APPROVE PHASE 20B-8/9 — EVALUATION EXECUTION PACK`
 
-PR #39 was created and the original exact-head merge was approved, but review repairs moved the branch. A new exact-head merge approval is required after requalification.
+PR #39 was created and earlier exact-head merge approvals became stale when review repairs moved the branch. A new exact-head merge approval is required after the latest repair qualification and exact-head review verification.
 
 No result collection, Phase 20B-5, product modification, deployment, Phase 20B-10 or Phase 20B-11 work is authorized.
