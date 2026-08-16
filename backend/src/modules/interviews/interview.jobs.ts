@@ -12,6 +12,9 @@ import {
 
 let registered = false;
 
+// Features 4.4, 4.11, and 4.12 — Interview AI job boundary.
+// Registers question-generation, explanation, and non-MCQ feedback work while
+// preserving the shared polling/cancel/retry execution model.
 export function registerInterviewJobHandlers(): void {
   if (registered) return;
   registered = true;
