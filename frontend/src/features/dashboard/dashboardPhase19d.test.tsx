@@ -136,18 +136,23 @@ function progressFixture(): DashboardProgress {
   };
 }
 
-function activityFixture(): DashboardActivityPage {
+function activityFixture(
+  page = 1,
+  limit = 5,
+  total = 12,
+): DashboardActivityPage {
+  const pages = Math.ceil(total / limit);
   return {
     events: [
       {
-        id: "activity-1",
+        id: `activity-${page}-1`,
         type: "learning.quiz.generated",
         resourceType: "quiz",
         origin: "worker",
         occurredAt: "2026-08-16T04:00:00.000Z",
       },
       {
-        id: "activity-2",
+        id: `activity-${page}-2`,
         type: "resume.analysis.completed",
         resourceType: "resume-analysis",
         origin: "worker",
@@ -155,10 +160,10 @@ function activityFixture(): DashboardActivityPage {
       },
     ],
     pagination: {
-      page: 1,
-      limit: 5,
-      total: 12,
-      pages: 3,
+      page,
+      limit,
+      total,
+      pages,
     },
   };
 }
@@ -177,8 +182,8 @@ describe("Phase 19D Dashboard refinements", () => {
     vi.mocked(dashboardApi.fetchProgressSnapshot).mockResolvedValue(
       progressFixture(),
     );
-    vi.mocked(dashboardApi.fetchDashboardActivity).mockResolvedValue(
-      activityFixture(),
+    vi.mocked(dashboardApi.fetchDashboardActivity).mockImplementation(
+      async (query) => activityFixture(query.page, query.limit),
     );
   });
 
@@ -200,16 +205,19 @@ describe("Phase 19D Dashboard refinements", () => {
         .getByRole("link", { name: /Continue Resume/i })
         .getAttribute("href"),
     ).toBe("/resumes/resume-1");
+    expect(within(continuation).getByText("Software engineer · 84% readiness")).not.toBeNull();
     expect(
       within(continuation)
         .getByRole("link", { name: /Continue Interview/i })
         .getAttribute("href"),
     ).toBe("/interviews/session-1");
+    expect(within(continuation).getByText("Latest feedback 76%")).not.toBeNull();
     expect(
       within(continuation)
         .getByRole("link", { name: /Open Learning Document/i })
         .getAttribute("href"),
     ).toBe("/learning/documents/document-1");
+    expect(within(continuation).getByText("Operating systems notes · Ready")).not.toBeNull();
 
     expect(
       screen.getByRole("group", { name: "Performance period" }),
@@ -227,10 +235,12 @@ describe("Phase 19D Dashboard refinements", () => {
     });
   });
 
-  it("shows user-outcome metrics without internal AI diagnostics", async () => {
+  it("shows semantic user-outcome metrics without internal AI diagnostics", async () => {
     renderDashboard();
 
     expect(await screen.findByText("Resume performance")).not.toBeNull();
+    expect(screen.getAllByText("Strong result")).toHaveLength(2);
+    expect(screen.getByText("Developing")).not.toBeNull();
     expect(
       screen.getAllByText("Interview feedback").length,
     ).toBeGreaterThanOrEqual(1);
@@ -269,7 +279,7 @@ describe("Phase 19D Dashboard refinements", () => {
     ).not.toBeNull();
   });
 
-  it("keeps recent activity compact until the user asks to browse it", async () => {
+  it("switches recent activity from a five-item summary to ten-item browsing", async () => {
     renderDashboard();
     const user = userEvent.setup();
 
@@ -281,6 +291,7 @@ describe("Phase 19D Dashboard refinements", () => {
     });
 
     expect(await screen.findByText("Quiz created")).not.toBeNull();
+    expect(screen.getByText("2 recent")).not.toBeNull();
     expect(
       screen.queryByRole("button", { name: "Previous activity page" }),
     ).toBeNull();
@@ -289,14 +300,28 @@ describe("Phase 19D Dashboard refinements", () => {
       screen.getByRole("button", { name: "View all activity" }),
     );
 
+    await waitFor(() => {
+      expect(dashboardApi.fetchDashboardActivity).toHaveBeenLastCalledWith(
+        { page: 1, limit: 10 },
+        expect.any(AbortSignal),
+      );
+    });
+    expect(screen.getByText("12 total")).not.toBeNull();
     expect(
       screen.getByRole("button", { name: "Previous activity page" }),
     ).not.toBeNull();
     expect(
       screen.getByRole("button", { name: "Next activity page" }),
     ).not.toBeNull();
-    expect(
+
+    await user.click(
       screen.getByRole("button", { name: "Show recent activity only" }),
-    ).not.toBeNull();
+    );
+    await waitFor(() => {
+      expect(dashboardApi.fetchDashboardActivity).toHaveBeenLastCalledWith(
+        { page: 1, limit: 5 },
+        expect.any(AbortSignal),
+      );
+    });
   });
 });
