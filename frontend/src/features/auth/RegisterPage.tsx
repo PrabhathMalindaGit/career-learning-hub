@@ -316,11 +316,31 @@ export function RegisterPage() {
             <button
               className="password-visibility-toggle"
               type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
               disabled={busy}
               onClick={() => setShowPassword((visible) => !visible)}
             >
-              {showPassword ? "Hide password" : "Show password"}
+              <svg
+                className="password-visibility-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                {showPassword ? (
+                  <>
+                    <path d="M3 3l18 18" />
+                    <path d="M10.6 6.2A10.5 10.5 0 0 1 12 6c6 0 9.5 6 9.5 6a15.6 15.6 0 0 1-2.7 3.5" />
+                    <path d="M6.2 6.2C3.7 8.1 2.5 12 2.5 12s3.5 6 9.5 6a10 10 0 0 0 4.1-.9" />
+                    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </>
+                )}
+              </svg>
             </button>
           </div>
           <p
