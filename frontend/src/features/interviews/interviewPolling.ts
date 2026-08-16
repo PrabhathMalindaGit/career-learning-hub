@@ -8,7 +8,7 @@ export const INTERVIEW_POLLING_MAX_DURATION_MS = 5 * 60 * 1_000;
 const TRANSIENT_FAILURE_LIMIT = 3;
 
 export function interviewPollDelayForAttempt(attempt: number): number {
-  return [1_000, 2_000, 3_000, 5_000][attempt] ?? 8_000;
+  return [1_000, 1_000, 2_000, 2_000, 3_000][attempt] ?? 3_000;
 }
 
 function defaultWait(
