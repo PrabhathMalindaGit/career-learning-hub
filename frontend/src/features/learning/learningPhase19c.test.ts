@@ -66,14 +66,17 @@ describe("Phase 19C Learning Workspace contracts", () => {
     expect(phaseCss).toContain('.learning-tabs button[aria-selected="true"]');
   });
 
-  it("uses the modern provider-job treatment for Learning AI status surfaces only", () => {
+  it("uses the modern provider-job treatment with the product green palette for Learning AI status surfaces", () => {
     const phaseCss = source("learningPhase19c.css");
 
     expect(phaseCss).toContain(".job-resilience-actions__progress");
     expect(phaseCss).toContain(
       ".learning-response-status:has(.job-resilience-actions)",
     );
-    expect(phaseCss).toContain("accent-color: #6553b8");
+    expect(phaseCss).toContain("accent-color: var(--accent)");
+    expect(phaseCss).toContain("background: #f4f8f5");
+    expect(phaseCss).not.toContain("#6553b8");
+    expect(phaseCss).not.toContain("#f7f5ff");
     expect(phaseCss).toContain(
       ".learning-response-status .job-resilience-actions__buttons button",
     );
