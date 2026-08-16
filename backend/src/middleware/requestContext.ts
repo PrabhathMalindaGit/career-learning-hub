@@ -16,6 +16,8 @@ function resolveRequestId(value: string | undefined): string {
   return randomUUID();
 }
 
+// Feature 7.8 — Request context and diagnostic identity.
+// Establishes the bounded request identifier used for safe error correlation.
 export const requestContextMiddleware: RequestHandler = (
   request,
   response,
