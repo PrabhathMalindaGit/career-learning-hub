@@ -1,0 +1,19 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "LQ-A02",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "case_version": "1.0",
+  "case_type": "ANSWERABLE_MULTI",
+  "document_fixture_id": "LEARN-A-SOLAR-01",
+  "document_id": "6a8215bbfcfac3c65e882620",
+  "conversation_id": "6a8215cdfcfac3c65e882739",
+  "job_id": "6a8215cdfcfac3c65e882748",
+  "question": "What monitoring information is recorded, and what limitation should be considered when interpreting results?",
+  "formal_output": {
+    "answer": "During the pilot, the project team records monthly generation, aggregate participant bill credits, support requests, and system downtime. When interpreting results, a key limitation to consider is that the evaluation is limited to 120 households in one municipality, so results should not automatically be generalized to all households or regions.",
+    "sourcePages": [3, 4],
+    "assistantMessageId": "6a8215d0fcfac3c65e88277b"
+  }
+}
