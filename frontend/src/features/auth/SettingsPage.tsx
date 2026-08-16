@@ -3,6 +3,9 @@ import { AiUsageDiagnosticsSettingsSection } from "./AiUsageDiagnosticsSettings"
 import { useAuth } from "./AuthProvider";
 import { GeminiConnectionSettingsSection } from "./GeminiConnectionSettings";
 
+// Features 6.10–6.11 — Settings composition.
+// Combines Gemini controls, bounded AI-usage diagnostics, account information,
+// and explicit current-session sign-out without exposing credential plaintext.
 export function SettingsPage() {
   const { user, logout } = useAuth();
 
