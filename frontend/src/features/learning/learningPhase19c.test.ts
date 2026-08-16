@@ -23,11 +23,15 @@ describe("Phase 19C Learning Workspace contracts", () => {
     const flashcards = source("DocumentFlashcards.tsx");
     const quizzes = source("DocumentQuizzes.tsx");
 
-    expect(flashcards.indexOf("learning-flashcard-set-list")).toBeLessThan(
-      flashcards.indexOf("learning-flashcard-generation"),
+    expect(
+      flashcards.indexOf('className="learning-flashcard-set-list"'),
+    ).toBeLessThan(
+      flashcards.indexOf('id="learning-flashcard-generation"'),
     );
-    expect(quizzes.indexOf("learning-quiz-set-list")).toBeLessThan(
-      quizzes.indexOf("learning-quiz-generation"),
+    expect(
+      quizzes.indexOf('className="learning-quiz-set-list"'),
+    ).toBeLessThan(
+      quizzes.indexOf('id="learning-quiz-generation"'),
     );
     expect(flashcards).toContain("Document-based flashcards");
     expect(quizzes).toContain("Document-based quiz");
