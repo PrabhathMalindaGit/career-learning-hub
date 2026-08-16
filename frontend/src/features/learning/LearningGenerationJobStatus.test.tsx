@@ -14,14 +14,16 @@ describe("LearningGenerationJobStatus", () => {
       <LearningGenerationJobStatus
         status={status}
         message={message}
+        requestId="request-routine-0001"
       />,
     );
 
     expect(screen.getByRole("status").textContent).toBe(message);
     expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByText(/Request ID:/)).toBeNull();
   });
 
-  it("keeps paused copy, request ID, and recovery action caller-owned", async () => {
+  it("keeps paused recovery action caller-owned without exposing diagnostic request metadata", async () => {
     const onResume = vi.fn();
     render(
       <LearningGenerationJobStatus
@@ -38,9 +40,7 @@ describe("LearningGenerationJobStatus", () => {
 
     expect(screen.queryByRole("status")).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(
-      screen.getByText("Request ID: request-job-0001"),
-    ).not.toBeNull();
+    expect(screen.queryByText(/Request ID:/)).toBeNull();
     await userEvent.click(
       screen.getByRole("button", { name: "Resume caller checks" }),
     );
@@ -48,7 +48,7 @@ describe("LearningGenerationJobStatus", () => {
   });
 
   it.each(["failed", "unavailable"] as const)(
-    "renders %s only as an explicit alert",
+    "renders %s only as an explicit alert with diagnostic request metadata",
     (status) => {
       render(
         <LearningGenerationJobStatus
