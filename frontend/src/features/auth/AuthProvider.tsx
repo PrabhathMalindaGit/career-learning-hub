@@ -15,6 +15,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  ApiError,
   configureApiClientAuth,
   refreshAuthentication,
 } from "../../api/apiClient";
@@ -32,9 +33,12 @@ export type AuthenticationStatus =
   | "anonymous"
   | "authenticated";
 
+export type AuthenticationAnonymousReason = "session-expired" | null;
+
 type AuthenticationState = {
   status: AuthenticationStatus;
   user: PublicUser | null;
+  anonymousReason: AuthenticationAnonymousReason;
 };
 
 export type AuthContextValue = AuthenticationState & {
@@ -53,9 +57,12 @@ export function AuthProvider({
   const [state, setState] = useState<AuthenticationState>({
     status: "bootstrapping",
     user: null,
+    anonymousReason: null,
   });
   const accessTokenRef = useRef<string | null>(null);
   const knownUserIdRef = useRef<string | null>(null);
+  const pendingAnonymousReasonRef =
+    useRef<AuthenticationAnonymousReason>(null);
 
   const cleanupOutgoingUserRecovery = useCallback((userId: string) => {
     invalidateResumeRecoveryWritersForUser(userId);
@@ -72,27 +79,52 @@ export function AuthProvider({
       if (outgoingUserId && outgoingUserId !== response.user.id) {
         cleanupOutgoingUserRecovery(outgoingUserId);
       }
+      pendingAnonymousReasonRef.current = null;
       knownUserIdRef.current = response.user.id;
       accessTokenRef.current = response.accessToken;
       setState({
         status: "authenticated",
         user: response.user,
+        anonymousReason: null,
       });
     },
     [cleanupOutgoingUserRecovery],
   );
 
   const clearAuthentication = useCallback(() => {
+    const anonymousReason = pendingAnonymousReasonRef.current;
+    pendingAnonymousReasonRef.current = null;
+
+    const outgoingUserId = knownUserIdRef.current;
+    if (outgoingUserId) {
+      cleanupOutgoingUserRecovery(outgoingUserId);
+      knownUserIdRef.current = null;
+    }
+
     accessTokenRef.current = null;
     setState({
       status: "anonymous",
       user: null,
+      anonymousReason,
     });
-  }, []);
+  }, [cleanupOutgoingUserRecovery]);
 
   const refreshSession = useCallback(async () => {
-    const response = await refreshSessionRequest();
-    applyAuthentication(response);
+    try {
+      const response = await refreshSessionRequest();
+      applyAuthentication(response);
+    } catch (error) {
+      if (
+        knownUserIdRef.current !== null &&
+        error instanceof ApiError &&
+        error.status === 401
+      ) {
+        pendingAnonymousReasonRef.current = "session-expired";
+      } else {
+        pendingAnonymousReasonRef.current = null;
+      }
+      throw error;
+    }
   }, [applyAuthentication]);
 
   useEffect(() => {
@@ -126,6 +158,7 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
+    pendingAnonymousReasonRef.current = null;
     const outgoingUserId = knownUserIdRef.current;
     if (outgoingUserId) {
       cleanupOutgoingUserRecovery(outgoingUserId);

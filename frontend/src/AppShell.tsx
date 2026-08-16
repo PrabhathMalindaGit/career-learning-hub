@@ -140,6 +140,8 @@ export function AppShell() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoutBusy, setLogoutBusy] = useState(false);
+  const logoutPendingRef = useRef(false);
   const mobileToggleRef = useRef<HTMLButtonElement>(null);
   const mobileCloseRef = useRef<HTMLButtonElement>(null);
 
@@ -150,6 +152,19 @@ export function AppShell() {
   function dismissMobileNavigation() {
     setMobileOpen(false);
     window.setTimeout(() => mobileToggleRef.current?.focus(), 0);
+  }
+
+  function handleLogout() {
+    if (logoutPendingRef.current) return;
+
+    logoutPendingRef.current = true;
+    setLogoutBusy(true);
+    void logout()
+      .catch(() => undefined)
+      .finally(() => {
+        logoutPendingRef.current = false;
+        setLogoutBusy(false);
+      });
   }
 
   return (
@@ -172,9 +187,10 @@ export function AppShell() {
           <button
             className="sidebar-logout"
             type="button"
-            onClick={() => void logout().catch(() => undefined)}
+            disabled={logoutBusy}
+            onClick={handleLogout}
           >
-            Log out
+            {logoutBusy ? "Logging out…" : "Log out"}
           </button>
         </div>
       </aside>
@@ -228,12 +244,13 @@ export function AppShell() {
           <button
             className="sidebar-logout"
             type="button"
+            disabled={logoutBusy}
             onClick={() => {
               setMobileOpen(false);
-              void logout().catch(() => undefined);
+              handleLogout();
             }}
           >
-            Log out
+            {logoutBusy ? "Logging out…" : "Log out"}
           </button>
         </div>
       </Dialog>

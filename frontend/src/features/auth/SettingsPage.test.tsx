@@ -92,6 +92,7 @@ describe("SettingsPage", () => {
     vi.mocked(useAuth).mockReturnValue({
       status: "authenticated",
       user,
+      anonymousReason: null,
       login,
       register,
       logout,

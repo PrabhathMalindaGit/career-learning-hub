@@ -5,7 +5,10 @@ import {
 } from "react-router-dom";
 import { BrandLockup } from "../../components/BrandLockup";
 import { AuthenticationShell } from "./AuthenticationShell";
-import { useAuth } from "./AuthProvider";
+import {
+  useAuth,
+  type AuthenticationAnonymousReason,
+} from "./AuthProvider";
 
 export type AuthRouteMode = "protected" | "public-only";
 
@@ -43,6 +46,19 @@ export function intendedLocationFromState(state: unknown): string {
   return "/dashboard";
 }
 
+export function authenticationReasonFromState(
+  state: unknown,
+): AuthenticationAnonymousReason {
+  return (
+    typeof state === "object" &&
+    state !== null &&
+    "authReason" in state &&
+    state.authReason === "session-expired"
+  )
+    ? "session-expired"
+    : null;
+}
+
 export function RouteLoadingState() {
   return (
     <AuthenticationShell
@@ -72,7 +88,7 @@ export function RouteLoadingState() {
 }
 
 export function AuthRoute({ mode }: { mode: AuthRouteMode }) {
-  const { status } = useAuth();
+  const { status, anonymousReason } = useAuth();
   const location = useLocation();
 
   if (status === "bootstrapping") {
@@ -87,7 +103,12 @@ export function AuthRoute({ mode }: { mode: AuthRouteMode }) {
       <Navigate
         to="/login"
         replace
-        state={{ from: intendedPath }}
+        state={{
+          from: intendedPath,
+          ...(anonymousReason === "session-expired"
+            ? { authReason: "session-expired" }
+            : {}),
+        }}
       />
     );
   }
