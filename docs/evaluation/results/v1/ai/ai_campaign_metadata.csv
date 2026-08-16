@@ -1,0 +1,2 @@
+campaign_id,protocol_version,evaluation_date,executable_checkpoint,repository_main_identity,model_identity,model_configuration_identity,dataset_pack_version,resume_dataset_version,interview_dataset_version,learning_dataset_version,execution_channel,application_configuration_identity,run_policy,notes
+CLH-AI-001,1.0,,6b80f91d7016971d58ed9628e8818fabf00d1cd2,4f2a0dfbe07f31ed8163ff31e6bc662da5e4d6cd,gemini-3.6-flash,,20B8-v1.0,20B8-resume-v1.0,20B8-interview-v1.0,20B8-learning-v1.0,,,ONE_FORMAL_OUTPUT_PER_FROZEN_CASE_NO_BEST_OF_N,
