@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
+import "./components/SharedFormControls.css";
 import { AuthProvider } from "./features/auth/AuthProvider";
 import { router } from "./routing/router";
 import "./styles.css";
