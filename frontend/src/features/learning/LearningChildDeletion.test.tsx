@@ -3,9 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiClient";
 import { LearningChildDeletion } from "./LearningChildDeletion";
-import * as learningApi from "./learningApi";
+import * as deletionApi from "./learningChildDeletionApi";
 
-vi.mock("./learningApi", () => ({
+vi.mock("./learningChildDeletionApi", () => ({
   deleteLearningConversation: vi.fn(),
   deleteFlashcardSet: vi.fn(),
   deleteQuiz: vi.fn(),
@@ -13,15 +13,15 @@ vi.mock("./learningApi", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(learningApi.deleteLearningConversation).mockResolvedValue({
+  vi.mocked(deletionApi.deleteLearningConversation).mockResolvedValue({
     deleted: true,
     id: "conversation-1",
   });
-  vi.mocked(learningApi.deleteFlashcardSet).mockResolvedValue({
+  vi.mocked(deletionApi.deleteFlashcardSet).mockResolvedValue({
     deleted: true,
     id: "set-1",
   });
-  vi.mocked(learningApi.deleteQuiz).mockResolvedValue({
+  vi.mocked(deletionApi.deleteQuiz).mockResolvedValue({
     deleted: true,
     id: "quiz-1",
   });
@@ -64,7 +64,7 @@ describe("LearningChildDeletion", () => {
     );
 
     await waitFor(() =>
-      expect(learningApi.deleteLearningConversation).toHaveBeenCalledWith(
+      expect(deletionApi.deleteLearningConversation).toHaveBeenCalledWith(
         "document-1",
         "conversation-1",
         expect.any(AbortSignal),
@@ -92,7 +92,7 @@ describe("LearningChildDeletion", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
-    expect(learningApi.deleteFlashcardSet).not.toHaveBeenCalled();
+    expect(deletionApi.deleteFlashcardSet).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
@@ -119,7 +119,7 @@ describe("LearningChildDeletion", () => {
     );
 
     await waitFor(() =>
-      expect(learningApi.deleteQuiz).toHaveBeenCalledWith(
+      expect(deletionApi.deleteQuiz).toHaveBeenCalledWith(
         "quiz-1",
         expect.any(AbortSignal),
       ),
@@ -128,7 +128,7 @@ describe("LearningChildDeletion", () => {
   });
 
   it("keeps a failed resource visible and exposes the safe Request ID", async () => {
-    vi.mocked(learningApi.deleteFlashcardSet).mockRejectedValue(
+    vi.mocked(deletionApi.deleteFlashcardSet).mockRejectedValue(
       new ApiError(
         409,
         "FLASHCARD_SET_DELETE_BLOCKED_BY_ACTIVE_JOB",
