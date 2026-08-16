@@ -12,6 +12,7 @@ import {
 } from "react-router-dom";
 import { ApiError } from "../../api/apiClient";
 import { BrandLockup } from "../../components/BrandLockup";
+import { TechnicalDetails } from "../../components/TechnicalDetails";
 import {
   intendedLocationFromState,
 } from "./AuthRoute";
@@ -365,14 +366,10 @@ export function RegisterPage() {
             ref={apiErrorRef}
           >
             <p>{apiError.message}</p>
-            {apiError.requestId ? (
-              <details className="authentication-technical-details">
-                <summary>Technical details</summary>
-                <p className="request-id">
-                  Request ID: {apiError.requestId}
-                </p>
-              </details>
-            ) : null}
+            <TechnicalDetails
+              requestId={apiError.requestId}
+              className="authentication-technical-details"
+            />
           </div>
         ) : null}
 

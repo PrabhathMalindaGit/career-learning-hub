@@ -16,6 +16,7 @@ import {
   intendedLocationFromState,
 } from "./AuthRoute";
 import { BrandLockup } from "../../components/BrandLockup";
+import { TechnicalDetails } from "../../components/TechnicalDetails";
 import { AuthenticationShell } from "./AuthenticationShell";
 import { useAuth } from "./AuthProvider";
 import "./authPhase19e.css";
@@ -281,14 +282,10 @@ export function LoginPage() {
             ref={apiErrorRef}
           >
             <p>{apiError.message}</p>
-            {apiError.requestId ? (
-              <details className="authentication-technical-details">
-                <summary>Technical details</summary>
-                <p className="request-id">
-                  Request ID: {apiError.requestId}
-                </p>
-              </details>
-            ) : null}
+            <TechnicalDetails
+              requestId={apiError.requestId}
+              className="authentication-technical-details"
+            />
           </div>
         ) : null}
 
