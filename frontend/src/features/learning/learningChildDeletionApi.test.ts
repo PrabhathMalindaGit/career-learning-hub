@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, requestWithStatusMetadata } from "../../api/apiClient";
+import { requestWithStatusMetadata } from "../../api/apiClient";
 import {
   deleteFlashcardSet,
   deleteLearningConversation,
@@ -61,7 +61,7 @@ describe("learning child deletion API", () => {
     });
 
     await expect(deleteQuiz("quiz-1")).rejects.toEqual(
-      expect.objectContaining<ApiError>({
+      expect.objectContaining({
         status: 502,
         code: "INVALID_LEARNING_RESPONSE",
       }),
