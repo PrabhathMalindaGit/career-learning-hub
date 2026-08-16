@@ -13,6 +13,7 @@ import {
   normalizeSafeJob,
   retryJob,
 } from "../jobs/jobResilience";
+import { LearningChildDeletion } from "./LearningChildDeletion";
 import {
   createFlashcardSet,
   fetchFlashcardSet,
@@ -59,18 +60,14 @@ function safeError(error: unknown, fallback: string): SafeError {
   if (error instanceof ApiError) {
     return {
       message: error.message,
-      ...(error.requestId === undefined
-        ? {}
-        : { requestId: error.requestId }),
+      ...(error.requestId === undefined ? {} : { requestId: error.requestId }),
     };
   }
   return { message: fallback };
 }
 
 function RequestId({ value }: { value?: string }) {
-  return value ? (
-    <p className="request-id">Request ID: {value}</p>
-  ) : null;
+  return value ? <p className="request-id">Request ID: {value}</p> : null;
 }
 
 export function DocumentFlashcards({
@@ -508,6 +505,14 @@ export function DocumentFlashcards({
     }
   };
 
+  const handleDeleted = useCallback(() => {
+    if (sets.length === 1 && page > 1) {
+      setPage((current) => Math.max(1, current - 1));
+      return;
+    }
+    setListVersion((current) => current + 1);
+  }, [page, sets.length]);
+
   const showGenerationForm =
     generationOpen || (!loading && !loadError && sets.length === 0);
 
@@ -601,20 +606,23 @@ export function DocumentFlashcards({
                     <p className="learning-collection-type">Flashcard set</p>
                     <h3>{set.title}</h3>
                   </div>
-                  <span
-                    className={`learning-status learning-status--${set.status}`}
-                  >
+                  <span className={`learning-status learning-status--${set.status}`}>
                     {set.status === "generating"
                       ? "Generating"
                       : set.status === "failed"
                         ? "Generation failed"
                         : "Ready to study"}
                   </span>
+                  <LearningChildDeletion
+                    kind="flashcard-set"
+                    id={set.id}
+                    title={set.title}
+                    disabled={set.status === "generating"}
+                    onDeleted={handleDeleted}
+                  />
                 </div>
                 <div className="learning-collection-meta">
-                  <span>
-                    {set.cardCount === 1 ? "1 card" : `${set.cardCount} cards`}
-                  </span>
+                  <span>{set.cardCount === 1 ? "1 card" : `${set.cardCount} cards`}</span>
                   <span>
                     Created{" "}
                     <time dateTime={set.createdAt}>
@@ -623,9 +631,7 @@ export function DocumentFlashcards({
                   </span>
                 </div>
                 {set.generationError ? (
-                  <p className="learning-row-error">
-                    {set.generationError.message}
-                  </p>
+                  <p className="learning-row-error">{set.generationError.message}</p>
                 ) : null}
                 {set.status === "ready" ? (
                   <Link
@@ -655,9 +661,7 @@ export function DocumentFlashcards({
           >
             Previous
           </button>
-          <span>
-            Flashcard-set page {page} of {pagination.pages}
-          </span>
+          <span>Flashcard-set page {page} of {pagination.pages}</span>
           <button
             type="button"
             className="learning-secondary-button"
