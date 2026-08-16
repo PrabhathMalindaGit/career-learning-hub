@@ -63,6 +63,14 @@
   padding: 16px;
 }
 
+.dashboard-continue-work .dashboard-quick-start__copy {
+  gap: 4px;
+}
+
+.dashboard-continue-work .dashboard-quick-start__copy > span {
+  line-height: 1.4;
+}
+
 .dashboard-performance-toolbar {
   display: flex;
   min-width: 0;
@@ -127,7 +135,7 @@
   min-height: 158px;
   grid-column: auto;
   align-content: start;
-  gap: 10px;
+  gap: 9px;
   color: var(--dashboard-ink);
   border-color: #d8e2dc;
   background: #ffffff;
@@ -170,6 +178,39 @@
 
 .dashboard-performance-metrics .dashboard-metric > strong {
   margin-top: 2px;
+}
+
+.dashboard-metric__interpretation {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid #d4ded8;
+  border-radius: 999px;
+  color: #44544b;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 0.71rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.dashboard-metric__interpretation--needs-review {
+  border-color: #e7c7bf;
+  color: #7b3f35;
+  background: #fff5f2;
+}
+
+.dashboard-metric__interpretation--developing {
+  border-color: #e6d3ad;
+  color: #76591f;
+  background: #fff9ec;
+}
+
+.dashboard-metric__interpretation--strong {
+  border-color: #c8ddcf;
+  color: #2f6745;
+  background: #f2f8f4;
 }
 
 .dashboard-metric__action {
