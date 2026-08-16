@@ -19,14 +19,21 @@ const activeJob = {
 describe("JobResilienceActions", () => {
   it("announces safe progress and suppresses duplicate Cancel clicks", async () => {
     let release!: () => void;
-    const onCancel = vi.fn(() => new Promise<void>((resolve) => {
-      release = resolve;
-    }));
+    const onCancel = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+    );
     render(<JobResilienceActions job={activeJob} onCancel={onCancel} />);
 
-    expect(screen.getByRole("status").textContent).toContain("Waiting for response");
+    expect(screen.getByRole("status").textContent).toContain(
+      "Waiting for response",
+    );
     expect(
-      screen.getByRole("progressbar", { name: "40% complete" }).getAttribute("value"),
+      screen
+        .getByRole("progressbar", { name: "40% complete" })
+        .getAttribute("value"),
     ).toBe("40");
     const cancel = screen.getByRole("button", { name: "Cancel" });
     fireEvent.click(cancel);
@@ -34,7 +41,9 @@ describe("JobResilienceActions", () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(cancel.getAttribute("aria-busy")).toBe("true");
     release();
-    await waitFor(() => expect((cancel as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() =>
+      expect((cancel as HTMLButtonElement).disabled).toBe(false),
+    );
   });
 
   it("shows Retry only for eligible terminal jobs and suppresses duplicate clicks", async () => {
@@ -138,7 +147,9 @@ describe("JobResilienceActions", () => {
     render(
       <JobResilienceActions
         job={activeJob}
-        onCancel={vi.fn().mockRejectedValue(new Error("Status refresh required."))}
+        onCancel={vi
+          .fn()
+          .mockRejectedValue(new Error("Status refresh required."))}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
