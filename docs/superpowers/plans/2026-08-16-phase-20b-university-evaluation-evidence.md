@@ -58,7 +58,7 @@ Do not freeze eligibility, recruitment route, target count, sample description, 
 Separate Resume, Interview and Grounded Learning rubrics remain authoritative.
 
 ### Task 8 — Frozen synthetic evaluation inputs
-`IMPLEMENTED / PR #39 OPEN / COMPREHENSIVE REPRODUCIBILITY REPAIR / AWAITING LOCAL REQUALIFICATION`
+`IMPLEMENTED / PR #39 OPEN / CONTENT LOCALLY QUALIFIED AT 8e4810fe70f19194554bdb812e888a75c08aec1d / FINAL BOOKKEEPING REPAIR`
 
 Authoritative directory: `docs/evaluation/datasets/v1/`
 
@@ -79,7 +79,7 @@ The two PDFs were rendered and visually inspected, and local qualification has r
 No AI output is generated or scored in Task 8.
 
 ### Task 9 — Evidence-collection templates
-`IMPLEMENTED / PR #39 OPEN / COMPREHENSIVE REPRODUCIBILITY REPAIR / AWAITING LOCAL REQUALIFICATION`
+`IMPLEMENTED / PR #39 OPEN / CONTENT LOCALLY QUALIFIED AT 8e4810fe70f19194554bdb812e888a75c08aec1d / FINAL BOOKKEEPING REPAIR`
 
 Authoritative directory: `docs/evaluation/templates/v1/`
 
@@ -90,12 +90,14 @@ Frozen structures:
 - `sus_responses.csv` linked to the same usability campaign through `campaign_id`;
 - `accessibility_campaign_metadata.csv`;
 - `accessibility_checks.csv` linked through `campaign_id`;
-- `ai_resume_scoring.csv`;
-- `ai_interview_questions_scoring.csv` for per-question IQ-01 to IQ-03;
-- `ai_interview_question_sets_scoring.csv` for set-level IQ-04 and IQ-05;
-- `ai_interview_feedback_scoring.csv`;
-- `ai_learning_grounded_qa_scoring.csv` for answer-level support/completeness/unsupported handling;
-- `ai_learning_grounded_qa_citations.csv` for raw one-row-per-presented-reference citation classification.
+- `ai_campaign_metadata.csv` for campaign-level AI execution/model/dataset/configuration identity;
+- `ai_resume_scoring.csv` linked through `campaign_id`;
+- `ai_interview_questions_scoring.csv` for per-question IQ-01 to IQ-03, linked through `campaign_id`;
+- `ai_interview_question_sets_scoring.csv` for set-level IQ-04 and IQ-05, linked through `campaign_id`;
+- `ai_interview_feedback_scoring.csv` linked through `campaign_id`;
+- `ai_learning_grounded_qa_scoring.csv` for answer-level support/completeness/unsupported handling, linked through `campaign_id`;
+- `ai_learning_grounded_qa_citations.csv` for raw one-row-per-presented-reference citation classification, linked through `campaign_id`;
+- `docs/evaluation/INTERVIEW_AI_EVALUATION_EXECUTION_PROCEDURE.md` defining the supported authenticated API path for reproducing the complete frozen Interview payloads.
 
 For Grounded Learning, `CORRECT / INCORRECT / UNVERIFIABLE` classifications are preserved individually before any count/rate is derived. Aggregate citation metrics belong to later Phase 20B-10 analysis, not the Task 9 raw template.
 
@@ -162,60 +164,52 @@ A bounded broader audit was performed before another review cycle. It also ident
 - Resume cases were simplified descriptions rather than exact application `ResumeContent` plus analysis-request inputs;
 - Grounded Learning did not explicitly freeze the application document title or empty prior-conversation history even though those enter the integrated AI path.
 
-The comprehensive repair now addresses all four issues together:
+Those items were repaired and locally qualified at `6ad03fd24125e3f16feb8baf050663b3e3071ecf`.
 
-- exact application-shaped Resume content and analysis context;
-- full Interview session/generation/manual-question/feedback context;
-- exact Grounded Learning upload-title/fresh-conversation rules;
-- raw one-row-per-reference Grounded Learning citation classification plus separate answer-level scoring.
+### Review round 4 and final content repair
 
-All repairs remain inside `docs/`. The PDF repair does not modify `.gitattributes` or repository configuration; text changes use `git diff --check` with PDF paths excluded while PDFs are qualified by frozen SHA-256 plus macOS PDFKit page/text checks.
+A fresh exact-head review at `6ad03fd24125e3f16feb8baf050663b3e3071ecf` found:
 
-Because repairs moved the PR head, every earlier exact-head merge approval is stale. A fresh local qualification, clean exact-head Codex review and new exact-head merge approval are mandatory before merge.
+9. the frozen Interview payloads needed a documented executable path because the integrated frontend helpers do not expose every frozen content-affecting field;
+10. AI scoring rows needed campaign-level execution metadata linkage.
+
+The final content repair added the supported authenticated Interview API execution procedure plus `ai_campaign_metadata.csv` and `campaign_id` linkage across the Resume, Interview and Grounded Learning AI evidence tables.
+
+The user then ran the bounded final local verification at exact head `8e4810fe70f19194554bdb812e888a75c08aec1d`. The following checks passed:
+
+- exact HEAD matched;
+- AI campaign metadata template structure;
+- `campaign_id` linkage across all six AI evidence CSVs;
+- Interview feedback rubric field `answer_relevance`;
+- required authenticated Interview session/generation/feedback/job-polling route documentation;
+- no changed paths outside `docs/`;
+- text `git diff --check` with PDFs excluded;
+- clean final working tree.
+
+A fresh Codex review of that exact qualified head found only one remaining P2: the controlling status/roadmap still said local requalification was pending. The current authorized bookkeeping-only repair updates these two planning/status documents to record the already-completed qualification. It does not alter any evaluation fixture, template, execution procedure, product code, test, configuration or runtime behavior.
 
 ## Current qualification boundary
 
-Before final merge approval, the user must verify:
+The comprehensive evaluation-pack content is qualified at `8e4810fe70f19194554bdb812e888a75c08aec1d`.
+
+For the bookkeeping-only final head, the remaining verification is intentionally limited to:
 
 - exact working-branch HEAD;
 - merge base/ancestry against `origin/main`;
-- all changed paths remain under `docs/`;
-- all JSON inputs parse;
-- all Resume stable IDs are valid unique UUIDs and each case contains frozen `resume_content`, analysis request and optional-field rules;
-- all Interview cases freeze full generation-session/request and feedback-session/manual-question/typed-answer inputs, with valid count/difficulty/type distributions;
-- Learning cases freeze application upload title, fresh-conversation state and first-message question;
-- all CSV templates parse and preserve expected row structures;
-- usability/accessibility campaign metadata linkages remain present;
-- SUS preserves raw items 1-10 and `campaign_id`;
-- Interview question-unit and question-set templates remain separate;
-- Grounded Learning answer-level template contains no aggregate citation-count fields;
-- Grounded Learning citation template contains raw citation identity/page/classification fields;
-- both PDF SHA-256 values match the frozen manifest;
-- both PDFs open as four-page, text-extractable documents through macOS PDFKit;
-- `git diff --check origin/main...HEAD -- . ':(exclude,glob)**/*.pdf'` produces no output;
+- changes since `8e4810fe70f19194554bdb812e888a75c08aec1d` limited to `docs/planning/CURRENT_PHASE.md` and this plan;
+- text `git diff --check` produces no output;
 - final working tree is clean.
 
-Expected execution-pack paths remain under:
+No application test rerun, PDF requalification, dataset/template revalidation or another broad evaluation-framework audit is required for this bookkeeping-only status repair.
 
-- `docs/evaluation/datasets/v1/**`
-- `docs/evaluation/templates/v1/**`
-
-plus modifications to:
-
-- `docs/planning/CURRENT_PHASE.md`
-- this plan.
-
-No application test rerun is required while all changed paths remain under `docs/`.
-
-After local qualification, addressed outdated review threads may be resolved and a fresh exact-head Codex review must complete before a new merge approval token is issued.
+After that tiny verification, the stale final-review thread may be resolved and a new exact-head merge approval is required.
 
 ## Current authorization
 
 Authorized:
 
-- Task 8 synthetic/de-identified fixture creation and bounded same-branch reproducibility repair;
-- Task 9 empty machine-readable collection-template creation and bounded same-branch review repair;
-- planning/progress updates for those tasks.
+- `APPROVE FINAL PR39 BOOKKEEPING REPAIR`;
+- update only `docs/planning/CURRENT_PHASE.md` and this plan to record the already-completed qualification at `8e4810fe70f19194554bdb812e888a75c08aec1d`.
 
 Not authorized:
 
@@ -227,5 +221,6 @@ Not authorized:
 - executable product changes;
 - repository/product configuration changes;
 - deployment;
-- merge at any head not separately approved after qualification and clean exact-head review;
 - branch deletion.
+
+The user's earlier merge approval for `8e4810fe70f19194554bdb812e888a75c08aec1d` is stale because this bookkeeping-only repair moves the PR head. A new exact-head merge approval is mandatory after the bookkeeping head is verified.
