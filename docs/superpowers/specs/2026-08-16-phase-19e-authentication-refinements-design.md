@@ -1,8 +1,8 @@
 # Phase 19E — Authentication Refinements Design
 
-**Status:** Approved design, awaiting written-spec review  
-**Date:** 2026-08-16  
-**Baseline:** `main @ 8887a10be6283b8ea551e160f662cadcd7fe11f4`  
+**Status:** Approved design, awaiting written-spec review
+**Date:** 2026-08-16
+**Baseline:** `main @ 8887a10be6283b8ea551e160f662cadcd7fe11f4`
 **Branch:** `phase-19e-authentication-refinements`
 
 ## Goal
