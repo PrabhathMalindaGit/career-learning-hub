@@ -1,5 +1,5 @@
 campaign_id,case_id,case_version,rubric_version,executable_checkpoint,model_identity,output_reference,validity_status,useful_coverage,redundancy_control,rater_notes
-CLH-AI-001,INT-01,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,,,,,
-CLH-AI-001,INT-02,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,,,,,
-CLH-AI-001,INT-03,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,,,,,
-CLH-AI-001,INT-04,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,,,,,
+CLH-AI-001,INT-01,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,docs/evaluation/results/v1/ai/raw/interview/INT-01.json,VALID,2,2,"All four frozen scope areas are represented across six materially distinct questions: debugging, web fundamentals, testing and team communication."
+CLH-AI-001,INT-02,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,docs/evaluation/results/v1/ai/raw/interview/INT-02.json,VALID,2,2,"All four frozen scope areas are represented across six materially distinct questions: campaign coordination, content planning, basic analytics and stakeholder communication."
+CLH-AI-001,INT-03,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,docs/evaluation/results/v1/ai/raw/interview/INT-03.json,VALID,2,2,"All four frozen scope areas are represented across six materially distinct questions: accuracy, reconciliation, invoice checking and discrepancies."
+CLH-AI-001,INT-04,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,docs/evaluation/results/v1/ai/raw/interview/INT-04.json,VALID,2,2,"All four frozen scope areas are represented across six materially distinct questions: data cleaning, SQL, basic visualization and communicating findings."
