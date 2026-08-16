@@ -465,6 +465,9 @@ const workspaceViews: Array<{
   { id: "quizzes", label: "Quizzes" },
 ];
 
+// Features 5.4–5.9 — Learning document workspace.
+// Hosts Overview, secure original PDF, extracted content, Grounded Chat,
+// Flashcards, and Quizzes for one processed document.
 export function LearningDocumentWorkspace() {
   const { documentId = "" } = useParams<{ documentId: string }>();
   const { user } = useAuth();
