@@ -183,7 +183,7 @@ describe("Phase 19D Dashboard refinements", () => {
       progressFixture(),
     );
     vi.mocked(dashboardApi.fetchDashboardActivity).mockImplementation(
-      async (query) => activityFixture(query.page, query.limit),
+      async (query) => activityFixture(query?.page ?? 1, query?.limit ?? 5),
     );
   });
 
