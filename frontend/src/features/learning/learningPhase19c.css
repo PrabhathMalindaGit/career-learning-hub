@@ -17,3 +17,64 @@
   font-size: 0.9em;
   line-height: 1;
 }
+
+.learning-panel-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.learning-generation-panel {
+  margin-top: 26px;
+  padding: 20px;
+  border: 1px solid #c9d9cd;
+  border-radius: 18px;
+  background: #fbfdfb;
+}
+
+.learning-generation-heading h3 {
+  margin: 0;
+  color: #26362c;
+}
+
+.learning-generation-panel .learning-flashcard-form,
+.learning-generation-panel .learning-quiz-form {
+  margin-top: 16px;
+  padding: 18px;
+  border-top-width: 3px;
+  box-shadow: none;
+}
+
+.learning-generation-panel .learning-flashcard-focus,
+.learning-generation-panel .learning-quiz-focus {
+  max-width: 720px;
+}
+
+@media (max-width: 700px) {
+  .learning-panel-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .learning-panel-actions > * {
+    flex: 1 1 180px;
+  }
+}
+
+@media (max-width: 390px) {
+  .learning-panel-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .learning-panel-actions > * {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
+  .learning-generation-panel {
+    padding: 16px;
+  }
+}
