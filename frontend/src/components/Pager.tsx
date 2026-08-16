@@ -41,7 +41,7 @@ export function Pager({
         type="button"
         className={buttonClassName}
         aria-label={previousAriaLabel}
-        disabled={previousDisabled || busy}
+        disabled={previousDisabled}
         onClick={onPrevious}
       >
         {previousLabel}
@@ -51,7 +51,7 @@ export function Pager({
         type="button"
         className={buttonClassName}
         aria-label={nextAriaLabel}
-        disabled={nextDisabled || busy}
+        disabled={nextDisabled}
         onClick={onNext}
       >
         {nextLabel}
