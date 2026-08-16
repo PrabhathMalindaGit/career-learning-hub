@@ -1,0 +1,21 @@
+.resume-analysis-runner .resume-button-row {
+  margin-top: 14px;
+}
+
+.resume-analysis-runner .resume-button-row .resume-primary-button {
+  border-color: #b9cec1;
+  color: #245e3c;
+  background: #eef6f1;
+}
+
+.resume-analysis-runner .resume-button-row .resume-primary-button:hover:not(:disabled) {
+  border-color: #aac2b3;
+  background: #e5f0e9;
+}
+
+.resume-analysis-runner .resume-button-row .resume-primary-button:disabled {
+  border-color: #c8d5cd;
+  color: #66756c;
+  background: #f1f5f2;
+  opacity: 1;
+}
