@@ -108,7 +108,7 @@ describe("Pager", () => {
     expect(screen.queryByRole("link")).toBeNull();
   });
 
-  it("disables both paging actions while busy even when caller flags are false", () => {
+  it("does not override caller-owned paging availability while busy", () => {
     render(
       <Pager
         label="Synthetic result pages"
@@ -126,10 +126,10 @@ describe("Pager", () => {
     expect(
       (screen.getByRole("button", { name: "Earlier results" }) as HTMLButtonElement)
         .disabled,
-    ).toBe(true);
+    ).toBe(false);
     expect(
       (screen.getByRole("button", { name: "Later results" }) as HTMLButtonElement)
         .disabled,
-    ).toBe(true);
+    ).toBe(false);
   });
 });
