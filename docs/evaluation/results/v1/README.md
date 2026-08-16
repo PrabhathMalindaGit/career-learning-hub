@@ -1,19 +1,19 @@
 # Phase 20B — Actual Permitted Evaluation Results
 
-Status: `NON-PARTICIPANT RESULTS COLLECTED / PHASE 20B-10 ANALYSIS COMPLETE / PARTICIPANT STREAM PENDING ETHICS`
+Status: `PHASE 20B-11 FINAL O7 EVIDENCE RECORD COMPLETE / READY FOR PHASE 20C`
 
 This directory stores genuine Phase 20B non-participant evaluation evidence collected under the frozen version 1.0 protocols.
 
-## Authorized campaigns
+## Completed campaigns
 
 - Accessibility campaign: `CLH-ACC-001`
 - AI campaign: `CLH-AI-001`
 
 The AI campaign covers the frozen Resume, Interview and Grounded Learning cases.
 
-## Ethics boundary
+## Evaluation scope boundary
 
-Participant-facing work remains blocked pending authoritative ethics/module guidance. This directory must not contain participant usability observations, SUS responses, participant demographics, recordings, real CVs, private participant documents or personal participant API keys.
+Formal participant usability and SUS were not conducted in the completed Phase 20B scope. No participant count, task-completion result, SUS score, participant preference or participant qualitative finding is claimed.
 
 ## Data integrity rules
 
@@ -24,7 +24,7 @@ Participant-facing work remains blocked pending authoritative ethics/module guid
 - Preserve the first valid formal AI output; do not regenerate merely to improve a score.
 - Do not modify product code during the evaluation campaign.
 - Raw or derived evidence must contain no authentication token, cookie, API key, password or other secret.
-- Phase 20B-10 aggregate analysis must remain reproducible from the recorded raw/derived evidence and must not invent participant evidence.
+- Aggregate analysis and the final O7 record must remain reproducible from recorded evidence and must not invent participant evidence.
 
 ## Current baseline
 
@@ -43,5 +43,10 @@ Participant-facing work remains blocked pending authoritative ethics/module guid
 3. Interview AI cases INT-01 through INT-04 — generated questions and prepared-answer feedback completed and scored.
 4. Grounded Learning cases LQ-A01 through LQ-B03 — completed and scored.
 5. Phase 20B-10 aggregate results analysis — completed in `PHASE_20B_10_RESULTS_ANALYSIS.md`.
+6. Phase 20B-11 final Objective O7 evidence record — completed in `PHASE_20B_11_FINAL_O7_EVIDENCE_RECORD.md`.
 
-Participant usability and SUS are not included because the ethics/module gate remains blocked. They must not be inferred from the completed non-participant evidence.
+## Next phase
+
+Proceed to **Phase 20C — Final Screenshots & Technical Evidence**.
+
+Phase 20B-11 completion does not by itself authorize deployment, branch deletion or merge.
