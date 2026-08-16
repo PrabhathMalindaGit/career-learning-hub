@@ -131,7 +131,7 @@ describe("Document flashcards", () => {
     });
     expect(await screen.findByText("No flashcard sets yet.")).not.toBeNull();
     await userEvent.click(
-      screen.getByRole("button", { name: "Refresh flashcard sets" }),
+      screen.getByRole("button", { name: "Refresh sets" }),
     );
     expect(learningApi.listFlashcardSets).toHaveBeenLastCalledWith(
       documentId,
@@ -140,7 +140,7 @@ describe("Document flashcards", () => {
     );
   });
 
-  it("renders canonical generating, failed, and ready sets with pagination", async () => {
+  it("renders generating, failed, and ready sets with pagination", async () => {
     vi.mocked(learningApi.listFlashcardSets).mockResolvedValue({
       sets: [
         setRecord({
@@ -183,6 +183,10 @@ describe("Document flashcards", () => {
       }),
     ).not.toBeNull();
     expect(screen.getByText("Ready to study")).not.toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Set title" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Create flashcards" }),
+    ).not.toBeNull();
 
     await userEvent.click(
       screen.getByRole("button", {
@@ -322,7 +326,7 @@ describe("Document flashcards", () => {
     expect(learningApi.createFlashcardSet).toHaveBeenCalledTimes(1);
   });
 
-  it("refetches canonical set and cards before completed navigation", async () => {
+  it("refetches the saved set and cards before completed navigation", async () => {
     vi.mocked(learningApi.createFlashcardSet).mockResolvedValue({
       setId,
       documentId,
