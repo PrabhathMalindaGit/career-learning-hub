@@ -307,33 +307,188 @@ The current common UI vocabulary is:
 
 ### 3.1 Resume collection
 
+- **UI path:** `Resumes`.
+- **Route:** `/resumes`.
+- **Screen / section:** `Resume Studio` → `Your resumes` collection.
+- **Control:** `Create Resume`, `Open Resume`, per-card More actions/delete control, `Previous`, `Next`, failure `Retry list`.
+- **Control location:** `Create Resume` is the heading action; `Open Resume` is the dominant action on each Resume card.
+- **Visual / state behavior:** Collection cards show title, status, version, appearance metadata and updated date. Empty state offers `Create your first resume`; loading uses skeleton cards.
+- **What happens:** Opening a card navigates to `/resumes/:resumeId`; creation opens the shared Resume creation dialog. Permanent deletion is separately confirmed and owner-scoped.
+- **Frontend:** `frontend/src/features/resumes/ResumeListPage.tsx`, `ResumeDeleteDialog.tsx`, `ResumeMiniDocument.tsx`.
+- **Frontend API / gateway:** `frontend/src/features/resumes/resumeApi.ts`.
+- **Backend:** `backend/src/modules/resumes/resume.routes.ts`, `resume.controller.ts`, `resume.service.ts`.
+- **Representative tests:** `ResumeListPage.test.tsx` and Resume deletion/API integration tests.
+- **Viva-ready explanation:** The collection page is a catalogue and entry point. Editing/versioning stays inside the canonical Resume workspace rather than being duplicated on cards.
+
 ### 3.2 Resume creation
+
+- **UI path:** `Resumes` → `Create Resume`, or global `Create` → `Resume`.
+- **Route:** `/resumes?action=create` opens the same dialog and then clears the query intent.
+- **Screen / section:** `Create Resume` dialog.
+- **Control:** `Guided setup`, `Start blank`, `Import PDF`, `Cancel`.
+- **Visual / state behavior:** Guided setup carries a visible `Recommended` badge. All three choices lead into bounded subflows inside the same dialog.
+- **What happens:** The selected method either creates a validated Resume directly or stages/imports data before the canonical `/resumes/:resumeId` workspace opens.
+- **Frontend:** `frontend/src/features/resumes/ResumeCreateDialog.tsx`.
+- **Frontend API / gateway:** `frontend/src/features/resumes/resumeApi.ts`.
+- **Backend:** `backend/src/modules/resumes/`, plus `backend/src/modules/resume-analysis/` for PDF import processing.
+- **Representative tests:** `ResumeCreateDialog.test.tsx`, `ResumePdfUpload.test.tsx`, `resumeApi.test.ts` and Resume creation/PDF-import integration tests.
+- **Viva-ready explanation:** Creation is one shared flow with three deliberate entry methods; it does not create separate Resume data models.
 
 #### 3.2.1 Guided setup
 
+- **Control:** `Guided setup` → the guided Resume setup form and final guided creation action.
+- **What happens:** Deterministic role/skill/experience/education guidance remains editable and optional before canonical Resume content is created.
+- **Frontend:** `ResumeGuidedSetup.tsx`, role/skill guidance helpers, `ResumeAchievementBuilder.tsx`.
+- **Viva-ready explanation:** Guidance assists structured entry but does not silently invent or lock candidate information.
+
 #### 3.2.2 Start blank
+
+- **Control:** `Start blank`; field `Resume title`; actions `Back` and `Create blank resume`.
+- **Enabled when:** Title trims to 1–120 characters and creation is not already busy.
+- **Visual / state behavior:** Creation action becomes disabled/`aria-busy` and reads `Creating…` while the request is active.
+- **What happens:** A blank canonical Resume is created and immediately opened in Resume Studio.
+- **Frontend:** `ResumeCreateDialog.tsx` → `createResume()` in `resumeApi.ts`.
+- **Viva-ready explanation:** Blank creation is the minimum path: only the title is required before the normal editor becomes authoritative.
 
 #### 3.2.3 Import PDF
 
+- **Control:** `Import PDF`; `Imported resume title`; private PDF picker; `Import private PDF`; status/resilience actions; final `Confirm and open in editor`.
+- **Enabled when:** A valid title and one PDF no larger than 15 MB are selected; confirmation occurs only after a completed validated Import Review.
+- **Visual / state behavior:** Initial action reads `Checking import…` while active. Job state shows `Import queued/processing/...`, `N% checked`, shared cancel/retry actions and `Check status` if polling pauses. Missing Gemini connection shows `PDF import needs a connected Gemini account.` with `Open Settings`.
+- **What happens:** The PDF is privately uploaded and processed as a background job. `Import Review` shows extracted evidence and an optional detected candidate-photo choice. No Resume is adopted until the user explicitly selects `Confirm and open in editor`.
+- **Frontend:** `ResumeCreateDialog.tsx`, `ResumePdfUpload.tsx`, `ResumeImportPhotoChoices.tsx`, `resumePolling.ts`.
+- **Backend:** `resumeAnalysis.jobs.ts`, `resumeAnalysis.service.ts`, `resumeParsing.service.ts`, private Asset services and Resume confirmation path.
+- **Representative tests:** Resume PDF-import contract/integration tests and candidate-photo import tests.
+- **Viva-ready explanation:** Import is staged deliberately: parsing/AI output is reviewed before it becomes user-owned Resume content, and the source PDF remains private.
+
 ### 3.3 Resume editor
+
+- **UI path:** `Resumes` → `Open Resume`.
+- **Route:** `/resumes/:resumeId`.
+- **Screen / section:** Main Resume Studio workspace → canonical editor.
+- **Control:** Direct editable Resume sections, validation links and section-specific add/remove/edit controls.
+- **Enabled when:** The workspace is loaded, not applying/saving, and no recovery decision blocks editing.
+- **Visual / state behavior:** Validation summary `Review the highlighted resume content` links directly to the affected editor field. Editing a historical snapshot returns the user to the current draft before accepting changes.
+- **What happens:** Edits modify the local canonical draft only. They do not alter stored Resume content until Feature 3.5 creates a new version.
+- **Frontend:** `ResumeWorkspace.tsx`, `ResumeEditor.tsx`, `resumeDraft.ts`.
+- **Backend:** Persistence occurs through Resume version APIs/services only on explicit save.
+- **Representative tests:** `ResumeEditor.test.tsx`, `ResumeWorkspace.test.tsx`, draft/validation tests.
+- **Viva-ready explanation:** The editor separates draft state from persisted immutable versions, which makes unsaved changes explicit and recoverable.
 
 ### 3.4 Live preview
 
+- **UI path:** Same `/resumes/:resumeId` workspace, beside/below the editor depending on width.
+- **Control:** No separate submit action; it reacts to the current draft and preview appearance selection.
+- **Visual / state behavior:** All three templates preserve realistic document proportions; desktop uses the established editor/preview layout and narrower layouts allow the preview to remain scrollable/readable.
+- **What happens:** `ResumePreview` renders the current draft immediately without persisting it. Printable/historical preview variants reuse the same canonical rendering architecture.
+- **Frontend:** `ResumePreview.tsx`, template registry/renderers, Resume preview/print CSS.
+- **Representative tests:** Resume preview/template/live-preview/print-parity tests.
+- **Viva-ready explanation:** Preview is presentation-only; changing the preview cannot bypass the explicit save/version workflow.
+
 ### 3.5 Save new immutable version
+
+- **UI path:** Open Resume → workspace heading actions.
+- **Control:** `Save new version`; keyboard shortcut shown as `⌘S` on Mac or `Ctrl+S`; quiet `Discard changes` appears when a draft is dirty.
+- **Enabled when:** There are unsaved changes; no save/apply/print conflict is active; the user is not viewing a historical snapshot; recovery has been resolved; no blocking conflict exists.
+- **Visual / state behavior:** `Save new version` is the workspace's highest-emphasis constructive green action. Canonical status cycles among `Version N saved`, `Unsaved changes`, `Saving…`, `Save failed`, or `Recovery decision required`.
+- **What happens:** Client validation runs first; the backend then validates/persists a new immutable version with expected-current-version conflict protection. Successful save updates history and cleans obsolete local recovery data.
+- **Frontend:** `ResumeWorkspace.tsx`, `resumeApi.ts`, `resumeDraft.ts`.
+- **Backend:** `resume.controller.ts`, `resume.service.ts`, Resume validation/version models.
+- **Representative tests:** `ResumeWorkspace.test.tsx`, save/recovery tests, `resumeVersionPersistence.integration.test.ts`.
+- **Viva-ready explanation:** Existing versions are never overwritten. Each accepted save creates a new auditable snapshot, which also gives AI assessment a stable version target.
 
 ### 3.6 Design/template controls
 
+- **UI path:** Open Resume → `Resume appearance`.
+- **Control:** `Customize` / `Close customization`; Template choices; Typography choices; Color choices; `Reset changes`; `Save appearance`.
+- **Control location:** Appearance panel above the editor/assessment content.
+- **Visual / state behavior:** Current summary displays Template • Font • Palette • Paper size. Template cards identify `Selected` and include `Best for`; changes preview immediately. Dirty state reads `Unsaved appearance changes`; save reads `Saving appearance…` then `Resume design saved.`.
+- **What happens:** Appearance selection updates preview immediately but only `Save appearance` persists approved template/font/palette choices. Paper size is intentionally controlled by Feature 3.8.
+- **Frontend:** `ResumeDesignControls.tsx`, `resumeTemplateRegistry.ts`, appearance CSS.
+- **Backend:** Resume design update path in `resume.controller.ts` / `resume.service.ts`.
+- **Representative tests:** template registry, appearance controls and visual/print contract tests.
+- **Viva-ready explanation:** Content versions and presentation settings are separate concerns: historical saved content uses the current Resume design by the product's existing design contract.
+
 ### 3.7 Candidate photo
+
+- **UI path:** Open Resume → `Candidate photo` panel.
+- **Control:** `Choose photo` / `Replace photo`; `Hide from Resume` / `Show on Resume`; destructive `Remove photo`; confirmation `Keep photo` / `Remove photo`; failure `Retry saved photo`.
+- **Enabled when:** No presentation mutation/recovery blocker is active. Accepted uploads are JPEG/PNG/WebP, maximum 2 MiB, 4096×4096 and 16 MP.
+- **Visual / state behavior:** Status is `Not added`, `Shown` or `Hidden`; busy state reads `Saving candidate photo…`.
+- **What happens:** Photo bytes use private Asset storage and authoritative backend validation. Show/hide changes presentation state; removal does not rewrite Resume version content.
+- **Frontend:** `ResumeCandidatePhotoControls.tsx`, candidate-photo gateway/validation helpers, `ResumeWorkspace.tsx`.
+- **Backend:** `resumePhoto.service.ts`, `asset.service.ts`, Resume design/service boundaries.
+- **Representative tests:** candidate-photo component/API/asset-policy/integration/security tests.
+- **Viva-ready explanation:** The photo is optional private presentation data at the Resume level, not part of the versioned Resume content or AI assessment payload.
 
 ### 3.8 Print / Save as PDF
 
+- **UI path:** Open Resume → `Print / Save as PDF`.
+- **Control:** `Paper size` (`A4` / `Letter`) and `Open print dialog`.
+- **Enabled when:** A saved current/historical version is selected; recovery, source loading, presentation mutation, photo loading/error, print preparation and unsaved-current-draft blockers are clear.
+- **Visual / state behavior:** Readiness states include `Ready to print / save as PDF` or an explicit reason why export is blocked. Busy action reads `Preparing print…`; page-size persistence reads `Saving paper size…`.
+- **What happens:** The application uses native browser printing; the user chooses `Save as PDF` and is instructed to disable browser `Headers and footers` for the final file.
+- **Frontend:** `ResumePrintControls.tsx`, `resumePrint.ts`, printable `ResumePreview`.
+- **Backend:** Paper-size preference persists through the existing Resume design endpoint; no separate PDF rendering backend is introduced.
+- **Representative tests:** `ResumePrintControls.test.tsx`, `resumePrint.test.ts`, print-parity/preview tests.
+- **Viva-ready explanation:** Export deliberately reuses browser print/PDF support instead of adding a second document-rendering architecture.
+
 ### 3.9 AI-assisted role assessment
+
+- **UI path:** `Resumes` → open Resume → `Role-aware assessment`.
+- **Route:** `/resumes/:resumeId`.
+- **Control:** Inputs `Target role`, `Company (optional)`, `Job description (optional)`; action `Run AI-assisted assessment`; paused-status action `Check status`; shared cancel/retry controls while the background job is active.
+- **Control location:** Role-aware assessment panel beside/below the main editor/preview content in the canonical workspace.
+- **Enabled when:** There is no unsaved draft, no recovery decision, assessment is not busy, and trimmed Target role contains at least 2 characters.
+- **Visual / state behavior:** If the draft is dirty, the workspace states `Save or discard draft changes before assessing this resume.`. Busy label is `Checking assessment…`; progress shows `N% checked`. The assessment action intentionally uses a restrained pale-green scoped treatment rather than the stronger Feature 3.5 save action:
+  - normal border `#b9cec1`
+  - normal text `#245e3c`
+  - normal background `#eef6f1`
+  - hover border `#aac2b3`
+  - hover background `#e5f0e9`
+  - disabled border `#c8d5cd`
+  - disabled text `#66756c`
+  - disabled background `#f1f5f2`
+  - disabled opacity `1`
+- **What happens:** `queueResumeAnalysis()` sends the current **saved** `versionId` plus target context. The durable `resume.analyze` job is polled; completion is accepted only when job kind/type, Resume ID, Resume version ID and fetched analysis identity/score all match the expected saved version.
+- **Frontend:** `ResumeWorkspace.tsx`, `ResumeAssessmentActionUi.css`, `resumeApi.ts`, `resumePolling.ts`, shared `JobResilienceActions.tsx`.
+- **Backend:** `resumeAnalysis.routes.ts`, `resumeAnalysis.controller.ts`, `resumeAnalysis.jobs.ts`, `resumeAnalysis.service.ts`.
+- **Representative tests:** `ResumeAssessmentActionUi.test.tsx`, `ResumeWorkspace.test.tsx`, `resumeJobIdempotency.integration.test.ts`, AI retry/persistence and response-validation tests.
+- **Viva-ready explanation:** Assessment is bound to a saved immutable Resume version. That prevents an AI result from being confused with later unsaved edits and lets the UI reject a mismatched/stale result.
 
 ### 3.10 AI recommendations
 
+- **UI path:** Same Resume workspace → `AI-assisted assessment` result after Feature 3.9 completes.
+- **Control:** Suggestion selection controls; `Apply selected suggestions`; confirmation `Cancel` / `Create new version`.
+- **Enabled when:** A non-stale completed assessment exists, at least one suggestion is selected, and no apply operation is active.
+- **Visual / state behavior:** Result state is `Awaiting assessment`, `Assessment running`, `Completed result` or `Stale assessment`. The panel shows the assessment gauge, four 25-point categories, strengths, review points, potential missing keywords and explicit suggested rewrites. Stale results cannot be applied.
+- **What happens:** Selected suggestion IDs are submitted explicitly. Successful application creates another immutable Resume version and marks the prior assessment stale.
+- **Frontend:** `AiRecommendations.tsx`, `ResumeSuggestionComparison.tsx`, `ResumeWorkspace.tsx`, `resumeApi.ts`.
+- **Backend:** Resume analysis suggestion application in `resumeAnalysis.controller.ts` / `resumeAnalysis.service.ts` plus Resume version persistence.
+- **Representative tests:** Resume recommendation/assessment/workspace and persistence tests.
+- **Viva-ready explanation:** AI does not silently rewrite the candidate's Resume. The user selects changes, confirms them, and receives a new immutable version that can be reviewed or compared.
+
 ### 3.11 Version history
 
+- **UI path:** Open Resume → version timeline below the main workspace.
+- **Control:** View/select version controls and timeline `Previous` / `Next`; when a snapshot is open, `Return to current draft`.
+- **Visual / state behavior:** Current and historical sources are labelled. A selected historical version opens as `Read-only version N` with a `Read-only` badge and saved timestamp; loading uses a dedicated snapshot skeleton.
+- **What happens:** `fetchResumeVersion` loads the owned immutable snapshot without replacing current persisted content. Historical content is rendered with current Resume design, per the existing design contract.
+- **Frontend:** `ResumeVersionTimeline.tsx`, snapshot path in `ResumeWorkspace.tsx`, `ResumePreview.tsx`.
+- **Backend:** Resume version list/fetch boundaries in `resume.controller.ts` / `resume.service.ts` and ResumeVersion model.
+- **Representative tests:** `ResumeVersionTimeline.test.tsx`, Resume workspace/version persistence tests.
+- **Viva-ready explanation:** Version history provides read-only evidence of earlier saved content while keeping the editable current draft separate.
+
 ### 3.12 Draft recovery / unsaved-change protection
+
+- **UI path:** Automatic within `/resumes/:resumeId` when unsaved session recovery exists or the user attempts to navigate away with dirty work.
+- **Control:** Recovery dialog `Restore recovered draft` / destructive `Discard recovery`; stale recovery `Review recovered draft` / destructive `Discard recovery`; navigation protection `Keep editing` / destructive `Leave without saving`.
+- **Visual / state behavior:** Workspace status can become `Recovery decision required`. Recovery cleanup/write failures are surfaced as warning/error notices; stale recovery is reviewed rather than silently applied.
+- **What happens:** Bounded recovery data is held in session storage under the authenticated user/Resume/version identity. Same-baseline recovery may be restored; stale recovery requires explicit review; successful saves remove obsolete recovery. Browser `beforeunload` and React Router blocking protect dirty work.
+- **Frontend:** `ResumeWorkspace.tsx`, `resumeRecovery.ts`, `resumeRecoveryWriter.ts`, `ResumeRecoveryReview.tsx`.
+- **Backend:** The server remains canonical; recovery never replaces backend version identity without an explicit save.
+- **Representative tests:** `ResumeRecoveryReview.test.tsx`, `resumeRecovery.test.ts`, `resumeRecoveryWriter.test.ts`, `ResumeWorkspace.snapshotEditing.test.tsx`, `ResumeWorkspace.test.tsx`.
+- **Viva-ready explanation:** Recovery protects local unsaved editing while still respecting the server's immutable-version model; stale recovered work is never silently merged into a newer version.
 
 ## 4 — Interview Coach
 
