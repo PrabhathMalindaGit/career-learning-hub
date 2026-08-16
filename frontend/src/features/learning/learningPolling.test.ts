@@ -34,18 +34,18 @@ function job(status: "queued" | "processing" | "completed") {
 }
 
 describe("Learning processing polling", () => {
-  it("uses the responsive bounded polling schedule", () => {
+  it("uses a steady one-second bounded delay between checks", () => {
     expect([0, 1, 2, 3, 4, 5].map(pollingDelayForAttempt)).toEqual([
       1_000,
       1_000,
-      2_000,
-      2_000,
-      3_000,
-      3_000,
+      1_000,
+      1_000,
+      1_000,
+      1_000,
     ]);
   });
 
-  it("polls the exact job until terminal completion", async () => {
+  it("checks immediately, then polls the exact job until terminal completion", async () => {
     const fetchJob = vi
       .fn()
       .mockResolvedValueOnce(job("processing"))
@@ -64,6 +64,8 @@ describe("Learning processing polling", () => {
       job: { status: "completed" },
     });
     expect(fetchJob).toHaveBeenCalledTimes(2);
+    expect(wait).toHaveBeenCalledTimes(1);
+    expect(wait).toHaveBeenCalledWith(1_000, undefined);
   });
 
   it("pauses after three consecutive transient failures", async () => {
@@ -82,10 +84,11 @@ describe("Learning processing polling", () => {
 
   it("pauses at five minutes without claiming backend failure", async () => {
     let now = 0;
+    const processing = job("processing");
     const result = await pollLearningJob({
       jobId,
       documentId,
-      fetchJob: vi.fn(),
+      fetchJob: vi.fn().mockResolvedValue(processing),
       now: () => now,
       wait: async (milliseconds) => {
         now += milliseconds;
@@ -97,7 +100,7 @@ describe("Learning processing polling", () => {
 
     expect(result).toEqual({
       reason: "paused",
-      job: undefined,
+      job: processing,
       cause: "timeout",
     });
   });
@@ -121,8 +124,10 @@ describe("Learning processing polling", () => {
     ).rejects.toBe(error);
   });
 
-  it("cancels on route change or unmount", async () => {
+  it("cancels after the immediate check on route change or unmount", async () => {
     const controller = new AbortController();
+    const processing = job("processing");
+    const fetchJob = vi.fn().mockResolvedValue(processing);
     const wait = vi.fn(async () => {
       controller.abort();
     });
@@ -131,14 +136,15 @@ describe("Learning processing polling", () => {
       pollLearningJob({
         jobId,
         documentId,
-        fetchJob: vi.fn(),
+        fetchJob,
         signal: controller.signal,
         wait,
       }),
     ).resolves.toEqual({
       reason: "cancelled",
-      job: undefined,
+      job: processing,
     });
+    expect(fetchJob).toHaveBeenCalledTimes(1);
   });
 
   it("uses the same bounded lifecycle for an exact quiz-generation job", async () => {
@@ -154,14 +160,16 @@ describe("Learning processing polling", () => {
       createdAt,
       updatedAt: createdAt,
     };
+    const wait = vi.fn().mockResolvedValue(undefined);
 
     const result = await pollLearningJob<LearningQuizJob>({
       jobId,
       documentId,
       fetchJob: vi.fn().mockResolvedValue(quizJob),
-      wait: vi.fn().mockResolvedValue(undefined),
+      wait,
     });
 
     expect(result).toEqual({ reason: "terminal", job: quizJob });
+    expect(wait).not.toHaveBeenCalled();
   });
 });
