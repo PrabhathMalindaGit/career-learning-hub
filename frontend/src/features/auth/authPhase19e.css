@@ -5,29 +5,34 @@
 
 .authentication-form-card .password-input-wrap input {
   width: 100%;
-  padding-inline-end: 7.9rem;
+  padding-inline-end: 3.8rem;
 }
 
 .password-visibility-toggle {
   position: absolute;
   top: 50%;
-  right: 10px;
-  min-height: 34px;
-  padding: 0 10px;
+  right: 7px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  place-items: center;
   transform: translateY(-50%);
   border: 0;
   border-radius: 10px;
-  color: var(--auth-deep-forest);
-  background: rgba(232, 240, 234, 0.72);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 760;
-  line-height: 1;
+  color: #53635a;
+  background: transparent;
   cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .password-visibility-toggle:hover:not(:disabled) {
-  background: var(--auth-sage);
+  color: var(--auth-deep-forest);
+  background: rgba(232, 240, 234, 0.9);
 }
 
 .password-visibility-toggle:focus-visible,
@@ -38,7 +43,17 @@
 
 .password-visibility-toggle:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.5;
+}
+
+.password-visibility-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .authentication-session-notice {
@@ -94,13 +109,19 @@
 
 @media (max-width: 620px) {
   .authentication-form-card .password-input-wrap input {
-    padding-inline-end: 7.35rem;
+    padding-inline-end: 3.65rem;
   }
 
   .password-visibility-toggle {
-    right: 8px;
-    padding-inline: 8px;
-    font-size: 0.76rem;
+    right: 6px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .password-visibility-icon {
+    width: 19px;
+    height: 19px;
   }
 
   .authentication-session-notice {
@@ -111,12 +132,13 @@
 
 @media (max-width: 350px) {
   .authentication-form-card .password-input-wrap input {
-    padding-inline-end: 6.75rem;
+    padding-inline-end: 3.5rem;
   }
 
   .password-visibility-toggle {
-    right: 6px;
-    padding-inline: 6px;
-    font-size: 0.72rem;
+    right: 5px;
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
   }
 }
