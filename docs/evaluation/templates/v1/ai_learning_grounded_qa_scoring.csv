@@ -1,7 +1,7 @@
-case_id,case_version,case_type,document_fixture_id,rubric_version,executable_checkpoint,model_identity,output_reference,validity_status,answer_support_score,completeness_score,unsupported_handling_status,unsupported_claim_flag,rater_notes
-LQ-A01,1.0,ANSWERABLE_SINGLE,LEARN-A-SOLAR-01,1.0,,,,,,,,,
-LQ-A02,1.0,ANSWERABLE_MULTI,LEARN-A-SOLAR-01,1.0,,,,,,,,,
-LQ-A03,1.0,UNANSWERABLE,LEARN-A-SOLAR-01,1.0,,,,,,,,,
-LQ-B01,1.0,ANSWERABLE_SINGLE,LEARN-B-WETLAND-01,1.0,,,,,,,,,
-LQ-B02,1.0,ANSWERABLE_MULTI,LEARN-B-WETLAND-01,1.0,,,,,,,,,
-LQ-B03,1.0,UNANSWERABLE,LEARN-B-WETLAND-01,1.0,,,,,,,,,
+campaign_id,case_id,case_version,case_type,document_fixture_id,rubric_version,executable_checkpoint,model_identity,output_reference,validity_status,answer_support_score,completeness_score,unsupported_handling_status,unsupported_claim_flag,rater_notes
+,LQ-A01,1.0,ANSWERABLE_SINGLE,LEARN-A-SOLAR-01,1.0,,,,,,,,,
+,LQ-A02,1.0,ANSWERABLE_MULTI,LEARN-A-SOLAR-01,1.0,,,,,,,,,
+,LQ-A03,1.0,UNANSWERABLE,LEARN-A-SOLAR-01,1.0,,,,,,,,,
+,LQ-B01,1.0,ANSWERABLE_SINGLE,LEARN-B-WETLAND-01,1.0,,,,,,,,,
+,LQ-B02,1.0,ANSWERABLE_MULTI,LEARN-B-WETLAND-01,1.0,,,,,,,,,
+,LQ-B03,1.0,UNANSWERABLE,LEARN-B-WETLAND-01,1.0,,,,,,,,,
