@@ -1,0 +1,5 @@
+campaign_id,case_id,case_version,rubric_version,executable_checkpoint,model_identity,output_reference,validity_status,factual_preservation,role_relevance,actionability,clarity,internal_consistency,fabrication_flag,resume_quality_points,rater_notes
+CLH-AI-001,RSM-01,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,,,,,,,,,,
+CLH-AI-001,RSM-02,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,,,,,,,,,,
+CLH-AI-001,RSM-03,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,,,,,,,,,,
+CLH-AI-001,RSM-04,1.0,1.0,6b80f91d7016971d58ed9628e8818fabf00d1cd2,gemini-3.6-flash,,,,,,,,,,
