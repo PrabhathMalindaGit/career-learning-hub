@@ -6,12 +6,11 @@
 - Mode: `<MODE>`
 - Phase number: `<EXECUTION_PHASE_NUMBER>`
 - Phase name: `<EXECUTION_PHASE_NAME>`
-- Controlling skill: `karpathy-guidelines`
 - Required skills:
   - `<REQUIRED_SKILL_1>`
   - `<REQUIRED_SKILL_2>`
 - Active repository: `Career Learning Hub`
-- Approved external read-only references:
+- Approved external references:
   - `<NONE_OR_EXPLICITLY_APPROVED_REFERENCE>`
 - Human approval token: `<PHASE_APPROVAL_TOKEN>`
 - Next phase: `<NEXT_EXECUTION_PHASE_NUMBER_AND_NAME>`
@@ -27,7 +26,7 @@
 - `<FILE_OR_DIRECTORY_1>`
 - `<FILE_OR_DIRECTORY_2>`
 - Inspect only what is needed for this phase.
-- Do not inspect an external read-only legacy reference unless this phase grants explicit access to that exact reference.
+- Do not inspect external material unless the phase explicitly requires it.
 
 ## In scope
 
@@ -39,7 +38,7 @@
 - `<OUT_OF_SCOPE_ITEM_1>`
 - `<OUT_OF_SCOPE_ITEM_2>`
 - Unrelated cleanup, speculative abstraction, or architecture changes.
-- Any external read-only legacy reference not explicitly approved above.
+- External material not explicitly approved for this phase.
 
 ## Assumptions
 
@@ -89,7 +88,7 @@
 7. Stop after three unsuccessful code-changing repair attempts for the same root failure.
 8. Run human visual QA when visible UI changed.
 9. Review Git status and diff.
-10. Stop before commit.
+10. Stop before merge unless the exact merge action has been explicitly approved.
 
 ## Verification commands
 
@@ -106,7 +105,7 @@
   - A local URL.
   - An inspection checklist for affected screens, states, breakpoints, keyboard behavior, focus behavior, and regressions.
   - The required phase-specific visual approval token.
-- Stop before commit until the user provides the required visual approval token.
+- Stop before merge until the user provides the required visual approval.
 - If no visible UI changed, record: `<NO_VISIBLE_UI_CHANGE_EVIDENCE>`.
 
 ## Failure-loop stop rule
@@ -140,6 +139,7 @@
 - Inspection summary.
 - Files created.
 - Files modified.
+- Files deleted.
 - Verification commands and results.
 - Remaining ambiguity or risk.
 - Unverified claims deliberately avoided.
@@ -153,11 +153,11 @@
 - Run a scoped `git diff -- <EXPECTED_PATHS>`.
 - Check for secrets, personal data, environment values, generated files, unrelated edits, and changes outside the approved scope.
 - Show the review evidence to the user.
-- Do not stage or commit without explicit user authorization.
+- Do not merge without explicit user authorization of the exact qualified head SHA.
+- Deployment and branch deletion require separate approval.
 
 ## Human approval gate
 
 - Required token: `<PHASE_APPROVAL_TOKEN>`
 - Required visual token, if applicable: `<VISUAL_APPROVAL_TOKEN_OR_NOT_APPLICABLE>`
-- Stop before commit.
 - Do not activate `<NEXT_EXECUTION_PHASE_NUMBER_AND_NAME>` until the user approves this phase.
