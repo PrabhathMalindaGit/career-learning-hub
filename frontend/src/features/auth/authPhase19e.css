@@ -1,0 +1,122 @@
+.password-input-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.authentication-form-card .password-input-wrap input {
+  width: 100%;
+  padding-inline-end: 7.9rem;
+}
+
+.password-visibility-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  min-height: 34px;
+  padding: 0 10px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 10px;
+  color: var(--auth-deep-forest);
+  background: rgba(232, 240, 234, 0.72);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 760;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.password-visibility-toggle:hover:not(:disabled) {
+  background: var(--auth-sage);
+}
+
+.password-visibility-toggle:focus-visible,
+.authentication-technical-details summary:focus-visible {
+  outline: 3px solid rgba(40, 122, 74, 0.22);
+  outline-offset: 2px;
+}
+
+.password-visibility-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.authentication-session-notice {
+  margin: -14px 0 26px;
+  padding: 13px 15px;
+  border: 1px solid rgba(40, 122, 74, 0.2);
+  border-radius: 14px;
+  color: #294436;
+  background: rgba(232, 240, 234, 0.72);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.authentication-session-notice strong {
+  color: var(--auth-deep-forest);
+}
+
+.authentication-technical-details {
+  margin-top: 8px;
+  color: #53635a;
+  font-size: 0.82rem;
+}
+
+.authentication-technical-details summary {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border-radius: 8px;
+  color: var(--auth-deep-forest);
+  font-weight: 720;
+  cursor: pointer;
+}
+
+.authentication-technical-details .request-id {
+  margin: 7px 0 0;
+  overflow-wrap: anywhere;
+  color: #66756c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.authentication-form-card .form-error:focus-visible {
+  outline: 3px solid rgba(40, 122, 74, 0.18);
+  outline-offset: 3px;
+}
+
+@media (min-width: 901px) and (min-height: 760px) {
+  .authentication-shell--login .authentication-form-card {
+    padding-block: clamp(4px, 1.2vh, 14px);
+  }
+}
+
+@media (max-width: 620px) {
+  .authentication-form-card .password-input-wrap input {
+    padding-inline-end: 7.35rem;
+  }
+
+  .password-visibility-toggle {
+    right: 8px;
+    padding-inline: 8px;
+    font-size: 0.76rem;
+  }
+
+  .authentication-session-notice {
+    margin-top: -10px;
+    margin-bottom: 22px;
+  }
+}
+
+@media (max-width: 350px) {
+  .authentication-form-card .password-input-wrap input {
+    padding-inline-end: 6.75rem;
+  }
+
+  .password-visibility-toggle {
+    right: 6px;
+    padding-inline: 6px;
+    font-size: 0.72rem;
+  }
+}
