@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { phaseLabel, type SafeJob } from "./jobResilience";
+import "./jobProgressPresentation.css";
 
 interface JobResilienceActionsProps {
   job: SafeJob;
