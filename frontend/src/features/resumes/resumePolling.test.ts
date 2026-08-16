@@ -39,14 +39,14 @@ function job(
 }
 
 describe("resume polling", () => {
-  it("uses the responsive bounded delay schedule", () => {
+  it("uses a steady one-second bounded delay between checks", () => {
     expect(
       [0, 1, 2, 3, 4, 20].map(pollDelayForAttempt),
-    ).toEqual([1_000, 1_000, 2_000, 2_000, 3_000, 3_000]);
+    ).toEqual([1_000, 1_000, 1_000, 1_000, 1_000, 1_000]);
     expect(POLLING_MAX_DURATION_MS).toBe(5 * 60 * 1_000);
   });
 
-  it("stops immediately after a validated terminal state", async () => {
+  it("checks immediately, then stops after a validated terminal state", async () => {
     const delays: number[] = [];
     const fetchJob = vi
       .fn()
@@ -64,7 +64,7 @@ describe("resume polling", () => {
       },
     });
 
-    expect(delays).toEqual([1_000, 1_000]);
+    expect(delays).toEqual([1_000]);
     expect(updates.map((value) => value.status)).toEqual([
       "processing",
       "completed",
@@ -147,10 +147,11 @@ describe("resume polling", () => {
 
   it("pauses without marking the backend job failed at five minutes", async () => {
     let now = 0;
+    const processing = job("processing");
     const result = await pollResumeJob({
       jobId,
       expectedType: "resume.import-pdf",
-      fetchJob: vi.fn().mockResolvedValue(job("processing")),
+      fetchJob: vi.fn().mockResolvedValue(processing),
       now: () => now,
       wait: async (delay) => {
         now += delay;
@@ -162,13 +163,14 @@ describe("resume polling", () => {
 
     expect(result).toEqual({
       reason: "timeout",
-      job: undefined,
+      job: processing,
     });
   });
 
-  it("honors cancellation without an extra request", async () => {
+  it("honors cancellation after the immediate check without an extra request", async () => {
     const controller = new AbortController();
-    const fetchJob = vi.fn();
+    const processing = job("processing");
+    const fetchJob = vi.fn().mockResolvedValue(processing);
     const result = await pollResumeJob({
       jobId,
       expectedType: "resume.import-pdf",
@@ -179,7 +181,7 @@ describe("resume polling", () => {
       },
     });
 
-    expect(result.reason).toBe("cancelled");
-    expect(fetchJob).not.toHaveBeenCalled();
+    expect(result).toEqual({ reason: "cancelled", job: processing });
+    expect(fetchJob).toHaveBeenCalledTimes(1);
   });
 });
