@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import request from "supertest";
 import { Types } from "mongoose";
+import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { app } from "../../app.js";
 import { JobRecordModel } from "../../jobs/job.model.js";
@@ -108,6 +108,10 @@ async function createQuizFixture(userId: string, documentId: string) {
   return { quiz, question, attempt };
 }
 
+function expectDeletedEnvelope(body: unknown, id: string) {
+  expect(body).toEqual({ success: true, data: { deleted: true, id } });
+}
+
 describe("Learning child resource deletion", () => {
   it("deletes an owned conversation and its messages", async () => {
     const owner = await registerTestUser(app, {
@@ -120,13 +124,14 @@ describe("Learning child resource deletion", () => {
       document._id.toString(),
     );
 
-    await request(app)
+    const response = await request(app)
       .delete(
         `/api/v1/learning-documents/${document._id.toString()}/conversations/${conversation._id.toString()}`,
       )
       .set("Authorization", `Bearer ${owner.accessToken}`)
-      .expect(204);
+      .expect(200);
 
+    expectDeletedEnvelope(response.body, conversation._id.toString());
     expect(await ConversationModel.exists({ _id: conversation._id })).toBeFalsy();
     expect(await MessageModel.exists({ _id: message._id })).toBeFalsy();
     expect(await LearningDocumentModel.exists({ _id: document._id })).toBeTruthy();
@@ -201,16 +206,14 @@ describe("Learning child resource deletion", () => {
       displayName: "Learning Child Delete Flashcards",
     });
     const document = await createReadyDocument(owner.userId, "Flashcard Delete");
-    const { set, card } = await createFlashcardFixture(
-      owner.userId,
-      document._id.toString(),
-    );
+    const { set, card } = await createFlashcardFixture(owner.userId, document._id.toString());
 
-    await request(app)
+    const response = await request(app)
       .delete(`/api/v1/flashcard-sets/${set._id.toString()}`)
       .set("Authorization", `Bearer ${owner.accessToken}`)
-      .expect(204);
+      .expect(200);
 
+    expectDeletedEnvelope(response.body, set._id.toString());
     expect(await FlashcardSetModel.exists({ _id: set._id })).toBeFalsy();
     expect(await FlashcardModel.exists({ _id: card._id })).toBeFalsy();
     expect(await LearningDocumentModel.exists({ _id: document._id })).toBeTruthy();
@@ -222,10 +225,7 @@ describe("Learning child resource deletion", () => {
       displayName: "Learning Child Delete Flashcards Busy",
     });
     const document = await createReadyDocument(owner.userId, "Flashcard Busy");
-    const { set, card } = await createFlashcardFixture(
-      owner.userId,
-      document._id.toString(),
-    );
+    const { set, card } = await createFlashcardFixture(owner.userId, document._id.toString());
     await JobRecordModel.create({
       userId: owner.userId,
       type: "learning.flashcards.generate",
@@ -260,10 +260,7 @@ describe("Learning child resource deletion", () => {
       displayName: "Learning Child Delete Flashcards Other",
     });
     const document = await createReadyDocument(owner.userId, "Flashcard Private");
-    const { set, card } = await createFlashcardFixture(
-      owner.userId,
-      document._id.toString(),
-    );
+    const { set, card } = await createFlashcardFixture(owner.userId, document._id.toString());
 
     const response = await request(app)
       .delete(`/api/v1/flashcard-sets/${set._id.toString()}`)
@@ -286,11 +283,12 @@ describe("Learning child resource deletion", () => {
       document._id.toString(),
     );
 
-    await request(app)
+    const response = await request(app)
       .delete(`/api/v1/quizzes/${quiz._id.toString()}`)
       .set("Authorization", `Bearer ${owner.accessToken}`)
-      .expect(204);
+      .expect(200);
 
+    expectDeletedEnvelope(response.body, quiz._id.toString());
     expect(await QuizModel.exists({ _id: quiz._id })).toBeFalsy();
     expect(await QuizQuestionModel.exists({ _id: question._id })).toBeFalsy();
     expect(await QuizAttemptModel.exists({ _id: attempt._id })).toBeFalsy();
