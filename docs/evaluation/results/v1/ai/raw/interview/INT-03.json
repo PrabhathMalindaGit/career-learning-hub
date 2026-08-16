@@ -1,0 +1,32 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "INT-03",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "sanitization": "Account-scoped userId omitted from repository evidence; generated questions, prepared answer, feedback, execution identifiers, and timestamps preserved.",
+  "evidence": {
+    "case_id": "INT-03",
+    "case_version": "1.0",
+    "role_title": "Junior Accountant",
+    "question_generation": {
+      "sessionId":"6a82134cfcfac3c65e8812c3",
+      "jobId":"6a82134cfcfac3c65e8812ce",
+      "requestedCount":6,
+      "questions":[
+        {"_id":"6a8213587d753b640073a891","sessionId":"6a82134cfcfac3c65e8812c3","source":"ai-generated","category":"invoice checking","difficulty":"easy","question":"What is a three-way match in accounts payable, and what three documents are compared during this process?","questionType":"short-answer","isPinned":false,"createdAt":"2026-08-16T19:45:28.788Z","updatedAt":"2026-08-16T19:45:28.788Z"},
+        {"_id":"6a8213587d753b640073a892","sessionId":"6a82134cfcfac3c65e8812c3","source":"ai-generated","category":"reconciliation","difficulty":"medium","question":"Explain the main purpose of a bank reconciliation statement and identify two common reasons why a company's cash book balance might differ from the bank statement balance.","questionType":"short-answer","isPinned":false,"createdAt":"2026-08-16T19:45:28.788Z","updatedAt":"2026-08-16T19:45:28.788Z"},
+        {"_id":"6a8213587d753b640073a893","sessionId":"6a82134cfcfac3c65e8812c3","source":"ai-generated","category":"accuracy","difficulty":"easy","question":"Can you describe a specific technique or habit you use to maintain high accuracy when entering or checking financial data?","questionType":"behavioral","isPinned":false,"createdAt":"2026-08-16T19:45:28.788Z","updatedAt":"2026-08-16T19:45:28.788Z"},
+        {"_id":"6a8213587d753b640073a894","sessionId":"6a82134cfcfac3c65e8812c3","source":"ai-generated","category":"discrepancies","difficulty":"medium","question":"Tell me about a situation where you discovered a discrepancy in financial figures or documentation. How did you identify it and what steps did you take to resolve it?","questionType":"behavioral","isPinned":false,"createdAt":"2026-08-16T19:45:28.788Z","updatedAt":"2026-08-16T19:45:28.788Z"},
+        {"_id":"6a8213587d753b640073a895","sessionId":"6a82134cfcfac3c65e8812c3","source":"ai-generated","category":"invoice checking","difficulty":"medium","question":"You are reviewing a vendor invoice for $5,000. The purchase order lists the price as $4,500, and the receiving log confirms that only $4,500 worth of goods were delivered. How would you handle this discrepancy before approving payment?","questionType":"scenario-based","isPinned":false,"createdAt":"2026-08-16T19:45:28.788Z","updatedAt":"2026-08-16T19:45:28.788Z"},
+        {"_id":"6a8213587d753b640073a896","sessionId":"6a82134cfcfac3c65e8812c3","source":"ai-generated","category":"reconciliation","difficulty":"hard","question":"During a month-end reconciliation, you find an unexplained $12,500 discrepancy between the general ledger accounts receivable control account and the sub-ledger balance. What step-by-step investigation approach would you take to resolve this?","questionType":"scenario-based","isPinned":false,"createdAt":"2026-08-16T19:45:28.788Z","updatedAt":"2026-08-16T19:45:28.788Z"}
+      ]
+    },
+    "feedback": {
+      "sessionId":"6a821359fcfac3c65e88131c",
+      "question":{"_id":"6a821359fcfac3c65e88131e","sessionId":"6a821359fcfac3c65e88131c","source":"manual","category":"invoice discrepancies","difficulty":"medium","question":"What would you do if an invoice did not match the purchase order?","questionType":"scenario-based","isPinned":false,"createdAt":"2026-08-16T19:45:29.104Z","updatedAt":"2026-08-16T19:45:29.104Z"},
+      "suppliedAnswer":{"answer":{"type":"scenario-based","text":"I would compare the invoice and order again, check the supporting details, and ask the responsible person before changing anything. I would keep a note of what was corrected."}},
+      "attempt":{"_id":"6a821359fcfac3c65e881326","sessionId":"6a821359fcfac3c65e88131c","questionId":"6a821359fcfac3c65e88131e","status":"feedback-completed","createdAt":"2026-08-16T19:45:29.126Z","updatedAt":"2026-08-16T19:45:34.850Z","answer":{"type":"scenario-based","text":"I would compare the invoice and order again, check the supporting details, and ask the responsible person before changing anything. I would keep a note of what was corrected."},"feedbackJobId":"6a821359fcfac3c65e881333","feedback":{"score":72,"summary":"The candidate demonstrates a cautious and logical approach to handling invoice discrepancies, emphasizing double-checking, verification before taking action, and maintaining documentation for an audit trail.","strengths":["Emphasizes verification before making any adjustments or payments.","Demonstrates basic risk awareness by consulting responsible parties.","Includes a step for documenting the correction for audit purposes."],"improvements":["Could mention specific standard accounting procedures such as three-way matching (Purchase Order, Goods Received Note, Invoice).","Could detail how to categorize the discrepancy (e.g., pricing issue vs. quantity mismatch) to determine whether to contact Procurement, the vendor, or the department manager.","Could explicitly state placing a hold on the invoice payment until the discrepancy is resolved."],"suggestedAnswerOutline":["1. Perform a three-way match: Compare the invoice, Purchase Order, and receiving report/delivery slip to identify the exact point of mismatch (price, quantity, terms, or items).","2. Determine the discrepancy type: Identify whether it is an internal error (e.g., PO entered incorrectly) or a supplier issue (e.g., overbilling or partial shipment).","3. Communicate and verify: Reach out to the internal purchasing/procurement team or vendor representative for clarification.","4. Hold payment and document: Place the invoice on hold in the accounting software and document the notes/correspondence.","5. Resolve and record: Once approved (via a corrected invoice or credit memo), process the updated invoice and record the audittrail."],"promptVersion":"interview-written-feedback-v2","provider":"gemini","model":"gemini-3.6-flash","completedAt":"2026-08-16T19:45:34.850Z"}}
+    }
+  }
+}
