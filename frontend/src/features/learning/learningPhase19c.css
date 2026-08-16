@@ -46,6 +46,19 @@
   gap: 10px;
 }
 
+/* Empty study collections already expose the creator, so suppress the
+   otherwise redundant Close creator control. */
+.learning-flashcard-sets:not(:has(.learning-flashcard-set-list))
+  > .learning-panel-header
+  .learning-panel-actions
+  > .learning-primary-button[aria-expanded="true"],
+.learning-quizzes:not(:has(.learning-quiz-set-list))
+  > .learning-panel-header
+  .learning-panel-actions
+  > .learning-primary-button[aria-expanded="true"] {
+  display: none;
+}
+
 .learning-generation-panel {
   margin-top: 26px;
   padding: 20px;
