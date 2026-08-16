@@ -77,6 +77,12 @@ describe("Phase 19C Learning Workspace contracts", () => {
     expect(phaseCss).toContain(
       ".learning-response-status .job-resilience-actions__buttons button",
     );
+    expect(phaseCss).toMatch(
+      /\.job-resilience-actions__progress\s*\{[\s\S]*?display:\s*none;/,
+    );
+    expect(phaseCss).toMatch(
+      /\.learning-response-status \.job-resilience-actions__progress\s*\{[\s\S]*?display:\s*block;/,
+    );
   });
 
   it("keeps user and assistant chat messages distinct with sources attached inside messages", () => {
