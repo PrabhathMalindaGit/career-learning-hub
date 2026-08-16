@@ -1,5 +1,20 @@
 /* Phase 19C — bounded Learning Workspace refinements. */
 
+.learning-tabs {
+  scroll-snap-type: inline proximity;
+  scrollbar-gutter: stable;
+}
+
+.learning-tabs button {
+  scroll-snap-align: center;
+}
+
+.learning-tabs button[aria-selected="true"] {
+  box-shadow:
+    0 5px 14px rgba(20, 45, 31, 0.08),
+    inset 0 -3px 0 var(--accent);
+}
+
 .learning-study-answer--reserved {
   min-height: 190px;
 }
@@ -16,6 +31,11 @@
   content: "▤";
   font-size: 0.9em;
   line-height: 1;
+}
+
+.learning-source-pages button,
+.learning-source-pages a {
+  text-underline-offset: 3px;
 }
 
 .learning-panel-actions {
