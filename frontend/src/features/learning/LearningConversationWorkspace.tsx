@@ -97,6 +97,9 @@ function unavailableMessage(document: LearningDocument): string {
   return "This document is unavailable while deletion completes.";
 }
 
+// Features 5.7.2–5.7.3 — Grounded document conversation.
+// Submits one user question through the durable grounded-response job flow and
+// presents validated source-page references with the stored assistant answer.
 export function LearningConversationWorkspace() {
   const { documentId = "", conversationId = "" } = useParams<{
     documentId: string;
