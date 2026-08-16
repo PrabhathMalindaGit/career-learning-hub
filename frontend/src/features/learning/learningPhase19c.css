@@ -111,6 +111,79 @@
   align-self: center;
 }
 
+.learning-quiz-focus-note {
+  margin-top: 24px;
+  padding: 12px 14px;
+  border: 1px solid #d5dfd7;
+  border-radius: 11px;
+  color: var(--text-muted);
+  background: #f8faf8;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.learning-performance-label {
+  color: inherit;
+  font-weight: 850;
+}
+
+.learning-score-card--needs-review {
+  border-color: #d9a9a3;
+  border-top-color: #a84a42;
+  background:
+    linear-gradient(135deg, rgba(249, 232, 230, 0.92), transparent 62%),
+    #fffdf8;
+}
+
+.learning-score-card--needs-review .learning-score-value strong,
+.learning-score-card--needs-review .learning-performance-label {
+  color: #8a332d;
+}
+
+.learning-score-card--developing {
+  border-color: #dccb9e;
+  border-top-color: #a77920;
+  background:
+    linear-gradient(135deg, rgba(250, 243, 222, 0.94), transparent 62%),
+    #fffdf8;
+}
+
+.learning-score-card--developing .learning-score-value strong,
+.learning-score-card--developing .learning-performance-label {
+  color: #7b5919;
+}
+
+.learning-score-card--strong .learning-performance-label {
+  color: #27683e;
+}
+
+.learning-attempt-card--needs-review {
+  border-left-color: #a84a42 !important;
+}
+
+.learning-attempt-card--needs-review .learning-attempt-result > strong,
+.learning-attempt-card--needs-review .learning-performance-label {
+  color: #8a332d;
+}
+
+.learning-attempt-card--developing {
+  border-left-color: #a77920 !important;
+}
+
+.learning-attempt-card--developing .learning-attempt-result > strong,
+.learning-attempt-card--developing .learning-performance-label {
+  color: #7b5919;
+}
+
+.learning-attempt-card--strong {
+  border-left-color: #2f7d4a !important;
+}
+
+.learning-attempt-card--strong .learning-attempt-result > strong,
+.learning-attempt-card--strong .learning-performance-label {
+  color: #27683e;
+}
+
 @media (max-width: 900px) {
   .learning-upload-panel--compact {
     grid-template-columns: 1fr;
