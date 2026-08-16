@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { dashboardScorePresentation } from "./dashboardScorePresentation";
 import type { DashboardProgress } from "./types";
 
 interface ProgressWidgetsProps {
@@ -38,6 +39,7 @@ function Metric({
   value,
   detail,
   icon,
+  score,
   action,
 }: {
   className: string;
@@ -45,11 +47,15 @@ function Metric({
   value: string;
   detail: string;
   icon: ReactNode;
+  score: number | null;
   action?: {
     label: string;
     to: string;
   };
 }) {
+  const interpretation =
+    score === null ? null : dashboardScorePresentation(score);
+
   return (
     <article className={`dashboard-metric ${className}`}>
       <div className="dashboard-metric__heading">
@@ -57,6 +63,13 @@ function Metric({
         <p>{label}</p>
       </div>
       <strong>{value}</strong>
+      {interpretation ? (
+        <span
+          className={`dashboard-metric__interpretation dashboard-metric__interpretation--${interpretation.level}`}
+        >
+          {interpretation.label}
+        </span>
+      ) : null}
       <small>{detail}</small>
       {action ? (
         <Link className="dashboard-metric__action" to={action.to}>
@@ -130,6 +143,7 @@ export function ProgressWidgets({
           className="dashboard-metric--resume"
           label="Resume performance"
           value={scoreLabel(resumeAverage)}
+          score={resumeAverage}
           detail={
             resumeAverage === null
               ? "No Resume analysis in this period."
@@ -158,6 +172,7 @@ export function ProgressWidgets({
           className="dashboard-metric--interview"
           label="Interview feedback"
           value={scoreLabel(interviewAverage)}
+          score={interviewAverage}
           detail={
             interviewAverage === null
               ? "No scored feedback in this period."
@@ -185,6 +200,7 @@ export function ProgressWidgets({
           className="dashboard-metric--learning"
           label="Quiz performance"
           value={scoreLabel(quizAverage)}
+          score={quizAverage}
           detail={
             quizAverage === null
               ? "No Quiz results in this period."
