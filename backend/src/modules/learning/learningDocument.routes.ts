@@ -7,6 +7,9 @@ import {
 import { validate } from "../../middleware/validate.js";
 import { asyncHandler } from "../../shared/asyncHandler.js";
 import {
+  deleteLearningConversationController,
+} from "./learningChildDeletion.controller.js";
+import {
   createConversationController,
   createFlashcardSetController,
   createQuizController,
@@ -104,6 +107,14 @@ learningDocumentRouter.get(
   }),
   requireOwnedLearningDocument,
   asyncHandler(listConversationsController),
+);
+
+learningDocumentRouter.delete(
+  "/:documentId/conversations/:conversationId",
+  validate({ params: conversationParamsSchema }),
+  requireOwnedLearningDocument,
+  requireOwnedConversation,
+  asyncHandler(deleteLearningConversationController),
 );
 
 learningDocumentRouter.get(
