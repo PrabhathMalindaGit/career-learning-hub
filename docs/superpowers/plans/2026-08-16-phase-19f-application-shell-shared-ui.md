@@ -15,9 +15,11 @@ Create focused tests for:
 - complete accessible account email and visual-inspection title in `AccountSummary`;
 - collapsed shared Request-ID disclosure in `TechnicalDetails`;
 - StateSurface using collapsed Technical details without changing its live-region semantics;
-- Pager disabling both paging actions while busy.
+- Pager preserving caller-owned button availability while reporting `aria-busy`.
 
-The connector cannot execute tests. These tests are written before production code, but RED/GREEN status must remain unclaimed until the user runs them locally or another executable environment supplies fresh evidence.
+The connector cannot execute tests. These tests are written before their production corrections where possible, but RED/GREEN status must remain grounded in executable local evidence.
+
+The first full regression run at Phase 19F head `917eb6b5ed8b0820373a4fec4a6e0f5896fd199a` supplied real RED evidence for Pager semantics: `MainDashboard.test.tsx` failed because automatically disabling Pager controls while busy prevented an in-flight Dashboard activity request from being superseded and aborted.
 
 ## Task 2 — Shared account presentation
 
@@ -39,9 +41,15 @@ Migrate:
 
 Keep the Phase 19E `authentication-technical-details` class on auth screens. Add restrained generic Technical-details styling for non-auth StateSurface use.
 
-## Task 4 — Pager busy-state safety
+## Task 4 — Pager busy-state semantics
 
-Change shared Pager buttons to be disabled when either the caller says they are disabled or `busy` is true. Keep labels, callbacks, page text and routing/data ownership caller-controlled.
+Keep shared Pager routing, fetching and disabled policy caller-owned.
+
+- `busy` sets `aria-busy` on the paging landmark.
+- `previousDisabled` and `nextDisabled` remain the only native disabled inputs.
+- Do not automatically disable paging just because `busy` is true.
+- This preserves flows such as Dashboard activity where a new page action intentionally supersedes and aborts an obsolete request.
+- A caller that needs to block paging while loading may explicitly fold loading state into its own disabled flags.
 
 Do not add page-number routing, data fetching or a pagination framework.
 
@@ -54,7 +62,7 @@ Add minimal disabled styling for shared `.form-field` controls and `.field-contr
 Run locally from repository root:
 
 ```bash
-npm run test --workspace @career-learning-hub/web -- src/components/AccountSummary.test.tsx src/components/TechnicalDetails.test.tsx src/components/Pager.test.tsx src/components/StateSurface.test.tsx src/components/Dialog.test.tsx src/components/PageHeader.test.tsx src/features/auth/authenticationPhase19e.test.tsx src/features/auth/logoutPhase19e.test.tsx src/routing/router.test.tsx
+npm run test --workspace @career-learning-hub/web -- src/components/AccountSummary.test.tsx src/components/TechnicalDetails.test.tsx src/components/Pager.test.tsx src/components/StateSurface.test.tsx src/components/Dialog.test.tsx src/components/PageHeader.test.tsx src/features/auth/authenticationPhase19e.test.tsx src/features/auth/logoutPhase19e.test.tsx src/features/dashboard/MainDashboard.test.tsx src/routing/router.test.tsx
 npm run typecheck --workspace @career-learning-hub/web
 npm run build --workspace @career-learning-hub/web
 git diff --check origin/main...HEAD
@@ -72,7 +80,8 @@ Verify at representative desktop, tablet and mobile widths:
 - desktop and mobile logout still show `Logging out…` and prevent duplicates;
 - mobile navigation opens/closes, traps focus and restores focus correctly;
 - Request IDs are hidden behind collapsed Technical details in auth and feature error states;
-- Pager controls become unavailable while loading;
+- Pager shows loading state without unexpectedly overriding caller-owned paging availability;
+- Dashboard activity can supersede an obsolete in-flight page request without showing stale results;
 - disabled form fields remain legible;
 - no regressions in Resume, Interview, Learning, Dashboard and Authentication shell entry points.
 
