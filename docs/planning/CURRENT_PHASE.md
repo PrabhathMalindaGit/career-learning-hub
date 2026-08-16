@@ -3,7 +3,7 @@
 ## Current activity
 
 - Activity: `PHASE 20B-8/9 — EVALUATION EXECUTION PACK`
-- Status: `ACTIVE / PR #39 COMPREHENSIVE REPRODUCIBILITY REPAIR / AWAITING LOCAL REQUALIFICATION`
+- Status: `ACTIVE / PR #39 LOCALLY QUALIFIED AT 8e4810fe70f19194554bdb812e888a75c08aec1d / FINAL BOOKKEEPING REPAIR`
 - Working branch: `phase-20b-8-9-evaluation-execution-pack-v2`
 - Base `main` commit: `36a300ff7e35e60b560c5a722d566333ba82b06b`
 - Base identity: `MERGE OF PR #38 — PHASE 20B-4/6/7 EVALUATION METHOD DESIGN FREEZE`
@@ -98,12 +98,14 @@ Frozen structures include:
 - `sus_responses.csv` linked to the same usability campaign through `campaign_id` while preserving raw items 1-10;
 - `accessibility_campaign_metadata.csv`;
 - `accessibility_checks.csv` with A-01 through A-29 linked through `campaign_id`;
-- `ai_resume_scoring.csv`;
-- `ai_interview_questions_scoring.csv` for per-question IQ-01 to IQ-03;
-- `ai_interview_question_sets_scoring.csv` for set-level IQ-04 and IQ-05;
-- `ai_interview_feedback_scoring.csv`;
-- `ai_learning_grounded_qa_scoring.csv` for answer-level LQ-01/LQ-03/LQ-04 and unsupported-claim evidence;
-- `ai_learning_grounded_qa_citations.csv` for one raw row per presented source/page reference and its `CORRECT / INCORRECT / UNVERIFIABLE` classification.
+- `ai_campaign_metadata.csv` for campaign-level AI execution/model/dataset/configuration identity;
+- `ai_resume_scoring.csv` linked through `campaign_id`;
+- `ai_interview_questions_scoring.csv` for per-question IQ-01 to IQ-03, linked through `campaign_id`;
+- `ai_interview_question_sets_scoring.csv` for set-level IQ-04 and IQ-05, linked through `campaign_id`;
+- `ai_interview_feedback_scoring.csv` linked through `campaign_id`;
+- `ai_learning_grounded_qa_scoring.csv` for answer-level LQ-01/LQ-03/LQ-04 and unsupported-claim evidence, linked through `campaign_id`;
+- `ai_learning_grounded_qa_citations.csv` for one raw row per presented source/page reference and its `CORRECT / INCORRECT / UNVERIFIABLE` classification, linked through `campaign_id`;
+- `docs/evaluation/INTERVIEW_AI_EVALUATION_EXECUTION_PROCEDURE.md` defining the supported authenticated API path for reproducing the complete frozen Interview payloads.
 
 Grounded Learning citation totals are not pre-aggregated in Task 9. Later Phase 20B-10 analysis must derive citation counts/rates from the raw citation rows.
 
@@ -145,7 +147,29 @@ Before another review cycle, a bounded broader audit also identified adjacent re
 - Resume cases should freeze the actual application-shaped Resume content and analysis request rather than only a simplified candidate description;
 - Grounded Learning should freeze document title and empty prior-conversation state because both enter the integrated prompt path.
 
-The current comprehensive repair addresses all four points together. It remains inside `docs/` only and now requires a new local qualification at the final repaired head.
+Those items were repaired and locally qualified at `6ad03fd24125e3f16feb8baf050663b3e3071ecf`.
+
+### Review round 4 and final content repair
+
+A fresh exact-head review at `6ad03fd24125e3f16feb8baf050663b3e3071ecf` found:
+
+9. the frozen Interview payloads needed a documented executable path because the integrated frontend helpers do not expose every frozen content-affecting field;
+10. AI scoring rows needed campaign-level execution metadata linkage.
+
+The final content repair added the supported authenticated Interview API execution procedure plus `ai_campaign_metadata.csv` and `campaign_id` linkage across the Resume, Interview and Grounded Learning AI evidence tables.
+
+The user then ran the bounded final local verification at exact head `8e4810fe70f19194554bdb812e888a75c08aec1d`. It passed:
+
+- exact HEAD matched `8e4810fe70f19194554bdb812e888a75c08aec1d`;
+- `ai_campaign_metadata.csv` structure passed;
+- all six AI evidence CSVs preserved `campaign_id` linkage;
+- Interview feedback rubric field remained `answer_relevance`;
+- the authenticated Interview API procedure contained the required session/generation/feedback/job-polling routes;
+- the non-documentation change check produced no output;
+- the text-file `git diff --check` produced no output with PDFs excluded;
+- final working tree was clean.
+
+A subsequent Codex review of that exact qualified head found only that this controlling status/roadmap had not yet been updated to record the successful qualification. The current bookkeeping-only repair addresses that stale status record and does not change any dataset, template, executable procedure, product code, test, configuration or runtime behavior.
 
 ## Ethics boundary
 
@@ -201,7 +225,7 @@ Those counts remain engineering evidence only.
 
 ## Current final-stage roadmap
 
-- Phase 20B-8/9 — `ACTIVE / PR #39 COMPREHENSIVE REPAIR / AWAITING LOCAL REQUALIFICATION`
+- Phase 20B-8/9 — `ACTIVE / PR #39 CONTENT LOCALLY QUALIFIED AT 8e4810fe70f19194554bdb812e888a75c08aec1d / FINAL BOOKKEEPING REPAIR`
 - Phase 20B-5 — `BLOCKED / NOT AUTHORIZED`
 - Evaluation campaigns — `NOT AUTHORIZED`
 - Phase 20B-10 Results Analysis — `PLANNED / NOT AUTHORIZED`
@@ -212,37 +236,23 @@ Those counts remain engineering evidence only.
 
 ## Completion gate for Phase 20B-8/9
 
-Before a new merge approval:
+The comprehensive evaluation-pack content was locally qualified at `8e4810fe70f19194554bdb812e888a75c08aec1d`. Because the current change is bookkeeping-only, the remaining final-head gate is intentionally narrow:
 
-1. working branch must descend from `main @ 36a300ff7e35e60b560c5a722d566333ba82b06b`;
-2. all changed paths must remain under `docs/`;
-3. all JSON inputs must parse;
-4. Resume cases must contain exact application-shaped content, stable unique UUID IDs, exact analysis request context and explicit optional-field rules;
-5. Interview cases must freeze complete session/generation/feedback content-affecting inputs and satisfy count/type-distribution invariants;
-6. both Learning PDFs must match the frozen SHA-256 values and open as four-page, text-extractable documents;
-7. Learning cases must freeze application upload title, fresh-conversation state and exact first question;
-8. U1-U5 bindings must identify repeatable synthetic starting state;
-9. CSV templates must contain no invented results;
-10. SUS must preserve raw items 1-10 and link through `campaign_id`;
-11. accessibility templates must preserve A-01 through A-29 and campaign linkage;
-12. Interview question-unit and set-level scoring must remain separate;
-13. Grounded Learning answer-level scoring and per-reference citation classifications must remain separate, with no pre-aggregated citation totals in Task 9;
-14. `20B-5` and the ethics gate must remain unchanged;
-15. `git diff --check origin/main...HEAD -- . ':(exclude,glob)**/*.pdf'` must pass locally for text changes;
-16. final working tree must be clean;
-17. no application test rerun is required while all changes remain under `docs/`;
-18. addressed review threads may be resolved only after the repaired head is locally qualified;
-19. a fresh Codex review must examine the exact qualified head;
-20. merge requires a new separate exact-head approval after clean review verification.
+1. final working branch must still descend from `main @ 36a300ff7e35e60b560c5a722d566333ba82b06b`;
+2. changes since `8e4810fe70f19194554bdb812e888a75c08aec1d` must be limited to `docs/planning/CURRENT_PHASE.md` and `docs/superpowers/plans/2026-08-16-phase-20b-university-evaluation-evidence.md`;
+3. text `git diff --check` must pass;
+4. final working tree must be clean;
+5. the stale final review thread must be resolved after the bookkeeping head is verified;
+6. merge requires a new separate approval for the exact bookkeeping head.
 
-The PDF-specific gate validates PDFs as documents rather than treating their binary syntax as line-oriented source text. No `.gitattributes` or product/configuration change is required for this evaluation-only slice.
+No application test rerun, PDF requalification, dataset/template rerun or new evaluation-framework review cycle is required for this bookkeeping-only status repair.
 
 ## Current approval boundary
 
 The user has authorized:
 
-`APPROVE PHASE 20B-8/9 — EVALUATION EXECUTION PACK`
+`APPROVE FINAL PR39 BOOKKEEPING REPAIR`
 
-That authorization covers the bounded same-branch synthetic-input/template review repairs required to make Tasks 8/9 reproducible. It does not authorize evaluation execution or product changes.
+That authorization covers only updating the two controlling planning/status documents to record the already-completed qualification at `8e4810fe70f19194554bdb812e888a75c08aec1d`.
 
-All earlier exact-head merge approvals are stale because PR review repairs moved the branch. A new exact-head merge approval is mandatory after final local requalification and clean exact-head review verification.
+The user's earlier merge approval for `8e4810fe70f19194554bdb812e888a75c08aec1d` is stale because this bookkeeping-only repair moves the PR head. A new exact-head merge approval is mandatory after the bookkeeping head is verified.
