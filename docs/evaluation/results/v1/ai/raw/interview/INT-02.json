@@ -1,0 +1,32 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "INT-02",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "sanitization": "Account-scoped userId omitted from repository evidence; generated questions, prepared answer, feedback, execution identifiers, and timestamps preserved.",
+  "evidence": {
+    "case_id": "INT-02",
+    "case_version": "1.0",
+    "role_title": "Marketing Coordinator",
+    "question_generation": {
+      "sessionId": "6a821336fcfac3c65e881201",
+      "jobId": "6a821336fcfac3c65e88120c",
+      "requestedCount": 6,
+      "questions": [
+        {"_id":"6a8213457d753b640073a88b","sessionId":"6a821336fcfac3c65e881201","source":"ai-generated","category":"basic analytics","difficulty":"easy","question":"What is click-through rate (CTR) in digital marketing campaigns, and how is it calculated?","questionType":"short-answer","isPinned":false,"createdAt":"2026-08-16T19:45:09.658Z","updatedAt":"2026-08-16T19:45:09.658Z"},
+        {"_id":"6a8213457d753b640073a88c","sessionId":"6a821336fcfac3c65e881201","source":"ai-generated","category":"campaign coordination","difficulty":"medium","question":"What are the key components of a marketing campaign brief, and why is each component essential for campaign coordination?","questionType":"short-answer","isPinned":false,"createdAt":"2026-08-16T19:45:09.658Z","updatedAt":"2026-08-16T19:45:09.658Z"},
+        {"_id":"6a8213457d753b640073a88d","sessionId":"6a821336fcfac3c65e881201","source":"ai-generated","category":"stakeholder communication","difficulty":"easy","question":"Describe a situation where you had to coordinate with team members or external partners to collect content or project updates under a tight deadline. How did you communicate to keep everyone on track?","questionType":"behavioral","isPinned":false,"createdAt":"2026-08-16T19:45:09.658Z","updatedAt":"2026-08-16T19:45:09.658Z"},
+        {"_id":"6a8213457d753b640073a88e","sessionId":"6a821336fcfac3c65e881201","source":"ai-generated","category":"content planning","difficulty":"medium","question":"Can you share an example of a time when a content plan or marketing asset did not achieve its intended engagement? How did you evaluate the outcome and adapt your approach?","questionType":"behavioral","isPinned":false,"createdAt":"2026-08-16T19:45:09.658Z","updatedAt":"2026-08-16T19:45:09.658Z"},
+        {"_id":"6a8213457d753b640073a88f","sessionId":"6a821336fcfac3c65e881201","source":"ai-generated","category":"campaign coordination","difficulty":"medium","question":"You are managing a multi-channel campaign timeline, but the design team informs you that key creative assets will be delayed by two days. How would you handle this delay and keep the overall launch on schedule?","questionType":"scenario-based","isPinned":false,"createdAt":"2026-08-16T19:45:09.658Z","updatedAt":"2026-08-16T19:45:09.658Z"},
+        {"_id":"6a8213457d753b640073a890","sessionId":"6a821336fcfac3c65e881201","source":"ai-generated","category":"basic analytics","difficulty":"hard","question":"Following a promotional email campaign, analytics show a low open rate (12%) but a very high click-to-open conversion rate (35%). How would you evaluate these conflicting metrics and present actionable recommendations to stakeholders?","questionType":"scenario-based","isPinned":false,"createdAt":"2026-08-16T19:45:09.658Z","updatedAt":"2026-08-16T19:45:09.658Z"}
+      ]
+    },
+    "feedback": {
+      "sessionId":"6a821346fcfac3c65e881266",
+      "question":{"_id":"6a821346fcfac3c65e881268","sessionId":"6a821346fcfac3c65e881266","source":"manual","category":"campaign coordination","difficulty":"medium","question":"Describe a time you had to coordinate several marketing tasks with the same deadline.","questionType":"behavioral","isPinned":false,"createdAt":"2026-08-16T19:45:10.797Z","updatedAt":"2026-08-16T19:45:10.797Z"},
+      "suppliedAnswer":{"answer":{"type":"behavioral","text":"During my internship we had social posts and an event in the same week. I made a list, checked the content calendar and asked the event lead what was most urgent. We finished the materials before the event."}},
+      "attempt":{"_id":"6a821346fcfac3c65e881270","sessionId":"6a821346fcfac3c65e881266","questionId":"6a821346fcfac3c65e881268","status":"feedback-completed","createdAt":"2026-08-16T19:45:10.819Z","updatedAt":"2026-08-16T19:45:16.108Z","answer":{"type":"behavioral","text":"During my internship we had social posts and an event in the same week. I made a list, checked the content calendar and asked the event lead what was most urgent. We finished the materials before the event."},"feedbackJobId":"6a821346fcfac3c65e88127d","feedback":{"score":5,"summary":"The answer addresses the question directly using a basic STAR structure, demonstrating prioritization and communication.However, it lacks specific details, tools used, and measurable results.","strengths":["Directly addresses the situation of managing competing deadlines.","Demonstrates proactive communication by consulting the event lead to align on priorities."],"improvements":["Add specific details regarding the scale of the tasks (e.g., number of social posts, type of event).","Mention specific tools used for tracking and organization (e.g., Asana, Trello, Excel).","Include measurable outcomes or metrics to demonstrate the success of the execution."],"suggestedAnswerOutline":["Situation: Outline the specific marketing project/event and the overlapping deadlines you faced.","Task: Clearly define your responsibility as the coordinator in managing both workstreams.","Action: Detail the prioritization methodology, tools used (e.g., content calendar, task management software), and how you communicated with stakeholders.","Result: Share the successful outcome, including any positive metrics (e.g., event attendance, social engagement, 100% on-time completion)."],"promptVersion":"interview-written-feedback-v2","provider":"gemini","model":"gemini-3.6-flash","completedAt":"2026-08-16T19:45:16.108Z"}}
+    }
+  }
+}

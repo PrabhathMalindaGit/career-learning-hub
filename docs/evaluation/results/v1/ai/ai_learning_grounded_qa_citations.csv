@@ -1,0 +1,8 @@
+campaign_id,case_id,case_version,rubric_version,output_reference,citation_unit_id,citation_index,presented_source_page,associated_claim_reference,citation_classification,rater_notes
+CLH-AI-001,LQ-A01,1.0,1.0,docs/evaluation/results/v1/ai/raw/learning/LQ-A01.json,LQ-A01-C1,1,1,household recruitment count,CORRECT,"Page 1 supports the 120-household recruitment claim."
+CLH-AI-001,LQ-A02,1.0,1.0,docs/evaluation/results/v1/ai/raw/learning/LQ-A02.json,LQ-A02-C1,1,3,recorded monitoring information,CORRECT,"Page 3 supports monthly generation, aggregate bill credits, support requests and system downtime monitoring."
+CLH-AI-001,LQ-A02,1.0,1.0,docs/evaluation/results/v1/ai/raw/learning/LQ-A02.json,LQ-A02-C2,2,4,interpretation limitation,CORRECT,"Page 4 supports the limitation that results from 120 households in one municipality should not automatically be generalized."
+CLH-AI-001,LQ-B01,1.0,1.0,docs/evaluation/results/v1/ai/raw/learning/LQ-B01.json,LQ-B01-C1,1,2,three native planting species,CORRECT,"Page 2 names smooth cordgrass, saltmeadow rush and sea purslane."
+CLH-AI-001,LQ-B02,1.0,1.0,docs/evaluation/results/v1/ai/raw/learning/LQ-B02.json,LQ-B02-C1,1,1,shorebird nesting buffer objective,CORRECT,"Page 1 supports preservation of a 3-hectare shorebird nesting buffer."
+CLH-AI-001,LQ-B02,1.0,1.0,docs/evaluation/results/v1/ai/raw/learning/LQ-B02.json,LQ-B02-C2,2,3,shorebird monitoring method,CORRECT,"Page 3 supports twice-monthly observations from designated points outside the nesting buffer."
+CLH-AI-001,LQ-B03,1.0,1.0,docs/evaluation/results/v1/ai/raw/learning/LQ-B03.json,LQ-B03-C1,1,4,fish-population sampling exclusion,CORRECT,"Page 4 explicitly states that fish-population sampling is not included."

@@ -1,0 +1,64 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "RSM-01",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "analysis_id": "6a820f5bfcfac3c65e87f32c",
+  "sanitization": "Account-scoped userId omitted from repository evidence; AI output content preserved.",
+  "analysis": {
+    "target": {
+      "role": "Marketing Coordinator",
+      "jobDescription": "Entry-level Marketing Coordinator role supporting content coordination, campaign support, basic analytics, and stakeholder communication."
+    },
+    "scoreBreakdown": {
+      "keywordMatch": 18,
+      "clarity": 20,
+      "evidence": 14,
+      "formatting": 22
+    },
+    "resumeId": "6a820f55fcfac3c65e87f2ee",
+    "resumeVersionId": "6a820f55fcfac3c65e87f2f0",
+    "jobId": "6a820f55fcfac3c65e87f2ff",
+    "scoringVersion": "resume-readiness-v1",
+    "promptVersion": "resume-analysis-prompt-v1",
+    "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "totalScore": 74,
+    "issues": [
+      {
+        "code": "MISSING_ANALYTICS_METRICS",
+        "severity": "medium",
+        "message": "The resume mentions summarizing survey responses but lacks quantifiable outcomes or metrics showing analytical impact."
+      },
+      {
+        "code": "KEYWORD_GAP",
+        "severity": "low",
+        "message": "Target keywords such as 'campaign support' and 'stakeholder communication' are missing or implied rather than explicitly stated."
+      }
+    ],
+    "strengths": [
+      {
+        "title": "Relevant Entry-Level Experience",
+        "detail": "The marketing internship clearly demonstrates core responsibilities like managing a content calendar, creating social content, and conducting market research."
+      }
+    ],
+    "missingKeywords": [
+      "campaign support",
+      "basic analytics",
+      "stakeholder communication"
+    ],
+    "suggestions": [
+      {
+        "id": "af99c8cf-3b8a-48d2-bb19-5fa684eb7d98",
+        "bulletId": "7b5d17ba-ece8-5a26-9591-bceb441f3c5f",
+        "originalText": "Drafted social posts, maintained a content calendar, supported two product events, and summarized customer survey responses.",
+        "rewrittenText": "Maintained content calendar and drafted social posts for campaign support, assisted with two product events, and performed basic analytics by summarizing [X] customer survey responses.",
+        "rationale": "Strengthens alignment with target role keywords (campaign support, basic analytics) while prompting for quantifiable survey numbers if available.",
+        "verificationRequired": true
+      }
+    ],
+    "createdAt": "2026-08-16T19:28:27.474Z",
+    "updatedAt": "2026-08-16T19:28:27.474Z"
+  }
+}

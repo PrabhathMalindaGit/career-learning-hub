@@ -1,0 +1,77 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "RSM-04",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "analysis_id": "6a8211b5fcfac3c65e880600",
+  "sanitization": "Account-scoped userId omitted from repository evidence; AI output content preserved.",
+  "analysis": {
+    "target": {
+      "role": "Junior Data Analyst",
+      "jobDescription": "Entry-level Junior Data Analyst role emphasizing data cleaning, SQL, basic visualization, and accuracy."
+    },
+    "scoreBreakdown": {
+      "keywordMatch": 17,
+      "clarity": 19,
+      "evidence": 12,
+      "formatting": 18
+    },
+    "resumeId": "6a8211aefcfac3c65e8805bf",
+    "resumeVersionId": "6a8211aefcfac3c65e8805c1",
+    "jobId": "6a8211aefcfac3c65e8805d0",
+    "scoringVersion": "resume-readiness-v1",
+    "promptVersion": "resume-analysis-prompt-v1",
+    "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "totalScore": 66,
+    "issues": [
+      {
+        "code": "LIMITED_WORK_EXPERIENCE",
+        "severity": "medium",
+        "message": "The resume contains only one short work experience bullet point with minimal metric-backed evidence."
+      },
+      {
+        "code": "MISSING_SQL_EVIDENCE",
+        "severity": "medium",
+        "message": "SQL is listed in skills, but no work bullet or project bullet demonstrates SQL application."
+      }
+    ],
+    "strengths": [
+      {
+        "title": "Relevant Skills Listed",
+        "detail": "Includes key tools relevant for a junior data analyst such as Excel, SQL, and Power BI."
+      },
+      {
+        "title": "Concise Resume Structure",
+        "detail": "The summary and project sections directly align with entry-level data analysis expectations."
+      }
+    ],
+    "missingKeywords": [
+      "SQL Queries",
+      "Data Visualization",
+      "Data Quality",
+      "Reporting"
+    ],
+    "suggestions": [
+      {
+        "id": "c0c6cc69-4d3c-43e9-ad66-9271e95598e8",
+        "bulletId": "8855721a-5091-5032-988b-81035abfd104",
+        "originalText": "Maintained weekly spreadsheets and checked duplicate order records.",
+        "rewrittenText": "Maintained weekly operational spreadsheets and audited order records to resolve duplicate entries across [X] records, ensuring data accuracy.",
+        "rationale": "Adds actionable phrasing around data cleaning and quality while placing a placeholder for measurable volume.",
+        "verificationRequired": true
+      },
+      {
+        "id": "f2d54d81-f42a-4d57-bd36-15e03bbbd57e",
+        "bulletId": "1db77cfa-c3a5-5612-bb89-6a8b6da2a738",
+        "originalText": "Cleaned a 5,000-row fictional sales dataset in Excel and produced summary charts.",
+        "rewrittenText": "Cleaned and standardized a 5,000-row sales dataset in Excel and created summary charts to highlight key performance trends.",
+        "rationale": "Clarifies the analytical workflow and output without adding unverified facts.",
+        "verificationRequired": false
+      }
+    ],
+    "createdAt": "2026-08-16T19:38:30.001Z",
+    "updatedAt": "2026-08-16T19:38:30.001Z"
+  }
+}

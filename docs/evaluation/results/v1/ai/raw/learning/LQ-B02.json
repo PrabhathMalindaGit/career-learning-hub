@@ -1,0 +1,19 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "LQ-B02",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "case_version": "1.0",
+  "case_type": "ANSWERABLE_MULTI",
+  "document_fixture_id": "LEARN-B-WETLAND-01",
+  "document_id": "6a8215c3fcfac3c65e882685",
+  "conversation_id": "6a8215d9fcfac3c65e882860",
+  "job_id": "6a8215dafcfac3c65e88286f",
+  "question": "What is the shorebird protection objective and how are shorebirds monitored?",
+  "formal_output": {
+    "answer": "The shorebird protection objective is to preserve a 3-hectare buffer for shorebird nesting. Shorebirds are monitored through observations conducted twice per month from designated observation points located outside the nesting buffer.",
+    "sourcePages": [1, 3],
+    "assistantMessageId": "6a8215dcfcfac3c65e8828a2"
+  }
+}

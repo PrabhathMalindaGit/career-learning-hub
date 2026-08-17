@@ -1,0 +1,68 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "RSM-02",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "analysis_id": "6a82100dfcfac3c65e87f8c3",
+  "sanitization": "Account-scoped userId omitted from repository evidence; AI output content preserved.",
+  "analysis": {
+    "target": {
+      "role": "Junior Accountant",
+      "jobDescription": "Entry-level Junior Accountant role emphasizing accuracy, reconciliations, documentation, invoice verification, and Excel."
+    },
+    "scoreBreakdown": {
+      "keywordMatch": 20,
+      "clarity": 21,
+      "evidence": 13,
+      "formatting": 22
+    },
+    "resumeId": "6a821006fcfac3c65e87f881",
+    "resumeVersionId": "6a821006fcfac3c65e87f883",
+    "jobId": "6a821006fcfac3c65e87f892",
+    "scoringVersion": "resume-readiness-v1",
+    "promptVersion": "resume-analysis-prompt-v1",
+    "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "totalScore": 76,
+    "issues": [
+      {
+        "code": "QUANTIFICATION_MISSING",
+        "severity": "medium",
+        "message": "bullet points lack specific metrics or volume figures (e.g., number of invoices verified per week/month)."
+      },
+      {
+        "code": "LIMITED_EXPERIENCE_DETAILS",
+        "severity": "low",
+        "message": "Experience section contains only one bullet point, missing details on tools or accuracy benchmarks."
+      }
+    ],
+    "strengths": [
+      {
+        "title": "Direct Relevance",
+        "detail": "Experience as a Finance Intern directly aligns with core entry-level accounting tasks like bank reconciliation and invoice checking."
+      },
+      {
+        "title": "Targeted Skill set",
+        "detail": "Skills section clearly explicitly highlights Excel, basic bookkeeping, bank reconciliation, and invoice verification."
+      }
+    ],
+    "missingKeywords": [
+      "Accuracy",
+      "General Ledger",
+      "Financial Statements"
+    ],
+    "suggestions": [
+      {
+        "id": "78164d5d-bf26-4ada-8c34-01ee276b5042",
+        "bulletId": "9142f857-96b0-5a77-9b2b-0d117889772b",
+        "originalText": "Checked supplier invoices, assisted monthly bank reconciliations, updated expense trackers, and filed supporting documents.",
+        "rewrittenText": "Verified supplier invoices for accuracy, assisted with monthly bank reconciliations, updated Excel expense trackers, and maintained organized supporting documentation.",
+        "rationale": "Emphasizes accuracy, mentions Excel explicitly, and improves active phrasing without adding unverified metrics.",
+        "verificationRequired": false
+      }
+    ],
+    "createdAt": "2026-08-16T19:31:25.235Z",
+    "updatedAt": "2026-08-16T19:31:25.235Z"
+  }
+}

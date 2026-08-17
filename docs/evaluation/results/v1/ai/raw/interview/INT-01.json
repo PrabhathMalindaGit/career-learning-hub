@@ -1,0 +1,149 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "INT-01",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "sanitization": "Account-scoped userId omitted from repository evidence; generated questions, prepared answer, feedback, execution identifiers, and timestamps preserved.",
+  "evidence": {
+    "case_id": "INT-01",
+    "case_version": "1.0",
+    "role_title": "Junior Software Developer",
+    "question_generation": {
+      "sessionId": "6a821320fcfac3c65e881134",
+      "jobId": "6a821320fcfac3c65e88113f",
+      "requestedCount": 6,
+      "questions": [
+        {
+          "_id": "6a82132c7d753b640073a885",
+          "sessionId": "6a821320fcfac3c65e881134",
+          "source": "ai-generated",
+          "category": "web fundamentals",
+          "difficulty": "easy",
+          "question": "What is the main difference between HTTP GET and POST requests regarding data transmission and idempotency?",
+          "questionType": "short-answer",
+          "isPinned": false,
+          "createdAt": "2026-08-16T19:44:44.699Z",
+          "updatedAt": "2026-08-16T19:44:44.699Z"
+        },
+        {
+          "_id": "6a82132c7d753b640073a886",
+          "sessionId": "6a821320fcfac3c65e881134",
+          "source": "ai-generated",
+          "category": "debugging",
+          "difficulty": "easy",
+          "question": "Write a function `find_first_even(numbers)` that takes a list of integers and returns the first even number found. If no even number exists, return `None`. Fix edge cases such as empty input.",
+          "questionType": "coding",
+          "isPinned": false,
+          "createdAt": "2026-08-16T19:44:44.699Z",
+          "updatedAt": "2026-08-16T19:44:44.699Z"
+        },
+        {
+          "_id": "6a82132c7d753b640073a887",
+          "sessionId": "6a821320fcfac3c65e881134",
+          "source": "ai-generated",
+          "category": "testing",
+          "difficulty": "medium",
+          "question": "Write a Python test function using `unittest` or simple assertions to test a `calculate_discount(price, discount_percent)` function. Write tests covering valid input, 0% discount, 100% discount, and raising a `ValueError` when invalid inputs (e.g., negative price or discount outside 0-100) are provided.",
+          "questionType": "coding",
+          "isPinned": false,
+          "createdAt": "2026-08-16T19:44:44.699Z",
+          "updatedAt": "2026-08-16T19:44:44.699Z"
+        },
+        {
+          "_id": "6a82132c7d753b640073a888",
+          "sessionId": "6a821320fcfac3c65e881134",
+          "source": "ai-generated",
+          "category": "web fundamentals",
+          "difficulty": "medium",
+          "question": "Explain the concept of the same-origin policy (SOP) in web browsers and how Cross-Origin Resource Sharing (CORS) allowsservers to safely bypass it.",
+          "questionType": "technical-explanation",
+          "isPinned": false,
+          "createdAt": "2026-08-16T19:44:44.699Z",
+          "updatedAt": "2026-08-16T19:44:44.699Z"
+        },
+        {
+          "_id": "6a82132c7d753b640073a889",
+          "sessionId": "6a821320fcfac3c65e881134",
+          "source": "ai-generated",
+          "category": "debugging",
+          "difficulty": "medium",
+          "question": "Imagine a user reports that a web form intermittently fails to submit when clicked, but no error appears on screen. What step-by-step debugging workflow would you follow to identify and diagnose the root cause?",
+          "questionType": "scenario-based",
+          "isPinned": false,
+          "createdAt": "2026-08-16T19:44:44.699Z",
+          "updatedAt": "2026-08-16T19:44:44.699Z"
+        },
+        {
+          "_id": "6a82132c7d753b640073a88a",
+          "sessionId": "6a821320fcfac3c65e881134",
+          "source": "ai-generated",
+          "category": "team communication",
+          "difficulty": "hard",
+          "question": "Describe a situation where you realized you were stuck on a technical problem for several hours. How did you decide when and how to ask a senior team member for help, and what was the outcome?",
+          "questionType": "behavioral",
+          "isPinned": false,
+          "createdAt": "2026-08-16T19:44:44.699Z",
+          "updatedAt": "2026-08-16T19:44:44.699Z"
+        }
+      ]
+    },
+    "feedback": {
+      "sessionId": "6a82132efcfac3c65e88119a",
+      "question": {
+        "_id": "6a82132efcfac3c65e88119c",
+        "sessionId": "6a82132efcfac3c65e88119a",
+        "source": "manual",
+        "category": "debugging and communication",
+        "difficulty": "medium",
+        "question": "Tell me about a difficult software bug you worked through and how you approached it.",
+        "questionType": "behavioral",
+        "isPinned": false,
+        "createdAt": "2026-08-16T19:44:46.451Z",
+        "updatedAt": "2026-08-16T19:44:46.451Z"
+      },
+      "suppliedAnswer": {
+        "answer": {
+          "type": "behavioral",
+          "text": "In a university web project the login page sometimes failed. I checked several files and eventually changed the token handling. It worked after that and I told my teammate."
+        }
+      },
+      "attempt": {
+        "_id": "6a82132efcfac3c65e8811a4",
+        "sessionId": "6a82132efcfac3c65e88119a",
+        "questionId": "6a82132efcfac3c65e88119c",
+        "status": "feedback-completed",
+        "createdAt": "2026-08-16T19:44:46.478Z",
+        "updatedAt": "2026-08-16T19:44:52.963Z",
+        "answer": {
+          "type": "behavioral",
+          "text": "In a university web project the login page sometimes failed. I checked several files and eventually changed the token handling. It worked after that and I told my teammate."
+        },
+        "feedbackJobId": "6a82132efcfac3c65e8811b1",
+        "feedback": {
+          "score": 4,
+          "summary": "The response references a relevant issue involving authentication tokens, but it lacks detail on the debugging methodology, root cause analysis, tools used, and impact.",
+          "strengths": [
+            "Identifies a relevant technical problem involving web authentication and tokens.",
+            "Mentions communicating the outcome with a teammate."
+          ],
+          "improvements": [
+            "Elaborate on the step-by-step debugging methodology (e.g., browser developer tools, server logs, reproducing the issue).",
+            "Explain the root cause of why token handling failed intermittently and how the fix addressed it.",
+            "Structure the response using the STAR method (Situation, Task, Action, Result) to make the narrative clear and impactful."
+          ],
+          "suggestedAnswerOutline": [
+            "Situation: Briefly describe the web project, the role of authentication, and how the intermittent login failure was reported ordiscovered.",
+            "Task: Clarify your responsibility in identifying the root cause and resolving the bug.",
+            "Action: Describe the systematic approach taken (e.g., checking network requests in dev tools, inspecting server logs, identifying issues like token expiration or scope), and the exact fix implemented.",
+            "Result: Share how you verified the fix with unit or manual testing and how you communicated the changes and updated documentation for the team."
+          ],
+          "promptVersion": "interview-written-feedback-v2",
+          "provider": "gemini",
+          "model": "gemini-3.6-flash",
+          "completedAt": "2026-08-16T19:44:52.962Z"
+        }
+      }
+    }
+  }
+}

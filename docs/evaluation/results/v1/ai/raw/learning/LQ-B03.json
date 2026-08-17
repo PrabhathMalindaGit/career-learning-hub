@@ -1,0 +1,19 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "LQ-B03",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "case_version": "1.0",
+  "case_type": "UNANSWERABLE",
+  "document_fixture_id": "LEARN-B-WETLAND-01",
+  "document_id": "6a8215c3fcfac3c65e882685",
+  "conversation_id": "6a8215defcfac3c65e8828c2",
+  "job_id": "6a8215defcfac3c65e8828d1",
+  "question": "Which fish species are sampled and how often are fish surveys performed?",
+  "formal_output": {
+    "answer": "According to the provided document, the plan does not include fish-population sampling, so no fish species are sampled and no fish surveys are performed.",
+    "sourcePages": [4],
+    "assistantMessageId": "6a8215e0fcfac3c65e882904"
+  }
+}

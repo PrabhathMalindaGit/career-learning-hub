@@ -1,0 +1,32 @@
+{
+  "campaign_id": "CLH-AI-001",
+  "case_id": "INT-04",
+  "capture_date": "2026-08-17",
+  "capture_channel": "authenticated local backend API",
+  "validity_status": "VALID",
+  "sanitization": "Account-scoped userId omitted from repository evidence; generated questions, prepared answer, feedback, execution identifiers, and timestamps preserved.",
+  "evidence": {
+    "case_id": "INT-04",
+    "case_version": "1.0",
+    "role_title": "Junior Data Analyst",
+    "question_generation": {
+      "sessionId":"6a82135ffcfac3c65e881376",
+      "jobId":"6a82135ffcfac3c65e881381",
+      "requestedCount":6,
+      "questions":[
+        {"_id":"6a82136d7d753b640073a897","sessionId":"6a82135ffcfac3c65e881376","source":"ai-generated","category":"data cleaning","difficulty":"easy","question":"What is the difference between missing completely at random (MCAR) and missing at random (MAR) when handling null values in a dataset?","questionType":"short-answer","isPinned":false,"createdAt":"2026-08-16T19:45:49.221Z","updatedAt":"2026-08-16T19:45:49.221Z"},
+        {"_id":"6a82136d7d753b640073a898","sessionId":"6a82135ffcfac3c65e881376","source":"ai-generated","category":"SQL","difficulty":"easy","question":"Write a SQL query to retrieve all unique customer IDs from the 'orders' table where the total order amount is strictly greater than 100.","questionType":"coding","isPinned":false,"createdAt":"2026-08-16T19:45:49.221Z","updatedAt":"2026-08-16T19:45:49.221Z"},
+        {"_id":"6a82136d7d753b640073a899","sessionId":"6a82135ffcfac3c65e881376","source":"ai-generated","category":"SQL","difficulty":"medium","question":"Write a SQL query using an aggregate function to find the total revenue and total number of orders per product categoryfrom the 'sales' table, filtering for sales made in 2023 and showing only categories with total revenue exceeding 5000.","questionType":"coding","isPinned":false,"createdAt":"2026-08-16T19:45:49.221Z","updatedAt":"2026-08-16T19:45:49.221Z"},
+        {"_id":"6a82136d7d753b640073a89a","sessionId":"6a82135ffcfac3c65e881376","source":"ai-generated","category":"basic visualization","difficulty":"medium","question":"Explain when a bar chart is a better visual choice than a line chart, and describe a situation where choosing a line chart would be preferred.","questionType":"technical-explanation","isPinned":false,"createdAt":"2026-08-16T19:45:49.221Z","updatedAt":"2026-08-16T19:45:49.221Z"},
+        {"_id":"6a82136d7d753b640073a89b","sessionId":"6a82135ffcfac3c65e881376","source":"ai-generated","category":"data cleaning","difficulty":"medium","question":"During data preparation, you discover duplicate records for the same transaction ID in an orders table, but each duplicate row has a different timestamp and payment status (e.g., 'Pending' vs 'Completed'). How would you investigate and determine which record to retain?","questionType":"scenario-based","isPinned":false,"createdAt":"2026-08-16T19:45:49.221Z","updatedAt":"2026-08-16T19:45:49.221Z"},
+        {"_id":"6a82136d7d753b640073a89c","sessionId":"6a82135ffcfac3c65e881376","source":"ai-generated","category":"communicating findings","difficulty":"hard","question":"Describe a situation where you would need to present data findings that contradict what stakeholders or team members strongly believed. How would you approach preparing and delivering this message?","questionType":"behavioral","isPinned":false,"createdAt":"2026-08-16T19:45:49.221Z","updatedAt":"2026-08-16T19:45:49.221Z"}
+      ]
+    },
+    "feedback": {
+      "sessionId":"6a82136dfcfac3c65e8813cf",
+      "question":{"_id":"6a82136dfcfac3c65e8813d1","sessionId":"6a82136dfcfac3c65e8813cf","source":"manual","category":"data cleaning","difficulty":"medium","question":"How would you check a dataset before using it for a dashboard?","questionType":"scenario-based","isPinned":false,"createdAt":"2026-08-16T19:45:49.417Z","updatedAt":"2026-08-16T19:45:49.417Z"},
+      "suppliedAnswer":{"answer":{"type":"scenario-based","text":"I would look for blanks and duplicates, check that the columns look correct, and compare totals. Then I would make the dashboard."}},
+      "attempt":{"_id":"6a82136dfcfac3c65e8813d9","sessionId":"6a82136dfcfac3c65e8813cf","questionId":"6a82136dfcfac3c65e8813d1","status":"feedback-completed","createdAt":"2026-08-16T19:45:49.459Z","updatedAt":"2026-08-16T19:45:56.548Z","answer":{"type":"scenario-based","text":"I would look for blanks and duplicates, check that the columns look correct, and compare totals. Then I would make the dashboard."},"feedbackJobId":"6a82136dfcfac3c65e8813e6","feedback":{"score":5,"summary":"The candidate mentions fundamental data validation steps like checking for missing values, duplicates, and comparing totals, but the response is overly brief and lacks detail on methodology, tools, and deeper data quality checks.","strengths":["Identifies essential initial data quality checks such as nulls and duplicate records.","Recognizes the importance of validating aggregate totals for basic sanity checks."],"improvements":["Specify tools or methods used to perform checks (e.g., SQL queries like COUNT(DISTINCT), checking data types).","Include checks for date ranges, outliers, data types, and business logic consistency.","Describe the process of handling and documenting data discrepancies when found."],"suggestedAnswerOutline":["1. Context & Business Logic: Review dashboard requirements and identify key metrics and source tables.","2. Structural & Schema Checks: Verify column data types, date formats, primary keys, and expected row counts.","3. Data Quality Audit: Query for missing values, duplicate records, outliers, and invalid ranges using SQL or Excel.","4. Reconciliation & Sanity Checks: Cross-reference high-level aggregates (totals, monthly averages) against raw source systems or baseline reports.","5. Resolution & Next Steps: Clean or document data issues and align with stakeholders before building visualizations."],"promptVersion":"interview-written-feedback-v2","provider":"gemini","model":"gemini-3.6-flash","completedAt":"2026-08-16T19:45:56.548Z"}}
+    }
+  }
+}
