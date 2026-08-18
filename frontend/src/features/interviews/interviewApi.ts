@@ -148,6 +148,7 @@ function expectedTypeForSubmission(
     : submission.answer.type;
 }
 
+// Feature 4.1 — Interview session collection list/filter/pagination API boundary.
 export async function listInterviewSessions(
   input: {
     page?: number;
@@ -165,6 +166,7 @@ export async function listInterviewSessions(
   );
 }
 
+// Feature 4.3 — Persist Career area / role / experience / practice context for a new session.
 export async function createInterviewSession(
   input: CreateInterviewSessionInput,
   signal?: AbortSignal,
@@ -202,6 +204,7 @@ export async function fetchInterviewSession(
   );
 }
 
+// Feature 4.13 — Session lifecycle status update used by complete/archive/restore flows.
 export async function updateInterviewSessionStatus(
   sessionId: string,
   status: InterviewSessionStatus,
@@ -219,6 +222,7 @@ export async function updateInterviewSessionStatus(
   );
 }
 
+// Feature 4.7 — Question Index filtering/pinning list boundary.
 export async function listInterviewQuestions(
   sessionId: string,
   input: {
@@ -245,6 +249,7 @@ export async function listInterviewQuestions(
   );
 }
 
+// Feature 4.5 — Add manually: persist one user-authored Interview question.
 export async function addManualQuestion(
   sessionId: string,
   input:
@@ -297,6 +302,7 @@ export async function addManualQuestion(
   );
 }
 
+// Feature 4.4 — Start durable AI question generation for the session.
 export async function generateInterviewQuestions(
   sessionId: string,
   input:
@@ -354,6 +360,7 @@ export async function fetchInterviewQuestion(
   );
 }
 
+// Feature 4.7 — Pin/unpin the selected Interview question.
 export async function setQuestionPinned(
   sessionId: string,
   questionId: string,
@@ -374,6 +381,7 @@ export async function setQuestionPinned(
   );
 }
 
+// Feature 4.8 — Save private notes for the selected Interview question.
 export async function saveQuestionNotes(
   sessionId: string,
   questionId: string,
@@ -394,6 +402,7 @@ export async function saveQuestionNotes(
   );
 }
 
+// Feature 4.11 — Request durable AI explanation for the selected question.
 export async function requestQuestionExplanation(
   sessionId: string,
   questionId: string,
@@ -412,6 +421,7 @@ export async function requestQuestionExplanation(
   );
 }
 
+// Feature 4.9 — Save one independent Interview practice attempt.
 export async function recordInterviewAttempt(
   sessionId: string,
   questionId: string,
@@ -445,6 +455,7 @@ export async function recordInterviewAttempt(
   );
 }
 
+// Feature 4.10 — Saved-attempt history list/filter/pagination boundary.
 export async function listAttemptHistory(
   sessionId: string,
   input: {
@@ -465,6 +476,7 @@ export async function listAttemptHistory(
   );
 }
 
+// Feature 4.10 — Fetch one saved attempt for review.
 export async function fetchInterviewAttempt(
   sessionId: string,
   attemptId: string,
@@ -488,6 +500,7 @@ export async function fetchInterviewAttempt(
   );
 }
 
+// Feature 4.12 — Request durable model-generated practice feedback for an eligible saved attempt.
 export async function requestAttemptFeedback(
   sessionId: string,
   attemptId: string,
