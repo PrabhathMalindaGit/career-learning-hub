@@ -12,6 +12,15 @@
    CONTROLS: Run AI-assisted assessment button
    CHANGE BORDER / TEXT / BACKGROUND COLOR HERE
    ========================================================= */
+/* =========================================================
+   FIND: RUN AI ASSESSMENT
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/ResumeAssessmentActionUi.css
+   UI FILE: frontend/src/features/resumes/ResumeWorkspace.tsx
+   CONTROLS: RUN AI ASSESSMENT
+   SELECTOR: .resume-analysis-runner .resume-button-row .resume-primary-button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-analysis-runner .resume-button-row .resume-primary-button {
   border-color: #b9cec1;
   color: #245e3c;

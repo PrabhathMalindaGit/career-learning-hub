@@ -221,6 +221,17 @@
    SHARED SELECTOR: .dashboard-quick-start__link
    CHANGE CARD COLOR HERE AND IN THE ADJACENT TONE RULES
    ========================================================= */
+/* =========================================================
+   FIND: RESUME SHORTCUT
+   FIND: INTERVIEW SHORTCUT
+   FIND: LEARNING SHORTCUT
+   TYPE: SHARED STYLE
+   FILE: frontend/src/features/dashboard/dashboard.css
+   UI FILE: frontend/src/features/dashboard/MainDashboard.tsx
+   CONTROLS: RESUME SHORTCUT / INTERVIEW SHORTCUT / LEARNING SHORTCUT
+   SELECTOR: .dashboard-quick-start__link
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .dashboard-quick-start__link {
   display: grid;
   min-width: 0;

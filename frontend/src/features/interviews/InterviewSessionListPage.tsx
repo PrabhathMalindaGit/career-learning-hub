@@ -167,7 +167,10 @@ export function InterviewSessionListPage() {
         actions={
           /* =========================================================
              FIND: CREATE INTERVIEW
-             STYLE: interviewCoach.css -> .interview-primary-button
+             TYPE: UI
+             FILE: frontend/src/features/interviews/InterviewSessionListPage.tsx
+             STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+             STYLE SELECTOR: .interview-primary-button
              ========================================================= */
           <button
             ref={createButtonRef}
@@ -184,7 +187,10 @@ export function InterviewSessionListPage() {
 
       {/* =========================================================
           FIND: INTERVIEW LIST
-          STYLE: interviewCoach.css -> .interview-collection
+          TYPE: UI
+          FILE: frontend/src/features/interviews/InterviewSessionListPage.tsx
+          STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+          STYLE SELECTOR: .interview-collection
           ========================================================= */}
       <section
         className="interview-collection interview-panel"

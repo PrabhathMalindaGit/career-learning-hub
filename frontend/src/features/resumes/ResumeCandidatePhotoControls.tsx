@@ -37,8 +37,10 @@ export function ResumeCandidatePhotoControls({
   return (
     /* =========================================================
        FIND: CANDIDATE PHOTO
-       STYLE: resumeCandidatePhoto.css
-       SELECTOR: .resume-candidate-photo-file-button
+       TYPE: UI
+       FILE: frontend/src/features/resumes/ResumeCandidatePhotoControls.tsx
+       STYLE FILE: frontend/src/features/resumes/resumeCandidatePhoto.css
+       STYLE SELECTOR: .resume-candidate-photo-file-button
        ========================================================= */
     <section
       className="resume-panel resume-candidate-photo-panel"

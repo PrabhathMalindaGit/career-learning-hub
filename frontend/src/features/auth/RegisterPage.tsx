@@ -378,8 +378,10 @@ export function RegisterPage() {
 
         {/* =========================================================
             FIND: CREATE ACCOUNT
-            STYLE: auth.css
-            SELECTOR: .authentication-form-card .primary-button
+            TYPE: UI
+            FILE: frontend/src/features/auth/RegisterPage.tsx
+            STYLE FILE: frontend/src/features/auth/auth.css
+            STYLE SELECTOR: .authentication-form-card .primary-button
             ========================================================= */}
         <button
           className="primary-button"

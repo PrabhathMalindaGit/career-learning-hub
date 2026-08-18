@@ -500,7 +500,10 @@ export function DocumentQuizzes({
   return (
     /* =========================================================
        FIND: QUIZZES
-       STYLE: learningWorkspace.css -> .learning-quiz-set-list
+       TYPE: UI
+       FILE: frontend/src/features/learning/DocumentQuizzes.tsx
+       STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+       STYLE SELECTOR: .learning-quiz-set-list
        ========================================================= */
     <section className="learning-quizzes" aria-labelledby="learning-quizzes-title">
       <header className="learning-panel-header">
@@ -628,8 +631,10 @@ export function DocumentQuizzes({
                 {quiz.status === "ready" ? (
                   /* =========================================================
                      FIND: TAKE QUIZ
-                     STYLE: learningWorkspace.css
-                     SELECTOR: .learning-document-link
+                     TYPE: UI
+                     FILE: frontend/src/features/learning/DocumentQuizzes.tsx
+                     STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+                     STYLE SELECTOR: .learning-document-link
                      ========================================================= */
                   <Link
                     className="learning-document-link"
@@ -739,8 +744,10 @@ export function DocumentQuizzes({
             ) : null}
             {/* =========================================================
                 FIND: GENERATE QUIZ
-                STYLE: learningWorkspace.css
-                SELECTOR: .learning-primary-button
+                TYPE: UI
+                FILE: frontend/src/features/learning/DocumentQuizzes.tsx
+                STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+                STYLE SELECTOR: .learning-primary-button
                 BACKEND: learning.jobs.ts -> FIND: GENERATE QUIZ BACKEND
                 ========================================================= */}
             <button

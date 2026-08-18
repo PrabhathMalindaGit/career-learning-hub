@@ -1630,8 +1630,10 @@ export function ResumeWorkspace() {
           ) : null}
           {/* =========================================================
               FIND: SAVE NEW VERSION
-              STYLE: resumeWorkspace.css
-              SELECTOR: .resume-primary-button
+              TYPE: UI
+              FILE: frontend/src/features/resumes/ResumeWorkspace.tsx
+              STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+              STYLE SELECTOR: .resume-primary-button
               ========================================================= */}
           <button
             type="button"
@@ -1793,7 +1795,10 @@ export function ResumeWorkspace() {
         <div className="resume-editor-preview-grid">
           {/* =========================================================
               FIND: RESUME EDITOR
-              STYLE: resumeWorkspace.css -> .resume-editor
+              TYPE: UI
+              FILE: frontend/src/features/resumes/ResumeWorkspace.tsx
+              STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+              STYLE SELECTOR: .resume-editor
               ========================================================= */}
           {/* Feature 3.3 UI — Resume editor. */}
           <ResumeEditor
@@ -1830,7 +1835,10 @@ export function ResumeWorkspace() {
           />
           {/* =========================================================
               FIND: RESUME PREVIEW
-              STYLE: resumeWorkspace.css -> .resume-preview-panel
+              TYPE: UI
+              FILE: frontend/src/features/resumes/ResumeWorkspace.tsx
+              STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+              STYLE SELECTOR: .resume-preview-panel
               ========================================================= */}
           {/* Feature 3.4 UI — Live Resume preview. */}
           <ResumePreview
@@ -1912,8 +1920,10 @@ export function ResumeWorkspace() {
           <div className="resume-button-row">
             {/* =========================================================
                 FIND: RUN AI ASSESSMENT
-                STYLE: ResumeAssessmentActionUi.css
-                SELECTOR: .resume-analysis-runner .resume-button-row .resume-primary-button
+                TYPE: UI
+                FILE: frontend/src/features/resumes/ResumeWorkspace.tsx
+                STYLE FILE: frontend/src/features/resumes/ResumeAssessmentActionUi.css
+                STYLE SELECTOR: .resume-analysis-runner .resume-button-row .resume-primary-button
                 BACKEND: resumeAnalysis.jobs.ts -> FIND: RUN AI ASSESSMENT BACKEND
                 ========================================================= */}
             <button

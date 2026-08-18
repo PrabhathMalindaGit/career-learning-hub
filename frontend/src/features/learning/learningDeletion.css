@@ -88,6 +88,15 @@
   background: #fff1f1;
 }
 
+/* =========================================================
+   FIND: DELETE LEARNING ITEM
+   TYPE: STYLE
+   FILE: frontend/src/features/learning/learningDeletion.css
+   UI FILE: frontend/src/features/learning/LearningChildDeletion.tsx
+   CONTROLS: DELETE LEARNING ITEM
+   SELECTOR: .learning-delete-heading
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .learning-delete-heading {
   display: flex;
   align-items: flex-start;

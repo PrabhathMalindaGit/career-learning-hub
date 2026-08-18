@@ -578,8 +578,10 @@ export function LearningQuizWorkspace() {
                       </time>
                       {/* =========================================================
                           FIND: REVIEW QUIZ
-                          STYLE: learningWorkspace.css
-                          SELECTOR: .learning-document-link
+                          TYPE: UI
+                          FILE: frontend/src/features/learning/LearningQuizWorkspace.tsx
+                          STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+                          STYLE SELECTOR: .learning-document-link
                           ========================================================= */}
                       <Link
                         className="learning-document-link"

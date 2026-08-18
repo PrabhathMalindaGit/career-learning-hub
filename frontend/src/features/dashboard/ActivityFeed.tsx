@@ -92,8 +92,10 @@ export function ActivityFeed({
           <p className="dashboard-kicker">Across your workspace</p>
           {/* =========================================================
               FIND: RECENT ACTIVITY
-              STYLE: dashboardPhase19d.css
-              SELECTOR: .dashboard-activity-disclosure button
+              TYPE: UI
+              FILE: frontend/src/features/dashboard/ActivityFeed.tsx
+              STYLE FILE: frontend/src/features/dashboard/dashboardPhase19d.css
+              STYLE SELECTOR: .dashboard-activity-disclosure button
               ========================================================= */}
           {/* Feature 2.5 UI — Recent activity. */}
           <h2 id="activity-feed-title">Recent activity</h2>

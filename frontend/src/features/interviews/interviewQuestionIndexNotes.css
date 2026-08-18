@@ -36,6 +36,15 @@
    CONTROLS: Private-note disclosure and editor panel
    SELECTOR: .interview-private-notes
    ========================================================= */
+/* =========================================================
+   FIND: PRIVATE NOTES
+   TYPE: STYLE
+   FILE: frontend/src/features/interviews/interviewQuestionIndexNotes.css
+   UI FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+   CONTROLS: PRIVATE NOTES
+   SELECTOR: .interview-private-notes
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .interview-private-notes {
   display: grid;
   gap: 10px;

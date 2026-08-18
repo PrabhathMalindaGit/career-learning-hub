@@ -1,8 +1,17 @@
-/* Viva feature locators — Learning action colours and states.
+/* Feature navigation — Learning action colours and states.
    Feature 5.1 — Upload PDF: .learning-primary-button; normal/hover/disabled/busy states are defined below.
    Feature 5.7 — Grounded Chat actions (Create conversation / Send question): .learning-primary-button; source-page controls use .learning-source-pages.
    Feature 5.8 — Flashcard generation/reveal actions: .learning-primary-button; Study set navigation uses .learning-document-link.
    Feature 5.9 — Quiz generation/taking actions: .learning-primary-button; Review attempt navigation uses .learning-document-link. */
+/* =========================================================
+   FIND: DOCUMENT LIBRARY
+   TYPE: STYLE
+   FILE: frontend/src/features/learning/learningWorkspace.css
+   UI FILE: frontend/src/features/learning/LearningDashboard.tsx
+   CONTROLS: DOCUMENT LIBRARY
+   SELECTOR: .learning-library
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .learning-library,
 .learning-workspace {
   min-width: 0;
@@ -110,6 +119,24 @@
    SHARED SELECTOR: .learning-primary-button
    CHANGE SHARED PRIMARY ACTION COLOR HERE
    ========================================================= */
+/* =========================================================
+   FIND: CREATE CONVERSATION
+   FIND: GENERATE FLASHCARDS
+   FIND: GENERATE QUIZ
+   FIND: SEND QUESTION
+   FIND: UPLOAD PDF
+   TYPE: SHARED STYLE
+   FILE: frontend/src/features/learning/learningWorkspace.css
+   UI FILES:
+   - frontend/src/features/learning/DocumentConversations.tsx
+   - frontend/src/features/learning/DocumentFlashcards.tsx
+   - frontend/src/features/learning/DocumentQuizzes.tsx
+   - frontend/src/features/learning/LearningConversationWorkspace.tsx
+   - frontend/src/features/learning/LearningDashboard.tsx
+   CONTROLS: CREATE CONVERSATION / GENERATE FLASHCARDS / GENERATE QUIZ / SEND QUESTION / UPLOAD PDF
+   SELECTOR: .learning-primary-button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .learning-primary-button {
   border: 1px solid var(--accent);
   color: #ffffff;
@@ -134,6 +161,22 @@
    FIND: REVIEW QUIZ STYLE
    SHARED SELECTOR: .learning-document-link
    CHANGE SHARED WORKSPACE LINK STYLE HERE
+   ========================================================= */
+/* =========================================================
+   FIND: STUDY FLASHCARDS
+   FIND: TAKE QUIZ
+   FIND: OPEN DOCUMENT
+   FIND: REVIEW QUIZ
+   TYPE: SHARED STYLE
+   FILE: frontend/src/features/learning/learningWorkspace.css
+   UI FILES:
+   - frontend/src/features/learning/DocumentFlashcards.tsx
+   - frontend/src/features/learning/DocumentQuizzes.tsx
+   - frontend/src/features/learning/LearningDashboard.tsx
+   - frontend/src/features/learning/LearningQuizWorkspace.tsx
+   CONTROLS: STUDY FLASHCARDS / TAKE QUIZ / OPEN DOCUMENT / REVIEW QUIZ
+   SELECTOR: .learning-document-link
+   CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .learning-document-link {
   border: 1px solid #b8d1c0;
@@ -251,6 +294,15 @@
   font-weight: 800;
 }
 
+/* =========================================================
+   FIND: DOCUMENT PROCESSING
+   TYPE: STYLE
+   FILE: frontend/src/features/learning/learningWorkspace.css
+   UI FILE: frontend/src/features/learning/LearningDashboard.tsx
+   CONTROLS: DOCUMENT PROCESSING
+   SELECTOR: .learning-processing-notice
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .learning-error,
 .learning-processing-notice {
   padding: 14px 16px;
@@ -770,6 +822,20 @@
   background: #f1f5f2;
 }
 
+/* =========================================================
+   FIND: DOCUMENT OVERVIEW
+   FIND: ORIGINAL PDF
+   FIND: EXTRACTED CONTENT
+   FIND: GROUNDED CHAT
+   FIND: FLASHCARDS
+   FIND: QUIZZES
+   TYPE: SHARED STYLE
+   FILE: frontend/src/features/learning/learningWorkspace.css
+   UI FILE: frontend/src/features/learning/LearningDocumentWorkspace.tsx
+   CONTROLS: DOCUMENT OVERVIEW / ORIGINAL PDF / EXTRACTED CONTENT / GROUNDED CHAT / FLASHCARDS / QUIZZES
+   SELECTOR: .learning-tabs button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .learning-tabs button {
   flex: 1 1 auto;
   min-height: 46px;
@@ -1229,6 +1295,15 @@
    CONTROLS: Grounded answer source-page pills and links
    SELECTOR: .learning-source-pages button
    ========================================================= */
+/* =========================================================
+   FIND: PAGE REFERENCE
+   TYPE: STYLE
+   FILE: frontend/src/features/learning/learningWorkspace.css
+   UI FILE: frontend/src/features/learning/LearningConversationWorkspace.tsx
+   CONTROLS: PAGE REFERENCE
+   SELECTOR: .learning-source-pages button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .learning-source-pages button {
   min-height: 44px;
   padding: 8px 12px;
@@ -1403,6 +1478,15 @@
   width: fit-content;
 }
 
+/* =========================================================
+   FIND: FLASHCARDS
+   TYPE: STYLE
+   FILE: frontend/src/features/learning/learningWorkspace.css
+   UI FILE: frontend/src/features/learning/DocumentFlashcards.tsx
+   CONTROLS: FLASHCARDS
+   SELECTOR: .learning-flashcard-set-list
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .learning-flashcard-set-list {
   display: grid;
   gap: 12px;
@@ -1453,6 +1537,15 @@
   grid-row: 1 / span 2;
 }
 
+/* =========================================================
+   FIND: QUIZZES
+   TYPE: STYLE
+   FILE: frontend/src/features/learning/learningWorkspace.css
+   UI FILE: frontend/src/features/learning/DocumentQuizzes.tsx
+   CONTROLS: QUIZZES
+   SELECTOR: .learning-quiz-set-list
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .learning-quiz-set-list,
 .learning-attempt-list,
 .learning-review-list {
@@ -1767,6 +1860,15 @@
   word-break: break-word;
 }
 
+/* =========================================================
+   FIND: REVEAL ANSWER
+   TYPE: STYLE
+   FILE: frontend/src/features/learning/learningWorkspace.css
+   UI FILE: frontend/src/features/learning/FlashcardStudy.tsx
+   CONTROLS: REVEAL ANSWER
+   SELECTOR: .learning-study-reveal
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .learning-study-reveal {
   margin-top: 24px;
 }

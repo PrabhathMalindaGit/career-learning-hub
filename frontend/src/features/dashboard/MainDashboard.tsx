@@ -228,8 +228,10 @@ function ContinueWorkActions({
        FIND: RESUME SHORTCUT
        FIND: INTERVIEW SHORTCUT
        FIND: LEARNING SHORTCUT
-       STYLE: dashboard.css
-       SELECTOR: .dashboard-quick-start__link
+       TYPE: UI
+       FILE: frontend/src/features/dashboard/MainDashboard.tsx
+       STYLE FILE: frontend/src/features/dashboard/dashboard.css
+       STYLE SELECTOR: .dashboard-quick-start__link
        ========================================================= */
     <nav
       className="dashboard-quick-start dashboard-continue-work"
@@ -703,8 +705,10 @@ export function MainDashboard() {
 
       {/* =========================================================
           FIND: PROGRESS OVERVIEW
-          STYLE: dashboardPhase19d.css
-          SELECTOR: .dashboard-performance-toolbar
+          TYPE: UI
+          FILE: frontend/src/features/dashboard/MainDashboard.tsx
+          STYLE FILE: frontend/src/features/dashboard/dashboardPhase19d.css
+          STYLE SELECTOR: .dashboard-performance-toolbar
           ========================================================= */}
       {/* Feature 2.1 UI — Progress overview and performance period. */}
       <section

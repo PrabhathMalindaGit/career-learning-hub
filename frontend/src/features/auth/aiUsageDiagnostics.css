@@ -5,6 +5,15 @@
    CONTROLS: AI usage metrics and diagnostic states
    SELECTOR: .ai-usage-diagnostics
    ========================================================= */
+/* =========================================================
+   FIND: AI USAGE
+   TYPE: STYLE
+   FILE: frontend/src/features/auth/aiUsageDiagnostics.css
+   UI FILE: frontend/src/features/auth/AiUsageDiagnosticsSettings.tsx
+   CONTROLS: AI USAGE
+   SELECTOR: .ai-usage-diagnostics
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .ai-usage-diagnostics {
   display: grid;
   gap: 18px;

@@ -363,8 +363,10 @@ export function AiRecommendations({
         </div>
         {/* =========================================================
             FIND: APPLY AI SUGGESTIONS
-            STYLE: resumeWorkspace.css
-            SELECTOR: .resume-primary-button
+            TYPE: UI
+            FILE: frontend/src/features/resumes/AiRecommendations.tsx
+            STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+            STYLE SELECTOR: .resume-primary-button
             ========================================================= */}
         <button
           ref={applyButtonRef}

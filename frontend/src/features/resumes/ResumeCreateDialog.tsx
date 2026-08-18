@@ -431,8 +431,10 @@ export function ResumeCreateDialog({
           <div className="resume-create-methods">
             {/* =========================================================
                 FIND: GUIDED SETUP
-                STYLE: resumeWorkspace.css
-                SELECTOR: .resume-create-methods > .resume-create-method--recommended
+                TYPE: UI
+                FILE: frontend/src/features/resumes/ResumeCreateDialog.tsx
+                STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+                STYLE SELECTOR: .resume-create-methods > .resume-create-method--recommended
                 ========================================================= */}
             <button
               ref={guidedRef}
@@ -451,8 +453,10 @@ export function ResumeCreateDialog({
             </button>
             {/* =========================================================
                 FIND: START BLANK
-                STYLE: resumeWorkspace.css
-                SELECTOR: .resume-create-methods > button
+                TYPE: UI
+                FILE: frontend/src/features/resumes/ResumeCreateDialog.tsx
+                STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+                STYLE SELECTOR: .resume-create-methods > button
                 ========================================================= */}
             <button
               type="button"
@@ -466,8 +470,10 @@ export function ResumeCreateDialog({
             </button>
             {/* =========================================================
                 FIND: IMPORT RESUME PDF
-                STYLE: resumeWorkspace.css
-                SELECTOR: .resume-create-methods > button
+                TYPE: UI
+                FILE: frontend/src/features/resumes/ResumeCreateDialog.tsx
+                STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+                STYLE SELECTOR: .resume-create-methods > button
                 BACKEND: resumeAnalysis.jobs.ts -> FIND: IMPORT RESUME PDF BACKEND
                 ========================================================= */}
             <button

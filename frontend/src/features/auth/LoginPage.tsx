@@ -294,8 +294,10 @@ export function LoginPage() {
 
         {/* =========================================================
             FIND: SIGN IN
-            STYLE: auth.css
-            SELECTOR: .authentication-form-card .primary-button
+            TYPE: UI
+            FILE: frontend/src/features/auth/LoginPage.tsx
+            STYLE FILE: frontend/src/features/auth/auth.css
+            STYLE SELECTOR: .authentication-form-card .primary-button
             ========================================================= */}
         <button
           className="primary-button"

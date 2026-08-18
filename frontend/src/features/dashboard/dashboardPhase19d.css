@@ -81,6 +81,15 @@
    CONTROLS: Progress period toolbar and adjacent selected-state rules
    SELECTOR: .dashboard-performance-toolbar
    ========================================================= */
+/* =========================================================
+   FIND: PROGRESS OVERVIEW
+   TYPE: STYLE
+   FILE: frontend/src/features/dashboard/dashboardPhase19d.css
+   UI FILE: frontend/src/features/dashboard/MainDashboard.tsx
+   CONTROLS: PROGRESS OVERVIEW
+   SELECTOR: .dashboard-performance-toolbar
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .dashboard-performance-toolbar {
   display: flex;
   min-width: 0;
@@ -303,6 +312,15 @@
   border-top: 1px solid #e4ebe6;
 }
 
+/* =========================================================
+   FIND: RECENT ACTIVITY
+   TYPE: STYLE
+   FILE: frontend/src/features/dashboard/dashboardPhase19d.css
+   UI FILE: frontend/src/features/dashboard/ActivityFeed.tsx
+   CONTROLS: RECENT ACTIVITY
+   SELECTOR: .dashboard-activity-disclosure button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .dashboard-activity-disclosure button,
 .dashboard-activity-collapse {
   min-height: var(--minimum-interactive-target);

@@ -146,7 +146,10 @@ export function ResumeListPage() {
         actions={
           /* =========================================================
              FIND: CREATE RESUME
-             STYLE: styles.css -> .primary-button
+             TYPE: UI
+             FILE: frontend/src/features/resumes/ResumeListPage.tsx
+             STYLE FILE: frontend/src/styles.css
+             STYLE SELECTOR: .primary-button
              ========================================================= */
           <button
             ref={headingCreateRef}
@@ -177,7 +180,10 @@ export function ResumeListPage() {
               <p className="resume-kicker">Collection</p>
               {/* =========================================================
                   FIND: RESUME LIST
-                  STYLE: resumeWorkspace.css -> .resume-collection
+                  TYPE: UI
+                  FILE: frontend/src/features/resumes/ResumeListPage.tsx
+                  STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+                  STYLE SELECTOR: .resume-collection
                   ========================================================= */}
               {/* Feature 3.1 UI — Resume collection. */}
               <h2 id="your-resumes">Your resumes</h2>

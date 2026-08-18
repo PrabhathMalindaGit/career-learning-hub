@@ -232,7 +232,10 @@ export function AiUsageDiagnosticsSettingsSection() {
       <header className="settings-panel__header">
         {/* =========================================================
             FIND: AI USAGE
-            STYLE: aiUsageDiagnostics.css -> .ai-usage-diagnostics
+            TYPE: UI
+            FILE: frontend/src/features/auth/AiUsageDiagnosticsSettings.tsx
+            STYLE FILE: frontend/src/features/auth/aiUsageDiagnostics.css
+            STYLE SELECTOR: .ai-usage-diagnostics
             ========================================================= */}
         {/* Feature 6.10 UI — AI usage and diagnostics. */}
         <h2 id="ai-usage-diagnostics-heading">AI usage & diagnostics</h2>

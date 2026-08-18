@@ -73,6 +73,15 @@
    CONTROLS: Candidate photo chooser button
    SELECTOR: .resume-candidate-photo-file-button
    ========================================================= */
+/* =========================================================
+   FIND: CANDIDATE PHOTO
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/resumeCandidatePhoto.css
+   UI FILE: frontend/src/features/resumes/ResumeCandidatePhotoControls.tsx
+   CONTROLS: CANDIDATE PHOTO
+   SELECTOR: .resume-candidate-photo-file-button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-candidate-photo-file-button {
   display: inline-flex;
   min-height: 2.75rem;

@@ -23,7 +23,10 @@ function actionErrorMessage(error: unknown): string {
 // =========================================================
 // FIND: JOB PROGRESS
 // FIND: CANCEL RETRY
-// STYLE: shared styles.css -> .job-resilience-actions
+// TYPE: UI
+// FILE: frontend/src/features/jobs/JobResilienceActions.tsx
+// STYLE FILE: frontend/src/styles.css
+// STYLE SELECTOR: .job-resilience-actions
 // BACKEND: job.controller.ts -> FIND: CANCEL RETRY BACKEND
 // =========================================================
 export function JobResilienceActions({

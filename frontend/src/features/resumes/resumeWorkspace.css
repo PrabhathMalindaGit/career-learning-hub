@@ -1,4 +1,4 @@
-/* Viva feature locators — Resume action colours and states.
+/* Feature navigation — Resume action colours and states.
    Feature 3.5 — Save new version: .resume-primary-button; disabled state is .resume-primary-button:disabled and busy state uses [aria-busy="true"].
    Feature 3.10 — Apply selected suggestions also uses .resume-primary-button after explicit user confirmation.
    Feature 3.11 — Version-history presentation begins at .resume-version-history / .resume-version-timeline and related selectors below. */
@@ -46,6 +46,15 @@
 }
 
 /* Feature 3.11 STYLE — Resume version-history surface. */
+/* =========================================================
+   FIND: RESUME LIST
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILE: frontend/src/features/resumes/ResumeListPage.tsx
+   CONTROLS: RESUME LIST
+   SELECTOR: .resume-collection
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-collection,
 .resume-action-form,
 .resume-panel,
@@ -318,6 +327,18 @@
    SHARED SELECTOR: .resume-primary-button
    CHANGE BORDER / TEXT / BACKGROUND COLOR HERE
    ========================================================= */
+/* =========================================================
+   FIND: APPLY AI SUGGESTIONS
+   FIND: SAVE NEW VERSION
+   TYPE: SHARED STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILES:
+   - frontend/src/features/resumes/AiRecommendations.tsx
+   - frontend/src/features/resumes/ResumeWorkspace.tsx
+   CONTROLS: APPLY AI SUGGESTIONS / SAVE NEW VERSION
+   SELECTOR: .resume-primary-button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-primary-button {
   border: 1px solid var(--accent-dark);
   color: #fff;
@@ -403,6 +424,15 @@
   width: auto;
 }
 
+/* =========================================================
+   FIND: RESUME EDITOR
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILE: frontend/src/features/resumes/ResumeWorkspace.tsx
+   CONTROLS: RESUME EDITOR
+   SELECTOR: .resume-editor
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-editor {
   display: grid;
   gap: 20px;
@@ -586,6 +616,15 @@
   padding: 12px;
 }
 
+/* =========================================================
+   FIND: RESUME PREVIEW
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILE: frontend/src/features/resumes/ResumeWorkspace.tsx
+   CONTROLS: RESUME PREVIEW
+   SELECTOR: .resume-preview-panel
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-preview-panel {
   position: static;
   max-height: none;
@@ -611,6 +650,15 @@
    FIND: RESUME APPEARANCE STYLE
    CONTROLS: Resume appearance customization panel
    SELECTOR: .resume-design-panel
+   ========================================================= */
+/* =========================================================
+   FIND: RESUME APPEARANCE
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILE: frontend/src/features/resumes/ResumeDesignControls.tsx
+   CONTROLS: RESUME APPEARANCE
+   SELECTOR: .resume-design-panel
+   CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .resume-design-panel {
   min-width: 0;
@@ -892,6 +940,15 @@
    FIND: PRINT RESUME STYLE
    CONTROLS: Print / Save as PDF panel
    SELECTOR: .resume-print-controls
+   ========================================================= */
+/* =========================================================
+   FIND: PRINT RESUME
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILE: frontend/src/features/resumes/ResumePrintControls.tsx
+   CONTROLS: PRINT RESUME
+   SELECTOR: .resume-print-controls
+   CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .resume-print-controls {
   display: grid;
@@ -2874,6 +2931,15 @@
    CONTROLS: Immutable Resume version timeline
    SELECTOR: .resume-version-history
    ========================================================= */
+/* =========================================================
+   FIND: VERSION HISTORY
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILE: frontend/src/features/resumes/ResumeVersionTimeline.tsx
+   CONTROLS: VERSION HISTORY
+   SELECTOR: .resume-version-history
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-version-history,
 .resume-snapshot {
   display: grid;
@@ -3571,6 +3637,15 @@
   gap: 10px;
 }
 
+/* =========================================================
+   FIND: DRAFT RECOVERY
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILE: frontend/src/features/resumes/ResumeRecoveryReview.tsx
+   CONTROLS: DRAFT RECOVERY
+   SELECTOR: .resume-recovery-review
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-recovery-review {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -3620,6 +3695,16 @@
   margin-top: 6px;
 }
 
+/* =========================================================
+   FIND: START BLANK
+   FIND: IMPORT RESUME PDF
+   TYPE: SHARED STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILE: frontend/src/features/resumes/ResumeCreateDialog.tsx
+   CONTROLS: START BLANK / IMPORT RESUME PDF
+   SELECTOR: .resume-create-methods > button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-create-methods > button {
   display: grid;
   justify-items: start;
@@ -3649,6 +3734,15 @@
   outline-offset: 3px;
 }
 
+/* =========================================================
+   FIND: GUIDED SETUP
+   TYPE: STYLE
+   FILE: frontend/src/features/resumes/resumeWorkspace.css
+   UI FILE: frontend/src/features/resumes/ResumeCreateDialog.tsx
+   CONTROLS: GUIDED SETUP
+   SELECTOR: .resume-create-methods > .resume-create-method--recommended
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .resume-create-methods > .resume-create-method--recommended {
   border-color: #9ebcab;
   background: #f3f8f5;

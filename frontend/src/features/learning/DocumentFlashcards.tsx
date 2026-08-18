@@ -522,7 +522,10 @@ export function DocumentFlashcards({
   return (
     /* =========================================================
        FIND: FLASHCARDS
-       STYLE: learningWorkspace.css -> .learning-flashcard-set-list
+       TYPE: UI
+       FILE: frontend/src/features/learning/DocumentFlashcards.tsx
+       STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+       STYLE SELECTOR: .learning-flashcard-set-list
        ========================================================= */
     <section
       className="learning-flashcard-sets"
@@ -643,8 +646,10 @@ export function DocumentFlashcards({
                 {set.status === "ready" ? (
                   /* =========================================================
                      FIND: STUDY FLASHCARDS
-                     STYLE: learningWorkspace.css
-                     SELECTOR: .learning-document-link
+                     TYPE: UI
+                     FILE: frontend/src/features/learning/DocumentFlashcards.tsx
+                     STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+                     STYLE SELECTOR: .learning-document-link
                      ========================================================= */
                   <Link
                     className="learning-document-link"
@@ -754,8 +759,10 @@ export function DocumentFlashcards({
             ) : null}
             {/* =========================================================
                 FIND: GENERATE FLASHCARDS
-                STYLE: learningWorkspace.css
-                SELECTOR: .learning-primary-button
+                TYPE: UI
+                FILE: frontend/src/features/learning/DocumentFlashcards.tsx
+                STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+                STYLE SELECTOR: .learning-primary-button
                 BACKEND: learning.jobs.ts -> FIND: GENERATE FLASHCARDS BACKEND
                 ========================================================= */}
             <button

@@ -185,7 +185,10 @@ export function LearningChildDeletion({
     <div className="learning-child-deletion">
       {/* =========================================================
           FIND: DELETE LEARNING ITEM
-          STYLE: learningDeletion.css -> .learning-delete-heading
+          TYPE: UI
+          FILE: frontend/src/features/learning/LearningChildDeletion.tsx
+          STYLE FILE: frontend/src/features/learning/learningDeletion.css
+          STYLE SELECTOR: .learning-delete-heading
           BACKEND: learningChildDeletion.service.ts -> FIND: DELETE LEARNING ITEM BACKEND
           ========================================================= */}
       <CardOverflowActions

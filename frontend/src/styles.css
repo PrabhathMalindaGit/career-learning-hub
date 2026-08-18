@@ -336,6 +336,19 @@ h2 {
    SHARED SELECTOR: .primary-button
    CHANGE PRIMARY ACTION BORDER / TEXT / BACKGROUND COLOR HERE
    ========================================================= */
+/* =========================================================
+   FIND: SAVE GEMINI KEY
+   FIND: APPLICATION GEMINI
+   FIND: CREATE RESUME
+   TYPE: SHARED STYLE
+   FILE: frontend/src/styles.css
+   UI FILES:
+   - frontend/src/features/auth/GeminiConnectionSettings.tsx
+   - frontend/src/features/resumes/ResumeListPage.tsx
+   CONTROLS: SAVE GEMINI KEY / APPLICATION GEMINI / CREATE RESUME
+   SELECTOR: .primary-button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .primary-button {
   border: 1px solid var(--accent);
   color: #ffffff;
@@ -355,6 +368,18 @@ h2 {
    SHARED SELECTOR: .secondary-button
    CHANGE SECONDARY ACTION BORDER / TEXT / BACKGROUND COLOR HERE
    ========================================================= */
+/* =========================================================
+   FIND: TEST GEMINI CONNECTION
+   FIND: PERSONAL GEMINI KEY
+   FIND: REPLACE GEMINI KEY
+   FIND: DISCONNECT GEMINI
+   TYPE: SHARED STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/features/auth/GeminiConnectionSettings.tsx
+   CONTROLS: TEST GEMINI CONNECTION / PERSONAL GEMINI KEY / REPLACE GEMINI KEY / DISCONNECT GEMINI
+   SELECTOR: .secondary-button
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .secondary-button {
   border: 1px solid var(--border);
   color: #28342d;
@@ -366,6 +391,15 @@ h2 {
    FIND: DELETE GEMINI KEY COLOR
    CONTROLS: Delete personal Gemini key button
    SELECTOR: .destructive-button
+   ========================================================= */
+/* =========================================================
+   FIND: DELETE GEMINI KEY
+   TYPE: STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/features/auth/GeminiConnectionSettings.tsx
+   CONTROLS: DELETE GEMINI KEY
+   SELECTOR: .destructive-button
+   CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .destructive-button {
   border: 1px solid #a33b3b;
@@ -423,6 +457,15 @@ h2 {
 }
 
 /* Feature 1.3 — Authenticated application-shell layout. */
+/* =========================================================
+   FIND: APPLICATION SHELL
+   TYPE: STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/AppShell.tsx
+   CONTROLS: APPLICATION SHELL
+   SELECTOR: .app-shell
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .app-shell {
   display: grid;
   grid-template-columns: 256px minmax(0, 1fr);
@@ -483,6 +526,15 @@ h2 {
    CONTROLS: Primary and mobile navigation links
    CHANGE TEXT / HOVER / ACTIVE COLOR HERE AND IN THE ADJACENT STATE RULES
    ========================================================= */
+/* =========================================================
+   FIND: NAVIGATION
+   TYPE: STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/AppShell.tsx
+   CONTROLS: NAVIGATION
+   SELECTOR: .nav-link
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .nav-link {
   display: flex;
   min-width: 0;
@@ -529,6 +581,15 @@ h2 {
    FIND: CREATE MENU COLOR
    CONTROLS: Global Create menu and its open/hover state
    CHANGE TEXT / BACKGROUND COLOR HERE AND IN THE ADJACENT STATE RULE
+   ========================================================= */
+/* =========================================================
+   FIND: CREATE MENU
+   TYPE: STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/AppShell.tsx
+   CONTROLS: CREATE MENU
+   SELECTOR: .create-menu summary
+   CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .create-menu summary {
   display: flex;
@@ -633,6 +694,15 @@ h2 {
    FIND: LOG OUT COLOR
    CONTROLS: Sidebar Log out button and related mobile shell controls
    SHARED SELECTOR: .sidebar-logout
+   ========================================================= */
+/* =========================================================
+   FIND: LOG OUT
+   TYPE: STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/AppShell.tsx
+   CONTROLS: LOG OUT
+   SELECTOR: .sidebar-logout
+   CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .sidebar-logout,
 .mobile-nav-toggle,
@@ -843,6 +913,15 @@ h2 {
    CONTROLS: Connected and disconnected Gemini status badges
    SELECTOR: .gemini-status
    ========================================================= */
+/* =========================================================
+   FIND: GEMINI CONNECTION
+   TYPE: STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/features/auth/GeminiConnectionSettings.tsx
+   CONTROLS: GEMINI CONNECTION
+   SELECTOR: .gemini-status
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .gemini-status {
   display: inline-flex;
   min-height: 32px;
@@ -923,6 +1002,15 @@ h2 {
    FIND: GEMINI MODEL STYLE
    CONTROLS: Fixed release-model label
    SELECTOR: .gemini-model
+   ========================================================= */
+/* =========================================================
+   FIND: GEMINI MODEL
+   TYPE: STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/features/auth/GeminiConnectionSettings.tsx
+   CONTROLS: GEMINI MODEL
+   SELECTOR: .gemini-model
+   CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .gemini-model {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -1071,6 +1159,15 @@ h2 {
    FIND: CURRENT SESSION STYLE
    CONTROLS: Current browser-session settings panel
    SELECTOR: .settings-session-panel
+   ========================================================= */
+/* =========================================================
+   FIND: CURRENT SESSION
+   TYPE: STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/features/auth/SettingsPage.tsx
+   CONTROLS: CURRENT SESSION
+   SELECTOR: .settings-session-panel
+   CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .settings-session-panel {
   display: flex;
@@ -1235,6 +1332,16 @@ h2 {
   }
 }
 
+/* =========================================================
+   FIND: JOB PROGRESS
+   FIND: CANCEL RETRY
+   TYPE: SHARED STYLE
+   FILE: frontend/src/styles.css
+   UI FILE: frontend/src/features/jobs/JobResilienceActions.tsx
+   CONTROLS: JOB PROGRESS / CANCEL RETRY
+   SELECTOR: .job-resilience-actions
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .job-resilience-actions,
 .job-resilience-actions__buttons {
   display: flex;

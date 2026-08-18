@@ -52,6 +52,15 @@
    CONTROLS: Question-type choice cards
    SELECTOR: .interview-type-choice
    ========================================================= */
+/* =========================================================
+   FIND: QUESTION TYPES
+   TYPE: STYLE
+   FILE: frontend/src/features/interviews/interviewQuestionTypes.css
+   UI FILE: frontend/src/features/interviews/InterviewQuestionTypeControls.tsx
+   CONTROLS: QUESTION TYPES
+   SELECTOR: .interview-type-choice
+   CHANGE: layout / border / background / text / state appearance here
+   ========================================================= */
 .interview-type-choice {
   display: grid;
   width: 100%;
@@ -366,6 +375,15 @@
    FIND: ARCHIVE INTERVIEW STYLE
    CONTROLS: Complete, archive, and restore lifecycle actions
    SELECTOR: .interview-workspace .interview-lifecycle-actions
+   ========================================================= */
+/* =========================================================
+   FIND: ARCHIVE INTERVIEW
+   TYPE: STYLE
+   FILE: frontend/src/features/interviews/interviewQuestionTypes.css
+   UI FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+   CONTROLS: ARCHIVE INTERVIEW
+   SELECTOR: .interview-workspace .interview-lifecycle-actions
+   CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .interview-workspace .interview-lifecycle-actions {
   flex-wrap: nowrap;

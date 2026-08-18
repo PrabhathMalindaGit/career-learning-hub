@@ -106,8 +106,10 @@ function PrimaryNavigation({
   return (
     /* =========================================================
        FIND: NAVIGATION
-       STYLE: styles.css
-       SELECTOR: .nav-link
+       TYPE: UI
+       FILE: frontend/src/AppShell.tsx
+       STYLE FILE: frontend/src/styles.css
+       STYLE SELECTOR: .nav-link
        ========================================================= */
     <nav aria-label={label} className="primary-navigation">
       {/* Feature 1.4 UI — Sidebar/mobile navigation links. */}
@@ -129,8 +131,10 @@ function CreateMenu() {
   return (
     /* =========================================================
        FIND: CREATE MENU
-       STYLE: styles.css
-       SELECTOR: .create-menu summary
+       TYPE: UI
+       FILE: frontend/src/AppShell.tsx
+       STYLE FILE: frontend/src/styles.css
+       STYLE SELECTOR: .create-menu summary
        ========================================================= */
     <details className="create-menu">
       {/* Feature 1.5 UI — Global Create menu. */}
@@ -191,7 +195,10 @@ export function AppShell() {
   return (
     /* =========================================================
        FIND: APPLICATION SHELL
-       STYLE: styles.css -> .app-shell, .app-sidebar, .app-main
+       TYPE: UI
+       FILE: frontend/src/AppShell.tsx
+       STYLE FILE: frontend/src/styles.css
+       STYLE SELECTOR: .app-shell
        ========================================================= */
     <div className="app-shell">
       {/* Feature 1.3 UI — Authenticated application shell. */}
@@ -213,8 +220,10 @@ export function AppShell() {
           />
           {/* =========================================================
               FIND: LOG OUT
-              STYLE: styles.css
-              SELECTOR: .sidebar-logout
+              TYPE: UI
+              FILE: frontend/src/AppShell.tsx
+              STYLE FILE: frontend/src/styles.css
+              STYLE SELECTOR: .sidebar-logout
               ========================================================= */}
           <button
             className="sidebar-logout"

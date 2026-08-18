@@ -1680,8 +1680,10 @@ export function InterviewSessionWorkspace() {
         </div>
         {/* =========================================================
             FIND: ARCHIVE INTERVIEW
-            STYLE: interviewQuestionTypes.css
-            SELECTOR: .interview-workspace .interview-lifecycle-actions
+            TYPE: UI
+            FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+            STYLE FILE: frontend/src/features/interviews/interviewQuestionTypes.css
+            STYLE SELECTOR: .interview-workspace .interview-lifecycle-actions
             ========================================================= */}
         <div className="interview-lifecycle-actions">
           {session.status === "active" ? (
@@ -1780,7 +1782,10 @@ export function InterviewSessionWorkspace() {
             </div>
             {/* =========================================================
                 FIND: ADD QUESTION MANUALLY
-                STYLE: interviewCoach.css -> .interview-section-heading > button
+                TYPE: UI
+                FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+                STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+                STYLE SELECTOR: .interview-section-heading > button
                 ========================================================= */}
             <button
               type="button"
@@ -1834,8 +1839,10 @@ export function InterviewSessionWorkspace() {
             </div>
             {/* =========================================================
                 FIND: GENERATE QUESTIONS
-                STYLE: interviewCoach.css
-                SELECTOR: .interview-primary-button
+                TYPE: UI
+                FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+                STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+                STYLE SELECTOR: .interview-primary-button
                 BACKEND: interview.jobs.ts -> FIND: GENERATE QUESTIONS BACKEND
                 ========================================================= */}
             <button
@@ -2290,7 +2297,10 @@ export function InterviewSessionWorkspace() {
                 {editable ? (
                   /* =========================================================
                      FIND: PIN QUESTION
-                     STYLE: interviewCoach.css -> .interview-secondary-button
+                     TYPE: UI
+                     FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+                     STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+                     STYLE SELECTOR: .interview-secondary-button
                      ========================================================= */
                   <button
                     type="button"
@@ -2353,8 +2363,10 @@ export function InterviewSessionWorkspace() {
               ) : editable ? (
                 /* =========================================================
                    FIND: REQUEST EXPLANATION
-                   STYLE: interviewCoach.css
-                   SELECTOR: .interview-secondary-button
+                   TYPE: UI
+                   FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+                   STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+                   STYLE SELECTOR: .interview-secondary-button
                    BACKEND: interview.jobs.ts -> FIND: REQUEST EXPLANATION BACKEND
                    ========================================================= */
                 <button
@@ -2370,8 +2382,10 @@ export function InterviewSessionWorkspace() {
 
               {/* =========================================================
                   FIND: PRIVATE NOTES
-                  STYLE: interviewQuestionIndexNotes.css
-                  SELECTOR: .interview-private-notes
+                  TYPE: UI
+                  FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+                  STYLE FILE: frontend/src/features/interviews/interviewQuestionIndexNotes.css
+                  STYLE SELECTOR: .interview-private-notes
                   ========================================================= */}
               <section
                 className="interview-private-notes"
@@ -2499,7 +2513,10 @@ export function InterviewSessionWorkspace() {
 
         {/* =========================================================
             FIND: SAVED ATTEMPTS
-            STYLE: interviewCoach.css -> .interview-history
+            TYPE: UI
+            FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+            STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+            STYLE SELECTOR: .interview-history
             ========================================================= */}
         <section
           className="interview-history interview-panel"
@@ -2650,8 +2667,10 @@ export function InterviewSessionWorkspace() {
               selectedAttempt.answer?.type !== "multiple-choice" ? (
                 /* =========================================================
                    FIND: REQUEST FEEDBACK
-                   STYLE: interviewCoach.css
-                   SELECTOR: .interview-secondary-button
+                   TYPE: UI
+                   FILE: frontend/src/features/interviews/InterviewSessionWorkspace.tsx
+                   STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+                   STYLE SELECTOR: .interview-secondary-button
                    BACKEND: interview.jobs.ts -> FIND: REQUEST FEEDBACK BACKEND
                    ========================================================= */
                 <button

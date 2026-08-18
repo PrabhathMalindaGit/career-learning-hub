@@ -79,7 +79,10 @@ export function SettingsPage() {
           <header className="settings-panel__header">
             {/* =========================================================
                 FIND: CURRENT SESSION
-                STYLE: styles.css -> .settings-session-panel
+                TYPE: UI
+                FILE: frontend/src/features/auth/SettingsPage.tsx
+                STYLE FILE: frontend/src/styles.css
+                STYLE SELECTOR: .settings-session-panel
                 ========================================================= */}
             {/* Feature 6.11 UI — Account/current session controls. */}
             <h2 id="current-session-heading">Current session</h2>

@@ -152,8 +152,10 @@ export function ResumeVersionTimeline({
   return (
     /* =========================================================
        FIND: VERSION HISTORY
-       STYLE: resumeWorkspace.css
-       SELECTOR: .resume-version-history
+       TYPE: UI
+       FILE: frontend/src/features/resumes/ResumeVersionTimeline.tsx
+       STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+       STYLE SELECTOR: .resume-version-history
        ========================================================= */
     <section
       className="resume-version-history"

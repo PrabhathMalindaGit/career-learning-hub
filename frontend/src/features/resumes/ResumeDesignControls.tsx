@@ -130,8 +130,10 @@ export function ResumeDesignControls({
   return (
     /* =========================================================
        FIND: RESUME APPEARANCE
-       STYLE: resumeWorkspace.css
-       SELECTOR: .resume-design-panel
+       TYPE: UI
+       FILE: frontend/src/features/resumes/ResumeDesignControls.tsx
+       STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+       STYLE SELECTOR: .resume-design-panel
        ========================================================= */
     <section
       className="resume-design-panel resume-appearance-polish"

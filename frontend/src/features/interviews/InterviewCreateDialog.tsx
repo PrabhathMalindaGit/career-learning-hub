@@ -349,7 +349,10 @@ export function InterviewCreateDialog({
 
         {/* =========================================================
             FIND: INTERVIEW SETUP
-            STYLE: interviewCoach.css -> .interview-create-dialog__body
+            TYPE: UI
+            FILE: frontend/src/features/interviews/InterviewCreateDialog.tsx
+            STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+            STYLE SELECTOR: .interview-create-dialog__body
             ========================================================= */}
         <div className="interview-create-dialog__body interview-form">
           <p className="interview-create-required-note">

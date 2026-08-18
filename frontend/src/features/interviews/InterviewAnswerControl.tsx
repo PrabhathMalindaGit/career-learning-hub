@@ -280,8 +280,10 @@ export function InterviewAnswerControl({
 
       {/* =========================================================
           FIND: SAVE ATTEMPT
-          STYLE: interviewCoach.css
-          SELECTOR: .interview-primary-button
+          TYPE: UI
+          FILE: frontend/src/features/interviews/InterviewAnswerControl.tsx
+          STYLE FILE: frontend/src/features/interviews/interviewCoach.css
+          STYLE SELECTOR: .interview-primary-button
           ========================================================= */}
       <button
         type="button"

@@ -219,8 +219,10 @@ export function DocumentConversations({
         </label>
         {/* =========================================================
             FIND: CREATE CONVERSATION
-            STYLE: learningWorkspace.css
-            SELECTOR: .learning-primary-button
+            TYPE: UI
+            FILE: frontend/src/features/learning/DocumentConversations.tsx
+            STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+            STYLE SELECTOR: .learning-primary-button
             ========================================================= */}
         <button type="submit" className="learning-primary-button" disabled={creating}>
           {/* Feature 5.7.1 UI — Create Grounded Chat conversation. */}

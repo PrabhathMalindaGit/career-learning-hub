@@ -92,8 +92,10 @@ export function ResumePrintControls({
         </label>
         {/* =========================================================
             FIND: PRINT RESUME
-            STYLE: resumeWorkspace.css
-            SELECTOR: .resume-print-controls
+            TYPE: UI
+            FILE: frontend/src/features/resumes/ResumePrintControls.tsx
+            STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+            STYLE SELECTOR: .resume-print-controls
             ========================================================= */}
         <button
           className="resume-primary-button"

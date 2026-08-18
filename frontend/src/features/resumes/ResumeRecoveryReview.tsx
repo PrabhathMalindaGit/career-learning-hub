@@ -25,7 +25,10 @@ export function ResumeRecoveryReview({
   return (
     /* =========================================================
        FIND: DRAFT RECOVERY
-       STYLE: resumeWorkspace.css -> .resume-recovery-review
+       TYPE: UI
+       FILE: frontend/src/features/resumes/ResumeRecoveryReview.tsx
+       STYLE FILE: frontend/src/features/resumes/resumeWorkspace.css
+       STYLE SELECTOR: .resume-recovery-review
        ========================================================= */
     <main
       className="resume-recovery-review"

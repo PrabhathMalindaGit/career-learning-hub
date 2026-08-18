@@ -440,7 +440,10 @@ export function LearningDashboard() {
   return (
     /* =========================================================
        FIND: DOCUMENT LIBRARY
-       STYLE: learningWorkspace.css -> .learning-library
+       TYPE: UI
+       FILE: frontend/src/features/learning/LearningDashboard.tsx
+       STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+       STYLE SELECTOR: .learning-library
        ========================================================= */
     <section className="workspace-section learning-library">
       <header className="learning-page-header">
@@ -455,8 +458,10 @@ export function LearningDashboard() {
         <div className="learning-header-actions">
           {/* =========================================================
               FIND: UPLOAD PDF
-              STYLE: learningWorkspace.css
-              SELECTOR: .learning-primary-button
+              TYPE: UI
+              FILE: frontend/src/features/learning/LearningDashboard.tsx
+              STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+              STYLE SELECTOR: .learning-primary-button
               BACKEND: learning.jobs.ts -> FIND: DOCUMENT PROCESSING BACKEND
               ========================================================= */}
           {/* Feature 5.1 UI — Upload private Learning PDF. */}
@@ -633,7 +638,10 @@ export function LearningDashboard() {
       {processingCheck ? (
         /* =========================================================
            FIND: DOCUMENT PROCESSING
-           STYLE: learningWorkspace.css -> .learning-processing-notice
+           TYPE: UI
+           FILE: frontend/src/features/learning/LearningDashboard.tsx
+           STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+           STYLE SELECTOR: .learning-processing-notice
            BACKEND: learning.jobs.ts -> FIND: DOCUMENT PROCESSING BACKEND
            ========================================================= */
         <div className="learning-processing-notice" aria-live="polite">
@@ -806,8 +814,10 @@ export function LearningDashboard() {
                   </p>
                   {/* =========================================================
                       FIND: OPEN DOCUMENT
-                      STYLE: learningWorkspace.css
-                      SELECTOR: .learning-document-link
+                      TYPE: UI
+                      FILE: frontend/src/features/learning/LearningDashboard.tsx
+                      STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+                      STYLE SELECTOR: .learning-document-link
                       ========================================================= */}
                   <Link
                     className="learning-document-link"

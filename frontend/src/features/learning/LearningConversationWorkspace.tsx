@@ -763,8 +763,10 @@ export function LearningConversationWorkspace() {
                       {message.sourcePages.map((page) => (
                         /* =========================================================
                            FIND: PAGE REFERENCE
-                           STYLE: learningWorkspace.css
-                           SELECTOR: .learning-source-pages button
+                           TYPE: UI
+                           FILE: frontend/src/features/learning/LearningConversationWorkspace.tsx
+                           STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+                           STYLE SELECTOR: .learning-source-pages button
                            ========================================================= */
                         <button
                           type="button"
@@ -870,8 +872,10 @@ export function LearningConversationWorkspace() {
         <div className="learning-form-actions">
           {/* =========================================================
               FIND: SEND QUESTION
-              STYLE: learningWorkspace.css
-              SELECTOR: .learning-primary-button
+              TYPE: UI
+              FILE: frontend/src/features/learning/LearningConversationWorkspace.tsx
+              STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+              STYLE SELECTOR: .learning-primary-button
               BACKEND: learning.jobs.ts -> FIND: SEND QUESTION BACKEND
               ========================================================= */}
           <button

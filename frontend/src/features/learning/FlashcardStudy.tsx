@@ -75,7 +75,10 @@ export function FlashcardStudy({
         <div className="learning-study-reveal">
           {/* =========================================================
               FIND: REVEAL ANSWER
-              STYLE: learningWorkspace.css -> .learning-study-reveal
+              TYPE: UI
+              FILE: frontend/src/features/learning/FlashcardStudy.tsx
+              STYLE FILE: frontend/src/features/learning/learningWorkspace.css
+              STYLE SELECTOR: .learning-study-reveal
               ========================================================= */}
           <button
             type="button"
