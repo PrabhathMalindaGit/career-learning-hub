@@ -1,3 +1,8 @@
+/* Viva feature locators — Learning action colours and states.
+   Feature 5.1 — Upload PDF: .learning-primary-button; normal/hover/disabled/busy states are defined below.
+   Feature 5.7 — Grounded Chat actions (Create conversation / Send question): .learning-primary-button; source-page controls use .learning-source-pages.
+   Feature 5.8 — Flashcard generation/reveal actions: .learning-primary-button; Study set navigation uses .learning-document-link.
+   Feature 5.9 — Quiz generation/taking actions: .learning-primary-button; Review attempt navigation uses .learning-document-link. */
 .learning-library,
 .learning-workspace {
   min-width: 0;
