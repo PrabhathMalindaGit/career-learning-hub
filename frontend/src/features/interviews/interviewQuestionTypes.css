@@ -1,3 +1,8 @@
+/* Feature 4.6 — Interview question-type presentation and selected-state styling.
+   UI: Interview workspace -> Question types.
+   Normal cards: .interview-type-choice.
+   Selected colour/state: .interview-type-choice:has(input:checked).
+   Coding answer presentation is also defined in this file; answers remain text-only. */
 .interview-type-controls {
   display: grid;
   min-width: 0;
@@ -474,5 +479,11 @@
 
   .interview-workspace .interview-lifecycle-actions button {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interview-workspace .interview-lifecycle-actions button {
+    transition: none;
   }
 }
