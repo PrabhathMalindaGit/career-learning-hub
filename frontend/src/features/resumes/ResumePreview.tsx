@@ -23,6 +23,7 @@ interface ResumePreviewProps {
   printOnly?: boolean;
 }
 
+// Feature 3.4 — Live Resume preview; renders current draft without persisting it.
 export function ResumePreview({
   draft,
   label = "Live preview",
