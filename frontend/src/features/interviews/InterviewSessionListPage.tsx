@@ -165,6 +165,10 @@ export function InterviewSessionListPage() {
           </p>
         }
         actions={
+          /* =========================================================
+             FIND: CREATE INTERVIEW
+             STYLE: interviewCoach.css -> .interview-primary-button
+             ========================================================= */
           <button
             ref={createButtonRef}
             className="primary-button interview-primary-button interview-create-action"
@@ -178,6 +182,10 @@ export function InterviewSessionListPage() {
         }
       />
 
+      {/* =========================================================
+          FIND: INTERVIEW LIST
+          STYLE: interviewCoach.css -> .interview-collection
+          ========================================================= */}
       <section
         className="interview-collection interview-panel"
         aria-labelledby="interview-collection-title"

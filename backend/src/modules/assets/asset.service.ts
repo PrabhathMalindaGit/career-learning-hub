@@ -73,6 +73,10 @@ export async function assertAssetQuota(
 }
 
 // Feature 7.3 BACKEND — Create private owner-scoped asset.
+// =========================================================
+// FIND: PRIVATE FILE STORAGE BACKEND
+// DOES: Validates and stores an owner-scoped private asset behind controlled access.
+// =========================================================
 export async function createAsset(input: {
   userId: string;
   purpose: AssetPurpose;

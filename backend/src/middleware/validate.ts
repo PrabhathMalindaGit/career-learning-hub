@@ -12,6 +12,10 @@ type RequestSchemas = {
 // Rejects malformed validated inputs before feature handlers persist or queue work.
 // Feature 7.7 — Server-authoritative Zod request validation before feature handlers.
 // Feature 7.7 BACKEND — Zod request validation.
+// =========================================================
+// FIND: VALIDATION BACKEND
+// DOES: Parses body, path, and query inputs before protected handlers run.
+// =========================================================
 export function validate(schemas: RequestSchemas): RequestHandler {
   return (request, _response, next) => {
     const errors: Record<string, unknown> = {};

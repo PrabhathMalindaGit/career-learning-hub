@@ -361,6 +361,11 @@ export function AiRecommendations({
             version.
           </span>
         </div>
+        {/* =========================================================
+            FIND: APPLY AI SUGGESTIONS
+            STYLE: resumeWorkspace.css
+            SELECTOR: .resume-primary-button
+            ========================================================= */}
         <button
           ref={applyButtonRef}
           type="button"

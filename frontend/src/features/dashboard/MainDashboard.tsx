@@ -224,6 +224,13 @@ function ContinueWorkActions({
   const actions = continuationActions(data);
 
   return (
+    /* =========================================================
+       FIND: RESUME SHORTCUT
+       FIND: INTERVIEW SHORTCUT
+       FIND: LEARNING SHORTCUT
+       STYLE: dashboard.css
+       SELECTOR: .dashboard-quick-start__link
+       ========================================================= */
     <nav
       className="dashboard-quick-start dashboard-continue-work"
       aria-labelledby="dashboard-continue-title"
@@ -694,6 +701,11 @@ export function MainDashboard() {
         }
       />
 
+      {/* =========================================================
+          FIND: PROGRESS OVERVIEW
+          STYLE: dashboardPhase19d.css
+          SELECTOR: .dashboard-performance-toolbar
+          ========================================================= */}
       {/* Feature 2.1 UI — Progress overview and performance period. */}
       <section
         className="dashboard-progress-section"

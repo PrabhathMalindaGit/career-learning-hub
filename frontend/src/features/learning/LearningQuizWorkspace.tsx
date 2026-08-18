@@ -576,6 +576,11 @@ export function LearningQuizWorkspace() {
                       <time dateTime={attempt.completedAt}>
                         {attemptDateFormatter.format(new Date(attempt.completedAt))}
                       </time>
+                      {/* =========================================================
+                          FIND: REVIEW QUIZ
+                          STYLE: learningWorkspace.css
+                          SELECTOR: .learning-document-link
+                          ========================================================= */}
                       <Link
                         className="learning-document-link"
                         to={`/learning/documents/${documentId}/quizzes/${quizId}/attempts/${attempt.id}`}

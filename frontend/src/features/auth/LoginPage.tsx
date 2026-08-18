@@ -292,6 +292,11 @@ export function LoginPage() {
           </div>
         ) : null}
 
+        {/* =========================================================
+            FIND: SIGN IN
+            STYLE: auth.css
+            SELECTOR: .authentication-form-card .primary-button
+            ========================================================= */}
         <button
           className="primary-button"
           type="submit"

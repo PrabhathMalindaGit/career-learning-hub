@@ -131,6 +131,12 @@ export function GeminiConnectionSettingsSection() {
       <header className="settings-panel__header settings-gemini-header">
         <div>
           <p className="settings-panel__eyebrow">AI connection</p>
+          {/* =========================================================
+              FIND: GEMINI CONNECTION
+              STYLE: styles.css
+              SELECTOR: .gemini-status
+              BACKEND: aiProvider.service.ts -> FIND: GEMINI CONNECTION BACKEND
+              ========================================================= */}
           {/* Feature 6.1 UI — Gemini connection status. */}
           <h2 id="gemini-connection-heading">Gemini connection</h2>
           <p>Control which Gemini credential Career Learning Hub uses for your AI jobs.</p>
@@ -154,6 +160,12 @@ export function GeminiConnectionSettingsSection() {
             </div>
             <div>
               <span>Model</span>
+              {/* =========================================================
+                  FIND: GEMINI MODEL
+                  STYLE: styles.css
+                  SELECTOR: .gemini-model
+                  BACKEND: geminiPolicy.ts -> FIND: GEMINI MODEL BACKEND
+                  ========================================================= */}
               {/* Feature 6.2 UI — Fixed Gemini model. */}
               <strong className="gemini-model">{settings.model}</strong>
               <p>Fixed for secure, predictable AI workflows.</p>
@@ -195,6 +207,11 @@ export function GeminiConnectionSettingsSection() {
                 onChange={(event) => setCandidateKey(event.target.value)}
               />
               <div className="gemini-action-row">
+                {/* =========================================================
+                    FIND: SAVE GEMINI KEY
+                    STYLE: styles.css -> .primary-button
+                    BACKEND: aiProvider.service.ts -> FIND: PERSONAL GEMINI KEY BACKEND
+                    ========================================================= */}
                 <button className="primary-button" type="submit" disabled={busy || candidateKey.length < 8}>
                   {/* Feature 6.5 UI — Save and test personal key. */}
                   {busy ? "Testing…" : "Save and test"}
@@ -207,6 +224,11 @@ export function GeminiConnectionSettingsSection() {
           ) : (
             <div className="gemini-action-row">
               {settings.mode !== "disconnected" ? (
+                /* =========================================================
+                   FIND: TEST GEMINI CONNECTION
+                   STYLE: styles.css -> .secondary-button
+                   BACKEND: aiProvider.service.ts -> FIND: TEST GEMINI CONNECTION BACKEND
+                   ========================================================= */
                 <button
                   className="secondary-button"
                   type="button"
@@ -221,6 +243,11 @@ export function GeminiConnectionSettingsSection() {
                 </button>
               ) : null}
               {settings.mode === "disconnected" && settings.administratorManagedAvailable ? (
+                /* =========================================================
+                   FIND: APPLICATION GEMINI
+                   STYLE: styles.css -> .primary-button
+                   BACKEND: aiProvider.service.ts -> FIND: APPLICATION GEMINI BACKEND
+                   ========================================================= */
                 <button
                   className="primary-button"
                   type="button"
@@ -237,6 +264,12 @@ export function GeminiConnectionSettingsSection() {
                   Use application-managed Gemini
                 </button>
               ) : null}
+              {/* =========================================================
+                  FIND: PERSONAL GEMINI KEY
+                  FIND: REPLACE GEMINI KEY
+                  STYLE: styles.css -> .secondary-button
+                  BACKEND: aiProvider.service.ts -> FIND: PERSONAL GEMINI KEY BACKEND
+                  ========================================================= */}
               <button
                 className="secondary-button"
                 type="button"
@@ -252,6 +285,11 @@ export function GeminiConnectionSettingsSection() {
                     : "Connect personal key"}
               </button>
               {settings.mode === "application-managed" ? (
+                /* =========================================================
+                   FIND: DISCONNECT GEMINI
+                   STYLE: styles.css -> .secondary-button
+                   BACKEND: aiProvider.service.ts -> FIND: APPLICATION GEMINI BACKEND
+                   ========================================================= */
                 <button
                   className="secondary-button"
                   type="button"
@@ -266,6 +304,11 @@ export function GeminiConnectionSettingsSection() {
                 </button>
               ) : null}
               {settings.mode === "personal" && settings.credential ? (
+                /* =========================================================
+                   FIND: DELETE GEMINI KEY
+                   STYLE: styles.css -> .destructive-button
+                   BACKEND: aiProvider.service.ts -> FIND: DELETE GEMINI KEY BACKEND
+                   ========================================================= */
                 <button
                   ref={deleteButtonRef}
                   className="destructive-button"

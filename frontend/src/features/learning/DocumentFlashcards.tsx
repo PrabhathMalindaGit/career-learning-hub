@@ -520,6 +520,10 @@ export function DocumentFlashcards({
     generationOpen || (!loading && !loadError && sets.length === 0);
 
   return (
+    /* =========================================================
+       FIND: FLASHCARDS
+       STYLE: learningWorkspace.css -> .learning-flashcard-set-list
+       ========================================================= */
     <section
       className="learning-flashcard-sets"
       aria-labelledby="learning-flashcard-sets-title"
@@ -637,6 +641,11 @@ export function DocumentFlashcards({
                   <p className="learning-row-error">{set.generationError.message}</p>
                 ) : null}
                 {set.status === "ready" ? (
+                  /* =========================================================
+                     FIND: STUDY FLASHCARDS
+                     STYLE: learningWorkspace.css
+                     SELECTOR: .learning-document-link
+                     ========================================================= */
                   <Link
                     className="learning-document-link"
                     to={`/learning/documents/${document.id}/flashcards/${set.id}`}
@@ -743,6 +752,12 @@ export function DocumentFlashcards({
                 <RequestId value={createError.requestId} />
               </div>
             ) : null}
+            {/* =========================================================
+                FIND: GENERATE FLASHCARDS
+                STYLE: learningWorkspace.css
+                SELECTOR: .learning-primary-button
+                BACKEND: learning.jobs.ts -> FIND: GENERATE FLASHCARDS BACKEND
+                ========================================================= */}
             <button
               type="submit"
               className="learning-primary-button"

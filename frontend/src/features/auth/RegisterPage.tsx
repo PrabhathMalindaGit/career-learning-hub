@@ -376,6 +376,11 @@ export function RegisterPage() {
           </div>
         ) : null}
 
+        {/* =========================================================
+            FIND: CREATE ACCOUNT
+            STYLE: auth.css
+            SELECTOR: .authentication-form-card .primary-button
+            ========================================================= */}
         <button
           className="primary-button"
           type="submit"

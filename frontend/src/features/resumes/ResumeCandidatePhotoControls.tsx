@@ -35,6 +35,11 @@ export function ResumeCandidatePhotoControls({
   const fileActionLabel = hasPhoto ? "Replace photo" : "Choose photo";
 
   return (
+    /* =========================================================
+       FIND: CANDIDATE PHOTO
+       STYLE: resumeCandidatePhoto.css
+       SELECTOR: .resume-candidate-photo-file-button
+       ========================================================= */
     <section
       className="resume-panel resume-candidate-photo-panel"
       aria-labelledby="resume-candidate-photo-title"

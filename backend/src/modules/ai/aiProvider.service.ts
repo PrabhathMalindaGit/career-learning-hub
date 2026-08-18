@@ -344,6 +344,11 @@ export async function withAiIdempotency<T>(input: {
 // Resolves the authenticated user's allowed connection mode without exposing
 // stored credential plaintext through the settings API.
 // Feature 6.1 BACKEND — Read Gemini connection/settings state.
+// =========================================================
+// FIND: GEMINI CONNECTION BACKEND
+// DOES: Returns the authenticated user's safe Gemini connection state.
+// UI: GeminiConnectionSettings.tsx -> FIND: GEMINI CONNECTION
+// =========================================================
 export async function listProviderSettings(userId: string) {
   const [preference, credentials] = await Promise.all([
     AiProviderPreferenceModel.findOne({ userId }).lean(),
@@ -420,6 +425,11 @@ export async function getRoutingSettings(userId: string) {
 }
 
 // Feature 6.4 BACKEND — Save/replace personal Gemini credential; Feature 6.5 BACKEND — test-before-activation path.
+// =========================================================
+// FIND: PERSONAL GEMINI KEY BACKEND
+// DOES: Tests, encrypts, and saves or replaces a personal Gemini credential.
+// UI: GeminiConnectionSettings.tsx -> FIND: PERSONAL GEMINI KEY
+// =========================================================
 export async function saveCredential(input: {
   userId: string;
   provider: AiExecutionState;
@@ -618,6 +628,11 @@ function normalizeConnectionError(error: unknown): AppError {
 }
 
 // Feature 6.6 BACKEND — Test Gemini credential connection.
+// =========================================================
+// FIND: TEST GEMINI CONNECTION BACKEND
+// DOES: Tests the selected allowed Gemini credential without returning its secret.
+// UI: GeminiConnectionSettings.tsx -> FIND: TEST GEMINI CONNECTION
+// =========================================================
 export async function testCredentialConnection(input: {
   userId: string;
   provider: AiExecutionState;
@@ -807,6 +822,11 @@ export async function testCredentialConnection(input: {
 }
 
 // Feature 6.3 BACKEND — Activate application-managed Gemini source; Feature 6.8 BACKEND — source preference changes.
+// =========================================================
+// FIND: APPLICATION GEMINI BACKEND
+// DOES: Activates or changes the authenticated user's allowed Gemini source.
+// UI: GeminiConnectionSettings.tsx -> FIND: APPLICATION GEMINI
+// =========================================================
 export async function activateProvider(input: {
   userId: string;
   provider: AiExecutionState;
@@ -987,6 +1007,11 @@ export async function activateProvider(input: {
 }
 
 // Feature 6.9 BACKEND — Delete personal Gemini credential.
+// =========================================================
+// FIND: DELETE GEMINI KEY BACKEND
+// DOES: Starts the controlled deletion of the authenticated user's personal key.
+// UI: GeminiConnectionSettings.tsx -> FIND: DELETE GEMINI KEY
+// =========================================================
 export async function deleteCredential(input: {
   userId: string;
   provider: AiExecutionState;

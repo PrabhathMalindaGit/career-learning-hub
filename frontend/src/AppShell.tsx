@@ -104,6 +104,11 @@ function PrimaryNavigation({
   label: "Primary navigation" | "Mobile navigation";
 }) {
   return (
+    /* =========================================================
+       FIND: NAVIGATION
+       STYLE: styles.css
+       SELECTOR: .nav-link
+       ========================================================= */
     <nav aria-label={label} className="primary-navigation">
       {/* Feature 1.4 UI — Sidebar/mobile navigation links. */}
       {navigationItems.map((item) => (
@@ -122,6 +127,11 @@ function PrimaryNavigation({
 
 function CreateMenu() {
   return (
+    /* =========================================================
+       FIND: CREATE MENU
+       STYLE: styles.css
+       SELECTOR: .create-menu summary
+       ========================================================= */
     <details className="create-menu">
       {/* Feature 1.5 UI — Global Create menu. */}
       <summary>
@@ -179,6 +189,10 @@ export function AppShell() {
   }
 
   return (
+    /* =========================================================
+       FIND: APPLICATION SHELL
+       STYLE: styles.css -> .app-shell, .app-sidebar, .app-main
+       ========================================================= */
     <div className="app-shell">
       {/* Feature 1.3 UI — Authenticated application shell. */}
       {/* Feature 7.9 UI — Skip link and responsive shell accessibility. */}
@@ -197,6 +211,11 @@ export function AppShell() {
             displayName={user?.profile.displayName}
             email={user?.email}
           />
+          {/* =========================================================
+              FIND: LOG OUT
+              STYLE: styles.css
+              SELECTOR: .sidebar-logout
+              ========================================================= */}
           <button
             className="sidebar-logout"
             type="button"

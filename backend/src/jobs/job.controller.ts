@@ -72,6 +72,11 @@ export async function getJobController(
   });
 }
 
+// =========================================================
+// FIND: CANCEL RETRY BACKEND
+// DOES: Cancels an owned active job when its execution phase allows cancellation.
+// UI: JobResilienceActions.tsx -> FIND: CANCEL RETRY
+// =========================================================
 export async function cancelJobPostController(
   request: Request<JobIdParams>,
   response: Response,
@@ -86,6 +91,12 @@ export async function cancelJobPostController(
   });
 }
 
+// =========================================================
+// FIND: JOB PROGRESS BACKEND
+// FIND: CANCEL RETRY BACKEND
+// DOES: Creates an authorized retry for an owned retryable job.
+// UI: JobResilienceActions.tsx -> FIND: JOB PROGRESS
+// =========================================================
 export async function retryJobController(
   request: Request<JobIdParams>,
   response: Response,

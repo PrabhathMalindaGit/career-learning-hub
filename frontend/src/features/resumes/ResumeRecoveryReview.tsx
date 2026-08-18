@@ -23,6 +23,10 @@ export function ResumeRecoveryReview({
   onDiscard,
 }: ResumeRecoveryReviewProps) {
   return (
+    /* =========================================================
+       FIND: DRAFT RECOVERY
+       STYLE: resumeWorkspace.css -> .resume-recovery-review
+       ========================================================= */
     <main
       className="resume-recovery-review"
       aria-labelledby="resume-recovery-review-title"

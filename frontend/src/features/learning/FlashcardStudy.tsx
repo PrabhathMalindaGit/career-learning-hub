@@ -73,6 +73,10 @@ export function FlashcardStudy({
         <p className="learning-study-content">{card.front}</p>
 
         <div className="learning-study-reveal">
+          {/* =========================================================
+              FIND: REVEAL ANSWER
+              STYLE: learningWorkspace.css -> .learning-study-reveal
+              ========================================================= */}
           <button
             type="button"
             className="learning-primary-button"

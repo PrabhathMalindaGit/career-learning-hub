@@ -1628,6 +1628,11 @@ export function ResumeWorkspace() {
               Discard changes
             </button>
           ) : null}
+          {/* =========================================================
+              FIND: SAVE NEW VERSION
+              STYLE: resumeWorkspace.css
+              SELECTOR: .resume-primary-button
+              ========================================================= */}
           <button
             type="button"
             className="primary-button resume-primary-button"
@@ -1786,6 +1791,10 @@ export function ResumeWorkspace() {
 
       <div className="resume-workspace-grid">
         <div className="resume-editor-preview-grid">
+          {/* =========================================================
+              FIND: RESUME EDITOR
+              STYLE: resumeWorkspace.css -> .resume-editor
+              ========================================================= */}
           {/* Feature 3.3 UI — Resume editor. */}
           <ResumeEditor
             draft={draft}
@@ -1819,6 +1828,10 @@ export function ResumeWorkspace() {
               }
             }}
           />
+          {/* =========================================================
+              FIND: RESUME PREVIEW
+              STYLE: resumeWorkspace.css -> .resume-preview-panel
+              ========================================================= */}
           {/* Feature 3.4 UI — Live Resume preview. */}
           <ResumePreview
             draft={draft}
@@ -1897,6 +1910,12 @@ export function ResumeWorkspace() {
             </div>
           ) : null}
           <div className="resume-button-row">
+            {/* =========================================================
+                FIND: RUN AI ASSESSMENT
+                STYLE: ResumeAssessmentActionUi.css
+                SELECTOR: .resume-analysis-runner .resume-button-row .resume-primary-button
+                BACKEND: resumeAnalysis.jobs.ts -> FIND: RUN AI ASSESSMENT BACKEND
+                ========================================================= */}
             <button
               type="button"
               className="primary-button resume-primary-button"

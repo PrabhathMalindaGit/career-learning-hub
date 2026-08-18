@@ -498,6 +498,10 @@ export function DocumentQuizzes({
     generationOpen || (!loading && !loadError && quizzes.length === 0);
 
   return (
+    /* =========================================================
+       FIND: QUIZZES
+       STYLE: learningWorkspace.css -> .learning-quiz-set-list
+       ========================================================= */
     <section className="learning-quizzes" aria-labelledby="learning-quizzes-title">
       <header className="learning-panel-header">
         <div>
@@ -622,6 +626,11 @@ export function DocumentQuizzes({
                   <p className="learning-row-error">{quiz.generationError.message}</p>
                 ) : null}
                 {quiz.status === "ready" ? (
+                  /* =========================================================
+                     FIND: TAKE QUIZ
+                     STYLE: learningWorkspace.css
+                     SELECTOR: .learning-document-link
+                     ========================================================= */
                   <Link
                     className="learning-document-link"
                     to={`/learning/documents/${document.id}/quizzes/${quiz.id}`}
@@ -728,6 +737,12 @@ export function DocumentQuizzes({
                 <RequestId value={createError.requestId} />
               </div>
             ) : null}
+            {/* =========================================================
+                FIND: GENERATE QUIZ
+                STYLE: learningWorkspace.css
+                SELECTOR: .learning-primary-button
+                BACKEND: learning.jobs.ts -> FIND: GENERATE QUIZ BACKEND
+                ========================================================= */}
             <button
               type="submit"
               className="learning-primary-button"

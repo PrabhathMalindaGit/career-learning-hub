@@ -150,6 +150,11 @@ export function ResumeVersionTimeline({
   onNextPage,
 }: ResumeVersionTimelineProps) {
   return (
+    /* =========================================================
+       FIND: VERSION HISTORY
+       STYLE: resumeWorkspace.css
+       SELECTOR: .resume-version-history
+       ========================================================= */
     <section
       className="resume-version-history"
       aria-labelledby="resume-version-history-title"

@@ -20,6 +20,10 @@ function resolveRequestId(value: string | undefined): string {
 // Establishes the bounded request identifier used for safe error correlation.
 // Feature 7.8 — Safe Request ID generation/propagation for support/error correlation.
 // Feature 7.8 BACKEND — Request ID creation/correlation.
+// =========================================================
+// FIND: REQUEST ID BACKEND
+// DOES: Accepts a bounded request ID or creates one and returns it in the response.
+// =========================================================
 export const requestContextMiddleware: RequestHandler = (
   request,
   response,

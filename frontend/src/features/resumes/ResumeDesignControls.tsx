@@ -128,6 +128,11 @@ export function ResumeDesignControls({
   };
 
   return (
+    /* =========================================================
+       FIND: RESUME APPEARANCE
+       STYLE: resumeWorkspace.css
+       SELECTOR: .resume-design-panel
+       ========================================================= */
     <section
       className="resume-design-panel resume-appearance-polish"
       aria-label="Resume design controls"

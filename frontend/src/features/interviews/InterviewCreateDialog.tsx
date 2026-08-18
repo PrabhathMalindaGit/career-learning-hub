@@ -347,6 +347,10 @@ export function InterviewCreateDialog({
           </div>
         ) : null}
 
+        {/* =========================================================
+            FIND: INTERVIEW SETUP
+            STYLE: interviewCoach.css -> .interview-create-dialog__body
+            ========================================================= */}
         <div className="interview-create-dialog__body interview-form">
           <p className="interview-create-required-note">
             {/* Feature 4.3 UI — Interview role/context setup. */}

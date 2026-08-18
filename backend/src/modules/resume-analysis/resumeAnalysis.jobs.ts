@@ -14,6 +14,11 @@ export function registerResumeAnalysisJobHandlers(): void {
   if (registered) return;
   registered = true;
 
+  // =========================================================
+  // FIND: IMPORT RESUME PDF BACKEND
+  // DOES: Parses an owned private PDF into a staged Resume import review.
+  // UI: ResumeCreateDialog.tsx -> FIND: IMPORT RESUME PDF
+  // =========================================================
   registerJobHandler(
     // Feature 3.2.3 BACKEND — Resume PDF import job.
     "resume.import-pdf",
@@ -36,6 +41,11 @@ export function registerResumeAnalysisJobHandlers(): void {
 
   // Feature 3.9 — Durable Resume AI assessment job.
   // Feature 3.10 — Validated result is reviewed before user-controlled suggestion application.
+  // =========================================================
+  // FIND: RUN AI ASSESSMENT BACKEND
+  // DOES: Runs the validated AI assessment for an owned saved Resume version.
+  // UI: ResumeWorkspace.tsx -> FIND: RUN AI ASSESSMENT
+  // =========================================================
   registerJobHandler(
     // Feature 3.9 BACKEND — Resume AI assessment job.
     "resume.analyze",

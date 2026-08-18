@@ -176,6 +176,11 @@ export function InterviewQuestionTypeControls({
   }
 
   return (
+    /* =========================================================
+       FIND: QUESTION TYPES
+       STYLE: interviewQuestionTypes.css
+       SELECTOR: .interview-type-choice
+       ========================================================= */
     <fieldset className="interview-type-controls" disabled={disabled}>
       {/* Feature 4.6 UI — Select Interview question types. */}
       <legend>Question types</legend>

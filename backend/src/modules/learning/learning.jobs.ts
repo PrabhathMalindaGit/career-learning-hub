@@ -27,6 +27,11 @@ export function registerLearningJobHandlers(): void {
   registered = true;
 
   // Feature 5.2 — Durable uploaded-document processing job.
+  // =========================================================
+  // FIND: DOCUMENT PROCESSING BACKEND
+  // DOES: Extracts and persists validated content from an owned uploaded PDF.
+  // UI: LearningDashboard.tsx -> FIND: DOCUMENT PROCESSING
+  // =========================================================
   registerJobHandler(
     // Feature 5.2 BACKEND — Learning document-processing job.
     "learning.document.process",
@@ -79,6 +84,11 @@ export function registerLearningJobHandlers(): void {
   // Feature 5.7 — Grounded Chat durable-response boundary.
   // Feature 5.7.2 — Process the persisted question request.
   // Feature 5.7.3 — Persist validated source-page references with the answer.
+  // =========================================================
+  // FIND: SEND QUESTION BACKEND
+  // DOES: Runs the grounded response job and persists validated page references.
+  // UI: LearningConversationWorkspace.tsx -> FIND: SEND QUESTION
+  // =========================================================
   registerJobHandler(
     // Feature 5.7.2 BACKEND — Grounded Chat response job.
     "learning.chat.respond",
@@ -107,6 +117,11 @@ export function registerLearningJobHandlers(): void {
 
   // Feature 5.8 — Flashcard background-work boundary.
   // Feature 5.8.1 — Durable flashcard-generation job.
+  // =========================================================
+  // FIND: GENERATE FLASHCARDS BACKEND
+  // DOES: Generates and persists validated flashcards for an owned document.
+  // UI: DocumentFlashcards.tsx -> FIND: GENERATE FLASHCARDS
+  // =========================================================
   registerJobHandler(
     // Feature 5.8.1 BACKEND — Flashcard-generation job.
     "learning.flashcards.generate",
@@ -136,6 +151,11 @@ export function registerLearningJobHandlers(): void {
 
   // Feature 5.9 — Quiz background-work boundary.
   // Feature 5.9.1 — Durable quiz-generation job.
+  // =========================================================
+  // FIND: GENERATE QUIZ BACKEND
+  // DOES: Generates and persists a validated quiz for an owned document.
+  // UI: DocumentQuizzes.tsx -> FIND: GENERATE QUIZ
+  // =========================================================
   registerJobHandler(
     // Feature 5.9.1 BACKEND — Quiz-generation job.
     "learning.quiz.generate",

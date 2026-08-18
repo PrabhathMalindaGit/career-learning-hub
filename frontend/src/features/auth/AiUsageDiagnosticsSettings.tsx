@@ -230,6 +230,10 @@ export function AiUsageDiagnosticsSettingsSection() {
       aria-labelledby="ai-usage-diagnostics-heading"
     >
       <header className="settings-panel__header">
+        {/* =========================================================
+            FIND: AI USAGE
+            STYLE: aiUsageDiagnostics.css -> .ai-usage-diagnostics
+            ========================================================= */}
         {/* Feature 6.10 UI — AI usage and diagnostics. */}
         <h2 id="ai-usage-diagnostics-heading">AI usage & diagnostics</h2>
         <p>

@@ -9,6 +9,11 @@ import { QuizAttemptModel } from "./quizAttempt.model.js";
 
 // Feature 7.2 — Learning ownership boundary: document/child-resource IDs are bound to request.auth.userId.
 // Feature 7.2 BACKEND — Owner-scoped Learning authorization.
+// =========================================================
+// FIND: LEARNING OWNERSHIP BACKEND
+// FIND: OWNERSHIP BACKEND
+// DOES: Binds Learning document and child-resource IDs to the authenticated user.
+// =========================================================
 export const requireOwnedLearningDocument: RequestHandler =
   asyncHandler(async (request, _response, next) => {
     const document = await LearningDocumentModel.findOne({

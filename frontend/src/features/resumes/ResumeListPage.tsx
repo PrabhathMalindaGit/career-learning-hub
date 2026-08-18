@@ -144,6 +144,10 @@ export function ResumeListPage() {
           </p>
         }
         actions={
+          /* =========================================================
+             FIND: CREATE RESUME
+             STYLE: styles.css -> .primary-button
+             ========================================================= */
           <button
             ref={headingCreateRef}
             type="button"
@@ -171,6 +175,10 @@ export function ResumeListPage() {
           <div className="resume-section-heading">
             <div>
               <p className="resume-kicker">Collection</p>
+              {/* =========================================================
+                  FIND: RESUME LIST
+                  STYLE: resumeWorkspace.css -> .resume-collection
+                  ========================================================= */}
               {/* Feature 3.1 UI — Resume collection. */}
               <h2 id="your-resumes">Your resumes</h2>
             </div>

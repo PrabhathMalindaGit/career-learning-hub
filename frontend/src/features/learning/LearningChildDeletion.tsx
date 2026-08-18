@@ -183,6 +183,11 @@ export function LearningChildDeletion({
 
   return (
     <div className="learning-child-deletion">
+      {/* =========================================================
+          FIND: DELETE LEARNING ITEM
+          STYLE: learningDeletion.css -> .learning-delete-heading
+          BACKEND: learningChildDeletion.service.ts -> FIND: DELETE LEARNING ITEM BACKEND
+          ========================================================= */}
       <CardOverflowActions
         ariaLabel={`More actions for ${title}`}
         open={actionsOpen}

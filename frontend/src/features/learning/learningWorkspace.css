@@ -101,6 +101,15 @@
 }
 
 /* Feature 5.1 STYLE — Upload PDF colour; Feature 5.7.1 STYLE — Create conversation colour; Feature 5.7.2 STYLE — Send question colour; Feature 5.8.1 STYLE — Generate flashcards colour; Feature 5.9.1 STYLE — Generate quiz colour. */
+/* =========================================================
+   FIND: UPLOAD PDF COLOR
+   FIND: CREATE CONVERSATION COLOR
+   FIND: SEND QUESTION COLOR
+   FIND: GENERATE FLASHCARDS COLOR
+   FIND: GENERATE QUIZ COLOR
+   SHARED SELECTOR: .learning-primary-button
+   CHANGE SHARED PRIMARY ACTION COLOR HERE
+   ========================================================= */
 .learning-primary-button {
   border: 1px solid var(--accent);
   color: #ffffff;
@@ -119,6 +128,13 @@
 }
 
 /* Feature 5.3 STYLE — Open workspace link; Feature 5.8.2 STYLE — Study set link; Feature 5.9.2 STYLE — Take quiz link; Feature 5.9.3 STYLE — Review attempt link. */
+/* =========================================================
+   FIND: STUDY FLASHCARDS STYLE
+   FIND: TAKE QUIZ STYLE
+   FIND: REVIEW QUIZ STYLE
+   SHARED SELECTOR: .learning-document-link
+   CHANGE SHARED WORKSPACE LINK STYLE HERE
+   ========================================================= */
 .learning-document-link {
   border: 1px solid #b8d1c0;
   color: var(--accent-dark);
@@ -1208,6 +1224,11 @@
   margin-top: 14px;
 }
 
+/* =========================================================
+   FIND: PAGE REFERENCE COLOR
+   CONTROLS: Grounded answer source-page pills and links
+   SELECTOR: .learning-source-pages button
+   ========================================================= */
 .learning-source-pages button {
   min-height: 44px;
   padding: 8px 12px;

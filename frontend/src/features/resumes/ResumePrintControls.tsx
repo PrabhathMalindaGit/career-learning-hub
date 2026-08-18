@@ -90,6 +90,11 @@ export function ResumePrintControls({
             <option value="LETTER">Letter</option>
           </select>
         </label>
+        {/* =========================================================
+            FIND: PRINT RESUME
+            STYLE: resumeWorkspace.css
+            SELECTOR: .resume-print-controls
+            ========================================================= */}
         <button
           className="resume-primary-button"
           type="button"

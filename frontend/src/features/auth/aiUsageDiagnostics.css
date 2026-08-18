@@ -1,5 +1,10 @@
 /* Feature 6.10 — AI usage & diagnostics panel/status/metric/detail styling. */
 /* Feature 6.10 STYLE — AI usage/diagnostics presentation. */
+/* =========================================================
+   FIND: AI USAGE STYLE
+   CONTROLS: AI usage metrics and diagnostic states
+   SELECTOR: .ai-usage-diagnostics
+   ========================================================= */
 .ai-usage-diagnostics {
   display: grid;
   gap: 18px;

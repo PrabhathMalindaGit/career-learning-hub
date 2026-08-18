@@ -157,6 +157,11 @@ export async function listResumes(
 }
 
 // Feature 7.2 BACKEND — Owner-scoped Resume authorization.
+// =========================================================
+// FIND: RESUME OWNERSHIP BACKEND
+// FIND: OWNERSHIP BACKEND
+// DOES: Loads a Resume only when its ID belongs to the authenticated user.
+// =========================================================
 export async function requireOwnedResume(
   userId: string,
   resumeId: string,

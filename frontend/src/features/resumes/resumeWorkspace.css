@@ -312,6 +312,12 @@
 }
 
 /* Feature 3.5 STYLE — Save new version colour/state; Feature 3.10 STYLE — Apply suggestions/Create new version colour/state. */
+/* =========================================================
+   FIND: SAVE NEW VERSION COLOR
+   FIND: APPLY AI SUGGESTIONS COLOR
+   SHARED SELECTOR: .resume-primary-button
+   CHANGE BORDER / TEXT / BACKGROUND COLOR HERE
+   ========================================================= */
 .resume-primary-button {
   border: 1px solid var(--accent-dark);
   color: #fff;
@@ -601,6 +607,11 @@
 }
 
 /* Feature 3.6 STYLE — Resume appearance panel. */
+/* =========================================================
+   FIND: RESUME APPEARANCE STYLE
+   CONTROLS: Resume appearance customization panel
+   SELECTOR: .resume-design-panel
+   ========================================================= */
 .resume-design-panel {
   min-width: 0;
   padding: 18px 20px;
@@ -877,6 +888,11 @@
 }
 
 /* Feature 3.8 STYLE — Print / Save as PDF controls. */
+/* =========================================================
+   FIND: PRINT RESUME STYLE
+   CONTROLS: Print / Save as PDF panel
+   SELECTOR: .resume-print-controls
+   ========================================================= */
 .resume-print-controls {
   display: grid;
   gap: 16px;
@@ -2853,6 +2869,11 @@
   margin: 5px 0 0;
 }
 
+/* =========================================================
+   FIND: VERSION HISTORY STYLE
+   CONTROLS: Immutable Resume version timeline
+   SELECTOR: .resume-version-history
+   ========================================================= */
 .resume-version-history,
 .resume-snapshot {
   display: grid;

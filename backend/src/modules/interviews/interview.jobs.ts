@@ -20,6 +20,11 @@ export function registerInterviewJobHandlers(): void {
   registered = true;
 
   // Feature 4.4 — Durable Interview AI question-generation job.
+  // =========================================================
+  // FIND: GENERATE QUESTIONS BACKEND
+  // DOES: Generates and persists validated questions for an owned Interview session.
+  // UI: InterviewSessionWorkspace.tsx -> FIND: GENERATE QUESTIONS
+  // =========================================================
   registerJobHandler(
     // Feature 4.4 BACKEND — Interview question-generation job.
     "interview.questions.generate",
@@ -62,6 +67,11 @@ export function registerInterviewJobHandlers(): void {
   );
 
   // Feature 4.11 — Durable selected-question explanation job.
+  // =========================================================
+  // FIND: REQUEST EXPLANATION BACKEND
+  // DOES: Generates validated guidance for the selected owned question.
+  // UI: InterviewSessionWorkspace.tsx -> FIND: REQUEST EXPLANATION
+  // =========================================================
   registerJobHandler(
     // Feature 4.11 BACKEND — Interview explanation job.
     "interview.question.explain",
@@ -83,6 +93,11 @@ export function registerInterviewJobHandlers(): void {
   );
 
   // Feature 4.12 — Durable non-MCQ practice-feedback job.
+  // =========================================================
+  // FIND: REQUEST FEEDBACK BACKEND
+  // DOES: Generates validated feedback for an owned saved attempt.
+  // UI: InterviewSessionWorkspace.tsx -> FIND: REQUEST FEEDBACK
+  // =========================================================
   registerJobHandler(
     // Feature 4.12 BACKEND — Interview feedback job.
     "interview.attempt.feedback",

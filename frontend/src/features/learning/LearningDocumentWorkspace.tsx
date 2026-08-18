@@ -457,15 +457,27 @@ const workspaceViews: Array<{
   id: WorkspaceView;
   label: string;
 }> = [
+  // FIND: DOCUMENT OVERVIEW
+  // STYLE: learningWorkspace.css -> .learning-tabs button
   // Feature 5.4 UI — Document Overview tab.
   { id: "overview", label: "Overview" },
+  // FIND: ORIGINAL PDF
+  // STYLE: learningWorkspace.css -> .learning-tabs button
   // Feature 5.5 UI — Secure Original PDF tab.
   { id: "original", label: "Original PDF" },
+  // FIND: EXTRACTED CONTENT
+  // STYLE: learningWorkspace.css -> .learning-tabs button
   // Feature 5.6 UI — Page-aware Extracted Content tab.
   { id: "extracted", label: "Extracted Content" },
+  // FIND: GROUNDED CHAT
+  // STYLE: learningWorkspace.css -> .learning-tabs button
   // Feature 5.7 UI — Grounded Chat tab.
   { id: "chat", label: "Grounded Chat" },
+  // FIND: FLASHCARDS
+  // STYLE: learningWorkspace.css -> .learning-tabs button
   { id: "flashcards", label: "Flashcards" },
+  // FIND: QUIZZES
+  // STYLE: learningWorkspace.css -> .learning-tabs button
   { id: "quizzes", label: "Quizzes" },
 ];
 

@@ -438,6 +438,10 @@ export function LearningDashboard() {
   };
 
   return (
+    /* =========================================================
+       FIND: DOCUMENT LIBRARY
+       STYLE: learningWorkspace.css -> .learning-library
+       ========================================================= */
     <section className="workspace-section learning-library">
       <header className="learning-page-header">
         <div>
@@ -449,6 +453,12 @@ export function LearningDashboard() {
           </p>
         </div>
         <div className="learning-header-actions">
+          {/* =========================================================
+              FIND: UPLOAD PDF
+              STYLE: learningWorkspace.css
+              SELECTOR: .learning-primary-button
+              BACKEND: learning.jobs.ts -> FIND: DOCUMENT PROCESSING BACKEND
+              ========================================================= */}
           {/* Feature 5.1 UI — Upload private Learning PDF. */}
           <button
             ref={uploadTriggerRef}
@@ -621,6 +631,11 @@ export function LearningDashboard() {
       ) : null}
 
       {processingCheck ? (
+        /* =========================================================
+           FIND: DOCUMENT PROCESSING
+           STYLE: learningWorkspace.css -> .learning-processing-notice
+           BACKEND: learning.jobs.ts -> FIND: DOCUMENT PROCESSING BACKEND
+           ========================================================= */
         <div className="learning-processing-notice" aria-live="polite">
           {/* Feature 5.2 UI — Document processing job status. */}
           {processingCheck.state === "checking" ? (
@@ -789,6 +804,11 @@ export function LearningDashboard() {
                       {formatDate(document.updatedAt)}
                     </time>
                   </p>
+                  {/* =========================================================
+                      FIND: OPEN DOCUMENT
+                      STYLE: learningWorkspace.css
+                      SELECTOR: .learning-document-link
+                      ========================================================= */}
                   <Link
                     className="learning-document-link"
                     to={`/learning/documents/${document.id}`}

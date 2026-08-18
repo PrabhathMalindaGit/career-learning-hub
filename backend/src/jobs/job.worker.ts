@@ -28,6 +28,10 @@ export interface JobWorkerHandle {
 // Executes registered durable work with the existing lease, cancellation,
 // retry, progress, and completion-safety rules.
 // Feature 7.4 BACKEND — Durable background-job worker.
+// =========================================================
+// FIND: BACKGROUND JOB WORKER
+// DOES: Claims and executes registered durable jobs with leases and execution fencing.
+// =========================================================
 export function startJobWorker(): JobWorkerHandle {
   let stopping = false;
   let active = 0;

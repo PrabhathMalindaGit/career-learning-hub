@@ -761,6 +761,11 @@ export function LearningConversationWorkspace() {
                       aria-label="Sources for assistant answer"
                     >
                       {message.sourcePages.map((page) => (
+                        /* =========================================================
+                           FIND: PAGE REFERENCE
+                           STYLE: learningWorkspace.css
+                           SELECTOR: .learning-source-pages button
+                           ========================================================= */
                         <button
                           type="button"
                           key={page}
@@ -863,6 +868,12 @@ export function LearningConversationWorkspace() {
           </div>
         ) : null}
         <div className="learning-form-actions">
+          {/* =========================================================
+              FIND: SEND QUESTION
+              STYLE: learningWorkspace.css
+              SELECTOR: .learning-primary-button
+              BACKEND: learning.jobs.ts -> FIND: SEND QUESTION BACKEND
+              ========================================================= */}
           <button
             type="submit"
             className="learning-primary-button"

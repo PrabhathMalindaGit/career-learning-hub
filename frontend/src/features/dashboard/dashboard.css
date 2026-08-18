@@ -214,6 +214,13 @@
   gap: 12px;
 }
 
+/* =========================================================
+   FIND: RESUME SHORTCUT COLOR
+   FIND: INTERVIEW SHORTCUT COLOR
+   FIND: LEARNING SHORTCUT COLOR
+   SHARED SELECTOR: .dashboard-quick-start__link
+   CHANGE CARD COLOR HERE AND IN THE ADJACENT TONE RULES
+   ========================================================= */
 .dashboard-quick-start__link {
   display: grid;
   min-width: 0;

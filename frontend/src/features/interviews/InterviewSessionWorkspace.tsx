@@ -1678,6 +1678,11 @@ export function InterviewSessionWorkspace() {
             </span>
           </div>
         </div>
+        {/* =========================================================
+            FIND: ARCHIVE INTERVIEW
+            STYLE: interviewQuestionTypes.css
+            SELECTOR: .interview-workspace .interview-lifecycle-actions
+            ========================================================= */}
         <div className="interview-lifecycle-actions">
           {session.status === "active" ? (
             <>
@@ -1773,6 +1778,10 @@ export function InterviewSessionWorkspace() {
               <p className="interview-kicker">Build the briefing</p>
               <h2 id="question-tools-title">Add questions</h2>
             </div>
+            {/* =========================================================
+                FIND: ADD QUESTION MANUALLY
+                STYLE: interviewCoach.css -> .interview-section-heading > button
+                ========================================================= */}
             <button
               type="button"
               aria-expanded={manualOpen}
@@ -1823,6 +1832,12 @@ export function InterviewSessionWorkspace() {
                 onExplicitCountsChange={setGenerationTypeCounts}
               />
             </div>
+            {/* =========================================================
+                FIND: GENERATE QUESTIONS
+                STYLE: interviewCoach.css
+                SELECTOR: .interview-primary-button
+                BACKEND: interview.jobs.ts -> FIND: GENERATE QUESTIONS BACKEND
+                ========================================================= */}
             <button
               className="interview-primary-button"
               type="submit"
@@ -2273,6 +2288,10 @@ export function InterviewSessionWorkspace() {
                 </div>
                 <p>{selectedQuestion.question}</p>
                 {editable ? (
+                  /* =========================================================
+                     FIND: PIN QUESTION
+                     STYLE: interviewCoach.css -> .interview-secondary-button
+                     ========================================================= */
                   <button
                     type="button"
                     className="interview-secondary-button"
@@ -2332,6 +2351,12 @@ export function InterviewSessionWorkspace() {
                   Submit an attempt to unlock the explanation.
                 </p>
               ) : editable ? (
+                /* =========================================================
+                   FIND: REQUEST EXPLANATION
+                   STYLE: interviewCoach.css
+                   SELECTOR: .interview-secondary-button
+                   BACKEND: interview.jobs.ts -> FIND: REQUEST EXPLANATION BACKEND
+                   ========================================================= */
                 <button
                   type="button"
                   className="interview-secondary-button"
@@ -2343,6 +2368,11 @@ export function InterviewSessionWorkspace() {
                 </button>
               ) : null}
 
+              {/* =========================================================
+                  FIND: PRIVATE NOTES
+                  STYLE: interviewQuestionIndexNotes.css
+                  SELECTOR: .interview-private-notes
+                  ========================================================= */}
               <section
                 className="interview-private-notes"
                 aria-label="Private notes"
@@ -2467,6 +2497,10 @@ export function InterviewSessionWorkspace() {
           ) : null}
         </section>
 
+        {/* =========================================================
+            FIND: SAVED ATTEMPTS
+            STYLE: interviewCoach.css -> .interview-history
+            ========================================================= */}
         <section
           className="interview-history interview-panel"
           aria-labelledby="attempt-history-title"
@@ -2614,6 +2648,12 @@ export function InterviewSessionWorkspace() {
               {editable &&
               !selectedAttempt.feedback &&
               selectedAttempt.answer?.type !== "multiple-choice" ? (
+                /* =========================================================
+                   FIND: REQUEST FEEDBACK
+                   STYLE: interviewCoach.css
+                   SELECTOR: .interview-secondary-button
+                   BACKEND: interview.jobs.ts -> FIND: REQUEST FEEDBACK BACKEND
+                   ========================================================= */
                 <button
                   type="button"
                   className="interview-secondary-button"

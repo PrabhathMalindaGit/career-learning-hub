@@ -602,6 +602,12 @@
 }
 
 /* Feature 4.4 STYLE — Generate questions colour; Feature 4.9 STYLE — Save attempt colour. */
+/* =========================================================
+   FIND: GENERATE QUESTIONS COLOR
+   FIND: SAVE ATTEMPT COLOR
+   SHARED SELECTOR: .interview-primary-button
+   CHANGE BORDER / TEXT / BACKGROUND COLOR HERE
+   ========================================================= */
 .interview-primary-button {
   border: 1px solid var(--accent);
   color: #fff;
@@ -613,6 +619,12 @@
 }
 
 /* Feature 4.11 STYLE — Explanation action colour; Feature 4.12 STYLE — Feedback action colour. */
+/* =========================================================
+   FIND: REQUEST EXPLANATION COLOR
+   FIND: REQUEST FEEDBACK COLOR
+   SHARED SELECTOR: .interview-secondary-button
+   CHANGE BORDER / TEXT / BACKGROUND COLOR HERE
+   ========================================================= */
 .interview-secondary-button {
   border: 1px solid #bfd0c5;
   color: #245e3c;
@@ -817,6 +829,11 @@
 }
 
 /* Feature 4.7 STYLE SELECTED — Active Question Index item. */
+/* =========================================================
+   FIND: SELECTED QUESTION COLOR
+   CONTROLS: Selected Question Index item
+   SELECTOR: .interview-question-select--active
+   ========================================================= */
 .interview-question-select--active {
   border-color: #6a9f7c;
   background: #edf6f0;

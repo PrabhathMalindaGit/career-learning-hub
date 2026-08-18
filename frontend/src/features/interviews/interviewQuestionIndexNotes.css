@@ -31,6 +31,11 @@
 }
 
 /* Feature 4.8 STYLE — Private-note panel. */
+/* =========================================================
+   FIND: PRIVATE NOTES STYLE
+   CONTROLS: Private-note disclosure and editor panel
+   SELECTOR: .interview-private-notes
+   ========================================================= */
 .interview-private-notes {
   display: grid;
   gap: 10px;

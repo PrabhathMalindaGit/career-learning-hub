@@ -20,6 +20,12 @@ function actionErrorMessage(error: unknown): string {
 // Feature 7.5 — Shared progress/status presentation used by feature polling workflows.
 // Feature 7.6 — Server-authorized Cancel / Retry controls for eligible durable jobs.
 // Feature 7.6 UI — Shared Cancel / Retry controls for durable jobs.
+// =========================================================
+// FIND: JOB PROGRESS
+// FIND: CANCEL RETRY
+// STYLE: shared styles.css -> .job-resilience-actions
+// BACKEND: job.controller.ts -> FIND: CANCEL RETRY BACKEND
+// =========================================================
 export function JobResilienceActions({
   job,
   onCancel,

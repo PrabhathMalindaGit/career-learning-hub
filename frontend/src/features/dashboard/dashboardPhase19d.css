@@ -76,6 +76,11 @@
 }
 
 /* Feature 2.1 STYLE — Performance-period controls and colours. */
+/* =========================================================
+   FIND: PROGRESS OVERVIEW COLOR
+   CONTROLS: Progress period toolbar and adjacent selected-state rules
+   SELECTOR: .dashboard-performance-toolbar
+   ========================================================= */
 .dashboard-performance-toolbar {
   display: flex;
   min-width: 0;
@@ -283,6 +288,11 @@
 
 /* Feature 2.5 — Recent activity expand/collapse/pagination control styling. */
 /* Feature 2.5 STYLE — Recent-activity disclosure/actions. */
+/* =========================================================
+   FIND: RECENT ACTIVITY COLOR
+   CONTROLS: Recent activity disclosure and pagination actions
+   SELECTOR: .dashboard-activity-disclosure
+   ========================================================= */
 .dashboard-activity-disclosure,
 .dashboard-activity-expanded-controls {
   display: flex;

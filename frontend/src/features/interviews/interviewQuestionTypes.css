@@ -47,6 +47,11 @@
 }
 
 /* Feature 4.6 STYLE — Question-type card colour. */
+/* =========================================================
+   FIND: QUESTION TYPE COLOR
+   CONTROLS: Question-type choice cards
+   SELECTOR: .interview-type-choice
+   ========================================================= */
 .interview-type-choice {
   display: grid;
   width: 100%;
@@ -66,6 +71,11 @@
 }
 
 /* Feature 4.6 STYLE SELECTED — Selected question-type colour. */
+/* =========================================================
+   FIND: QUESTION TYPE SELECTED COLOR
+   CONTROLS: Selected question-type choice card
+   SELECTOR: .interview-type-choice:has(input:checked)
+   ========================================================= */
 .interview-type-choice:has(input:checked) {
   border-color: #6b9a7c;
   color: #174e2d;
@@ -352,6 +362,11 @@
 /* Task 7R Interview Briefing lifecycle actions. Keep status behavior in React
    unchanged while giving the primary completion action stronger hierarchy. */
 /* Feature 4.13 STYLE — Archive/restore lifecycle controls. */
+/* =========================================================
+   FIND: ARCHIVE INTERVIEW STYLE
+   CONTROLS: Complete, archive, and restore lifecycle actions
+   SELECTOR: .interview-workspace .interview-lifecycle-actions
+   ========================================================= */
 .interview-workspace .interview-lifecycle-actions {
   flex-wrap: nowrap;
   justify-content: flex-end;

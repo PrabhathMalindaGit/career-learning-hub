@@ -429,6 +429,11 @@ export function ResumeCreateDialog({
 
         {method === "choose" ? (
           <div className="resume-create-methods">
+            {/* =========================================================
+                FIND: GUIDED SETUP
+                STYLE: resumeWorkspace.css
+                SELECTOR: .resume-create-methods > .resume-create-method--recommended
+                ========================================================= */}
             <button
               ref={guidedRef}
               type="button"
@@ -444,6 +449,11 @@ export function ResumeCreateDialog({
               <strong>Guided setup</strong>
               <span>Build a resume using editable suggestions.</span>
             </button>
+            {/* =========================================================
+                FIND: START BLANK
+                STYLE: resumeWorkspace.css
+                SELECTOR: .resume-create-methods > button
+                ========================================================= */}
             <button
               type="button"
               aria-label="Start blank"
@@ -454,6 +464,12 @@ export function ResumeCreateDialog({
               <strong>Start blank</strong>
               <span>Create an empty resume.</span>
             </button>
+            {/* =========================================================
+                FIND: IMPORT RESUME PDF
+                STYLE: resumeWorkspace.css
+                SELECTOR: .resume-create-methods > button
+                BACKEND: resumeAnalysis.jobs.ts -> FIND: IMPORT RESUME PDF BACKEND
+                ========================================================= */}
             <button
               type="button"
               aria-label="Import PDF"

@@ -142,6 +142,12 @@
 /* Feature 1.1 — “Create account” normal primary-action colour/gradient.
    Feature 1.2 — “Sign in” normal primary-action colour/gradient. */
 /* Feature 1.1 STYLE — Create account normal colour; Feature 1.2 STYLE — Sign in normal colour. */
+/* =========================================================
+   FIND: CREATE ACCOUNT COLOR
+   FIND: SIGN IN COLOR
+   SHARED SELECTOR: .authentication-form-card .primary-button
+   CHANGE PRIMARY ACTION BORDER / TEXT / BACKGROUND COLOR HERE
+   ========================================================= */
 .authentication-form-card .primary-button {
   position: relative;
   min-height: 52px;

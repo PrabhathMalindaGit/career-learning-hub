@@ -15,6 +15,11 @@ const activeJobStatuses = ["queued", "processing"] as const;
 // Performs owner-scoped transactional deletion/cascade rules while active jobs
 // remain authoritative blockers for the targeted resource.
 // Feature 5.10 BACKEND — Delete owned Learning conversation.
+// =========================================================
+// FIND: DELETE LEARNING ITEM BACKEND
+// DOES: Deletes an owned conversation, flashcard set, or quiz with its children.
+// UI: LearningChildDeletion.tsx -> FIND: DELETE LEARNING ITEM
+// =========================================================
 export async function deleteLearningConversation(input: {
   userId: string;
   documentId: string;

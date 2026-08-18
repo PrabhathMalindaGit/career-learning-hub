@@ -30,6 +30,11 @@ function readBearerToken(authorization: string | undefined): string {
 // Resolves the current session/user context used by owner-scoped protected APIs.
 // Feature 7.1 — Authentication/session security boundary for protected APIs.
 // Feature 7.1 BACKEND — Authenticate protected API requests.
+// =========================================================
+// FIND: AUTHENTICATION BACKEND
+// DOES: Verifies the Bearer token and binds an active user/session to the request.
+// UI: LoginPage.tsx -> FIND: SIGN IN
+// =========================================================
 export const authenticate: RequestHandler = asyncHandler(
   async (request, _response, next) => {
     const token = readBearerToken(request.get("authorization"));

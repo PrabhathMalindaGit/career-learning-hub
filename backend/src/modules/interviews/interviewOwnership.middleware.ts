@@ -7,6 +7,11 @@ import { InterviewSessionModel } from "./interviewSession.model.js";
 
 // Feature 7.2 — Interview ownership boundary: session/question/attempt IDs are bound to request.auth.userId.
 // Feature 7.2 BACKEND — Owner-scoped Interview authorization.
+// =========================================================
+// FIND: INTERVIEW OWNERSHIP BACKEND
+// FIND: OWNERSHIP BACKEND
+// DOES: Binds Interview session, question, and attempt IDs to the authenticated user.
+// =========================================================
 export const requireOwnedInterviewSession: RequestHandler =
   asyncHandler(async (request, _response, next) => {
     const session = await InterviewSessionModel.findOne({
