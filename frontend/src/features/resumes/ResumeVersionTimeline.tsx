@@ -134,6 +134,7 @@ function VersionTimelineSkeleton() {
   );
 }
 
+// Feature 3.11 — Immutable Resume version-history timeline and read-only saved snapshots.
 export function ResumeVersionTimeline({
   versions,
   currentVersionId,
