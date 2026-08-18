@@ -21,6 +21,7 @@ interface ResumePrintControlsProps {
   onPrint: () => void;
 }
 
+// Feature 3.8 — Print / Save as PDF paper-size and “Open print dialog” controls.
 export function ResumePrintControls({
   sourceKind,
   versionNumber,
