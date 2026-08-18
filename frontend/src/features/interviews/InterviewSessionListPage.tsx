@@ -58,6 +58,8 @@ function emptyStateCopy(filter: SessionFilter): string {
 // Features 4.1–4.2 — Interview Coach collection and creation entry point.
 // Lists/filter sessions and opens the guided session-creation dialog before
 // navigating into the selected session workspace.
+// Feature 4.1 — Interview session collection: /interviews -> “Your sessions”, filters/cards/paging.
+// Feature 4.2 — “Create interview” entry point.
 export function InterviewSessionListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
