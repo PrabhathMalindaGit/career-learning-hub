@@ -105,6 +105,7 @@ function PrimaryNavigation({
 }) {
   return (
     <nav aria-label={label} className="primary-navigation">
+      {/* Feature 1.4 UI — Sidebar/mobile navigation links. */}
       {navigationItems.map((item) => (
         <NavLink
           className={navigationClass}
@@ -122,6 +123,7 @@ function PrimaryNavigation({
 function CreateMenu() {
   return (
     <details className="create-menu">
+      {/* Feature 1.5 UI — Global Create menu. */}
       <summary>
         <span aria-hidden="true">＋</span>
         Create
@@ -178,6 +180,8 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
+      {/* Feature 1.3 UI — Authenticated application shell. */}
+      {/* Feature 7.9 UI — Skip link and responsive shell accessibility. */}
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
@@ -199,6 +203,7 @@ export function AppShell() {
             disabled={logoutBusy}
             onClick={handleLogout}
           >
+            {/* Feature 1.6 UI — Log out button. */}
             {logoutBusy ? "Logging out…" : "Log out"}
           </button>
         </div>
