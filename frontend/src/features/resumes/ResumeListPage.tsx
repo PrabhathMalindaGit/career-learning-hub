@@ -42,6 +42,8 @@ function titleCase(value: string): string {
 // Features 3.1–3.2 — Resume collection and creation entry point.
 // Lists owned resumes and opens the shared creation flow without duplicating
 // editor, import, or assessment behavior in the collection page.
+// Feature 3.1 — Resume collection: /resumes -> “Your resumes”, open/delete/paging.
+// Feature 3.2 — Resume creation entry point: “Create Resume”.
 export function ResumeListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
