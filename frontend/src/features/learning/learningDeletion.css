@@ -99,28 +99,28 @@
    ========================================================= */
 .learning-delete-heading {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: flex-start; /* Aligns warning icon and heading from the top */
+  gap: 12px; /* Space between warning icon and heading */
 }
 
 .learning-delete-warning-mark {
   display: inline-flex;
-  width: 36px;
-  height: 36px;
+  width: 36px; /* Warning-icon width */
+  height: 36px; /* Warning-icon height */
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  color: #8d2d2d;
-  background: #fdeaea;
+  border-radius: 999px; /* Circular warning-icon shape */
+  color: #8d2d2d; /* Warning-icon color */
+  background: #fdeaea; /* Warning-icon background color */
   font-size: 1rem;
   font-weight: 900;
 }
 
 .learning-deletion-form .learning-delete-heading h2 {
-  color: #243129;
-  font-size: 1.35rem;
-  line-height: 1.25;
+  color: #243129; /* Delete-heading text color */
+  font-size: 1.35rem; /* Delete-heading text size */
+  line-height: 1.25; /* Delete-heading line spacing */
 }
 
 .learning-delete-irreversible {

@@ -16,24 +16,24 @@
    ========================================================= */
 .ai-usage-diagnostics {
   display: grid;
-  gap: 18px;
+  gap: 18px; /* Space between diagnostics sections */
 }
 
 .ai-usage-diagnostics__summary {
   display: grid;
   margin: 0;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr)); /* Four summary metric columns */
+  gap: 10px; /* Space between summary metrics */
 }
 
 .ai-usage-diagnostics__summary > div {
   display: grid;
   min-width: 0;
   gap: 5px;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface-muted);
+  padding: 14px; /* Inner metric-card spacing */
+  border: 1px solid var(--border); /* Metric-card border */
+  border-radius: 12px; /* Metric-card corner rounding */
+  background: var(--surface-muted); /* Metric-card background color */
 }
 
 .ai-usage-diagnostics__summary dt,
@@ -113,9 +113,9 @@
 .ai-usage-diagnostics__feature {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(190px, 0.9fr) minmax(0, 1.1fr);
-  gap: 16px;
-  padding: 14px;
+  grid-template-columns: minmax(190px, 0.9fr) minmax(0, 1.1fr); /* Feature label and metrics widths */
+  gap: 16px; /* Space between feature label and metrics */
+  padding: 14px; /* Inner feature-row spacing */
   border: 1px solid var(--border);
   border-radius: 12px;
   background: #ffffff;
@@ -150,7 +150,7 @@
 
 @media (max-width: 900px) {
   .ai-usage-diagnostics__summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* Two summary columns on tablets */
   }
 
   .ai-usage-diagnostics__feature {
@@ -161,7 +161,7 @@
 @media (max-width: 560px) {
   .ai-usage-diagnostics__summary,
   .ai-usage-diagnostics__feature dl {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Single diagnostics column on small screens */
   }
 
   .ai-usage-diagnostics__summary > div,

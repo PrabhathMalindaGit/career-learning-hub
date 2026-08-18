@@ -47,16 +47,16 @@
    ========================================================= */
 .interview-private-notes {
   display: grid;
-  gap: 10px;
-  padding-top: 4px;
+  gap: 10px; /* Space between private-note controls and editor */
+  padding-top: 4px; /* Space above private notes */
 }
 
 .interview-private-notes-heading {
   display: flex;
   min-width: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: space-between; /* Separates private-note label and action */
+  gap: 12px; /* Space between private-note heading items */
 }
 
 .interview-private-notes-heading strong {
@@ -65,8 +65,8 @@
 }
 
 .interview-private-notes-heading .interview-secondary-button {
-  min-height: 36px;
-  padding: 6px 10px;
+  min-height: 36px; /* Private-note action height */
+  padding: 6px 10px; /* Inner private-note action spacing */
 }
 
 .interview-private-notes-editor {

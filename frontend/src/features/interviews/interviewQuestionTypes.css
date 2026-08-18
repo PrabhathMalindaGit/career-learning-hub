@@ -64,17 +64,17 @@
 .interview-type-choice {
   display: grid;
   width: 100%;
-  min-height: 54px;
-  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 54px; /* Question-type card height */
+  grid-template-columns: auto minmax(0, 1fr); /* Checkbox and label widths */
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid #cbd9d0;
-  border-radius: 12px;
-  color: #2f4d3b;
-  background: #fff;
-  font-size: 0.8rem;
-  font-weight: 750;
+  gap: 10px; /* Space between checkbox and type label */
+  padding: 10px 12px; /* Inner question-type card spacing */
+  border: 1px solid #cbd9d0; /* Question-type card border */
+  border-radius: 12px; /* Question-type card corner rounding */
+  color: #2f4d3b; /* Question-type label color */
+  background: #fff; /* Question-type card background color */
+  font-size: 0.8rem; /* Question-type label size */
+  font-weight: 750; /* Question-type label boldness */
   line-height: 1.3;
   cursor: pointer;
 }
@@ -86,9 +86,9 @@
    SELECTOR: .interview-type-choice:has(input:checked)
    ========================================================= */
 .interview-type-choice:has(input:checked) {
-  border-color: #6b9a7c;
-  color: #174e2d;
-  background: #eaf3ed;
+  border-color: #6b9a7c; /* Selected type border color */
+  color: #174e2d; /* Selected type label color */
+  background: #eaf3ed; /* Selected type background color */
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
@@ -386,19 +386,19 @@
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .interview-workspace .interview-lifecycle-actions {
-  flex-wrap: nowrap;
-  justify-content: flex-end;
-  gap: 10px;
+  flex-wrap: nowrap; /* Keeps lifecycle actions on one row */
+  justify-content: flex-end; /* Aligns lifecycle actions to the right */
+  gap: 10px; /* Space between lifecycle actions */
 }
 
 .interview-workspace .interview-lifecycle-actions button {
-  min-width: 124px;
-  min-height: 44px;
-  padding: 10px 16px;
-  border: 1px solid #b8cbbf;
-  border-radius: 12px;
-  color: #245e3c;
-  background: #fff;
+  min-width: 124px; /* Minimum lifecycle-button width */
+  min-height: 44px; /* Lifecycle-button height */
+  padding: 10px 16px; /* Inner lifecycle-button spacing */
+  border: 1px solid #b8cbbf; /* Lifecycle-button border */
+  border-radius: 12px; /* Lifecycle-button corner rounding */
+  color: #245e3c; /* Lifecycle-button text color */
+  background: #fff; /* Lifecycle-button background color */
   box-shadow: 0 4px 12px rgba(24, 66, 40, 0.05);
   font-weight: 800;
   transition:
@@ -410,8 +410,8 @@
 }
 
 .interview-workspace .interview-lifecycle-actions button:hover:not(:disabled) {
-  border-color: #7da68a;
-  background: #f3f8f5;
+  border-color: #7da68a; /* Lifecycle-button hover border color */
+  background: #f3f8f5; /* Lifecycle-button hover background color */
   box-shadow: 0 7px 16px rgba(24, 66, 40, 0.09);
   transform: translateY(-1px);
 }
@@ -438,8 +438,8 @@
 }
 
 .interview-workspace .interview-lifecycle-actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
+  cursor: not-allowed; /* Disabled lifecycle-button cursor */
+  opacity: 0.62; /* Disabled lifecycle-button fade */
   transform: none;
 }
 

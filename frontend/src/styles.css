@@ -84,8 +84,8 @@ button:disabled {
    SELECTOR: :focus-visible
    ========================================================= */
 :focus-visible {
-  outline: var(--focus-ring-width) solid var(--focus-ring-color);
-  outline-offset: var(--focus-ring-offset);
+  outline: var(--focus-ring-width) solid var(--focus-ring-color); /* Keyboard focus ring thickness / style / color */
+  outline-offset: var(--focus-ring-offset); /* Space between the focus ring and control */
 }
 
 .skip-link {
@@ -320,12 +320,12 @@ h2 {
   min-height: max(
     var(--minimum-interactive-target),
     var(--control-height)
-  );
+  ); /* Minimum shared button height */
   align-items: center;
   justify-content: center;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 800;
+  padding: 10px 16px; /* Inner spacing around button text */
+  border-radius: 10px; /* Button corner rounding */
+  font-weight: 800; /* Button text boldness */
   text-decoration: none;
 }
 
@@ -350,13 +350,13 @@ h2 {
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .primary-button {
-  border: 1px solid var(--accent);
-  color: #ffffff;
-  background: var(--accent);
+  border: 1px solid var(--accent); /* Primary button border thickness / style / color */
+  color: #ffffff; /* Primary button text color */
+  background: var(--accent); /* Primary button background color */
 }
 
 .primary-button:hover:not(:disabled) {
-  background: var(--accent-dark);
+  background: var(--accent-dark); /* Primary button hover background color */
 }
 
 /* Feature 6.4 STYLE — Personal-key action; Feature 6.6 STYLE — Test connection; Feature 6.7 STYLE — Replace key; Feature 6.8 STYLE — Disconnect. */
@@ -381,9 +381,9 @@ h2 {
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .secondary-button {
-  border: 1px solid var(--border);
-  color: #28342d;
-  background: var(--surface-muted);
+  border: 1px solid var(--border); /* Secondary button border thickness / style / color */
+  color: #28342d; /* Secondary button text color */
+  background: var(--surface-muted); /* Secondary button background color */
 }
 
 /* Feature 6.9 STYLE — Delete key destructive colour/state. */
@@ -402,13 +402,13 @@ h2 {
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .destructive-button {
-  border: 1px solid #a33b3b;
-  color: #ffffff;
-  background: #a33b3b;
+  border: 1px solid #a33b3b; /* Destructive button border thickness / style / color */
+  color: #ffffff; /* Destructive button text color */
+  background: #a33b3b; /* Destructive button background color */
 }
 
 .destructive-button:hover:not(:disabled) {
-  background: #842424;
+  background: #842424; /* Destructive button hover background color */
 }
 
 .quiet-button {
@@ -426,15 +426,15 @@ h2 {
 .secondary-button:disabled,
 .destructive-button:disabled,
 .quiet-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
+  cursor: not-allowed; /* Disabled cursor appearance */
+  opacity: 0.62; /* Disabled control fade */
 }
 
 .primary-button[aria-busy="true"],
 .secondary-button[aria-busy="true"],
 .destructive-button[aria-busy="true"],
 .quiet-button[aria-busy="true"] {
-  cursor: wait;
+  cursor: wait; /* Busy-state cursor appearance */
 }
 
 .primary-link {
@@ -467,9 +467,9 @@ h2 {
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .app-shell {
-  display: grid;
-  grid-template-columns: 256px minmax(0, 1fr);
-  min-height: 100vh;
+  display: grid; /* Main application shell grid */
+  grid-template-columns: 256px minmax(0, 1fr); /* Sidebar width and main-content width */
+  min-height: 100vh; /* Full viewport shell height */
 }
 
 .app-sidebar {
@@ -477,13 +477,13 @@ h2 {
   z-index: 20;
   top: 0;
   display: flex;
-  height: 100vh;
+  height: 100vh; /* Full viewport sidebar height */
   min-width: 0;
   flex-direction: column;
-  gap: 22px;
-  padding: 24px 18px;
-  border-right: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.98);
+  gap: 22px; /* Space between sidebar sections */
+  padding: 24px 18px; /* Inner sidebar spacing */
+  border-right: 1px solid var(--border); /* Sidebar divider */
+  background: rgba(255, 255, 255, 0.98); /* Sidebar background color */
   box-shadow: 8px 0 28px rgba(20, 45, 31, 0.04);
 }
 
@@ -540,23 +540,23 @@ h2 {
   min-width: 0;
   min-height: var(--minimum-interactive-target);
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 11px;
-  color: #425047;
-  font-size: 0.94rem;
-  font-weight: 700;
+  gap: 12px; /* Space between navigation icon and label */
+  padding: 10px 12px; /* Inner navigation-link spacing */
+  border-radius: 11px; /* Navigation-link corner rounding */
+  color: #425047; /* Navigation text and icon color */
+  font-size: 0.94rem; /* Navigation text size */
+  font-weight: 700; /* Navigation text boldness */
   text-decoration: none;
   white-space: nowrap;
 }
 
 .nav-link:hover {
-  background: #edf3ef;
+  background: #edf3ef; /* Navigation hover background color */
 }
 
 .nav-link--active {
-  color: var(--accent-dark);
-  background: #e5f1e9;
+  color: var(--accent-dark); /* Active navigation text and icon color */
+  background: #e5f1e9; /* Active navigation background color */
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
@@ -596,13 +596,13 @@ h2 {
   min-height: var(--minimum-interactive-target);
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: 11px;
-  color: #ffffff;
-  background: var(--accent);
-  font-weight: 800;
-  cursor: pointer;
+  gap: 8px; /* Space between Create label and icon */
+  padding: 10px 14px; /* Inner Create-menu spacing */
+  border-radius: 11px; /* Create-menu corner rounding */
+  color: #ffffff; /* Create-menu text color */
+  background: var(--accent); /* Create-menu background color */
+  font-weight: 800; /* Create-menu text boldness */
+  cursor: pointer; /* Pointer cursor over the Create menu */
   list-style: none;
 }
 
@@ -612,7 +612,7 @@ h2 {
 
 .create-menu[open] summary,
 .create-menu summary:hover {
-  background: var(--accent-dark);
+  background: var(--accent-dark); /* Open and hover background color */
 }
 
 .create-menu__items {
@@ -707,25 +707,25 @@ h2 {
 .sidebar-logout,
 .mobile-nav-toggle,
 .mobile-nav-drawer button {
-  min-height: var(--minimum-interactive-target);
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  color: #2d3a32;
-  background: #ffffff;
-  font-weight: 750;
+  min-height: var(--minimum-interactive-target); /* Minimum logout/control height */
+  padding: 8px 12px; /* Inner logout/control spacing */
+  border: 1px solid var(--border); /* Logout/control border */
+  border-radius: 9px; /* Logout/control corner rounding */
+  color: #2d3a32; /* Logout/control text color */
+  background: #ffffff; /* Logout/control background color */
+  font-weight: 750; /* Logout/control text boldness */
 }
 
 /* Feature 1.6 STYLE — Log out control colour/state. */
 .sidebar-logout {
-  width: 100%;
+  width: 100%; /* Full available sidebar width */
 }
 
 .app-main {
-  width: min(1120px, calc(100% - 48px));
+  width: min(1120px, calc(100% - 48px)); /* Main-content width and page-side spacing */
   min-width: 0;
   margin: 0 auto;
-  padding: 64px 0 80px;
+  padding: 64px 0 80px; /* Space above and below main content */
 }
 
 .mobile-nav-drawer {
@@ -926,15 +926,15 @@ h2 {
   display: inline-flex;
   min-height: 32px;
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* Space between status dot and label */
   flex: 0 0 auto;
-  padding: 6px 12px;
-  border: 1px solid #bedcca;
-  border-radius: 999px;
-  background: #eef8f2;
-  color: #245a3a;
-  font-size: 0.8rem;
-  font-weight: 800;
+  padding: 6px 12px; /* Inner status-badge spacing */
+  border: 1px solid #bedcca; /* Connected badge border */
+  border-radius: 999px; /* Pill-shaped status badge */
+  background: #eef8f2; /* Connected badge background color */
+  color: #245a3a; /* Connected badge text color */
+  font-size: 0.8rem; /* Status text size */
+  font-weight: 800; /* Status text boldness */
 }
 
 .gemini-status::before {
@@ -946,9 +946,9 @@ h2 {
 }
 
 .gemini-status--disconnected {
-  border-color: #decfc4;
-  background: #faf5f1;
-  color: #74533d;
+  border-color: #decfc4; /* Disconnected badge border color */
+  background: #faf5f1; /* Disconnected badge background color */
+  color: #74533d; /* Disconnected badge text color */
 }
 
 .gemini-status--disconnected::before {
@@ -1014,7 +1014,7 @@ h2 {
    ========================================================= */
 .gemini-model {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.9rem;
+  font-size: 0.9rem; /* Fixed model-name text size */
 }
 
 /* Feature 6.3 — Application-managed Gemini action row.
@@ -1175,8 +1175,8 @@ h2 {
 }
 
 .settings-session-panel .settings-actions {
-  margin-top: auto;
-  padding-top: 28px;
+  margin-top: auto; /* Pushes session actions to the panel bottom */
+  padding-top: 28px; /* Space above session actions */
 }
 
 .settings-actions .secondary-button {
@@ -1347,13 +1347,13 @@ h2 {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 10px; /* Space between progress actions */
   min-width: 0;
 }
 
 .job-resilience-actions {
-  justify-content: space-between;
-  width: 100%;
+  justify-content: space-between; /* Separates job status from its actions */
+  width: 100%; /* Full available progress-row width */
 }
 
 .job-resilience-actions > p {

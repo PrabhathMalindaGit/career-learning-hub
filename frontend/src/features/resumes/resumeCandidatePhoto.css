@@ -84,15 +84,15 @@
    ========================================================= */
 .resume-candidate-photo-file-button {
   display: inline-flex;
-  min-height: 2.75rem;
+  min-height: 2.75rem; /* Candidate-photo chooser height */
   align-items: center;
   justify-content: center;
-  padding: 0.65rem 1rem;
-  border: 1px solid var(--border-color, #cfd8d1);
-  border-radius: 0.75rem;
-  background: var(--surface-muted, #f3f7f4);
-  color: var(--text-color, #173b2a);
-  font-weight: 700;
+  padding: 0.65rem 1rem; /* Inner photo-chooser spacing */
+  border: 1px solid var(--border-color, #cfd8d1); /* Photo-chooser border */
+  border-radius: 0.75rem; /* Photo-chooser corner rounding */
+  background: var(--surface-muted, #f3f7f4); /* Photo-chooser background color */
+  color: var(--text-color, #173b2a); /* Photo-chooser text color */
+  font-weight: 700; /* Photo-chooser text boldness */
   line-height: 1.2;
   box-shadow: 0 1px 2px rgb(17 55 36 / 7%);
   transition:
@@ -104,20 +104,20 @@
 .resume-candidate-photo-file-control:hover
   .resume-candidate-photo-file-input:not(:disabled)
   + .resume-candidate-photo-file-button {
-  background: #eaf3ed;
-  border-color: #a8bfae;
+  background: #eaf3ed; /* Photo-chooser hover background color */
+  border-color: #a8bfae; /* Photo-chooser hover border color */
 }
 
 .resume-candidate-photo-file-input:focus-visible
   + .resume-candidate-photo-file-button {
-  outline: 3px solid var(--focus-ring, #2b7b50);
-  outline-offset: 2px;
+  outline: 3px solid var(--focus-ring, #2b7b50); /* Photo-chooser keyboard focus ring */
+  outline-offset: 2px; /* Space between focus ring and chooser */
 }
 
 .resume-candidate-photo-file-input:disabled
   + .resume-candidate-photo-file-button {
-  cursor: not-allowed;
-  opacity: 0.62;
+  cursor: not-allowed; /* Disabled photo-chooser cursor */
+  opacity: 0.62; /* Disabled photo-chooser fade */
   box-shadow: none;
 }
 

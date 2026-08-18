@@ -163,8 +163,8 @@
 .dashboard-status-message button:focus-visible {
   position: relative;
   z-index: 2;
-  outline: 3px solid #e4a33e;
-  outline-offset: 3px;
+  outline: 3px solid #e4a33e; /* Dashboard keyboard focus ring */
+  outline-offset: 3px; /* Space between focus ring and control */
 }
 
 .dashboard-quick-start {
@@ -235,15 +235,15 @@
 .dashboard-quick-start__link {
   display: grid;
   min-width: 0;
-  min-height: 132px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 132px; /* Quick-start card height */
+  grid-template-columns: auto minmax(0, 1fr) auto; /* Icon, text, and arrow widths */
   align-items: start;
-  gap: 15px;
-  padding: 19px;
-  border: 1px solid #d6e0da;
-  border-radius: 17px;
-  color: var(--dashboard-ink);
-  background: #ffffff;
+  gap: 15px; /* Space between card icon, text, and arrow */
+  padding: 19px; /* Inner quick-start card spacing */
+  border: 1px solid #d6e0da; /* Quick-start card border */
+  border-radius: 17px; /* Quick-start card corner rounding */
+  color: var(--dashboard-ink); /* Quick-start card text color */
+  background: #ffffff; /* Quick-start card background color */
   text-decoration: none;
   box-shadow: 0 6px 20px rgba(20, 45, 31, 0.035);
   touch-action: manipulation;
@@ -254,19 +254,19 @@
 }
 
 .dashboard-quick-start__link:hover {
-  border-color: #8cab98;
+  border-color: #8cab98; /* Quick-start hover border color */
   box-shadow: 0 14px 30px rgba(20, 45, 31, 0.09);
-  transform: translateY(-3px);
+  transform: translateY(-3px); /* Quick-start hover lift */
 }
 
 .dashboard-quick-start__link--ink {
-  border-color: #ced7dc;
-  background: #f3f6f8;
+  border-color: #ced7dc; /* Interview shortcut border color */
+  background: #f3f6f8; /* Interview shortcut background color */
 }
 
 .dashboard-quick-start__link--amber {
-  border-color: #ead9bc;
-  background: #fffaf0;
+  border-color: #ead9bc; /* Learning shortcut border color */
+  background: #fffaf0; /* Learning shortcut background color */
 }
 
 .dashboard-quick-start__icon {

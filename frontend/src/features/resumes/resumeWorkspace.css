@@ -60,11 +60,11 @@
 .resume-panel,
 .resume-version-history,
 .resume-snapshot {
-  min-width: 0;
-  padding: 22px;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  background: var(--surface);
+  min-width: 0; /* Allows Resume panels to shrink without overflow */
+  padding: 22px; /* Inner Resume panel spacing */
+  border: 1px solid var(--border); /* Resume panel border */
+  border-radius: 20px; /* Resume panel corner rounding */
+  background: var(--surface); /* Resume panel background color */
   box-shadow: 0 12px 34px rgba(20, 45, 31, 0.06);
 }
 
@@ -315,9 +315,9 @@
   min-height: var(--minimum-interactive-target);
   align-items: center;
   justify-content: center;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 800;
+  padding: 10px 16px; /* Inner Resume button spacing */
+  border-radius: 10px; /* Resume button corner rounding */
+  font-weight: 800; /* Resume button text boldness */
 }
 
 /* Feature 3.5 STYLE — Save new version colour/state; Feature 3.10 STYLE — Apply suggestions/Create new version colour/state. */
@@ -340,9 +340,9 @@
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .resume-primary-button {
-  border: 1px solid var(--accent-dark);
-  color: #fff;
-  background: var(--accent-dark);
+  border: 1px solid var(--accent-dark); /* Primary Resume button border */
+  color: #fff; /* Primary Resume button text color */
+  background: var(--accent-dark); /* Primary Resume button background color */
 }
 
 .resume-save-shortcut {
@@ -368,21 +368,21 @@
 .resume-primary-button:disabled,
 .resume-secondary-button:disabled,
 .resume-danger-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
+  cursor: not-allowed; /* Disabled Resume button cursor */
+  opacity: 0.62; /* Disabled Resume button fade */
 }
 
 .resume-primary-button:disabled {
-  border-color: #b6c2ba;
-  color: #5e6c64;
-  background: #edf1ee;
-  opacity: 1;
+  border-color: #b6c2ba; /* Disabled primary-button border color */
+  color: #5e6c64; /* Disabled primary-button text color */
+  background: #edf1ee; /* Disabled primary-button background color */
+  opacity: 1; /* Uses explicit disabled colors instead of fading */
 }
 
 .resume-primary-button[aria-busy="true"],
 .resume-secondary-button[aria-busy="true"],
 .resume-danger-button[aria-busy="true"] {
-  cursor: wait;
+  cursor: wait; /* Busy Resume button cursor */
 }
 
 .resume-workspace-actions,
@@ -398,9 +398,9 @@
 .resume-workspace-grid,
 .resume-editor-preview-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr); /* Workspace column layout */
+  gap: 18px; /* Space between workspace panels */
+  align-items: start; /* Aligns workspace panels from the top */
 }
 
 .resume-form-grid {
@@ -435,7 +435,7 @@
    ========================================================= */
 .resume-editor {
   display: grid;
-  gap: 20px;
+  gap: 20px; /* Space between Resume editor sections */
 }
 
 .resume-section-navigation {
@@ -493,7 +493,7 @@
 
 .resume-editor-section--open,
 .resume-editor-section:target {
-  border-color: #9fbeab;
+  border-color: #9fbeab; /* Open/targeted editor section border color */
   box-shadow: 0 0 0 2px rgba(63, 119, 82, 0.08);
 }
 
@@ -506,8 +506,8 @@
 }
 
 .resume-editor-section--open .resume-editor-section-disclosure {
-  border-bottom: 1px solid #dce5df;
-  background: #f4f8f5;
+  border-bottom: 1px solid #dce5df; /* Divider below an open section heading */
+  background: #f4f8f5; /* Open section heading background color */
 }
 
 .resume-editor-section-copy {
@@ -558,7 +558,7 @@
 }
 
 .resume-editor-section-body {
-  padding: 14px;
+  padding: 14px; /* Inner editor-section spacing */
 }
 
 .resume-entry-card,
@@ -627,17 +627,17 @@
    ========================================================= */
 .resume-preview-panel {
   position: static;
-  max-height: none;
+  max-height: none; /* Allows the full Resume preview height */
   overflow: visible;
 }
 
 .resume-preview-panel:focus-visible {
-  outline: 3px solid rgba(18, 107, 58, 0.25);
-  outline-offset: 3px;
+  outline: 3px solid rgba(18, 107, 58, 0.25); /* Resume preview keyboard focus ring */
+  outline-offset: 3px; /* Space between focus ring and preview */
 }
 
 .resume-editor-preview-grid > .resume-preview-panel .resume-paper {
-  max-width: 860px;
+  max-width: 860px; /* Maximum on-screen Resume preview width */
   margin-inline: auto;
 }
 
@@ -662,10 +662,10 @@
    ========================================================= */
 .resume-design-panel {
   min-width: 0;
-  padding: 18px 20px;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  background: var(--surface);
+  padding: 18px 20px; /* Inner appearance-panel spacing */
+  border: 1px solid var(--border); /* Appearance-panel border */
+  border-radius: 20px; /* Appearance-panel corner rounding */
+  background: var(--surface); /* Appearance-panel background color */
   box-shadow: 0 12px 34px rgba(20, 45, 31, 0.06);
 }
 
@@ -952,7 +952,7 @@
    ========================================================= */
 .resume-print-controls {
   display: grid;
-  gap: 16px;
+  gap: 16px; /* Space between print controls and readiness status */
 }
 
 .resume-export-readiness {
@@ -2120,7 +2120,7 @@
 }
 
 .resume-collection {
-  padding: 26px;
+  padding: 26px; /* Inner Resume-list spacing */
 }
 
 .resume-collection > .resume-section-heading {
@@ -2943,7 +2943,7 @@
 .resume-version-history,
 .resume-snapshot {
   display: grid;
-  gap: 16px;
+  gap: 16px; /* Space between version-history sections */
 }
 
 .resume-version-history {
@@ -2955,8 +2955,8 @@
 }
 
 .resume-version-history-intro {
-  max-width: 620px;
-  margin: 7px 0 0;
+  max-width: 620px; /* Maximum version-history introduction width */
+  margin: 7px 0 0; /* Space above version-history introduction */
   color: #5e6c64;
   line-height: 1.55;
 }
@@ -3403,8 +3403,8 @@
 }
 
 .resume-version-history .resume-pagination {
-  padding-top: 16px;
-  border-top: 1px solid #e1e7e3;
+  padding-top: 16px; /* Space above version-history pagination */
+  border-top: 1px solid #e1e7e3; /* Pagination divider */
 }
 
 .resume-version-history .resume-pagination span {
@@ -3648,16 +3648,16 @@
    ========================================================= */
 .resume-recovery-review {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr); /* Draft-recovery review column layout */
+  gap: 20px; /* Space between recovery-review sections */
   min-width: 0;
 }
 
 .resume-recovery-review-warning {
-  padding: 20px;
-  border: 1px solid #ddc68f;
-  border-radius: 18px;
-  background: #fff8df;
+  padding: 20px; /* Inner recovery-warning spacing */
+  border: 1px solid #ddc68f; /* Recovery-warning border */
+  border-radius: 18px; /* Recovery-warning corner rounding */
+  background: #fff8df; /* Recovery-warning background color */
 }
 
 .resume-recovery-review-warning h1,
@@ -3708,13 +3708,13 @@
 .resume-create-methods > button {
   display: grid;
   justify-items: start;
-  gap: 6px;
-  min-height: 104px;
-  padding: 18px;
-  border-color: #cedbd2;
-  border-radius: 14px;
-  background: #fbfdfc;
-  text-align: left;
+  gap: 6px; /* Space between creation-method text elements */
+  min-height: 104px; /* Creation-method card height */
+  padding: 18px; /* Inner creation-method card spacing */
+  border-color: #cedbd2; /* Creation-method card border color */
+  border-radius: 14px; /* Creation-method card corner rounding */
+  background: #fbfdfc; /* Creation-method card background color */
+  text-align: left; /* Aligns creation-method text to the left */
   transition:
     border-color 160ms ease,
     background-color 160ms ease,
@@ -3723,15 +3723,15 @@
 }
 
 .resume-create-methods > button:hover {
-  transform: translateY(-1px);
-  border-color: #88aa94;
-  background: #f3f8f5;
+  transform: translateY(-1px); /* Creation-method hover lift */
+  border-color: #88aa94; /* Creation-method hover border color */
+  background: #f3f8f5; /* Creation-method hover background color */
   box-shadow: 0 10px 24px rgba(20, 45, 31, 0.08);
 }
 
 .resume-create-methods > button:focus-visible {
-  outline: 3px solid rgba(18, 107, 58, 0.28);
-  outline-offset: 3px;
+  outline: 3px solid rgba(18, 107, 58, 0.28); /* Creation-method keyboard focus ring */
+  outline-offset: 3px; /* Space between focus ring and card */
 }
 
 /* =========================================================
@@ -3744,8 +3744,8 @@
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .resume-create-methods > .resume-create-method--recommended {
-  border-color: #9ebcab;
-  background: #f3f8f5;
+  border-color: #9ebcab; /* Recommended-method border color */
+  background: #f3f8f5; /* Recommended-method background color */
 }
 
 .resume-create-method strong {

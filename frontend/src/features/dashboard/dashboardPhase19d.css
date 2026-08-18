@@ -93,13 +93,13 @@
 .dashboard-performance-toolbar {
   display: flex;
   min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 22px;
-  padding: 18px 20px;
-  border: 1px solid #d9e2dc;
-  border-radius: 18px;
-  background: #ffffff;
+  align-items: center; /* Vertically aligns toolbar content */
+  justify-content: space-between; /* Separates heading from period controls */
+  gap: 22px; /* Space between toolbar sections */
+  padding: 18px 20px; /* Inner toolbar spacing */
+  border: 1px solid #d9e2dc; /* Toolbar border */
+  border-radius: 18px; /* Toolbar corner rounding */
+  background: #ffffff; /* Toolbar background color */
 }
 
 .dashboard-performance-toolbar h2 {
@@ -132,15 +132,15 @@
 .dashboard-performance-toolbar
   .dashboard-window-options
   button[aria-pressed="true"] {
-  color: #ffffff;
-  background: var(--dashboard-forest);
+  color: #ffffff; /* Selected period text color */
+  background: var(--dashboard-forest); /* Selected period background color */
 }
 
 .dashboard-performance-toolbar
   .dashboard-window-options
   button:hover:not([aria-pressed="true"]) {
-  color: var(--dashboard-forest-deep);
-  background: #e6efe9;
+  color: var(--dashboard-forest-deep); /* Period-control hover text color */
+  background: #e6efe9; /* Period-control hover background color */
 }
 
 .dashboard-performance-metrics {
@@ -307,9 +307,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #e4ebe6;
+  margin-top: 14px; /* Space above activity controls */
+  padding-top: 14px; /* Space below the activity divider */
+  border-top: 1px solid #e4ebe6; /* Activity-control divider */
 }
 
 /* =========================================================
@@ -323,12 +323,12 @@
    ========================================================= */
 .dashboard-activity-disclosure button,
 .dashboard-activity-collapse {
-  min-height: var(--minimum-interactive-target);
-  border: 1px solid #b9c9bf;
-  border-radius: 11px;
-  padding: 8px 14px;
-  color: #254633;
-  background: #ffffff;
+  min-height: var(--minimum-interactive-target); /* Activity-control height */
+  border: 1px solid #b9c9bf; /* Activity-control border */
+  border-radius: 11px; /* Activity-control corner rounding */
+  padding: 8px 14px; /* Inner activity-control spacing */
+  color: #254633; /* Activity-control text color */
+  background: #ffffff; /* Activity-control background color */
   font: inherit;
   font-weight: 800;
   cursor: pointer;
@@ -336,8 +336,8 @@
 
 .dashboard-activity-disclosure button:hover,
 .dashboard-activity-collapse:hover {
-  border-color: #7fa08c;
-  background: #edf5f0;
+  border-color: #7fa08c; /* Activity-control hover border color */
+  background: #edf5f0; /* Activity-control hover background color */
 }
 
 .dashboard-activity-expanded-controls {

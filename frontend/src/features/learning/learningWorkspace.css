@@ -23,7 +23,7 @@
   background:
     radial-gradient(circle, rgba(40, 122, 74, 0.075) 1px, transparent 1.5px)
       0 0 / 18px 18px,
-    linear-gradient(145deg, #fbfdfb 0%, #ffffff 42%, #f7faf8 100%);
+    linear-gradient(145deg, #fbfdfb 0%, #ffffff 42%, #f7faf8 100%); /* Document-library background pattern and colors */
 }
 
 .learning-library > * {
@@ -102,9 +102,9 @@
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  padding: 10px 15px;
-  border-radius: 10px;
-  font-weight: 800;
+  padding: 10px 15px; /* Inner Learning action spacing */
+  border-radius: 10px; /* Learning action corner rounding */
+  font-weight: 800; /* Learning action text boldness */
   line-height: 1.25;
   text-decoration: none;
 }
@@ -138,13 +138,13 @@
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .learning-primary-button {
-  border: 1px solid var(--accent);
-  color: #ffffff;
-  background: var(--accent);
+  border: 1px solid var(--accent); /* Primary Learning button border */
+  color: #ffffff; /* Primary Learning button text color */
+  background: var(--accent); /* Primary Learning button background color */
 }
 
 .learning-primary-button:hover:not(:disabled) {
-  background: var(--accent-dark);
+  background: var(--accent-dark); /* Primary Learning button hover color */
 }
 
 .learning-secondary-button,
@@ -179,20 +179,20 @@
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .learning-document-link {
-  border: 1px solid #b8d1c0;
-  color: var(--accent-dark);
-  background: #f4faf6;
+  border: 1px solid #b8d1c0; /* Document/action link border */
+  color: var(--accent-dark); /* Document/action link text color */
+  background: #f4faf6; /* Document/action link background color */
 }
 
 .learning-primary-button:disabled,
 .learning-secondary-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
+  cursor: not-allowed; /* Disabled Learning button cursor */
+  opacity: 0.62; /* Disabled Learning button fade */
 }
 
 .learning-primary-button[aria-busy="true"],
 .learning-secondary-button[aria-busy="true"] {
-  cursor: wait;
+  cursor: wait; /* Busy Learning button cursor */
 }
 
 .learning-upload-panel {
@@ -329,10 +329,10 @@
 }
 
 .learning-processing-notice {
-  margin-top: 20px;
-  border: 1px solid #c9d9cd;
-  color: #294a35;
-  background: #edf7f0;
+  margin-top: 20px; /* Space above processing status */
+  border: 1px solid #c9d9cd; /* Processing notice border */
+  color: #294a35; /* Processing notice text color */
+  background: #edf7f0; /* Processing notice background color */
 }
 
 .learning-library-toolbar {
@@ -837,20 +837,20 @@
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .learning-tabs button {
-  flex: 1 1 auto;
-  min-height: 46px;
-  padding: 10px 14px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  color: #4b5a50;
-  background: transparent;
-  font-weight: 800;
+  flex: 1 1 auto; /* Shares tab-row width between tabs */
+  min-height: 46px; /* Tab button height */
+  padding: 10px 14px; /* Inner tab spacing */
+  border: 1px solid transparent; /* Reserves space for selected-tab border */
+  border-radius: 10px; /* Tab corner rounding */
+  color: #4b5a50; /* Tab text color */
+  background: transparent; /* Unselected tab background */
+  font-weight: 800; /* Tab text boldness */
 }
 
 .learning-tabs button[aria-selected="true"] {
-  border-color: #b9d0c0;
-  color: var(--accent-dark);
-  background: #ffffff;
+  border-color: #b9d0c0; /* Selected tab border color */
+  color: var(--accent-dark); /* Selected tab text color */
+  background: #ffffff; /* Selected tab background color */
   box-shadow: 0 5px 14px rgba(20, 45, 31, 0.08);
 }
 
@@ -1136,8 +1136,8 @@
 .learning-deletion-status button:focus-visible,
 .learning-deletion-form input:focus-visible,
 .learning-deletion-actions button:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--accent) 42%, transparent);
-  outline-offset: 3px;
+  outline: 3px solid color-mix(in srgb, var(--accent) 42%, transparent); /* Learning keyboard focus ring */
+  outline-offset: 3px; /* Space between focus ring and control */
 }
 
 .learning-conversations > .learning-error,
@@ -1286,8 +1286,8 @@
 .learning-source-pages {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
+  gap: 8px; /* Space between page-reference pills */
+  margin-top: 14px; /* Space above page references */
 }
 
 /* =========================================================
@@ -1305,13 +1305,13 @@
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .learning-source-pages button {
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 1px solid #b8d1c0;
-  border-radius: 999px;
-  color: var(--accent-dark);
-  background: #f4faf6;
-  font-weight: 800;
+  min-height: 44px; /* Page-reference pill height */
+  padding: 8px 12px; /* Inner page-reference spacing */
+  border: 1px solid #b8d1c0; /* Page-reference border */
+  border-radius: 999px; /* Pill-shaped page reference */
+  color: var(--accent-dark); /* Page-reference text color */
+  background: #f4faf6; /* Page-reference background color */
+  font-weight: 800; /* Page-reference text boldness */
 }
 
 .learning-source-pages::before {
@@ -1489,8 +1489,8 @@
    ========================================================= */
 .learning-flashcard-set-list {
   display: grid;
-  gap: 12px;
-  margin: 24px 0 0;
+  gap: 12px; /* Space between flashcard sets */
+  margin: 24px 0 0; /* Space above the flashcard-set list */
   padding: 0;
   list-style: none;
 }
@@ -1498,13 +1498,13 @@
 .learning-flashcard-set-list article {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px 18px;
+  grid-template-columns: minmax(0, 1fr) auto; /* Flashcard details and action widths */
+  gap: 8px 18px; /* Row and column spacing inside a flashcard set */
   align-items: center;
-  padding: 17px 18px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #ffffff;
+  padding: 17px 18px; /* Inner flashcard-set spacing */
+  border: 1px solid var(--border); /* Flashcard-set border */
+  border-radius: 12px; /* Flashcard-set corner rounding */
+  background: #ffffff; /* Flashcard-set background color */
 }
 
 .learning-flashcard-set-list article > div {
@@ -1550,8 +1550,8 @@
 .learning-attempt-list,
 .learning-review-list {
   display: grid;
-  gap: 12px;
-  margin: 24px 0 0;
+  gap: 12px; /* Space between quiz/attempt rows */
+  margin: 24px 0 0; /* Space above quiz/attempt lists */
   padding: 0;
   list-style: none;
 }
@@ -1560,13 +1560,13 @@
 .learning-attempt-list article {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px 18px;
+  grid-template-columns: minmax(0, 1fr) auto; /* Quiz details and action widths */
+  gap: 8px 18px; /* Row and column spacing inside a quiz row */
   align-items: center;
-  padding: 17px 18px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #ffffff;
+  padding: 17px 18px; /* Inner quiz-row spacing */
+  border: 1px solid var(--border); /* Quiz-row border */
+  border-radius: 12px; /* Quiz-row corner rounding */
+  background: #ffffff; /* Quiz-row background color */
 }
 
 .learning-quiz-set-list article > div,
@@ -1870,7 +1870,7 @@
    CHANGE: layout / border / background / text / state appearance here
    ========================================================= */
 .learning-study-reveal {
-  margin-top: 24px;
+  margin-top: 24px; /* Space above the reveal-answer action */
 }
 
 .learning-study-answer {
@@ -1920,8 +1920,8 @@
   grid-template-columns: repeat(
     auto-fit,
     minmax(min(100%, 270px), 1fr)
-  );
-  gap: 16px;
+  ); /* Responsive collection-card column widths */
+  gap: 16px; /* Space between collection cards */
 }
 
 .learning-flashcard-set-list > li,
@@ -1935,14 +1935,14 @@
   display: grid;
   width: 100%;
   min-width: 0;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr; /* Single-column collection-card content */
   grid-template-rows: auto 1fr auto auto;
   align-content: start;
-  gap: 16px;
-  padding: 22px;
-  border: 1px solid #cbd9cf;
+  gap: 16px; /* Space between collection-card sections */
+  padding: 22px; /* Inner collection-card spacing */
+  border: 1px solid #cbd9cf; /* Collection-card border */
   border-top: 4px solid var(--accent);
-  border-radius: 18px;
+  border-radius: 18px; /* Collection-card corner rounding */
   background:
     linear-gradient(150deg, rgba(239, 247, 241, 0.7), transparent 52%),
     #ffffff;
@@ -1951,7 +1951,7 @@
 
 .learning-flashcard-set-list .learning-collection-card:hover,
 .learning-quiz-set-list .learning-collection-card:hover {
-  border-color: #9ebda8;
+  border-color: #9ebda8; /* Collection-card hover border color */
   box-shadow: 0 16px 34px rgba(20, 45, 31, 0.09);
 }
 
@@ -2389,8 +2389,8 @@
   }
 
   .learning-tabs button {
-    flex: 0 0 auto;
-    padding-inline: 12px;
+    flex: 0 0 auto; /* Keeps mobile tabs sized to their labels */
+    padding-inline: 12px; /* Mobile tab horizontal spacing */
     white-space: nowrap;
   }
 
