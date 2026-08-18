@@ -449,6 +449,7 @@ export function LearningDashboard() {
           </p>
         </div>
         <div className="learning-header-actions">
+          {/* Feature 5.1 UI — Upload private Learning PDF. */}
           <button
             ref={uploadTriggerRef}
             type="button"
@@ -461,7 +462,6 @@ export function LearningDashboard() {
               setUploadError(undefined);
             }}
           >
-            {/* Feature 5.1 UI — Upload private Learning PDF. */}
             Upload PDF
           </button>
         </div>
