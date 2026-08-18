@@ -12,6 +12,7 @@ interface ResumeRecoveryReviewProps {
   onDiscard: () => void;
 }
 
+// Feature 3.12 — Recovered-draft review surface for stale/conflicted local recovery.
 export function ResumeRecoveryReview({
   content,
   baselineVersionNumber,
