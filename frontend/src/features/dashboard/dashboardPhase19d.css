@@ -97,6 +97,7 @@
   line-height: 1.45;
 }
 
+/* Feature 2.1 — Final Performance period normal/selected/hover colours. */
 .dashboard-performance-toolbar .dashboard-window-options {
   flex: 0 0 auto;
   border-color: #cbd8d0;
@@ -275,6 +276,7 @@
   padding: 20px;
 }
 
+/* Feature 2.5 — Recent activity expand/collapse/pagination control styling. */
 .dashboard-activity-disclosure,
 .dashboard-activity-expanded-controls {
   display: flex;
