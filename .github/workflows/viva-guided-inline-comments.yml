@@ -1,0 +1,240 @@
+name: Temporary guided viva comment pass
+
+on:
+  push:
+    branches:
+      - task/viva-guided-inline-comments
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: task/viva-guided-inline-comments
+          fetch-depth: 0
+
+      - name: Upgrade feature comments
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+            'frontend/src/features/auth/RegisterPage.tsx': {
+              '{/* Feature 1.1 UI — Create account. */}': '{/* FEATURE 1.1 UI: Create account button. */}\n          {/* STYLE: auth.css -> .authentication-form-card .primary-button */}',
+            },
+            'frontend/src/features/auth/LoginPage.tsx': {
+              '{/* Feature 1.2 UI — Sign in. */}': '{/* FEATURE 1.2 UI: Sign in button. */}\n          {/* STYLE: auth.css -> .authentication-form-card .primary-button */}',
+            },
+            'frontend/src/AppShell.tsx': {
+              '{/* Feature 1.4 UI — Sidebar/mobile navigation links. */}': '{/* FEATURE 1.4 UI: Sidebar/mobile navigation links. */}\n      {/* STYLE: styles.css -> .nav-link / .nav-link--active */}',
+              '{/* Feature 1.5 UI — Global Create menu. */}': '{/* FEATURE 1.5 UI: Global Create menu. */}\n      {/* STYLE: styles.css -> .create-menu */}',
+              '{/* Feature 1.6 UI — Log out button. */}': '{/* FEATURE 1.6 UI: Log out button. */}\n            {/* STYLE: styles.css -> .sidebar-logout */}',
+              '{/* Feature 7.9 UI — Skip link and responsive shell accessibility. */}': '{/* FEATURE 7.9 UI: Skip link and responsive shell accessibility. */}\n      {/* STYLE: styles.css -> :focus-visible */}',
+            },
+            'frontend/src/features/dashboard/MainDashboard.tsx': {
+              '// Feature 2.2 UI — Continue/Create Resume dashboard shortcut.': '// FEATURE 2.2 UI: Continue/Create Resume dashboard shortcut.\n  // STYLE: dashboardPhase19d.css -> .dashboard-quick-start__link',
+              '// Feature 2.3 UI — Continue/Start Interview dashboard shortcut.': '// FEATURE 2.3 UI: Continue/Start Interview dashboard shortcut.\n  // STYLE: dashboardPhase19d.css -> .dashboard-quick-start__link',
+              '// Feature 2.4 UI — Open/Upload Learning document dashboard shortcut.': '// FEATURE 2.4 UI: Open/Upload Learning document dashboard shortcut.\n  // STYLE: dashboardPhase19d.css -> .dashboard-quick-start__link',
+              '{/* Feature 2.1 UI — Progress overview and performance period. */}': '{/* FEATURE 2.1 UI: Progress overview and performance period. */}\n      {/* STYLE: dashboardPhase19d.css -> .dashboard-performance-toolbar */}',
+            },
+            'frontend/src/features/dashboard/ActivityFeed.tsx': {
+              '{/* Feature 2.5 UI — Recent activity. */}': '{/* FEATURE 2.5 UI: Recent activity. */}\n          {/* STYLE: dashboardPhase19d.css -> .dashboard-activity-disclosure */}',
+            },
+            'frontend/src/features/resumes/ResumeWorkspace.tsx': {
+              '{/* Feature 3.5 UI — Save new immutable version. */}': '{/* FEATURE 3.5 UI: Save new immutable version. */}\n                {/* STYLE: resumeWorkspace.css -> .resume-primary-button */}',
+              '{/* Feature 3.9 UI — Run AI-assisted assessment. */}': '{/* FEATURE 3.9 UI: Run AI-assisted assessment. */}\n              {/* STYLE: ResumeAssessmentActionUi.css -> .resume-analysis-runner .resume-button-row .resume-primary-button */}',
+            },
+            'frontend/src/features/resumes/AiRecommendations.tsx': {
+              '{/* Feature 3.10 UI — Apply selected AI suggestions. */}': '{/* FEATURE 3.10 UI: Apply selected AI suggestions. */}\n          {/* STYLE: resumeWorkspace.css -> .resume-primary-button */}',
+            },
+            'frontend/src/features/resumes/ResumeDesignControls.tsx': {
+              '{/* Feature 3.6 UI — Resume appearance customization. */}': '{/* FEATURE 3.6 UI: Resume appearance customization. */}\n            {/* STYLE: resumeWorkspace.css -> .resume-design-panel */}',
+            },
+            'frontend/src/features/resumes/ResumeCandidatePhotoControls.tsx': {
+              '{/* Feature 3.7 UI — Candidate photo controls. */}': '{/* FEATURE 3.7 UI: Candidate photo controls. */}\n          {/* STYLE: resumeCandidatePhoto.css -> .resume-candidate-photo-file-button */}',
+            },
+            'frontend/src/features/resumes/ResumePrintControls.tsx': {
+              '{/* Feature 3.8 UI — Print / Save as PDF. */}': '{/* FEATURE 3.8 UI: Print / Save as PDF. */}\n          {/* STYLE: resumeWorkspace.css -> .resume-print-controls */}',
+            },
+            'frontend/src/features/resumes/ResumeVersionTimeline.tsx': {
+              '{/* Feature 3.11 UI — Immutable Resume version history. */}': '{/* FEATURE 3.11 UI: Immutable Resume version history. */}\n          {/* STYLE: resumeWorkspace.css -> .resume-collection / .resume-panel */}',
+            },
+            'frontend/src/features/interviews/InterviewQuestionTypeControls.tsx': {
+              '{/* Feature 4.6 UI — Select Interview question types. */}': '{/* FEATURE 4.6 UI: Select Interview question types. */}\n      {/* STYLE: interviewQuestionTypes.css -> .interview-type-choice */}',
+            },
+            'frontend/src/features/interviews/InterviewAnswerControl.tsx': {
+              '{/* Feature 4.9 UI — Save practice attempt. */}': '{/* FEATURE 4.9 UI: Save practice attempt. */}\n        {/* STYLE: interviewCoach.css -> .interview-primary-button */}',
+            },
+            'frontend/src/features/interviews/InterviewSessionWorkspace.tsx': {
+              '{/* Feature 4.4 UI — Generate Interview questions. */}': '{/* FEATURE 4.4 UI: Generate Interview questions. */}\n              {/* STYLE: interviewCoach.css -> .interview-primary-button */}',
+              '{/* Feature 4.7 UI — Pin/unpin selected question. */}': '{/* FEATURE 4.7 UI: Pin/unpin selected question. */}\n                    {/* STYLE: interviewCoach.css -> .interview-question-select--active */}',
+              '{/* Feature 4.8 UI — Private notes. */}': '{/* FEATURE 4.8 UI: Private notes. */}\n                  {/* STYLE: interviewQuestionIndexNotes.css -> .interview-private-notes */}',
+              '{/* Feature 4.11 UI — Request question explanation. */}': '{/* FEATURE 4.11 UI: Request question explanation. */}\n                  {/* STYLE: interviewCoach.css -> .interview-secondary-button */}',
+              '{/* Feature 4.12 UI — Request AI feedback. */}': '{/* FEATURE 4.12 UI: Request AI feedback. */}\n                  {/* STYLE: interviewCoach.css -> .interview-secondary-button */}',
+              '{/* Feature 4.13 UI — Archive Interview session. */}': '{/* FEATURE 4.13 UI: Archive Interview session. */}\n                {/* STYLE: interviewQuestionTypes.css -> .interview-workspace .interview-lifecycle-actions */}',
+            },
+            'frontend/src/features/learning/DocumentConversations.tsx': {
+              '{/* Feature 5.7.1 UI — Create Grounded Chat conversation. */}': '{/* FEATURE 5.7.1 UI: Create Grounded Chat conversation. */}\n          {/* STYLE: learningWorkspace.css -> .learning-primary-button */}',
+            },
+            'frontend/src/features/learning/LearningConversationWorkspace.tsx': {
+              '{/* Feature 5.7.2 UI — Send Grounded Chat question. */}': '{/* FEATURE 5.7.2 UI: Send Grounded Chat question. */}\n            {/* STYLE: learningWorkspace.css -> .learning-primary-button */}',
+              '{/* Feature 5.7.3 UI — Grounded page reference. */}': '{/* FEATURE 5.7.3 UI: Grounded page reference. */}\n                          {/* STYLE: learningWorkspace.css -> .learning-source-pages */}',
+            },
+            'frontend/src/features/learning/LearningDashboard.tsx': {
+              '{/* Feature 5.1 UI — Upload private Learning PDF. */}': '{/* FEATURE 5.1 UI: Upload private Learning PDF. */}\n          {/* STYLE: learningWorkspace.css -> .learning-primary-button */}',
+              '{/* Feature 5.3 UI — Open document from Learning library. */}': '{/* FEATURE 5.3 UI: Open document from Learning library. */}\n                    {/* STYLE: learningWorkspace.css -> .learning-document-link */}',
+            },
+            'frontend/src/features/learning/DocumentFlashcards.tsx': {
+              '{/* Feature 5.8.1 UI — Generate flashcards. */}': '{/* FEATURE 5.8.1 UI: Generate flashcards. */}\n              {/* STYLE: learningWorkspace.css -> .learning-primary-button */}',
+              '{/* Feature 5.8.2 UI — Open flashcard Study set. */}': '{/* FEATURE 5.8.2 UI: Open flashcard Study set. */}\n                    {/* STYLE: learningWorkspace.css -> .learning-document-link */}',
+            },
+            'frontend/src/features/learning/DocumentQuizzes.tsx': {
+              '{/* Feature 5.9.1 UI — Generate quiz. */}': '{/* FEATURE 5.9.1 UI: Generate quiz. */}\n              {/* STYLE: learningWorkspace.css -> .learning-primary-button */}',
+              '{/* Feature 5.9.2 UI — Take quiz. */}': '{/* FEATURE 5.9.2 UI: Take quiz. */}\n                    {/* STYLE: learningWorkspace.css -> .learning-document-link */}',
+            },
+            'frontend/src/features/learning/LearningQuizWorkspace.tsx': {
+              '{/* Feature 5.9.3 UI — Review saved quiz attempt. */}': '{/* FEATURE 5.9.3 UI: Review saved quiz attempt. */}\n                        {/* STYLE: learningWorkspace.css -> .learning-document-link */}',
+            },
+            'frontend/src/features/auth/GeminiConnectionSettings.tsx': {
+              '{/* Feature 6.1 UI — Gemini connection status. */}': '{/* FEATURE 6.1 UI: Gemini connection status. */}\n          {/* STYLE: styles.css -> .gemini-status */}',
+              '{/* Feature 6.2 UI — Fixed Gemini model. */}': '{/* FEATURE 6.2 UI: Fixed Gemini model. */}\n              {/* STYLE: styles.css -> .gemini-model */}',
+              '{/* Feature 6.3 UI — Use application-managed Gemini. */}': '{/* FEATURE 6.3 UI: Use application-managed Gemini. */}\n                  {/* STYLE: styles.css -> .primary-button */}',
+              '{/* Feature 6.4 UI — Connect a personal Gemini key. */}': '{/* FEATURE 6.4 UI: Connect a personal Gemini key. */}\n                {/* STYLE: styles.css -> .secondary-button */}',
+              '{/* Feature 6.5 UI — Save and test personal key. */}': '{/* FEATURE 6.5 UI: Save and test personal key. */}\n                  {/* STYLE: styles.css -> .primary-button */}',
+              '{/* Feature 6.6 UI — Test Gemini connection. */}': '{/* FEATURE 6.6 UI: Test Gemini connection. */}\n                  {/* STYLE: styles.css -> .secondary-button */}',
+              '{/* Feature 6.7 UI — Replace personal Gemini key. */}': '{/* FEATURE 6.7 UI: Replace personal Gemini key. */}\n                {/* STYLE: styles.css -> .secondary-button */}',
+              '{/* Feature 6.8 UI — Disconnect Gemini source. */}': '{/* FEATURE 6.8 UI: Disconnect Gemini source. */}\n                  {/* STYLE: styles.css -> .secondary-button */}',
+              '{/* Feature 6.9 UI — Delete personal Gemini key. */}': '{/* FEATURE 6.9 UI: Delete personal Gemini key. */}\n                  {/* STYLE: styles.css -> .destructive-button */}',
+            },
+            'frontend/src/features/auth/AiUsageDiagnosticsSettings.tsx': {
+              '{/* Feature 6.10 UI — AI usage and diagnostics. */}': '{/* FEATURE 6.10 UI: AI usage and diagnostics. */}\n        {/* STYLE: aiUsageDiagnostics.css -> .ai-usage-diagnostics */}',
+            },
+            'frontend/src/features/auth/SettingsPage.tsx': {
+              '{/* Feature 6.11 UI — Account/current session controls. */}': '{/* FEATURE 6.11 UI: Account/current session controls. */}\n            {/* STYLE: styles.css -> .settings-session-panel */}',
+            },
+            'frontend/src/features/auth/auth.css': {
+              '/* Feature 1.1 STYLE — Create account normal colour; Feature 1.2 STYLE — Sign in normal colour. */': '/* FEATURE 1.1 / 1.2 COLOR TARGET: Create account + Sign in buttons. */\n/* CHANGE background, text, border and hover colours in this selector/state block. */',
+            },
+            'frontend/src/features/dashboard/dashboardPhase19d.css': {
+              '/* Feature 2.2 STYLE — Resume shortcut; Feature 2.3 STYLE — Interview shortcut; Feature 2.4 STYLE — Learning shortcut. */': '/* FEATURE 2.2 / 2.3 / 2.4 COLOR TARGET: Dashboard quick-start cards. */\n/* CHANGE card border/background/text colours here. */',
+              '/* Feature 2.1 STYLE — Performance-period controls and colours. */': '/* FEATURE 2.1 COLOR TARGET: Performance-period controls. */\n/* CHANGE period-control colours here. */',
+              '/* Feature 2.5 STYLE — Recent-activity disclosure/actions. */': '/* FEATURE 2.5 COLOR TARGET: Recent-activity controls. */\n/* CHANGE disclosure/action colours here. */',
+            },
+            'frontend/src/features/resumes/ResumeAssessmentActionUi.css': {
+              '/* Feature 3.9 STYLE — AI assessment normal colour. */': '/* FEATURE 3.9 COLOR TARGET: AI assessment button. */\n/* CHANGE border-color, color and background here. */',
+              '/* Feature 3.9 STYLE HOVER — AI assessment hover colour. */': '/* FEATURE 3.9 HOVER COLOR TARGET: AI assessment button. */\n/* CHANGE hover border/background here. */',
+            },
+            'frontend/src/features/resumes/resumeCandidatePhoto.css': {
+              '/* Feature 3.7 STYLE — Candidate photo chooser colour/state. */': '/* FEATURE 3.7 COLOR TARGET: Candidate photo chooser. */\n/* CHANGE chooser border/background/text colours here. */',
+            },
+            'frontend/src/features/resumes/resumeWorkspace.css': {
+              '/* Feature 3.11 STYLE — Resume version-history surface. */': '/* FEATURE 3.11 COLOR TARGET: Resume version-history surface. */\n/* CHANGE panel/surface colours here. */',
+              '/* Feature 3.5 STYLE — Save new version colour/state; Feature 3.10 STYLE — Apply suggestions/Create new version colour/state. */': '/* FEATURE 3.5 / 3.10 COLOR TARGET: Primary Resume actions. */\n/* CHANGE button border/text/background colours here. */',
+              '/* Feature 3.6 STYLE — Resume appearance panel. */': '/* FEATURE 3.6 COLOR TARGET: Resume appearance panel. */\n/* CHANGE panel surface/border colours here. */',
+              '/* Feature 3.8 STYLE — Print / Save as PDF controls. */': '/* FEATURE 3.8 COLOR TARGET: Print / Save as PDF controls. */\n/* CHANGE print-control colours here. */',
+            },
+            'frontend/src/features/interviews/interviewCoach.css': {
+              '/* Feature 4.4 STYLE — Generate questions colour; Feature 4.9 STYLE — Save attempt colour. */': '/* FEATURE 4.4 / 4.9 COLOR TARGET: Interview primary actions. */\n/* CHANGE button border/text/background colours here. */',
+              '/* Feature 4.11 STYLE — Explanation action colour; Feature 4.12 STYLE — Feedback action colour. */': '/* FEATURE 4.11 / 4.12 COLOR TARGET: Interview secondary AI actions. */\n/* CHANGE button border/text/background colours here. */',
+              '/* Feature 4.7 STYLE SELECTED — Active Question Index item. */': '/* FEATURE 4.7 COLOR TARGET: Active Question Index item. */\n/* CHANGE selected border/background/text colours here. */',
+            },
+            'frontend/src/features/interviews/interviewQuestionIndexNotes.css': {
+              '/* Feature 4.8 STYLE — Private-note panel. */': '/* FEATURE 4.8 COLOR TARGET: Private-note panel. */\n/* CHANGE panel surface/border colours here. */',
+            },
+            'frontend/src/features/interviews/interviewQuestionTypes.css': {
+              '/* Feature 4.6 STYLE — Question-type card colour. */': '/* FEATURE 4.6 COLOR TARGET: Question-type cards. */\n/* CHANGE card border/background/text colours here. */',
+              '/* Feature 4.6 STYLE SELECTED — Selected question-type colour. */': '/* FEATURE 4.6 SELECTED COLOR TARGET: Selected question type. */\n/* CHANGE selected border/background/text colours here. */',
+              '/* Feature 4.13 STYLE — Archive/restore lifecycle controls. */': '/* FEATURE 4.13 COLOR TARGET: Archive/restore lifecycle controls. */\n/* CHANGE lifecycle-control presentation here. */',
+            },
+            'frontend/src/features/learning/learningWorkspace.css': {
+              '/* Feature 5.1 STYLE — Upload PDF colour; Feature 5.7.1 STYLE — Create conversation colour; Feature 5.7.2 STYLE — Send question colour; Feature 5.8.1 STYLE — Generate flashcards colour; Feature 5.9.1 STYLE — Generate quiz colour. */': '/* FEATURE 5.1 / 5.7.1 / 5.7.2 / 5.8.1 / 5.9.1 COLOR TARGET: Learning primary actions. */\n/* CHANGE button border/text/background colours here. */',
+              '/* Feature 5.3 STYLE — Open workspace link; Feature 5.8.2 STYLE — Study set link; Feature 5.9.2 STYLE — Take quiz link; Feature 5.9.3 STYLE — Review attempt link. */': '/* FEATURE 5.3 / 5.8.2 / 5.9.2 / 5.9.3 COLOR TARGET: Learning action links. */\n/* CHANGE link border/text/background colours here. */',
+              '/* Feature 5.7.3 STYLE — Grounded page-reference pills/links. */': '/* FEATURE 5.7.3 COLOR TARGET: Grounded page-reference pills/links. */\n/* CHANGE citation/page-reference colours here. */',
+            },
+            'frontend/src/features/auth/aiUsageDiagnostics.css': {
+              '/* Feature 6.10 STYLE — AI usage/diagnostics presentation. */': '/* FEATURE 6.10 COLOR TARGET: AI usage/diagnostics panel. */\n/* CHANGE metric/status/panel colours here. */',
+            },
+            'frontend/src/styles.css': {
+              '/* Feature 7.9 STYLE — Shared keyboard focus treatment. */': '/* FEATURE 7.9 COLOR TARGET: Shared keyboard focus ring. */\n/* CHANGE focus-ring colour/width through the variables used here. */',
+              '/* Feature 6.3 STYLE — Application-managed Gemini primary action; Feature 6.5 STYLE — Save and test primary action. */': '/* FEATURE 6.3 / 6.5 COLOR TARGET: Gemini primary actions. */\n/* CHANGE shared primary-button border/text/background colours here. */',
+              '/* Feature 6.4 STYLE — Personal-key action; Feature 6.6 STYLE — Test connection; Feature 6.7 STYLE — Replace key; Feature 6.8 STYLE — Disconnect. */': '/* FEATURE 6.4 / 6.6 / 6.7 / 6.8 COLOR TARGET: Gemini secondary actions. */\n/* CHANGE shared secondary-button border/text/background colours here. */',
+              '/* Feature 6.9 STYLE — Delete key destructive colour/state. */': '/* FEATURE 6.9 COLOR TARGET: Delete-key destructive action. */\n/* CHANGE destructive border/text/background colours here. */',
+              '/* Feature 1.4 STYLE — Navigation normal/hover/active colours. */': '/* FEATURE 1.4 COLOR TARGET: Navigation normal/hover/active states. */\n/* CHANGE navigation colours in this selector and nearby state selectors. */',
+              '/* Feature 1.5 STYLE — Global Create menu colours. */': '/* FEATURE 1.5 COLOR TARGET: Global Create menu. */\n/* CHANGE Create-menu colours here and in its nearby summary/open states. */',
+              '/* Feature 1.6 STYLE — Log out control colour/state. */': '/* FEATURE 1.6 COLOR TARGET: Log out control. */\n/* CHANGE logout border/text/background colours here. */',
+              '/* Feature 6.1 STYLE — Gemini connection status colours. */': '/* FEATURE 6.1 COLOR TARGET: Gemini Connected/Disconnected status. */\n/* CHANGE status-badge colours here and in nearby state selectors. */',
+              '/* Feature 6.2 STYLE — Fixed Gemini model presentation. */': '/* FEATURE 6.2 STYLE TARGET: Fixed Gemini model presentation. */\n/* CHANGE model text presentation here. */',
+              '/* Feature 6.11 STYLE — Current-session panel. */': '/* FEATURE 6.11 COLOR TARGET: Current-session panel. */\n/* CHANGE panel surface/border colours here. */',
+            },
+          }
+
+          changed = []
+          for file_name, pairs in replacements.items():
+              path = Path(file_name)
+              text = path.read_text()
+              original = text
+              for old, new in pairs.items():
+                  count = text.count(old)
+                  if count != 1:
+                      raise SystemExit(f'{file_name}: expected exactly one occurrence of {old!r}, found {count}')
+                  text = text.replace(old, new, 1)
+              if text != original:
+                  path.write_text(text)
+                  changed.append(file_name)
+
+          print(f'Updated {len(changed)} source/style files')
+          PY
+
+      - name: Verify comment-only source changes
+        shell: bash
+        run: |
+          rm .github/workflows/viva-guided-inline-comments.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+          git diff --check
+          python - <<'PY'
+          import subprocess
+          diff = subprocess.check_output(['git','diff','--unified=0','origin/main...HEAD','--','backend/src','frontend/src'], text=True)
+          # HEAD still equals main before commit, so also include working-tree diff.
+          diff += subprocess.check_output(['git','diff','--unified=0','--','backend/src','frontend/src'], text=True)
+          bad=[]
+          for line in diff.splitlines():
+              if line.startswith(('+++','---','@@','diff ','index ')):
+                  continue
+              if not line.startswith(('+','-')):
+                  continue
+              body=line[1:].lstrip()
+              if not body:
+                  continue
+              if body.startswith(('//','/*','{/*','*','*/')):
+                  continue
+              bad.append(line)
+          if bad:
+              print('Non-comment source changes detected:')
+              print('\n'.join(bad[:80]))
+              raise SystemExit(1)
+          print('Verified: all source changes are comments only.')
+          PY
+
+      - name: Install and verify frontend
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
+          npm run test --workspace @career-learning-hub/web
+
+      - name: Commit guided locator comments
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs(viva): make inline feature comments self-locating'
+          git push origin HEAD:task/viva-guided-inline-comments
