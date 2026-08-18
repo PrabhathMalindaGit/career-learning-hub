@@ -5,6 +5,7 @@ import { InterviewAttemptModel } from "./interviewAttempt.model.js";
 import { InterviewQuestionModel } from "./interviewQuestion.model.js";
 import { InterviewSessionModel } from "./interviewSession.model.js";
 
+// Feature 7.2 — Interview ownership boundary: session/question/attempt IDs are bound to request.auth.userId.
 export const requireOwnedInterviewSession: RequestHandler =
   asyncHandler(async (request, _response, next) => {
     const session = await InterviewSessionModel.findOne({
