@@ -51,6 +51,9 @@
   margin-bottom: 14px;
 }
 
+/* Feature 2.2 — Resume continuation/create shortcut: first Continue-your-work card.
+   Feature 2.3 — Interview continuation/start shortcut: second Continue-your-work card.
+   Feature 2.4 — Learning open/upload shortcut: third Continue-your-work card. */
 .dashboard-quick-start__grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
