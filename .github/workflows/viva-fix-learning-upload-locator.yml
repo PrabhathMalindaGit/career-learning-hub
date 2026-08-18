@@ -1,0 +1,68 @@
+name: Temporary Viva Learning Locator Fix
+
+on:
+  push:
+    branches:
+      - task/viva-inline-feature-locators
+
+permissions:
+  contents: write
+
+jobs:
+  fix-learning-upload-locator:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: task/viva-inline-feature-locators
+          fetch-depth: 0
+
+      - name: Move Feature 5.1 locator outside button text contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('frontend/src/features/learning/LearningDashboard.tsx')
+          text = path.read_text()
+          child = '            {/* Feature 5.1 UI — Upload private Learning PDF. */}\n'
+          anchor = '          <button\n            ref={uploadTriggerRef}'
+          if text.count(child) != 1:
+              raise SystemExit('Expected one Feature 5.1 child locator')
+          if text.count(anchor) != 1:
+              raise SystemExit('Expected one upload button anchor')
+          text = text.replace(child, '', 1)
+          text = text.replace(
+              anchor,
+              '          {/* Feature 5.1 UI — Upload private Learning PDF. */}\n' + anchor,
+              1,
+          )
+          path.write_text(text)
+          PY
+          git diff --check
+          if git diff --numstat origin/main -- frontend/src/features/learning/LearningDashboard.tsx | awk '$2 != 0 { bad=1 } END { exit bad }'; then
+            echo 'Verified: LearningDashboard cumulative diff remains additions-only.'
+          else
+            echo 'Refusing: LearningDashboard cumulative diff contains deletions.' >&2
+            git diff --numstat origin/main -- frontend/src/features/learning/LearningDashboard.tsx
+            exit 1
+          fi
+
+      - name: Run targeted Learning source-contract test
+        shell: bash
+        run: |
+          npm ci
+          npm run test --workspace @career-learning-hub/web -- src/features/learning/learningPhase19c.test.ts
+
+      - name: Remove workflow and commit
+        shell: bash
+        run: |
+          rm .github/workflows/viva-fix-learning-upload-locator.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs(viva): preserve Learning upload source contract'
+          git push origin HEAD:task/viva-inline-feature-locators
