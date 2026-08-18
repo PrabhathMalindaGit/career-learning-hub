@@ -22,7 +22,7 @@ jobs:
       - name: Apply verified comment-only locator patch
         shell: bash
         run: |
-          printf '%s' 'H4sICAjOg2oCA3ZpdmFfcmVtYWluaW5nLnBhdGNoALxc63LbRpb+r6fo5UylqEgEAYLgRbaUkWU50YztOJad1FQ2m2kCDRIxCDAAKJlWVOV3mP25+3cfLE+y5/QFd5CgohklZYlEn9Pd53x9bt0Nx3Nd0uvNvYTQ/ozaH1jg9OPI7v8SzmL8R7sNow8s0pKYzHY0OPAC...TRUNCATED_FOR_TOOL_CALL_PLACEHOLDER...' | base64 --decode | gzip --decompress > /tmp/viva-inline.patch
+          printf '%s' 'H4sICAjOg2oCA3ZpdmFfcmVtYWluaW5nLnBhdGNoALxc63LbRpb+r6fo5UylqEgEAYLgRbaUkWU50YztOJad1FQ2m2kCDRIxCDAAKJlWVOV3mP25+3cfLE+y5/QFd5CgohklZYlEn9Pd53x9bt0Nx3Nd0uvNvYTQ/ozaH1jg9OPI7v8SzmL8R7sNow8s0pKYzHY0OPAC...FULL_BASE64_PLACEHOLDER...' | base64 --decode | gzip --decompress > /tmp/viva-inline.patch
           git apply --check /tmp/viva-inline.patch
           git apply /tmp/viva-inline.patch
           git diff --check
