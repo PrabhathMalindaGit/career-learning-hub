@@ -72,6 +72,7 @@ function RequestId({ value }: { value?: string }) {
 
 // Feature 5.8.1 — Document-based flashcard generation.
 // Creates and tracks grounded flashcard sets, then opens ready sets for study.
+// Feature 5.8 UI — Flashcards workspace.
 export function DocumentFlashcards({
   accountId,
   document,
@@ -643,6 +644,7 @@ export function DocumentFlashcards({
                       set.cardCount === 1 ? "card" : "cards"
                     }`}
                   >
+                    {/* Feature 5.8.2 UI — Open flashcard Study set. */}
                     Study set
                   </Link>
                 ) : null}
@@ -746,6 +748,7 @@ export function DocumentFlashcards({
               className="learning-primary-button"
               disabled={creating || pendingJob !== undefined}
             >
+              {/* Feature 5.8.1 UI — Generate flashcards. */}
               {creating ? "Starting generation…" : "Generate flashcards"}
             </button>
           </form>

@@ -343,6 +343,7 @@ export async function withAiIdempotency<T>(input: {
 // Features 6.1–6.9 — Gemini source and credential preference boundary.
 // Resolves the authenticated user's allowed connection mode without exposing
 // stored credential plaintext through the settings API.
+// Feature 6.1 BACKEND — Read Gemini connection/settings state.
 export async function listProviderSettings(userId: string) {
   const [preference, credentials] = await Promise.all([
     AiProviderPreferenceModel.findOne({ userId }).lean(),
@@ -418,6 +419,7 @@ export async function getRoutingSettings(userId: string) {
   };
 }
 
+// Feature 6.4 BACKEND — Save/replace personal Gemini credential; Feature 6.5 BACKEND — test-before-activation path.
 export async function saveCredential(input: {
   userId: string;
   provider: AiExecutionState;
@@ -615,6 +617,7 @@ function normalizeConnectionError(error: unknown): AppError {
   return new AppError(502, "unknown_provider_error", "The provider connection test failed.");
 }
 
+// Feature 6.6 BACKEND — Test Gemini credential connection.
 export async function testCredentialConnection(input: {
   userId: string;
   provider: AiExecutionState;
@@ -803,6 +806,7 @@ export async function testCredentialConnection(input: {
   }
 }
 
+// Feature 6.3 BACKEND — Activate application-managed Gemini source; Feature 6.8 BACKEND — source preference changes.
 export async function activateProvider(input: {
   userId: string;
   provider: AiExecutionState;
@@ -982,6 +986,7 @@ export async function activateProvider(input: {
   }
 }
 
+// Feature 6.9 BACKEND — Delete personal Gemini credential.
 export async function deleteCredential(input: {
   userId: string;
   provider: AiExecutionState;

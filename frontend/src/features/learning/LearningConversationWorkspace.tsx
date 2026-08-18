@@ -766,6 +766,7 @@ export function LearningConversationWorkspace() {
                           key={page}
                           onClick={() => setSelectedSourcePage(page)}
                         >
+                          {/* Feature 5.7.3 UI — Grounded page reference. */}
                           Page {page}
                         </button>
                       ))}
@@ -867,6 +868,7 @@ export function LearningConversationWorkspace() {
             className="learning-primary-button"
             disabled={responseBusy}
           >
+            {/* Feature 5.7.2 UI — Send Grounded Chat question. */}
             {sending
               ? "Sending…"
               : uncertain

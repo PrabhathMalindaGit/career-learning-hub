@@ -30,6 +30,7 @@
   background: #fff;
 }
 
+/* Feature 4.8 STYLE — Private-note panel. */
 .interview-private-notes {
   display: grid;
   gap: 10px;

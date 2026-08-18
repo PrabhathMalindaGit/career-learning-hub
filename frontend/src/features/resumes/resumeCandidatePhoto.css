@@ -67,6 +67,7 @@
   border: 0;
 }
 
+/* Feature 3.7 STYLE — Candidate photo chooser colour/state. */
 .resume-candidate-photo-file-button {
   display: inline-flex;
   min-height: 2.75rem;

@@ -72,6 +72,7 @@ export async function assertAssetQuota(
   }
 }
 
+// Feature 7.3 BACKEND — Create private owner-scoped asset.
 export async function createAsset(input: {
   userId: string;
   purpose: AssetPurpose;

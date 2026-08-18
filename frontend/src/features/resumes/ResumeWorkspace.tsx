@@ -1309,6 +1309,7 @@ export function ResumeWorkspace() {
     });
   }
 
+  // Feature 7.5 UI — Resume job progress/status polling.
   async function completeAnalysisPolling(jobIdentifier: string) {
     if (!resumeId || !workspace) return;
     const expectedVersionId = workspace.version.id;
@@ -1647,6 +1648,7 @@ export function ResumeWorkspace() {
               "Saving…"
             ) : (
               <>
+                {/* Feature 3.5 UI — Save new immutable version. */}
                 Save new version
                 <kbd className="resume-save-shortcut" aria-hidden="true">
                   {navigator.platform.toLowerCase().includes("mac")
@@ -1784,6 +1786,7 @@ export function ResumeWorkspace() {
 
       <div className="resume-workspace-grid">
         <div className="resume-editor-preview-grid">
+          {/* Feature 3.3 UI — Resume editor. */}
           <ResumeEditor
             draft={draft}
             disabled={saving || applying || recoveryGate !== undefined}
@@ -1816,6 +1819,7 @@ export function ResumeWorkspace() {
               }
             }}
           />
+          {/* Feature 3.4 UI — Live Resume preview. */}
           <ResumePreview
             draft={draft}
             pageSize={workspace.resume.design.pageSize}
@@ -1905,6 +1909,7 @@ export function ResumeWorkspace() {
               aria-busy={analysisBusy}
               onClick={() => void handleRunAnalysis()}
             >
+              {/* Feature 3.9 UI — Run AI-assisted assessment. */}
               {analysisBusy
                 ? "Checking assessment…"
                 : "Run AI-assisted assessment"}

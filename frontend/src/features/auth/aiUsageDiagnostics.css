@@ -1,4 +1,5 @@
 /* Feature 6.10 — AI usage & diagnostics panel/status/metric/detail styling. */
+/* Feature 6.10 STYLE — AI usage/diagnostics presentation. */
 .ai-usage-diagnostics {
   display: grid;
   gap: 18px;

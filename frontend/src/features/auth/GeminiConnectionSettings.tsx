@@ -131,6 +131,7 @@ export function GeminiConnectionSettingsSection() {
       <header className="settings-panel__header settings-gemini-header">
         <div>
           <p className="settings-panel__eyebrow">AI connection</p>
+          {/* Feature 6.1 UI — Gemini connection status. */}
           <h2 id="gemini-connection-heading">Gemini connection</h2>
           <p>Control which Gemini credential Career Learning Hub uses for your AI jobs.</p>
         </div>
@@ -153,6 +154,7 @@ export function GeminiConnectionSettingsSection() {
             </div>
             <div>
               <span>Model</span>
+              {/* Feature 6.2 UI — Fixed Gemini model. */}
               <strong className="gemini-model">{settings.model}</strong>
               <p>Fixed for secure, predictable AI workflows.</p>
             </div>
@@ -194,6 +196,7 @@ export function GeminiConnectionSettingsSection() {
               />
               <div className="gemini-action-row">
                 <button className="primary-button" type="submit" disabled={busy || candidateKey.length < 8}>
+                  {/* Feature 6.5 UI — Save and test personal key. */}
                   {busy ? "Testing…" : "Save and test"}
                 </button>
                 <button className="secondary-button" type="button" disabled={busy} onClick={cancelKeyEntry}>
@@ -213,6 +216,7 @@ export function GeminiConnectionSettingsSection() {
                     "Gemini connection tested successfully.",
                   )}
                 >
+                  {/* Feature 6.6 UI — Test Gemini connection. */}
                   Test connection
                 </button>
               ) : null}
@@ -229,6 +233,7 @@ export function GeminiConnectionSettingsSection() {
                     "Application-managed Gemini connected.",
                   )}
                 >
+                  {/* Feature 6.3 UI — Use application-managed Gemini. */}
                   Use application-managed Gemini
                 </button>
               ) : null}
@@ -238,6 +243,8 @@ export function GeminiConnectionSettingsSection() {
                 disabled={busy}
                 onClick={() => setEditingKey(true)}
               >
+                {/* Feature 6.4 UI — Connect a personal Gemini key. */}
+                {/* Feature 6.7 UI — Replace personal Gemini key. */}
                 {settings.mode === "disconnected"
                   ? "Connect a personal key"
                   : settings.mode === "personal"
@@ -254,6 +261,7 @@ export function GeminiConnectionSettingsSection() {
                     "Gemini disconnected.",
                   )}
                 >
+                  {/* Feature 6.8 UI — Disconnect Gemini source. */}
                   Disconnect
                 </button>
               ) : null}
@@ -265,6 +273,7 @@ export function GeminiConnectionSettingsSection() {
                   disabled={busy}
                   onClick={() => setConfirmingDelete(true)}
                 >
+                  {/* Feature 6.9 UI — Delete personal Gemini key. */}
                   Delete key
                 </button>
               ) : null}

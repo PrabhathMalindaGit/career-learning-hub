@@ -19,6 +19,7 @@ function resolveRequestId(value: string | undefined): string {
 // Feature 7.8 — Request context and diagnostic identity.
 // Establishes the bounded request identifier used for safe error correlation.
 // Feature 7.8 — Safe Request ID generation/propagation for support/error correlation.
+// Feature 7.8 BACKEND — Request ID creation/correlation.
 export const requestContextMiddleware: RequestHandler = (
   request,
   response,

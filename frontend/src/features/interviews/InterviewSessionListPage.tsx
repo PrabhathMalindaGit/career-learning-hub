@@ -172,6 +172,7 @@ export function InterviewSessionListPage() {
             onClick={() => setCreateOpen(true)}
           >
             <span aria-hidden="true">+</span>
+            {/* Feature 4.2 UI — Create interview. */}
             Create interview
           </button>
         }
@@ -184,6 +185,7 @@ export function InterviewSessionListPage() {
         <div className="interview-section-heading">
           <div>
             <p className="interview-kicker">Briefing desk</p>
+            {/* Feature 4.1 UI — Interview session collection. */}
             <h2 id="interview-collection-title">Your sessions</h2>
           </div>
           {pagination ? (

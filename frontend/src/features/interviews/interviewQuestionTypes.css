@@ -46,6 +46,7 @@
   gap: 10px;
 }
 
+/* Feature 4.6 STYLE — Question-type card colour. */
 .interview-type-choice {
   display: grid;
   width: 100%;
@@ -64,6 +65,7 @@
   cursor: pointer;
 }
 
+/* Feature 4.6 STYLE SELECTED — Selected question-type colour. */
 .interview-type-choice:has(input:checked) {
   border-color: #6b9a7c;
   color: #174e2d;
@@ -349,6 +351,7 @@
 
 /* Task 7R Interview Briefing lifecycle actions. Keep status behavior in React
    unchanged while giving the primary completion action stronger hierarchy. */
+/* Feature 4.13 STYLE — Archive/restore lifecycle controls. */
 .interview-workspace .interview-lifecycle-actions {
   flex-wrap: nowrap;
   justify-content: flex-end;

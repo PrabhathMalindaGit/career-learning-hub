@@ -59,6 +59,7 @@
   gap: 10px;
 }
 
+/* Feature 2.2 STYLE — Resume shortcut; Feature 2.3 STYLE — Interview shortcut; Feature 2.4 STYLE — Learning shortcut. */
 .dashboard-quick-start__link,
 .dashboard-quick-start__link:first-child {
   min-height: 104px;
@@ -74,6 +75,7 @@
   line-height: 1.4;
 }
 
+/* Feature 2.1 STYLE — Performance-period controls and colours. */
 .dashboard-performance-toolbar {
   display: flex;
   min-width: 0;
@@ -280,6 +282,7 @@
 }
 
 /* Feature 2.5 — Recent activity expand/collapse/pagination control styling. */
+/* Feature 2.5 STYLE — Recent-activity disclosure/actions. */
 .dashboard-activity-disclosure,
 .dashboard-activity-expanded-controls {
   display: flex;

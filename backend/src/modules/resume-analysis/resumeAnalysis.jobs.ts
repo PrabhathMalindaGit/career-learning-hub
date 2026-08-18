@@ -15,6 +15,7 @@ export function registerResumeAnalysisJobHandlers(): void {
   registered = true;
 
   registerJobHandler(
+    // Feature 3.2.3 BACKEND — Resume PDF import job.
     "resume.import-pdf",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),
@@ -36,6 +37,7 @@ export function registerResumeAnalysisJobHandlers(): void {
   // Feature 3.9 — Durable Resume AI assessment job.
   // Feature 3.10 — Validated result is reviewed before user-controlled suggestion application.
   registerJobHandler(
+    // Feature 3.9 BACKEND — Resume AI assessment job.
     "resume.analyze",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),

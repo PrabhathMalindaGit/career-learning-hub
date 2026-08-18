@@ -149,6 +149,7 @@ export function ResumeDesignControls({
             aria-controls="resume-design-customization"
             onClick={() => setCustomizing((current) => !current)}
           >
+            {/* Feature 3.6 UI — Resume appearance customization. */}
             {customizing ? "Close customization" : "Customize"}
           </button>
         </div>

@@ -77,6 +77,7 @@ button:disabled {
 }
 
 /* Feature 7.9 — Shared visible keyboard-focus treatment. */
+/* Feature 7.9 STYLE — Shared keyboard focus treatment. */
 :focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring-color);
   outline-offset: var(--focus-ring-offset);
@@ -323,6 +324,7 @@ h2 {
   text-decoration: none;
 }
 
+/* Feature 6.3 STYLE — Application-managed Gemini primary action; Feature 6.5 STYLE — Save and test primary action. */
 .primary-button {
   border: 1px solid var(--accent);
   color: #ffffff;
@@ -333,12 +335,14 @@ h2 {
   background: var(--accent-dark);
 }
 
+/* Feature 6.4 STYLE — Personal-key action; Feature 6.6 STYLE — Test connection; Feature 6.7 STYLE — Replace key; Feature 6.8 STYLE — Disconnect. */
 .secondary-button {
   border: 1px solid var(--border);
   color: #28342d;
   background: var(--surface-muted);
 }
 
+/* Feature 6.9 STYLE — Delete key destructive colour/state. */
 .destructive-button {
   border: 1px solid #a33b3b;
   color: #ffffff;
@@ -449,6 +453,7 @@ h2 {
 }
 
 /* Feature 1.4 — Navigation normal/hover/active styling; active state is .nav-link--active below. */
+/* Feature 1.4 STYLE — Navigation normal/hover/active colours. */
 .nav-link {
   display: flex;
   min-width: 0;
@@ -486,6 +491,7 @@ h2 {
 }
 
 /* Feature 1.5 — Global Create menu styling; normal uses --accent and hover/open uses --accent-dark. */
+/* Feature 1.5 STYLE — Global Create menu colours. */
 .create-menu {
   position: relative;
 }
@@ -601,6 +607,7 @@ h2 {
   font-weight: 750;
 }
 
+/* Feature 1.6 STYLE — Log out control colour/state. */
 .sidebar-logout {
   width: 100%;
 }
@@ -791,6 +798,7 @@ h2 {
 }
 
 /* Feature 6.1 — Gemini Connected/Disconnected status-badge styling. */
+/* Feature 6.1 STYLE — Gemini connection status colours. */
 .gemini-status {
   display: inline-flex;
   min-height: 32px;
@@ -866,6 +874,7 @@ h2 {
 }
 
 /* Feature 6.2 — Fixed Gemini model text presentation. */
+/* Feature 6.2 STYLE — Fixed Gemini model presentation. */
 .gemini-model {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.9rem;
@@ -1008,6 +1017,7 @@ h2 {
 }
 
 /* Feature 6.11 — Current-session panel; sign-out uses the global secondary-button treatment. */
+/* Feature 6.11 STYLE — Current-session panel. */
 .settings-session-panel {
   display: flex;
   flex-direction: column;

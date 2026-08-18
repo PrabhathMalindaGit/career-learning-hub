@@ -177,6 +177,7 @@ export function InterviewQuestionTypeControls({
 
   return (
     <fieldset className="interview-type-controls" disabled={disabled}>
+      {/* Feature 4.6 UI — Select Interview question types. */}
       <legend>Question types</legend>
       <p className="interview-type-controls__help">
         Choose one or more types. Balanced distribution is used unless you set

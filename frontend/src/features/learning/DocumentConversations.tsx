@@ -218,6 +218,7 @@ export function DocumentConversations({
           />
         </label>
         <button type="submit" className="learning-primary-button" disabled={creating}>
+          {/* Feature 5.7.1 UI — Create Grounded Chat conversation. */}
           {creating ? "Creating…" : "Create conversation"}
         </button>
       </form>

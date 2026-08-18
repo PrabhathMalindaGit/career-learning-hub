@@ -58,6 +58,7 @@ function safeError(error: unknown): SafeError {
   return { message: "This item could not be deleted. Try again." };
 }
 
+// Feature 5.10 UI — Delete Learning conversation, flashcard set, or quiz.
 export function LearningChildDeletion({
   kind,
   id,

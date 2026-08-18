@@ -27,6 +27,7 @@ export interface JobWorkerHandle {
 // Feature 7.4 — Shared background-job execution boundary.
 // Executes registered durable work with the existing lease, cancellation,
 // retry, progress, and completion-safety rules.
+// Feature 7.4 BACKEND — Durable background-job worker.
 export function startJobWorker(): JobWorkerHandle {
   let stopping = false;
   let active = 0;

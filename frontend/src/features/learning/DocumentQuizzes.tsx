@@ -71,6 +71,7 @@ function RequestId({ value }: { value?: string }) {
 
 // Feature 5.9.1 — Document-based quiz generation.
 // Creates and tracks grounded quizzes and opens ready quizzes for attempts.
+// Feature 5.9 UI — Quizzes workspace.
 export function DocumentQuizzes({
   accountId,
   document,
@@ -628,6 +629,7 @@ export function DocumentQuizzes({
                       quiz.questionCount === 1 ? "question" : "questions"
                     }`}
                   >
+                    {/* Feature 5.9.2 UI — Take quiz. */}
                     Take quiz
                   </Link>
                 ) : null}
@@ -731,6 +733,7 @@ export function DocumentQuizzes({
               className="learning-primary-button"
               disabled={generationDisabled}
             >
+              {/* Feature 5.9.1 UI — Generate quiz. */}
               {creating ? "Starting generation…" : "Generate quiz"}
             </button>
           </form>

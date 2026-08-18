@@ -100,6 +100,7 @@
   text-decoration: none;
 }
 
+/* Feature 5.1 STYLE — Upload PDF colour; Feature 5.7.1 STYLE — Create conversation colour; Feature 5.7.2 STYLE — Send question colour; Feature 5.8.1 STYLE — Generate flashcards colour; Feature 5.9.1 STYLE — Generate quiz colour. */
 .learning-primary-button {
   border: 1px solid var(--accent);
   color: #ffffff;
@@ -117,6 +118,7 @@
   background: var(--surface-muted);
 }
 
+/* Feature 5.3 STYLE — Open workspace link; Feature 5.8.2 STYLE — Study set link; Feature 5.9.2 STYLE — Take quiz link; Feature 5.9.3 STYLE — Review attempt link. */
 .learning-document-link {
   border: 1px solid #b8d1c0;
   color: var(--accent-dark);
@@ -1198,6 +1200,7 @@
   color: #ffffff;
 }
 
+/* Feature 5.7.3 STYLE — Grounded page-reference pills/links. */
 .learning-source-pages {
   display: flex;
   flex-wrap: wrap;

@@ -156,6 +156,7 @@ export async function listResumes(
   };
 }
 
+// Feature 7.2 BACKEND — Owner-scoped Resume authorization.
 export async function requireOwnedResume(
   userId: string,
   resumeId: string,

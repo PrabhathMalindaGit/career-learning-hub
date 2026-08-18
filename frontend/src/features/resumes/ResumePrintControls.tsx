@@ -99,6 +99,7 @@ export function ResumePrintControls({
           aria-busy={printPreparing}
           onClick={onPrint}
         >
+          {/* Feature 3.8 UI — Print / Save as PDF. */}
           {printPreparing ? "Preparing print…" : "Open print dialog"}
         </button>
       </div>

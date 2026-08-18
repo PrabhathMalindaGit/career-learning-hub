@@ -27,6 +27,7 @@ export function ResumeRecoveryReview({
       className="resume-recovery-review"
       aria-labelledby="resume-recovery-review-title"
     >
+      {/* Feature 3.12 UI — Draft recovery review. */}
       <header className="resume-recovery-review-warning">
         <p className="resume-kicker">Read-only recovery review</p>
         <h1 id="resume-recovery-review-title">

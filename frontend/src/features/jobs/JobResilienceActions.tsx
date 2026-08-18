@@ -19,6 +19,7 @@ function actionErrorMessage(error: unknown): string {
 // Learning durable jobs without owning feature-specific persistence.
 // Feature 7.5 — Shared progress/status presentation used by feature polling workflows.
 // Feature 7.6 — Server-authorized Cancel / Retry controls for eligible durable jobs.
+// Feature 7.6 UI — Shared Cancel / Retry controls for durable jobs.
 export function JobResilienceActions({
   job,
   onCancel,

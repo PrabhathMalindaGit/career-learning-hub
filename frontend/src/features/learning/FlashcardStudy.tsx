@@ -83,6 +83,7 @@ export function FlashcardStudy({
               setSelectedSourcePage(undefined);
             }}
           >
+            {/* Feature 5.8.3 UI — Reveal/hide flashcard answer. */}
             {revealed ? "Hide answer" : "Reveal answer"}
           </button>
         </div>

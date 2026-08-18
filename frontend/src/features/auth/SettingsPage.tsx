@@ -77,6 +77,7 @@ export function SettingsPage() {
           aria-labelledby="current-session-heading"
         >
           <header className="settings-panel__header">
+            {/* Feature 6.11 UI — Account/current session controls. */}
             <h2 id="current-session-heading">Current session</h2>
             <p>
               Sign out when you have finished using this browser.

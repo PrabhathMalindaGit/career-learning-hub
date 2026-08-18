@@ -28,6 +28,7 @@ export function registerLearningJobHandlers(): void {
 
   // Feature 5.2 — Durable uploaded-document processing job.
   registerJobHandler(
+    // Feature 5.2 BACKEND — Learning document-processing job.
     "learning.document.process",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),
@@ -58,6 +59,7 @@ export function registerLearningJobHandlers(): void {
 
   // Feature 5.10 — Durable Learning document delete/cascade job.
   registerJobHandler(
+    // Feature 5.10 BACKEND — Learning document deletion job.
     "learning.document.delete",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),
@@ -78,6 +80,7 @@ export function registerLearningJobHandlers(): void {
   // Feature 5.7.2 — Process the persisted question request.
   // Feature 5.7.3 — Persist validated source-page references with the answer.
   registerJobHandler(
+    // Feature 5.7.2 BACKEND — Grounded Chat response job.
     "learning.chat.respond",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),
@@ -105,6 +108,7 @@ export function registerLearningJobHandlers(): void {
   // Feature 5.8 — Flashcard background-work boundary.
   // Feature 5.8.1 — Durable flashcard-generation job.
   registerJobHandler(
+    // Feature 5.8.1 BACKEND — Flashcard-generation job.
     "learning.flashcards.generate",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),
@@ -133,6 +137,7 @@ export function registerLearningJobHandlers(): void {
   // Feature 5.9 — Quiz background-work boundary.
   // Feature 5.9.1 — Durable quiz-generation job.
   registerJobHandler(
+    // Feature 5.9.1 BACKEND — Quiz-generation job.
     "learning.quiz.generate",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),

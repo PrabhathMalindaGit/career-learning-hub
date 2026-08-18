@@ -45,6 +45,7 @@
   align-items: start;
 }
 
+/* Feature 3.11 STYLE — Resume version-history surface. */
 .resume-collection,
 .resume-action-form,
 .resume-panel,
@@ -310,6 +311,7 @@
   font-weight: 800;
 }
 
+/* Feature 3.5 STYLE — Save new version colour/state; Feature 3.10 STYLE — Apply suggestions/Create new version colour/state. */
 .resume-primary-button {
   border: 1px solid var(--accent-dark);
   color: #fff;
@@ -598,6 +600,7 @@
   display: none;
 }
 
+/* Feature 3.6 STYLE — Resume appearance panel. */
 .resume-design-panel {
   min-width: 0;
   padding: 18px 20px;
@@ -873,6 +876,7 @@
   min-height: var(--minimum-interactive-target);
 }
 
+/* Feature 3.8 STYLE — Print / Save as PDF controls. */
 .resume-print-controls {
   display: grid;
   gap: 16px;

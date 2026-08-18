@@ -260,6 +260,7 @@ export function LearningDashboard() {
       pollControllerRef.current = controller;
       setProcessingCheck({ state: "checking", documentId, job });
 
+      // Feature 7.5 UI — Learning document progress/status polling.
       void pollLearningJob({
         jobId: job.id,
         documentId,
@@ -460,6 +461,7 @@ export function LearningDashboard() {
               setUploadError(undefined);
             }}
           >
+            {/* Feature 5.1 UI — Upload private Learning PDF. */}
             Upload PDF
           </button>
         </div>
@@ -620,6 +622,7 @@ export function LearningDashboard() {
 
       {processingCheck ? (
         <div className="learning-processing-notice" aria-live="polite">
+          {/* Feature 5.2 UI — Document processing job status. */}
           {processingCheck.state === "checking" ? (
             isFullLearningJob(processingCheck.job) ? (
               <JobResilienceActions
@@ -790,6 +793,7 @@ export function LearningDashboard() {
                     className="learning-document-link"
                     to={`/learning/documents/${document.id}`}
                   >
+                    {/* Feature 5.3 UI — Open document from Learning library. */}
                     Open workspace
                   </Link>
                   {document.status !== "deleting" ? (

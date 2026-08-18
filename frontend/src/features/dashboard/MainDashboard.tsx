@@ -154,6 +154,7 @@ function continuationActions(
     data.interviews.trend[data.interviews.trend.length - 1];
   const recentDocument = data.learning.recentDocuments[0];
 
+  // Feature 2.2 UI — Continue/Create Resume dashboard shortcut.
   const resume: ContinuationAction = latestResume
     ? {
         label: "Continue Resume",
@@ -170,6 +171,7 @@ function continuationActions(
         tone: "forest",
       };
 
+  // Feature 2.3 UI — Continue/Start Interview dashboard shortcut.
   const interview: ContinuationAction = latestInterview
     ? {
         label: "Continue Interview",
@@ -194,6 +196,7 @@ function continuationActions(
           tone: "ink",
         };
 
+  // Feature 2.4 UI — Open/Upload Learning document dashboard shortcut.
   const learning: ContinuationAction = recentDocument
     ? {
         label: "Open Learning Document",
@@ -691,6 +694,7 @@ export function MainDashboard() {
         }
       />
 
+      {/* Feature 2.1 UI — Progress overview and performance period. */}
       <section
         className="dashboard-progress-section"
         aria-label="Progress overview"

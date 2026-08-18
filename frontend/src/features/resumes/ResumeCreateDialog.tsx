@@ -440,6 +440,7 @@ export function ResumeCreateDialog({
               <span id={recommendedId} className="resume-create-method-badge">
                 Recommended
               </span>
+              {/* Feature 3.2.1 UI — Guided setup. */}
               <strong>Guided setup</strong>
               <span>Build a resume using editable suggestions.</span>
             </button>
@@ -449,6 +450,7 @@ export function ResumeCreateDialog({
               className="resume-create-method"
               onClick={() => choose("blank")}
             >
+              {/* Feature 3.2.2 UI — Start blank. */}
               <strong>Start blank</strong>
               <span>Create an empty resume.</span>
             </button>
@@ -458,6 +460,7 @@ export function ResumeCreateDialog({
               className="resume-create-method"
               onClick={() => choose("import")}
             >
+              {/* Feature 3.2.3 UI — Import PDF. */}
               <strong>Import PDF</strong>
               <span>Import an existing resume.</span>
             </button>

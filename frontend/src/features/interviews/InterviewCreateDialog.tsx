@@ -349,6 +349,7 @@ export function InterviewCreateDialog({
 
         <div className="interview-create-dialog__body interview-form">
           <p className="interview-create-required-note">
+            {/* Feature 4.3 UI — Interview role/context setup. */}
             Required: Session title, Career area, Target role, Experience level
             and Practice mode.
           </p>

@@ -21,6 +21,7 @@ export function registerInterviewJobHandlers(): void {
 
   // Feature 4.4 — Durable Interview AI question-generation job.
   registerJobHandler(
+    // Feature 4.4 BACKEND — Interview question-generation job.
     "interview.questions.generate",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),
@@ -62,6 +63,7 @@ export function registerInterviewJobHandlers(): void {
 
   // Feature 4.11 — Durable selected-question explanation job.
   registerJobHandler(
+    // Feature 4.11 BACKEND — Interview explanation job.
     "interview.question.explain",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),
@@ -82,6 +84,7 @@ export function registerInterviewJobHandlers(): void {
 
   // Feature 4.12 — Durable non-MCQ practice-feedback job.
   registerJobHandler(
+    // Feature 4.12 BACKEND — Interview feedback job.
     "interview.attempt.feedback",
     z.object({
       userId: z.string().regex(/^[a-f\d]{24}$/i),

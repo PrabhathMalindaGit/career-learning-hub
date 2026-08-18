@@ -285,6 +285,7 @@ export function InterviewAnswerControl({
         aria-busy={disabled}
         onClick={onSubmit}
       >
+        {/* Feature 4.9 UI — Save practice attempt. */}
         {disabled ? "Saving…" : "Save attempt"}
       </button>
     </div>

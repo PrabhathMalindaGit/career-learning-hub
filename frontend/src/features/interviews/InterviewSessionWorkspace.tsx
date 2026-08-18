@@ -844,6 +844,7 @@ export function InterviewSessionWorkspace() {
     return () => controller.abort();
   }, [selectedAttemptId, selectedQuestion, selectedQuestionId, sessionId]);
 
+  // Feature 7.5 UI — Interview job progress/status polling.
   const pollAcceptedJob = useCallback(
     async (
       scope: ActiveJob["scope"],
@@ -1692,6 +1693,7 @@ export function InterviewSessionWorkspace() {
                 disabled={statusBusy}
                 onClick={() => void changeStatus("archived")}
               >
+                {/* Feature 4.13 UI — Archive Interview session. */}
                 Archive
               </button>
             </>
@@ -1777,6 +1779,7 @@ export function InterviewSessionWorkspace() {
               aria-controls="manual-question-form"
               onClick={() => setManualOpen((open) => !open)}
             >
+              {/* Feature 4.5 UI — Add question manually. */}
               {manualOpen ? "Close manual form" : "Add manually"}
             </button>
           </div>
@@ -1833,6 +1836,7 @@ export function InterviewSessionWorkspace() {
                 )
               }
             >
+              {/* Feature 4.4 UI — Generate Interview questions. */}
               {providerBusy && activeJob?.scope === "generation"
                 ? "Generating…"
                 : "Generate questions"}
@@ -2277,6 +2281,7 @@ export function InterviewSessionWorkspace() {
                     }
                     onClick={() => void togglePinned()}
                   >
+                    {/* Feature 4.7 UI — Pin/unpin selected question. */}
                     {selectedQuestion.isPinned ? "Unpin" : "Pin question"}
                   </button>
                 ) : null}
@@ -2333,6 +2338,7 @@ export function InterviewSessionWorkspace() {
                   disabled={providerBusy}
                   onClick={() => void requestExplanation()}
                 >
+                  {/* Feature 4.11 UI — Request question explanation. */}
                   Request explanation
                 </button>
               ) : null}
@@ -2342,6 +2348,7 @@ export function InterviewSessionWorkspace() {
                 aria-label="Private notes"
               >
                 <div className="interview-private-notes-heading">
+                  {/* Feature 4.8 UI — Private notes. */}
                   <strong>Private notes</strong>
                   {notesOpen ? (
                     notesResolved ? (
@@ -2466,6 +2473,7 @@ export function InterviewSessionWorkspace() {
         >
           <div className="interview-section-heading">
             <div>
+              {/* Feature 4.10 UI — Saved attempt history. */}
               <h2 id="attempt-history-title">Saved attempts</h2>
               <p className="interview-saved-attempts-copy">
                 Review each saved submission and any available feedback.
@@ -2616,6 +2624,7 @@ export function InterviewSessionWorkspace() {
                   }
                   onClick={() => void requestFeedback(selectedAttempt)}
                 >
+                  {/* Feature 4.12 UI — Request AI feedback. */}
                   Request feedback
                 </button>
               ) : null}

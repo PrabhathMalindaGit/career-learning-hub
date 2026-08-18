@@ -6,6 +6,7 @@
 }
 
 /* Feature 3.9 — Normal “Run AI-assisted assessment” pale-green colour override. */
+/* Feature 3.9 STYLE — AI assessment normal colour. */
 .resume-analysis-runner .resume-button-row .resume-primary-button {
   border-color: #b9cec1;
   color: #245e3c;
@@ -13,6 +14,7 @@
 }
 
 /* Feature 3.9 — Hover colour override for “Run AI-assisted assessment”. */
+/* Feature 3.9 STYLE HOVER — AI assessment hover colour. */
 .resume-analysis-runner .resume-button-row .resume-primary-button:hover:not(:disabled) {
   border-color: #aac2b3;
   background: #e5f0e9;

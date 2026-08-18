@@ -90,6 +90,7 @@ export function ActivityFeed({
       <header className="dashboard-panel-header">
         <div>
           <p className="dashboard-kicker">Across your workspace</p>
+          {/* Feature 2.5 UI — Recent activity. */}
           <h2 id="activity-feed-title">Recent activity</h2>
         </div>
         <span className="dashboard-chip">{chipLabel}</span>

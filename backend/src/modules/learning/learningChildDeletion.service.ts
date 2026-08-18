@@ -14,6 +14,7 @@ const activeJobStatuses = ["queued", "processing"] as const;
 // Feature 5.10 — Learning child-resource deletion boundary.
 // Performs owner-scoped transactional deletion/cascade rules while active jobs
 // remain authoritative blockers for the targeted resource.
+// Feature 5.10 BACKEND — Delete owned Learning conversation.
 export async function deleteLearningConversation(input: {
   userId: string;
   documentId: string;
@@ -73,6 +74,7 @@ export async function deleteLearningConversation(input: {
   });
 }
 
+// Feature 5.10 BACKEND — Delete owned flashcard set.
 export async function deleteLearningFlashcardSet(input: {
   userId: string;
   setId: string;
@@ -129,6 +131,7 @@ export async function deleteLearningFlashcardSet(input: {
   });
 }
 
+// Feature 5.10 BACKEND — Delete owned quiz.
 export async function deleteLearningQuiz(input: {
   userId: string;
   quizId: string;

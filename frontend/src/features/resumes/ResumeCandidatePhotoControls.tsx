@@ -42,6 +42,7 @@ export function ResumeCandidatePhotoControls({
       <header className="resume-panel-header">
         <div>
           <p className="resume-kicker">Optional presentation</p>
+          {/* Feature 3.7 UI — Candidate photo controls. */}
           <h2 id="resume-candidate-photo-title">Candidate photo</h2>
         </div>
         <span className="resume-status">

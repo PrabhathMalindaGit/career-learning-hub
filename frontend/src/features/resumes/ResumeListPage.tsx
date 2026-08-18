@@ -150,6 +150,7 @@ export function ResumeListPage() {
             className="primary-button"
             onClick={openCreateDialog}
           >
+            {/* Feature 3.2 UI — Create Resume. */}
             Create Resume
           </button>
         }
@@ -170,6 +171,7 @@ export function ResumeListPage() {
           <div className="resume-section-heading">
             <div>
               <p className="resume-kicker">Collection</p>
+              {/* Feature 3.1 UI — Resume collection. */}
               <h2 id="your-resumes">Your resumes</h2>
             </div>
             {pagination ? (

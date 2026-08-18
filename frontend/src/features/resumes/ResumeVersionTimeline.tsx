@@ -157,6 +157,7 @@ export function ResumeVersionTimeline({
       <header className="resume-version-history-header">
         <div>
           <p className="resume-kicker">Immutable timeline</p>
+          {/* Feature 3.11 UI — Immutable Resume version history. */}
           <h2 id="resume-version-history-title">Version history</h2>
           <p className="resume-version-history-intro">
             Review saved milestones without changing your active draft.

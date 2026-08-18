@@ -183,6 +183,7 @@ function strictBase64Url(value: string): Buffer {
 // Features 6.4, 6.7, and 6.9 — Personal Gemini credential vault.
 // Encrypts/decrypts server-side credential material for controlled execution;
 // the complete saved key is never returned to the browser.
+// Feature 6.7 BACKEND — Replacement persists new encrypted secret; personal-key storage uses this encryption boundary.
 export function encryptCredential(
   input: EncryptCredentialInput,
 ): EncryptedCredentialSecret {

@@ -230,6 +230,7 @@ export function AiUsageDiagnosticsSettingsSection() {
       aria-labelledby="ai-usage-diagnostics-heading"
     >
       <header className="settings-panel__header">
+        {/* Feature 6.10 UI — AI usage and diagnostics. */}
         <h2 id="ai-usage-diagnostics-heading">AI usage & diagnostics</h2>
         <p>
           Review Gemini-assisted usage recorded for the last 30 days. Cost values are estimates only.

@@ -457,9 +457,13 @@ const workspaceViews: Array<{
   id: WorkspaceView;
   label: string;
 }> = [
+  // Feature 5.4 UI — Document Overview tab.
   { id: "overview", label: "Overview" },
+  // Feature 5.5 UI — Secure Original PDF tab.
   { id: "original", label: "Original PDF" },
+  // Feature 5.6 UI — Page-aware Extracted Content tab.
   { id: "extracted", label: "Extracted Content" },
+  // Feature 5.7 UI — Grounded Chat tab.
   { id: "chat", label: "Grounded Chat" },
   { id: "flashcards", label: "Flashcards" },
   { id: "quizzes", label: "Quizzes" },

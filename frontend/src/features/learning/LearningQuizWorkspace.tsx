@@ -583,6 +583,7 @@ export function LearningQuizWorkspace() {
                           new Date(attempt.completedAt),
                         )}`}
                       >
+                        {/* Feature 5.9.3 UI — Review saved quiz attempt. */}
                         Review attempt
                       </Link>
                     </article>

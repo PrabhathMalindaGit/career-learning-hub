@@ -374,6 +374,7 @@ export function AiRecommendations({
           }
           onClick={() => setConfirming(true)}
         >
+          {/* Feature 3.10 UI — Apply selected AI suggestions. */}
           Apply selected suggestions
         </button>
       </div>
