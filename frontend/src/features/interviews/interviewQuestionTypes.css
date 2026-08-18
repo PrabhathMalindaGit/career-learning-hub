@@ -481,9 +481,3 @@
     width: 100%;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .interview-workspace .interview-lifecycle-actions button {
-    transition: none;
-  }
-}
