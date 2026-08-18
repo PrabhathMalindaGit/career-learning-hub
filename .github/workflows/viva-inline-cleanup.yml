@@ -1,0 +1,77 @@
+name: Temporary Viva Inline Locator Cleanup
+
+on:
+  push:
+    branches:
+      - task/viva-inline-feature-locators
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup-auth-diff:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: task/viva-inline-feature-locators
+          fetch-depth: 0
+
+      - name: Restore auth files and re-add precise UI locators
+        shell: bash
+        run: |
+          git show origin/main:frontend/src/features/auth/RegisterPage.tsx > frontend/src/features/auth/RegisterPage.tsx
+          git show origin/main:frontend/src/features/auth/LoginPage.tsx > frontend/src/features/auth/LoginPage.tsx
+          python - <<'PY'
+          from pathlib import Path
+
+          edits = [
+              (
+                  Path('frontend/src/features/auth/RegisterPage.tsx'),
+                  '          {busy ? "Creating account…" : "Create account"}',
+                  '          {/* Feature 1.1 UI — Create account. */}\n          {busy ? "Creating account…" : "Create account"}',
+              ),
+              (
+                  Path('frontend/src/features/auth/LoginPage.tsx'),
+                  '          {busy ? "Signing in…" : "Sign in"}',
+                  '          {/* Feature 1.2 UI — Sign in. */}\n          {busy ? "Signing in…" : "Sign in"}',
+              ),
+          ]
+          for path, needle, replacement in edits:
+              text = path.read_text()
+              if text.count(needle) != 1:
+                  raise SystemExit(f'Expected exactly one target in {path}')
+              path.write_text(text.replace(needle, replacement, 1))
+          PY
+
+      - name: Verify final source diff
+        shell: bash
+        run: |
+          git diff --check origin/main...HEAD || true
+          git diff --check
+          if git diff --numstat origin/main -- backend/src frontend/src | awk '$2 != 0 { bad=1 } END { exit bad }'; then
+            echo 'Verified: final source comparison has zero deletions.'
+          else
+            echo 'Refusing: final source comparison contains deletions.' >&2
+            git diff --numstat origin/main -- backend/src frontend/src
+            exit 1
+          fi
+
+      - name: Typecheck
+        run: |
+          npm ci
+          npm run typecheck
+
+      - name: Remove workflow and commit
+        shell: bash
+        run: |
+          rm .github/workflows/viva-inline-cleanup.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs(viva): normalize auth inline locator diff'
+          git push origin HEAD:task/viva-inline-feature-locators
