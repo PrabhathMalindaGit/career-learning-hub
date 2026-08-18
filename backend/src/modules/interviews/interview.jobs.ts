@@ -19,6 +19,7 @@ export function registerInterviewJobHandlers(): void {
   if (registered) return;
   registered = true;
 
+  // Feature 4.4 — Durable Interview AI question-generation job.
   registerJobHandler(
     "interview.questions.generate",
     z.object({
@@ -59,6 +60,7 @@ export function registerInterviewJobHandlers(): void {
     },
   );
 
+  // Feature 4.11 — Durable selected-question explanation job.
   registerJobHandler(
     "interview.question.explain",
     z.object({
@@ -78,6 +80,7 @@ export function registerInterviewJobHandlers(): void {
     },
   );
 
+  // Feature 4.12 — Durable non-MCQ practice-feedback job.
   registerJobHandler(
     "interview.attempt.feedback",
     z.object({
