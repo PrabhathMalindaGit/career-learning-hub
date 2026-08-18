@@ -44,6 +44,9 @@ function validateLogin(
   return errors;
 }
 
+// Feature 1.2 — Login.
+// UI: /login -> centered authentication form -> “Sign in” primary action.
+// Styling: auth.css -> search “Feature 1.2”.
 export function LoginPage() {
   const { login } = useAuth();
   const location = useLocation();
