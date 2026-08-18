@@ -140,6 +140,11 @@ function CreateMenu() {
 // Features 1.3–1.6 — Authenticated application shell.
 // Centralizes desktop/mobile navigation, global creation shortcuts, account
 // context, and single-flight logout while protected feature routes render below.
+// Feature 1.3 — Authenticated application shell: the whole post-login sidebar/header + main content layout.
+// Feature 1.4 — Navigation: Dashboard, Resumes, Interviews, Learning, Settings; desktop sidebar/mobile drawer.
+// Feature 1.5 — Global Create menu: sidebar below logo; Resume / Interview session / Learning document.
+// Feature 1.6 — Logout: sidebar bottom below account summary; repeated in mobile drawer.
+// Feature 7.9 — Shared accessible shell behavior: skip link, keyboard focus return, responsive mobile navigation.
 export function AppShell() {
   const { user, logout } = useAuth();
   const location = useLocation();

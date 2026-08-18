@@ -1,3 +1,5 @@
+/* Feature 4.7 — Question Index filtering/pinning presentation.
+   Feature 4.8 — Private-note presentation for the selected question. */
 .interview-question-select__meta {
   display: flex;
   min-width: 0;

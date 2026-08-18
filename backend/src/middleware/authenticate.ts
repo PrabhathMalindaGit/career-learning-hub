@@ -28,6 +28,7 @@ function readBearerToken(authorization: string | undefined): string {
 
 // Features 7.1–7.2 — Authenticated request boundary.
 // Resolves the current session/user context used by owner-scoped protected APIs.
+// Feature 7.1 — Authentication/session security boundary for protected APIs.
 export const authenticate: RequestHandler = asyncHandler(
   async (request, _response, next) => {
     const token = readBearerToken(request.get("authorization"));

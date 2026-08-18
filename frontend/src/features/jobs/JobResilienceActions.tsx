@@ -17,6 +17,8 @@ function actionErrorMessage(error: unknown): string {
 // Features 7.5–7.6 — Shared job resilience controls.
 // Presents progress-aware cancel/retry actions used by Resume, Interview, and
 // Learning durable jobs without owning feature-specific persistence.
+// Feature 7.5 — Shared progress/status presentation used by feature polling workflows.
+// Feature 7.6 — Server-authorized Cancel / Retry controls for eligible durable jobs.
 export function JobResilienceActions({
   job,
   onCancel,

@@ -7,6 +7,11 @@ import "./interviewQuestionTypes.css";
 import "./interviewGenerationStatus.css";
 import "./interviewQuestionIndexNotes.css";
 
+// Feature 4.6 — Interview question-type controls.
+// UI: Interview workspace -> question generation/manual-question controls.
+// Types: Multiple Choice, Short Answer, Coding, Behavioral, Scenario-based,
+// and Technical Explanation. Styling: interviewQuestionTypes.css -> search
+// "Feature 4.6".
 export const QUESTION_TYPE_OPTIONS: ReadonlyArray<{
   value: InterviewQuestionType;
   label: string;

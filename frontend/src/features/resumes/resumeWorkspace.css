@@ -1,3 +1,7 @@
+/* Viva feature locators — Resume action colours and states.
+   Feature 3.5 — Save new version: .resume-primary-button; disabled state is .resume-primary-button:disabled and busy state uses [aria-busy="true"].
+   Feature 3.10 — Apply selected suggestions also uses .resume-primary-button after explicit user confirmation.
+   Feature 3.11 — Version-history presentation begins at .resume-version-history / .resume-version-timeline and related selectors below. */
 .resume-list-page,
 .resume-workspace {
   display: grid;

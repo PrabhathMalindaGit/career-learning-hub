@@ -53,6 +53,9 @@ function validateRegistration(
   return errors;
 }
 
+// Feature 1.1 — Register.
+// UI: /register -> centered authentication form -> “Create account” primary action.
+// Styling: auth.css -> search “Feature 1.1”.
 export function RegisterPage() {
   const { register } = useAuth();
   const location = useLocation();

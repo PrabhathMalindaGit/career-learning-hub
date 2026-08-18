@@ -82,6 +82,7 @@ function completeSelection(
   };
 }
 
+// Feature 3.6 — Resume appearance/template customization and “Save appearance”.
 export function ResumeDesignControls({
   design,
   saving,

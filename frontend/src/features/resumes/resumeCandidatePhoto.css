@@ -1,5 +1,6 @@
 @import "./resumeImportSkillsRefinement.css";
 
+/* Feature 3.7 — Candidate photo panel/control styling. */
 .resume-candidate-photo-panel {
   display: grid;
   gap: 1rem;

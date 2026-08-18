@@ -33,6 +33,8 @@ export function registerResumeAnalysisJobHandlers(): void {
     },
   );
 
+  // Feature 3.9 — Durable Resume AI assessment job.
+  // Feature 3.10 — Validated result is reviewed before user-controlled suggestion application.
   registerJobHandler(
     "resume.analyze",
     z.object({

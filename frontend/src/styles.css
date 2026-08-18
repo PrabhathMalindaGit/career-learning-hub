@@ -76,6 +76,7 @@ button:disabled {
   opacity: 0.68;
 }
 
+/* Feature 7.9 — Shared visible keyboard-focus treatment. */
 :focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring-color);
   outline-offset: var(--focus-ring-offset);
@@ -393,6 +394,7 @@ h2 {
   font-weight: 750;
 }
 
+/* Feature 1.3 — Authenticated application-shell layout. */
 .app-shell {
   display: grid;
   grid-template-columns: 256px minmax(0, 1fr);
@@ -446,6 +448,7 @@ h2 {
   gap: 6px;
 }
 
+/* Feature 1.4 — Navigation normal/hover/active styling; active state is .nav-link--active below. */
 .nav-link {
   display: flex;
   min-width: 0;
@@ -482,6 +485,7 @@ h2 {
   stroke-width: 1.8;
 }
 
+/* Feature 1.5 — Global Create menu styling; normal uses --accent and hover/open uses --accent-dark. */
 .create-menu {
   position: relative;
 }
@@ -584,6 +588,7 @@ h2 {
   font-size: 0.75rem;
 }
 
+/* Feature 1.6 — Sidebar/mobile Log out and navigation-toggle control styling. */
 .sidebar-logout,
 .mobile-nav-toggle,
 .mobile-nav-drawer button {
@@ -785,6 +790,7 @@ h2 {
   text-transform: uppercase;
 }
 
+/* Feature 6.1 — Gemini Connected/Disconnected status-badge styling. */
 .gemini-status {
   display: inline-flex;
   min-height: 32px;
@@ -859,11 +865,19 @@ h2 {
   line-height: 1.5;
 }
 
+/* Feature 6.2 — Fixed Gemini model text presentation. */
 .gemini-model {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.9rem;
 }
 
+/* Feature 6.3 — Application-managed Gemini action row.
+   Feature 6.4 — Connect personal key.
+   Feature 6.5 — Save and test uses global .primary-button.
+   Feature 6.6 — Test connection uses global .secondary-button.
+   Feature 6.7 — Replace key uses global .secondary-button.
+   Feature 6.8 — Disconnect uses global .secondary-button.
+   Feature 6.9 — Delete key uses global .destructive-button. */
 .gemini-action-row {
   display: flex;
   flex-wrap: wrap;
@@ -993,6 +1007,7 @@ h2 {
   margin-top: 24px;
 }
 
+/* Feature 6.11 — Current-session panel; sign-out uses the global secondary-button treatment. */
 .settings-session-panel {
   display: flex;
   flex-direction: column;
@@ -1025,6 +1040,7 @@ h2 {
   font-size: clamp(2rem, 6vw, 3.2rem);
 }
 
+/* Feature 7.9 — Shared responsive shell/layout breakpoint for narrower viewports. */
 @media (max-width: 980px) {
   .app-shell {
     display: block;

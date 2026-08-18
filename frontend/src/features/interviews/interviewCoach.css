@@ -1,3 +1,9 @@
+/* Viva feature locators — Interview action colours and states.
+   Feature 4.4 — Generate questions: .interview-primary-button; hover is .interview-primary-button:hover:not(:disabled).
+   Feature 4.9 — Save attempt: .interview-primary-button; same normal/hover/disabled/busy selectors.
+   Feature 4.11 — Request explanation: .interview-secondary-button.
+   Feature 4.12 — Request feedback: .interview-secondary-button.
+   Feature 4.13 — Session lifecycle: .interview-lifecycle-actions and later workspace-specific lifecycle overrides. */
 .interview-list-page,
 .interview-workspace {
   display: grid;

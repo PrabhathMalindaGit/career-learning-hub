@@ -40,6 +40,7 @@ import type {
   QuizQuestionForTaking,
 } from "./types";
 
+// Feature 5.1 — Upload private Learning PDF and accept document-processing work.
 export async function uploadLearningDocument(
   title: string,
   file: File,
@@ -84,6 +85,7 @@ function boundedInteger(
   return Math.min(maximum, Math.max(minimum, Math.trunc(value)));
 }
 
+// Feature 5.3 — Learning document library list/filter/pagination API boundary.
 export async function listLearningDocuments(
   input: {
     page?: number;
@@ -112,6 +114,7 @@ export async function listLearningDocuments(
   };
 }
 
+// Feature 5.4 — Overview/summary reads the canonical Learning document detail.
 export async function fetchLearningDocument(
   documentId: string,
   signal?: AbortSignal,
@@ -131,6 +134,7 @@ export async function fetchLearningDocument(
   };
 }
 
+// Feature 5.6 — Extracted page-aware content/chunk listing boundary.
 export async function listDocumentChunks(
   documentId: string,
   pageCount: number,
@@ -154,6 +158,7 @@ export async function listDocumentChunks(
   };
 }
 
+// Feature 5.2 — Poll document-processing durable job status.
 export async function fetchLearningJob(
   jobId: string,
   documentId: string,
@@ -169,6 +174,7 @@ export async function fetchLearningJob(
   });
 }
 
+// Feature 5.5 — Request owner-authorized short-lived access to the original PDF.
 export async function fetchLearningDocumentSource(
   documentId: string,
   signal?: AbortSignal,
@@ -188,6 +194,7 @@ export async function fetchLearningDocumentSource(
   };
 }
 
+// Feature 5.7.1 — Create a stored Grounded Chat conversation for one document.
 export async function createLearningConversation(
   documentId: string,
   title: string,
@@ -218,6 +225,7 @@ export async function createLearningConversation(
   };
 }
 
+// Feature 5.7 — List conversations that belong to the selected Learning document.
 export async function listLearningConversations(
   documentId: string,
   input: { page?: number; limit?: number } = {},
@@ -240,6 +248,7 @@ export async function listLearningConversations(
   };
 }
 
+// Feature 5.7.2 — Send one Grounded Chat question with stable request identity.
 export async function sendLearningMessage(
   documentId: string,
   conversationId: string,
@@ -277,6 +286,7 @@ export async function sendLearningMessage(
   };
 }
 
+// Feature 5.7.3 — Read canonical chat messages including validated source-page references.
 export async function listLearningMessages(
   documentId: string,
   conversationId: string,
@@ -317,6 +327,7 @@ export async function fetchLearningChatJob(
   return parseLearningChatJob(response.data, { jobId, pageCount });
 }
 
+// Feature 5.8.1 — Create/generate an owned Flashcard set.
 export async function createFlashcardSet(
   documentId: string,
   payload: {
@@ -352,6 +363,7 @@ export async function createFlashcardSet(
   };
 }
 
+// Feature 5.8 — List Flashcard sets for the selected document.
 export async function listFlashcardSets(
   documentId: string,
   input: { page?: number; limit?: number } = {},
@@ -374,6 +386,7 @@ export async function listFlashcardSets(
   };
 }
 
+// Feature 5.8.2 — Fetch the selected ready Flashcard set for study.
 export async function fetchFlashcardSet(
   documentId: string,
   setId: string,
@@ -394,6 +407,7 @@ export async function fetchFlashcardSet(
   };
 }
 
+// Feature 5.8.3 — Load study cards used by Reveal answer / Previous / Next navigation.
 export async function listLearningFlashcards(
   setId: string,
   pageCount: number,
@@ -429,6 +443,7 @@ export async function fetchLearningFlashcardJob(
   return parseLearningFlashcardJob(response.data, { jobId, setId });
 }
 
+// Feature 5.9.1 — Create/generate an owned Quiz.
 export async function createQuizGeneration(
   documentId: string,
   payload: {
@@ -464,6 +479,7 @@ export async function createQuizGeneration(
   };
 }
 
+// Feature 5.9 — List Quizzes for the selected document.
 export async function listQuizzes(
   documentId: string,
   input: { page?: number; limit?: number } = {},
@@ -486,6 +502,7 @@ export async function listQuizzes(
   };
 }
 
+// Feature 5.9.2 — Fetch validated Quiz-taking content.
 export async function fetchQuizForTaking(
   documentId: string,
   quizId: string,
@@ -523,6 +540,7 @@ export async function fetchLearningQuizJob(
   return parseLearningQuizJob(response.data, { jobId, quizId });
 }
 
+// Feature 5.9.2 — Submit one Quiz attempt for server scoring/persistence.
 export async function submitQuizAttempt(
   documentId: string,
   quizId: string,
@@ -565,6 +583,7 @@ export async function submitQuizAttempt(
   };
 }
 
+// Feature 5.9.3 — List saved Quiz attempts for read-only review selection.
 export async function listQuizAttempts(
   documentId: string,
   quizId: string,
@@ -588,6 +607,7 @@ export async function listQuizAttempts(
   };
 }
 
+// Feature 5.9.3 — Fetch one canonical saved Quiz-attempt review.
 export async function fetchQuizAttemptReview(
   documentId: string,
   quizId: string,
@@ -615,6 +635,7 @@ export async function fetchQuizAttemptReview(
   };
 }
 
+// Feature 5.10 — Request durable Learning document deletion/cascade work.
 export async function requestLearningDocumentDeletion(
   documentId: string,
   signal?: AbortSignal,

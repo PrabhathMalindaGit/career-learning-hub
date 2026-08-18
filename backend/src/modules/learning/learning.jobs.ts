@@ -26,6 +26,7 @@ export function registerLearningJobHandlers(): void {
   if (registered) return;
   registered = true;
 
+  // Feature 5.2 — Durable uploaded-document processing job.
   registerJobHandler(
     "learning.document.process",
     z.object({
@@ -55,6 +56,7 @@ export function registerLearningJobHandlers(): void {
     },
   );
 
+  // Feature 5.10 — Durable Learning document delete/cascade job.
   registerJobHandler(
     "learning.document.delete",
     z.object({
@@ -72,6 +74,9 @@ export function registerLearningJobHandlers(): void {
     },
   );
 
+  // Feature 5.7 — Grounded Chat durable-response boundary.
+  // Feature 5.7.2 — Process the persisted question request.
+  // Feature 5.7.3 — Persist validated source-page references with the answer.
   registerJobHandler(
     "learning.chat.respond",
     z.object({
@@ -97,6 +102,8 @@ export function registerLearningJobHandlers(): void {
     },
   );
 
+  // Feature 5.8 — Flashcard background-work boundary.
+  // Feature 5.8.1 — Durable flashcard-generation job.
   registerJobHandler(
     "learning.flashcards.generate",
     z.object({
@@ -123,6 +130,8 @@ export function registerLearningJobHandlers(): void {
     },
   );
 
+  // Feature 5.9 — Quiz background-work boundary.
+  // Feature 5.9.1 — Durable quiz-generation job.
   registerJobHandler(
     "learning.quiz.generate",
     z.object({

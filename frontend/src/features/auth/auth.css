@@ -1,3 +1,5 @@
+/* Feature 1.1 — Register colour tokens and authentication presentation.
+   Feature 1.2 — Login colour tokens and authentication presentation. */
 .authentication-shell {
   --auth-ink: #18211b;
   --auth-forest: #287a4a;
@@ -137,6 +139,8 @@
   animation: authentication-message-reveal 180ms ease-out both;
 }
 
+/* Feature 1.1 — “Create account” normal primary-action colour/gradient.
+   Feature 1.2 — “Sign in” normal primary-action colour/gradient. */
 .authentication-form-card .primary-button {
   position: relative;
   min-height: 52px;
@@ -168,6 +172,8 @@
   pointer-events: none;
 }
 
+/* Feature 1.1 — “Create account” hover colour change.
+   Feature 1.2 — “Sign in” hover colour change. */
 .authentication-form-card .primary-button:hover:not(:disabled) {
   background: linear-gradient(
     135deg,

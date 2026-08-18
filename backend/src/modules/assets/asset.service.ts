@@ -141,6 +141,7 @@ export async function createAsset(input: {
   return asset;
 }
 
+// Feature 7.3 — Owner-scoped private Asset lookup before file access.
 export async function getOwnedAsset(
   userId: string,
   assetId: string,
