@@ -1,0 +1,176 @@
+name: Temporary guided viva comment pass
+
+on:
+  push:
+    branches:
+      - task/viva-guided-inline-comments
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: task/viva-guided-inline-comments
+          fetch-depth: 0
+
+      - name: Add self-locating guidance comments
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          style_map = {
+              '1.1': 'frontend/src/features/auth/auth.css -> .authentication-form-card .primary-button',
+              '1.2': 'frontend/src/features/auth/auth.css -> .authentication-form-card .primary-button',
+              '1.4': 'frontend/src/styles.css -> .nav-link / .nav-link--active',
+              '1.5': 'frontend/src/styles.css -> .create-menu',
+              '1.6': 'frontend/src/styles.css -> .sidebar-logout',
+              '2.1': 'frontend/src/features/dashboard/dashboardPhase19d.css -> .dashboard-performance-toolbar',
+              '2.2': 'frontend/src/features/dashboard/dashboardPhase19d.css -> .dashboard-quick-start__link',
+              '2.3': 'frontend/src/features/dashboard/dashboardPhase19d.css -> .dashboard-quick-start__link',
+              '2.4': 'frontend/src/features/dashboard/dashboardPhase19d.css -> .dashboard-quick-start__link',
+              '2.5': 'frontend/src/features/dashboard/dashboardPhase19d.css -> .dashboard-activity-disclosure',
+              '3.5': 'frontend/src/features/resumes/resumeWorkspace.css -> .resume-primary-button',
+              '3.6': 'frontend/src/features/resumes/resumeWorkspace.css -> .resume-design-panel',
+              '3.7': 'frontend/src/features/resumes/resumeCandidatePhoto.css -> .resume-candidate-photo-file-button',
+              '3.8': 'frontend/src/features/resumes/resumeWorkspace.css -> .resume-print-controls',
+              '3.9': 'frontend/src/features/resumes/ResumeAssessmentActionUi.css -> .resume-analysis-runner .resume-button-row .resume-primary-button',
+              '3.10': 'frontend/src/features/resumes/resumeWorkspace.css -> .resume-primary-button',
+              '3.11': 'frontend/src/features/resumes/resumeWorkspace.css -> .resume-collection / .resume-panel',
+              '4.4': 'frontend/src/features/interviews/interviewCoach.css -> .interview-primary-button',
+              '4.6': 'frontend/src/features/interviews/interviewQuestionTypes.css -> .interview-type-choice',
+              '4.7': 'frontend/src/features/interviews/interviewCoach.css -> .interview-question-select--active',
+              '4.8': 'frontend/src/features/interviews/interviewQuestionIndexNotes.css -> .interview-private-notes',
+              '4.9': 'frontend/src/features/interviews/interviewCoach.css -> .interview-primary-button',
+              '4.11': 'frontend/src/features/interviews/interviewCoach.css -> .interview-secondary-button',
+              '4.12': 'frontend/src/features/interviews/interviewCoach.css -> .interview-secondary-button',
+              '4.13': 'frontend/src/features/interviews/interviewQuestionTypes.css -> .interview-workspace .interview-lifecycle-actions',
+              '5.1': 'frontend/src/features/learning/learningWorkspace.css -> .learning-primary-button',
+              '5.3': 'frontend/src/features/learning/learningWorkspace.css -> .learning-document-link',
+              '5.7.1': 'frontend/src/features/learning/learningWorkspace.css -> .learning-primary-button',
+              '5.7.2': 'frontend/src/features/learning/learningWorkspace.css -> .learning-primary-button',
+              '5.7.3': 'frontend/src/features/learning/learningWorkspace.css -> .learning-source-pages',
+              '5.8.1': 'frontend/src/features/learning/learningWorkspace.css -> .learning-primary-button',
+              '5.8.2': 'frontend/src/features/learning/learningWorkspace.css -> .learning-document-link',
+              '5.9.1': 'frontend/src/features/learning/learningWorkspace.css -> .learning-primary-button',
+              '5.9.2': 'frontend/src/features/learning/learningWorkspace.css -> .learning-document-link',
+              '5.9.3': 'frontend/src/features/learning/learningWorkspace.css -> .learning-document-link',
+              '6.1': 'frontend/src/styles.css -> .gemini-status',
+              '6.2': 'frontend/src/styles.css -> .gemini-model',
+              '6.3': 'frontend/src/styles.css -> .primary-button',
+              '6.4': 'frontend/src/styles.css -> .secondary-button',
+              '6.5': 'frontend/src/styles.css -> .primary-button',
+              '6.6': 'frontend/src/styles.css -> .secondary-button',
+              '6.7': 'frontend/src/styles.css -> .secondary-button',
+              '6.8': 'frontend/src/styles.css -> .secondary-button',
+              '6.9': 'frontend/src/styles.css -> .destructive-button',
+              '6.10': 'frontend/src/features/auth/aiUsageDiagnostics.css -> .ai-usage-diagnostics',
+              '6.11': 'frontend/src/styles.css -> .settings-session-panel',
+              '7.9': 'frontend/src/styles.css -> :focus-visible',
+          }
+
+          ui_pattern = re.compile(r'Feature\s+([0-9]+(?:\.[0-9]+)+)\s+UI\b', re.I)
+          changed = 0
+          added = 0
+
+          for path in Path('frontend/src').rglob('*.tsx'):
+              lines = path.read_text().splitlines()
+              out = []
+              file_changed = False
+              for index, line in enumerate(lines):
+                  out.append(line)
+                  match = ui_pattern.search(line)
+                  if not match:
+                      continue
+                  feature = match.group(1)
+                  target = style_map.get(feature)
+                  if not target:
+                      continue
+                  next_line = lines[index + 1] if index + 1 < len(lines) else ''
+                  if 'STYLE LOCATION:' in next_line:
+                      continue
+                  indent = line[:len(line) - len(line.lstrip())]
+                  if '{/*' in line:
+                      out.append(f'{indent}{{/* STYLE LOCATION: {target} */}}')
+                  else:
+                      out.append(f'{indent}// STYLE LOCATION: {target}')
+                  file_changed = True
+                  added += 1
+              if file_changed:
+                  path.write_text('\n'.join(out) + '\n')
+                  changed += 1
+
+          css_feature_pattern = re.compile(r'Feature\s+[0-9]+(?:\.[0-9]+)+(?:[^\n]*?)STYLE', re.I)
+          for path in Path('frontend/src').rglob('*.css'):
+              lines = path.read_text().splitlines()
+              out = []
+              file_changed = False
+              for index, line in enumerate(lines):
+                  out.append(line)
+                  if not css_feature_pattern.search(line):
+                      continue
+                  next_line = lines[index + 1] if index + 1 < len(lines) else ''
+                  if 'CHANGE STYLE/COLOR HERE' in next_line:
+                      continue
+                  indent = line[:len(line) - len(line.lstrip())]
+                  out.append(f'{indent}/* CHANGE STYLE/COLOR HERE: edit the declarations in the selector/state block immediately below. */')
+                  file_changed = True
+                  added += 1
+              if file_changed:
+                  path.write_text('\n'.join(out) + '\n')
+                  changed += 1
+
+          print(f'Updated {changed} files; added {added} guidance comments.')
+          PY
+
+      - name: Remove temporary workflow and verify comment-only diff
+        shell: bash
+        run: |
+          rm .github/workflows/viva-guided-inline-comments.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+          git diff --check
+          python - <<'PY'
+          import subprocess
+          diff = subprocess.check_output(['git','diff','--unified=0','--','frontend/src','backend/src'], text=True)
+          bad=[]
+          for line in diff.splitlines():
+              if line.startswith(('+++','---','@@','diff ','index ')):
+                  continue
+              if not line.startswith(('+','-')):
+                  continue
+              body=line[1:].lstrip()
+              if not body:
+                  continue
+              if body.startswith(('//','/*','{/*','*','*/')):
+                  continue
+              bad.append(line)
+          if bad:
+              print('Non-comment source changes detected:')
+              print('\n'.join(bad[:80]))
+              raise SystemExit(1)
+          print('Verified: source diff is comment-only.')
+          PY
+
+      - name: Verify frontend
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
+          npm run test --workspace @career-learning-hub/web
+
+      - name: Commit guidance comments
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs(viva): add self-locating feature guidance comments'
+          git push origin HEAD:task/viva-guided-inline-comments
