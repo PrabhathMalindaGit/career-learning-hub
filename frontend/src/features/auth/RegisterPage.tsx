@@ -382,6 +382,7 @@ export function RegisterPage() {
           disabled={busy}
           aria-busy={busy}
         >
+          {/* Feature 1.1 UI — Create account. */}
           {busy ? "Creating account…" : "Create account"}
         </button>
       </form>
