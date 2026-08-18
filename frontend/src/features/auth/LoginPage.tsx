@@ -298,6 +298,7 @@ export function LoginPage() {
           disabled={busy}
           aria-busy={busy}
         >
+          {/* Feature 1.2 UI — Sign in. */}
           {busy ? "Signing in…" : "Sign in"}
         </button>
       </form>
